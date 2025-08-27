@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/format"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { getPaymentMode, getPaymentLinkUrl } from "@/lib/config"
 
 export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -31,11 +32,20 @@ export default function CheckoutPage() {
     setError(null)
 
     try {
+      const mode = getPaymentMode()
+      const link = getPaymentLinkUrl()
+
+      // If configured to use Stripe Payment Link, redirect there directly
+      if (mode === "link" && link) {
+        window.location.href = link
+        return
+      }
+
+      // Fallback to API-based Checkout Session creation
       const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantity: 1 }),
       })
 
       if (!response.ok) {

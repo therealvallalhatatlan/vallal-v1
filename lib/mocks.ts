@@ -11,8 +11,8 @@ export const mockData = {
 }
 
 export const COUNTERS_MOCK = {
-  totalGoal: 500,
-  totalPreorders: 137,
+  totalGoal: 100,
+  totalPreorders: 0,
 }
 
 export const ORDER_MOCK = {

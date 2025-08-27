@@ -1,65 +1,79 @@
+import Link from "next/link"
+import path from "path"
+import fs from "fs/promises"
 import { Container } from "@/components/Container"
 import { Card } from "@/components/Card"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { formatSequenceNumber } from "@/lib/format"
-import type { Metadata } from "next"
+import { formatSequence } from "@/lib/format"
 
-export const metadata: Metadata = {
-  title: "Payment Success | Next.js App",
-  description: "Your payment was processed successfully",
-  robots: "noindex",
+type Props = {
+  searchParams?: { session_id?: string }
 }
 
-export default function SuccessPage() {
-  const orderNumber = 1234
+async function readCounters() {
+  const COUNTERS_PATH = path.join(process.cwd(), "data", "counters.json")
+  try {
+    const raw = await fs.readFile(COUNTERS_PATH, "utf-8")
+    const json = JSON.parse(raw)
+    const goal = Number.isFinite(Number(json.goal)) ? Math.max(1, Number(json.goal)) : 100
+    const preorders = Number.isFinite(Number(json.preorders)) ? Math.max(0, Number(json.preorders)) : 0
+    return { goal, preorders }
+  } catch (err) {
+    return { goal: 100, preorders: 0 }
+  }
+}
+
+export default async function SuccessPage({ searchParams }: Props) {
+  const { goal, preorders } = await readCounters()
+  const capped = Math.min(preorders, goal)
+  const lastAssigned = capped // last assigned number (webhook increments preorders)
+  const soldOut = capped >= goal
+
+  // If webhook hasn't run yet, preorders may be 0 even though session completed.
+  // We keep the UI simple: show pending state when preorders === 0.
+  const pending = preorders === 0
 
   return (
-    <Container className="py-12">
+    <Container className="py-16">
       <Card>
-        <div className="text-center space-y-6">
-          <div className="text-6xl text-green-400 mb-4">✓</div>
-          <h1 className="text-3xl font-bold text-green-400">Payment Successful!</h1>
-          <p className="text-green-300/80 text-lg">
-            Thank you for your purchase. Your order {formatSequenceNumber(orderNumber)}
-            has been confirmed and will be processed shortly.
+        <div className="max-w-2xl mx-auto text-center space-y-6">
+          <h1 className="text-4xl font-bold text-green-400">Payment successful</h1>
+
+          <p className="text-green-300/80">
+            Köszönjük a támogatást — a fizetés sikeresen megtörtént.
           </p>
 
-          <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700 text-left space-y-4">
-            <h2 className="text-xl font-semibold text-green-400">What happens next?</h2>
-            <ul className="space-y-2 text-green-300/80">
-              <li className="flex items-start gap-2">
-                <span className="text-green-400 mt-1">•</span>
-                <span>You'll receive an order confirmation email shortly</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-400 mt-1">•</span>
-                <span>Track your order progress in your dashboard</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-400 mt-1">•</span>
-                <span>We'll notify you when production begins</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-400 mt-1">•</span>
-                <span>Your book will be shipped once the campaign goal is reached</span>
-              </li>
-            </ul>
+          <div className="mt-6">
+            <div className="mx-auto w-48 h-48 rounded-full bg-green-900/20 flex items-center justify-center">
+              <div className="text-4xl font-extrabold text-green-400">
+                {pending ? "—" : soldOut ? "Sold out" : formatSequence(lastAssigned)}
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-green-300/80">
+              {pending
+                ? "A sorszám hozzárendelése folyamatban van. Kérlek, frissítsd az oldalt pár másodperc múlva."
+                : soldOut
+                ? "A kampány elérte a célt — minden példány elkelt."
+                : "Ez a te sorszámod."}
+            </p>
           </div>
 
-          <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-            <p className="text-green-300 text-sm">Order Number</p>
-            <p className="text-green-400 font-bold text-xl">{formatSequenceNumber(orderNumber)}</p>
+          <div className="mt-6 text-lg">
+            <div className="text-green-300/80">Current status</div>
+            <div className="text-2xl font-semibold text-green-400">
+              {capped} / {goal} sold
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            <Button asChild variant="outline" className="bg-green-400 text-black hover:bg-green-300">
-              <Link href="/dashboard">Go to my dashboard</Link>
-            </Button>
-            <Button asChild variant="ghost" className="text-green-400 hover:bg-green-400/10 bg-transparent">
-              <Link href="/">Back to homepage</Link>
+          <div className="pt-6">
+            <Button asChild variant="outline" size="lg" className="px-8 py-3">
+              <Link href="/">Vissza a kezdőlapra</Link>
             </Button>
           </div>
+
+          <p className="text-xs text-green-300/60 mt-4">
+            If your number still shows pending after a minute, check your email or contact support.
+          </p>
         </div>
       </Card>
     </Container>
