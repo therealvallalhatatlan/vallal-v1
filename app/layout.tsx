@@ -21,7 +21,23 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`font-mono ${GeistSans.variable} ${GeistMono.variable} bg-black text-green-400 antialiased`}>
-        {children}
+        {/* Fullscreen background video (behind content) */}
+        <div className="bg-video" aria-hidden="true">
+          <video
+            className="bg-video__media"
+            src="/video.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+          <div className="bg-video__overlay" />
+        </div>
+
+        {/* Page content above video */}
+        <div className="content-above">
+          {children}
+        </div>
       </body>
     </html>
   )

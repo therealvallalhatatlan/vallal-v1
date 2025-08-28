@@ -19,16 +19,10 @@ export default function ImprintPage() {
             <h2 className="text-xl font-semibold text-green-300">Publisher Information</h2>
             <div className="space-y-2">
               <p>
-                <strong>Company:</strong> Support the Print Publishing
+                <strong>Company:</strong> Vállalhatatlan
               </p>
               <p>
-                <strong>Address:</strong> 123 Publishing Street, Book City, BC 12345
-              </p>
-              <p>
-                <strong>Email:</strong> contact@supporttheprint.com
-              </p>
-              <p>
-                <strong>Phone:</strong> +1 (555) 123-4567
+                <strong>Email:</strong> therealvallalhatatlan@gmail.com
               </p>
             </div>
 

@@ -31,33 +31,44 @@ export default function CheckoutPage() {
     setIsLoading(true)
     setError(null)
 
-    try {
-      const mode = getPaymentMode()
-      const link = getPaymentLinkUrl()
+    // Fallback Payment Link provided by you
+    const PAYMENT_LINK = "https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
 
-      // If configured to use Stripe Payment Link, redirect there directly
-      if (mode === "link" && link) {
-        window.location.href = link
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({}), // send minimal body so endpoint accepts it
+      })
+
+      // If API call failed, redirect to payment link fallback
+      if (!response.ok) {
+        console.warn("[checkout] API create session failed, redirecting to payment link fallback")
+        window.location.href = PAYMENT_LINK
         return
       }
 
-      // Fallback to API-based Checkout Session creation
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantity: 1 }),
-      })
+      const data = await response.json()
+      const url = data?.url
 
-      if (!response.ok) {
-        throw new Error("Failed to create checkout session")
+      // If API returned no url, use fallback link
+      if (!url) {
+        console.warn("[checkout] No session URL returned, using fallback payment link")
+        window.location.href = PAYMENT_LINK
+        return
       }
 
-      const { url } = await response.json()
+      // Redirect to Stripe Checkout session URL
       window.location.href = url
-    } catch (error) {
-      console.error("Checkout error:", error)
+    } catch (err) {
+      console.error("Checkout error:", err)
+      // On unexpected errors, redirect to the payment link fallback so users can still pay
+      window.location.href = PAYMENT_LINK
+    } finally {
+      // NOTE: navigation will usually occur before this runs, but keep state consistent
       setIsLoading(false)
-      setError("Payment could not be initiated. Please try again.")
     }
   }
 
@@ -65,11 +76,11 @@ export default function CheckoutPage() {
     <Container className="py-12">
       <Card>
         <div className="space-y-6">
-          <div className="flex justify-center">
+          {/*<div className="flex justify-center">
             <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-400/30">
               Demo mode: real Stripe checkout, no DB yet
             </Badge>
-          </div>
+          </div>*/}
 
           <h1 className="text-3xl font-bold text-green-400 text-center">Checkout</h1>
 

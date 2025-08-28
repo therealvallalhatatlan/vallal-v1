@@ -30,22 +30,27 @@ export const ORDER_MOCK = {
 
 export const FAQ_MOCK = [
   {
-    question: "When will I receive my book?",
+    question: "Mikor kapom meg a könyvemet?",
     answer:
-      "Books will be printed and shipped once we reach our goal of 500 preorders. Expected delivery is 6-8 weeks after the campaign ends.",
+      "Amint legalább 10 előrendelés beérkezik, elindítjuk a nyomdát. Onnantól a gyártás–száradás–csomagolás 3–4 hét. Készenlétkor kapsz visszaigazolást és sorszámot, majd a kézbesítés módjáról (drop/átvétel) részletes instrukciót.",
   },
   {
-    question: "What if the campaign doesn't reach its goal?",
-    answer: "If we don't reach 500 preorders, all payments will be fully refunded within 5-7 business days.",
+    question: "Mi történik, ha a kampány nem éri el a célját?",
+    answer: "Ha a kampány nem fut be (vagy leállítjuk), visszautaljuk a teljes összeget arra a fizetési módra, amivel fizettél (Stripe). A banktól függően a jóváírás jellemzően 5–10 munkanap.",
   },
   {
-    question: "Can I change or cancel my order?",
+    question: "Milyen helyeken lesz elrejtve a csomag?",
     answer:
-      "You can cancel your preorder anytime before we reach our goal. Contact us at support@example.com for assistance.",
+      "Nyilvános, bárki által elérhető helyeken, ahol nem kerülhetsz kellemetlen helyzetbe. Nem kell valamit vásárolni, nem kell személyzethez szólni, és nem kell belépni tiltott területre. Gondolj parkokra, közterekre, utcabútorok környékére, jellegzetes városi pontokra. A rejtek gyakran kapcsolódik a történetekhez – kapsz róla pozíciót, leírást és fotós nyomot. A cél, hogy jó kaland legyen, ne szívatás. Ha elakadnál, segítünk útbaigazítással.",
   },
   {
-    question: "What payment methods do you accept?",
-    answer: "We accept all major credit cards, PayPal, and bank transfers. All payments are processed securely.",
+    question: "Módosíthatom vagy lemondhatom a rendelésemet?",
+    answer:
+      "Ez limitált előrendelés. A vásárlás pillanatában lefoglalod a sorszámodat és a gyártási kapacitást, ezért a rendelés nem módosítható és nem lemondható. (Ha elírtad az e-mailed vagy átadnád valakinek a helyedet, írj nekünk – adatot tudunk frissíteni, de a rendelést nem töröljük.)",
+  },
+  {
+    question: "Milyen fizetési módokat fogadtok el?",
+    answer: "A fizetés Stripe-on keresztül történik. Elfogadott: bankkártyák (Visa, MasterCard, AmEx), valamint a Stripe által kínált Apple Pay / Google Pay és egyes helyi opciók. A fizetés biztonságos, titkosított környezetben zajlik.",
   },
 ]
 

@@ -12,16 +12,90 @@ import path from "path"
 import fs from "fs/promises"
 
 export const metadata: Metadata = {
-  title: "Support the Print - Crowdfunding Campaign",
-  description:
-    "Help us bring this amazing book to life. Support our crowdfunding campaign and be part of something special.",
-  openGraph: {
-    title: "Support the Print - Crowdfunding Campaign",
-    description:
-      "Help us bring this amazing book to life. Support our crowdfunding campaign and be part of something special.",
-    type: "website",
+  metadataBase: new URL("https://vallalhatatlan.online"),
+  title: {
+    default: "Vállalhatatlan — Y2K | Budapest underground a ’90-es évekből",
+    template: "%s | Vállalhatatlan",
   },
-}
+  description:
+    "Vállalhatatlan — Y2K: nyers, urbánus novellák a ’90-es évek és az ezredforduló Budapestjéről. Rave/techno éjszakák, underground szcénák, drogkultúra, identitásválság és könyörtelen őszinteség.",
+  keywords: [
+    // Hungarian focus
+    "Vállalhatatlan",
+    "Y2K",
+    "’90-es évek",
+    "kilencvenes évek",
+    "Budapest underground",
+    "rave kultúra",
+    "techno",
+    "acid",
+    "drogok",
+    "fű",
+    "illegális szerek",
+    "partikultúra",
+    "kortárs irodalom",
+    "novelláskötet",
+    "sötét urbánus próza",
+    // English support
+    "Budapest 1990s",
+    "Y2K fiction",
+    "underground culture",
+    "rave techno",
+    "drug culture literature",
+    "urban fiction",
+  ],
+  alternates: {
+    canonical: "/",
+    languages: {
+      "hu-HU": "/",
+      "en-US": "/en",
+    },
+  },
+  openGraph: {
+    type: "book",
+    url: "/",
+    siteName: "Vállalhatatlan",
+    title: "Vállalhatatlan — Y2K | Underground Budapest a ’90-es évekből",
+    description:
+      "Nyers, sötét humorú novellák a ’90-es évek/ezredforduló Budapestjéről: techno, acid, rave, drogkultúra és töréspontok.",
+    images: [
+      {
+        url: "/og.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Vállalhatatlan — Y2K könyv: Budapest underground, techno és ’90-es évek",
+      },
+    ],
+    locale: "hu_HU",
+    alternateLocale: ["en_US"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Vállalhatatlan — Y2K",
+    description:
+      "Underground Budapest a ’90-es években: rave/techno, drogkultúra és kíméletlenül őszinte novellák.",
+    images: ["/og.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  category: "books",
+  authors: [{ name: "Vállalhatatlan" }],
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  themeColor: "#0ea5a3",
+};
+
 
 async function readCountersFile() {
   const COUNTERS_PATH = path.join(process.cwd(), "data", "counters.json")
@@ -55,7 +129,7 @@ export default async function HomePage() {
           <div className="max-w-xl mx-auto space-y-6 relative z-10">
             <div className="text-center">
               <h1 className="text-4xl font-bold text-green-400">
-                <GlitchText intensity="subtle">Access the Drop</GlitchText>
+                <GlitchText intensity="subtle">Vállalhatatlan</GlitchText>
               </h1>
             </div>
 
@@ -63,20 +137,25 @@ export default async function HomePage() {
             <div className="space-y-4 text-center">
               <p className="text-green-300/80 text-lg leading-relaxed">
                 Ez nem egy könyv. Nem kapható a boltokban. 
-                Csak {goal} példány készül. Elrejtem, és neked meg kell találnod. 
+                Elrejtem, és te megtalálod.  <GlitchText intensity="subtle">Összesen {goal} példány készül.</GlitchText> <br />
                 Ha elfogynak, vége a játéknak. 
               </p>
+              <img
+                className="w-full max-w-full block h-auto object-cover"
+                src="/vallalhatatlan.png"
+                alt=""
+              />
               <p className="text-green-300/80 text-xs leading-relaxed">
-                A könyv egyedi, számozott példány lesz, amit csak a kampány támogatóinak készítek el.
-                A könyv várhatóan 6-8 héten belül kerül legyártásra, és megkezdődik amint elértünk {goal} előrendelést.
-                Ha nem érjük el a célt, minden befizetett összeget visszatérítünk 5-7 munkanapon belül.
+                A könyv egyedi, limitált darabszámú, számozott példány lesz.
+                Várhatóan 4-6 héten belül kerül legyártásra, és megkezdem a gyártást amint elérünk 10 db előrendelést.
+                Ha nem érem el ezt a célt, akkor minden befizetett összeget visszatérítek 5-7 munkanapon belül.
               </p>
             </div>
 
             {/* Campaign Progress */}
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-green-400 text-center">
-                <GlitchText intensity="subtle">Campaign Progress</GlitchText>
+                <GlitchText intensity="subtle">Így állunk most</GlitchText>
               </h2>
 
               <div className="grid grid-cols-3 gap-4 text-center">
@@ -119,7 +198,7 @@ export default async function HomePage() {
                 className="border-green-400 text-green-400 hover:bg-green-400 hover:text-black text-xl px-8 py-4 w-full bg-transparent transition-all duration-200 hover:skew-x-1 hover:animate-pulse"
                 disabled={soldOut}
               >
-                <Link href={soldOut ? "#" : "/checkout"}>{soldOut ? "Sold out" : `Support the print – ${formatCurrency(15000)}`}</Link>
+                <Link href={soldOut ? "#" : "/checkout"}>{soldOut ? "Sold out" : `Szerezd meg ezt: #01 – ${formatCurrency(15000)}`}</Link>
               </Button>
             </div>
           </div>
@@ -130,37 +209,55 @@ export default async function HomePage() {
       <CRTFrame intensity="subtle">
         <Card>
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-green-400 text-center">How It Works</h2>
+            <h2 className="text-2xl font-bold text-green-400 text-center">Így Működik</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center space-y-3">
                 <div className="w-12 h-12 bg-green-400 text-black rounded-full flex items-center justify-center font-bold text-xl mx-auto">
                   1
                 </div>
-                <h3 className="text-lg font-semibold text-green-300">Pay</h3>
-                <p className="text-green-300/70 text-sm">
-                  Support the campaign with your preorder payment. Your contribution helps us reach our printing goal.
+                <h3 className="text-lg font-semibold text-green-300">Fizetés</h3>
+                <p className="text-green-300/70 text-xs">
+                  Biztosítsd a saját példányod - csak 100db készül. Ha elfogy, vége.
                 </p>
               </div>
               <div className="text-center space-y-3">
                 <div className="w-12 h-12 bg-green-400 text-black rounded-full flex items-center justify-center font-bold text-xl mx-auto">
                   2
                 </div>
-                <h3 className="text-lg font-semibold text-green-300">Confirmation</h3>
-                <p className="text-green-300/70 text-sm">
-                  Receive your unique sequence number and confirmation. Track the campaign progress in real-time.
+                <h3 className="text-lg font-semibold text-green-300">Visszaigazolás</h3>
+                <p className="text-green-300/70 text-xs">
+                  Megkapod az egyedi sorszámodat és a visszaigazolást. Élőben követheted a haladást.
                 </p>
               </div>
               <div className="text-center space-y-3">
                 <div className="w-12 h-12 bg-green-400 text-black rounded-full flex items-center justify-center font-bold text-xl mx-auto">
                   3
                 </div>
-                <h3 className="text-lg font-semibold text-green-300">Receive</h3>
-                <p className="text-green-300/70 text-sm">
-                  Get your book delivered once we reach our goal. Quality printing and careful packaging guaranteed.
+                <h3 className="text-lg font-semibold text-green-300">Dead drop</h3>
+                <p className="text-green-300/70 text-xs">
+                  Kapsz egy jelzést. A könyved egy elrejtett helyen vár. Odamész, megtalálod.
                 </p>
               </div>
             </div>
+          </div>
+        </Card>
+      </CRTFrame>
+
+      {/* New informational card below "Így Működik" */}
+      <CRTFrame intensity="subtle">
+        <Card>
+          <div className="space-y-4 text-center">
+            <h3 className="text-2xl font-bold text-green-400">Miért 15K?</h3>
+            <p className="text-green-300/80 text-sm leading-relaxed max-w-2xl mx-auto">
+               Független kiadás, sorszámozott, limitált példányszámban, minőségi anyagokkal. A pénz a papírba, a nyomdába és az élménybe megy.
+              <br/><br/>A kötetben sosem publikált fotók és művészi illusztrációk vannak. 
+              Minden fejezet QR-kódokat rejt amikkel további szövegek, playlistek, bizonyítékok, webarchívumok nyílnak.
+              <br/><br/>A kézbesítés dead drop: koordináta + jel + rejtek. Biztonságos, de adrenalindús keresés. Nem szívatás, kaland.
+              <br/><br/>Ha soknak tűnik egy „sima könyvért”, igazad van: ez nem sima könyv - ezzel belépsz a történetbe. 
+              <br/><br/>Ezz egy egész estés városi performansz, amire örökké emlékezni fogsz, kiteheted a polcodra, 
+              és ha valaki megkérdezi, hogy mi az, csak annyit mondasz: vállalhatatlan.
+            </p>
           </div>
         </Card>
       </CRTFrame>
@@ -169,7 +266,7 @@ export default async function HomePage() {
       <CRTFrame intensity="subtle">
         <Card>
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-green-400 text-center">Frequently Asked Questions</h2>
+            <h2 className="text-2xl font-bold text-green-400 text-center">Gy.I.K.</h2>
 
             <Accordion type="single" collapsible className="space-y-2">
               {faqData.map((faq, index) => (
@@ -195,11 +292,8 @@ export default async function HomePage() {
             <Link href="/privacy" className="text-green-300/60 hover:text-green-400 transition-colors">
               Privacy Policy
             </Link>
-            <Link href="/imprint" className="text-green-300/60 hover:text-green-400 transition-colors">
-              Imprint
-            </Link>
           </div>
-          <p className="text-green-300/40 text-xs">© 2024 Support the Print Campaign. All rights reserved.</p>
+          <p className="text-green-300/40 text-xs">© 2025 First Vallalhatatlan Campaign. All rights reserved.</p>
         </div>
       </Card>
     </Container>
