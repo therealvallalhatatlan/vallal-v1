@@ -200,7 +200,7 @@ export default async function HomePage() {
             {/* Campaign Progress */}
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-green-400 text-center">
-                <GlitchText intensity="subtle">Így állunk most</GlitchText>
+                <GlitchText intensity="subtle">Találd Meg A Tiédet</GlitchText>
               </h2>
 
               <div className="grid grid-cols-3 gap-4 text-center">
@@ -243,7 +243,11 @@ export default async function HomePage() {
                 className="border-green-400 text-green-400 hover:bg-green-400 hover:text-black text-xl px-8 py-4 w-full bg-transparent transition-all duration-200 hover:skew-x-1 hover:animate-pulse"
                 disabled={soldOut}
               >
-                <Link href={soldOut ? "#" : "/checkout"}>{soldOut ? "Sold out" : `Szerezd meg ezt: #01 – ${formatCurrency(15000)}`}</Link>
+                <Link href={soldOut ? "#" : "/checkout"}>
+                  {soldOut
+                    ? "Sold out"
+                    : `Szerezd meg ezt: #${formatSequence(yourNumber ?? 1)} – ${formatCurrency(15000)}`}
+                </Link>
               </Button>
             </div>
           </div>
