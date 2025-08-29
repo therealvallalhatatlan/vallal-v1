@@ -102,7 +102,7 @@ async function readCountersSupabase() {
   if (!url || !key) return null
 
   try {
-    const resp = await fetch(`${url}/rest/v1/counters?id=eq.1`, {
+    const resp = await fetch(`${url}/rest/v1/counters?id=eq.main`, {
       method: "GET",
       headers: {
         apikey: key,
@@ -115,7 +115,14 @@ async function readCountersSupabase() {
       return null
     }
     const json = await resp.json()
-    if (json && json[0]) return { goal: Number(json[0].goal || 100), preorders: Number(json[0].preorders || 0) }
+    if (json && json[0]) {
+      const row = json[0]
+      return {
+        goal: Number(row.goal ?? 100),
+        preorders: Number(row.total_sold ?? row.preorders ?? 0),
+        last_sequence_number: Number(row.last_sequence_number ?? 0),
+      }
+    }
     return null
   } catch (err) {
     console.error("[PAGE] Supabase fetch error:", err)
@@ -130,7 +137,8 @@ async function readCountersFile() {
     const json = JSON.parse(raw)
     return {
       goal: Number.isFinite(Number(json.goal)) ? Math.max(1, Number(json.goal)) : 100,
-      preorders: Number.isFinite(Number(json.preorders)) ? Math.max(0, Number(json.preorders)) : 0,
+      // prefer total_sold, fallback to legacy preorders
+      preorders: Number.isFinite(Number(json.total_sold ?? json.preorders)) ? Math.max(0, Number(json.total_sold ?? json.preorders)) : 0,
     }
   } catch (err) {
     // fallback defaults
@@ -141,7 +149,7 @@ async function readCountersFile() {
 async function readCounters() {
   // prefer Supabase
   const sup = await readCountersSupabase()
-  if (sup) return sup
+  if (sup) return { goal: sup.goal, preorders: sup.preorders }
   return readCountersFile()
 }
 
