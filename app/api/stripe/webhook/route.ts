@@ -1,3 +1,4 @@
+export const runtime = "nodejs"
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
 import fs from "fs/promises"
@@ -10,8 +11,7 @@ async function readCounters() {
   try {
     const raw = await fs.readFile(COUNTERS_PATH, "utf-8")
     return JSON.parse(raw)
-  } catch (err) {
-    // fallback defaults
+  } catch {
     return { goal: 100, preorders: 0 }
   }
 }
@@ -32,8 +32,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (!stripe) {
-      console.error("[STRIPE_WEBHOOK] Stripe instance is not initialized")
-      return NextResponse.json({ error: "Stripe not initialized" }, { status: 500 })
+      console.error("[STRIPE_WEBHOOK] Stripe instance is not initialized");
+      return NextResponse.json({ error: "Stripe not initialized" }, { status: 500 });
+    }
+
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error("[STRIPE_WEBHOOK] STRIPE_WEBHOOK_SECRET not set");
+      return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 })
     }
 
     const event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!)
@@ -55,18 +60,19 @@ export async function POST(request: NextRequest) {
             const counters = await readCounters()
             const goal = Number.isFinite(Number(counters.goal)) ? Math.max(1, Number(counters.goal)) : 100
             const current = Number.isFinite(Number(counters.preorders)) ? Math.max(0, Number(counters.preorders)) : 0
-            const next = Math.min(goal, current + 1)
-            const newPreorders = Math.min(goal, current + 1) // increment by 1, cap at goal
+            const newPreorders = Math.min(goal, current + 1)
 
             await writeCounters({ goal, preorders: newPreorders })
 
             console.log(`[STRIPE_WEBHOOK] Incremented preorders: ${current} -> ${newPreorders} (goal ${goal})`)
           } catch (fsErr) {
             console.error("[STRIPE_WEBHOOK] Failed to update counters file:", fsErr)
+            // continue — don't fail the webhook response to Stripe
           }
+        } else {
+          console.log(`[STRIPE_WEBHOOK] Session ${session.id} not paid (status=${session.payment_status}), skipping counter increment`)
         }
 
-        // existing log/upsert work remains (no DB implemented here)
         const orderData = {
           stripe_session_id: session.id,
           amount_total: session.amount_total,
