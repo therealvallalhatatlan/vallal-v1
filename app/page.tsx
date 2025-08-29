@@ -109,6 +109,8 @@ async function readCountersSupabase() {
         Authorization: `Bearer ${key}`,
         Accept: "application/json",
       },
+      // ensure we always fetch fresh data (no stale cached response)
+      cache: "no-store",
     })
     if (!resp.ok) {
       console.warn("[PAGE] Supabase GET failed:", resp.status, await resp.text())
@@ -119,7 +121,8 @@ async function readCountersSupabase() {
       const row = json[0]
       return {
         goal: Number(row.goal ?? 100),
-        preorders: Number(row.total_sold ?? row.preorders ?? 0),
+        // return canonical production fields
+        total_sold: Number(row.total_sold ?? row.preorders ?? 0),
         last_sequence_number: Number(row.last_sequence_number ?? 0),
       }
     }
@@ -138,27 +141,28 @@ async function readCountersFile() {
     return {
       goal: Number.isFinite(Number(json.goal)) ? Math.max(1, Number(json.goal)) : 100,
       // prefer total_sold, fallback to legacy preorders
-      preorders: Number.isFinite(Number(json.total_sold ?? json.preorders)) ? Math.max(0, Number(json.total_sold ?? json.preorders)) : 0,
+      total_sold: Number.isFinite(Number(json.total_sold ?? json.preorders)) ? Math.max(0, Number(json.total_sold ?? json.preorders)) : 0,
+      last_sequence_number: Number.isFinite(Number(json.last_sequence_number ?? 0)) ? Math.max(0, Number(json.last_sequence_number ?? 0)) : 0,
     }
   } catch (err) {
     // fallback defaults
-    return { goal: 100, preorders: 0 }
+    return { goal: 100, total_sold: 0, last_sequence_number: 0 }
   }
 }
 
 async function readCounters() {
   // prefer Supabase
   const sup = await readCountersSupabase()
-  if (sup) return { goal: sup.goal, preorders: sup.preorders }
+  if (sup) return { goal: sup.goal, total_sold: sup.total_sold, last_sequence_number: sup.last_sequence_number }
   return readCountersFile()
 }
 
 export default async function HomePage() {
-  const { goal, preorders } = await readCounters()
-  const cappedPreorders = Math.min(preorders, goal)
-  const remaining = Math.max(0, goal - cappedPreorders)
-  const nextSequence = Math.min(goal, cappedPreorders + 1)
-  const percent = Math.min(100, Math.max(0, Math.round((cappedPreorders / goal) * 100)))
+  const { goal, total_sold, last_sequence_number } = await readCounters()
+  const preorders = Math.min(total_sold ?? 0, goal)
+  const remaining = Math.max(0, goal - preorders)
+  const yourNumber = remaining > 0 ? Math.min(goal, (last_sequence_number ?? preorders) + 1) : null
+  const percent = Math.min(100, Math.max(0, Math.round((preorders / goal) * 100)))
   const soldOut = remaining === 0
 
   return (
@@ -201,7 +205,7 @@ export default async function HomePage() {
 
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <div className="text-2xl lg:text-3xl font-bold text-green-400">{cappedPreorders}</div>
+                  <div className="text-2xl lg:text-3xl font-bold text-green-400">{preorders}</div>
                   <div className="text-green-300/60 text-xs lg:text-sm">Előrendelések</div>
                 </div>
                 <div>
@@ -210,7 +214,7 @@ export default async function HomePage() {
                 </div>
                 <div>
                   <div className="text-2xl lg:text-3xl font-bold text-green-400">
-                    {soldOut ? "—" : formatSequence(nextSequence)}
+                    {soldOut ? "—" : `#${formatSequence(yourNumber ?? 1)}`}
                   </div>
                   <div className="text-green-300/60 text-xs lg:text-sm">A Te Sorszámod</div>
                 </div>
