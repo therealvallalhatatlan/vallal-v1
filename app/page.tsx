@@ -96,6 +96,32 @@ export const metadata: Metadata = {
   themeColor: "#0ea5a3",
 };
 
+async function readCountersSupabase() {
+  const url = (process.env.SUPABASE_URL || "").replace(/\/$/, "")
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return null
+
+  try {
+    const resp = await fetch(`${url}/rest/v1/counters?id=eq.1`, {
+      method: "GET",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        Accept: "application/json",
+      },
+    })
+    if (!resp.ok) {
+      console.warn("[PAGE] Supabase GET failed:", resp.status, await resp.text())
+      return null
+    }
+    const json = await resp.json()
+    if (json && json[0]) return { goal: Number(json[0].goal || 100), preorders: Number(json[0].preorders || 0) }
+    return null
+  } catch (err) {
+    console.error("[PAGE] Supabase fetch error:", err)
+    return null
+  }
+}
 
 async function readCountersFile() {
   const COUNTERS_PATH = path.join(process.cwd(), "data", "counters.json")
@@ -112,8 +138,15 @@ async function readCountersFile() {
   }
 }
 
+async function readCounters() {
+  // prefer Supabase
+  const sup = await readCountersSupabase()
+  if (sup) return sup
+  return readCountersFile()
+}
+
 export default async function HomePage() {
-  const { goal, preorders } = await readCountersFile()
+  const { goal, preorders } = await readCounters()
   const cappedPreorders = Math.min(preorders, goal)
   const remaining = Math.max(0, goal - cappedPreorders)
   const nextSequence = Math.min(goal, cappedPreorders + 1)
