@@ -109,6 +109,39 @@ async function supabaseUpsertCounters(obj: { id?: string; goal?: number; total_s
   return resp.json()
 }
 
+async function supabaseGetOrCreateUserByEmail(email?: string): Promise<any | null> {
+  if (!email) return null
+  try {
+    // try to find existing user
+    const encoded = encodeURIComponent(email)
+    const resp = await supabaseFetch(`users?email=eq.${encoded}`, { method: "GET", headers: { Accept: "application/json" } })
+    if (!resp.ok) {
+      console.warn("[STRIPE_WEBHOOK] Supabase GET user failed:", resp.status, await resp.text())
+    } else {
+      const json = await resp.json()
+      if (Array.isArray(json) && json.length > 0) return json[0]
+    }
+
+    // create user
+    const body = JSON.stringify([{ email }])
+    const createResp = await supabaseFetch(`users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Prefer: "return=representation" },
+      body,
+    })
+    if (!createResp.ok) {
+      const text = await createResp.text()
+      console.warn("[STRIPE_WEBHOOK] Supabase create user failed:", createResp.status, text)
+      return null
+    }
+    const created = await createResp.json()
+    return created && created[0] ? created[0] : null
+  } catch (err) {
+    console.warn("[STRIPE_WEBHOOK] supabaseGetOrCreateUserByEmail error:", err)
+    return null
+  }
+}
+
 async function supabaseInsertOrder(order: Record<string, any>): Promise<any> {
   const body = JSON.stringify([order])
   const resp = await supabaseFetch(`orders`, {
@@ -157,6 +190,7 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as any
+        const customerEmail: string | undefined = session.customer_email || session.customer_details?.email
 
         // Read counters (prefer Supabase)
         let counters = await supabaseGetCounters()
@@ -165,14 +199,20 @@ export async function POST(request: NextRequest) {
         const current = Number.isFinite(Number(counters?.total_sold ?? counters?.preorders)) ? Math.max(0, Number(counters.total_sold ?? counters.preorders)) : 0
         const lastSeq = Number.isFinite(Number(counters?.last_sequence_number)) ? Math.max(0, Number(counters.last_sequence_number) || 0) : 0
 
-        // If already reached goal, don't increment beyond goal
+        // Determine whether the order is assigned or waitlisted
+        let sequenceNumber: number | null = null
+        let waitlisted = false
         if (current >= goal) {
-          console.log(`[STRIPE_WEBHOOK] Goal reached (${goal}), not incrementing counters for session ${session?.id}`)
+          waitlisted = true
         } else {
-          const newTotal = Math.min(goal, current + 1)
-          const newSequence = Math.min(goal, lastSeq + 1)
+          sequenceNumber = Math.min(goal, lastSeq + 1)
+        }
 
-          let persisted = false
+        // Update counters if not reached goal (increment total_sold and last_sequence_number)
+        let persisted = false
+        if (!waitlisted) {
+          const newTotal = Math.min(goal, current + 1)
+          const newSequence = sequenceNumber!
           if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
             try {
               await supabaseUpsertCounters({
@@ -195,52 +235,68 @@ export async function POST(request: NextRequest) {
               persisted = true
             }
           }
-
-          if (!persisted) {
-            console.error("[STRIPE_WEBHOOK] Could not persist counters to Supabase or local storage")
+        } else {
+          // On waitlist, we may still want to ensure counters row exists in Supabase
+          if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            try {
+              // ensure counters row exists (no increment)
+              await supabaseUpsertCounters({
+                id: "main",
+                goal,
+                total_sold: current,
+                last_sequence_number: lastSeq,
+              })
+              persisted = true
+            } catch (supErr) {
+              console.warn("[STRIPE_WEBHOOK] Supabase ensure counters failed for waitlisted order:", supErr)
+            }
           }
-
-          // Attempt to insert an order record (without sequence if DB doesn't have that column)
-          try {
-            const orderRow: Record<string, any> = {
-              stripe_session_id: session.id,
-              amount: session.amount_total ?? null,
-              currency: session.currency ?? null,
-              payment_status: session.payment_status ?? null,
-              customer_email: session.customer_email ?? null,
-              created_at: new Date().toISOString(),
-              // include sequence if persisted and DB has the column; it's safe if column absent Supabase will error
-              sequence_number: newSequence,
-            }
-
-            if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-              try {
-                await supabaseInsertOrder(orderRow)
-                console.log("[STRIPE_WEBHOOK] Order inserted into Supabase orders")
-              } catch (orderErr) {
-                console.warn("[STRIPE_WEBHOOK] Supabase insert order failed, attempting without sequence_number:", orderErr)
-                // retry without sequence_number if that caused issue
-                delete orderRow.sequence_number
-                try {
-                  await supabaseInsertOrder(orderRow)
-                  console.log("[STRIPE_WEBHOOK] Order inserted into Supabase orders (no sequence_number)")
-                } catch (orderErr2) {
-                  console.error("[STRIPE_WEBHOOK] Supabase insert order final failure:", orderErr2)
-                }
-              }
-            }
-          } catch (e) {
-            console.error("[STRIPE_WEBHOOK] Order insert error:", e)
+          if (!persisted) {
+            // write local to ensure a counters file exists
+            await writeCountersLocal({ goal, total_sold: current, last_sequence_number: lastSeq })
           }
         }
 
-        // keep existing logging
+        // Ensure user row exists in users table (by email) and get user_id
+        let userId: string | null = null
+        if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && customerEmail) {
+          try {
+            const user = await supabaseGetOrCreateUserByEmail(customerEmail)
+            if (user && user.id) userId = user.id
+          } catch (uErr) {
+            console.warn("[STRIPE_WEBHOOK] Could not create/find user:", uErr)
+          }
+        }
+
+        // Insert order row with correct columns
+        const orderRow: Record<string, any> = {
+          user_id: userId,
+          stripe_session_id: session.id,
+          amount: session.amount_total ?? null,
+          currency: session.currency ?? null,
+          status: session.payment_status ?? session.status ?? "unknown",
+          sequence_number: sequenceNumber,
+          waitlisted: !!waitlisted,
+          created_at: new Date().toISOString(),
+        }
+
+        if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+          try {
+            await supabaseInsertOrder(orderRow)
+            console.log("[STRIPE_WEBHOOK] Order inserted into Supabase orders")
+          } catch (orderErr) {
+            console.error("[STRIPE_WEBHOOK] Supabase insert order failed:", orderErr)
+          }
+        } else {
+          console.log("[STRIPE_WEBHOOK] Supabase not configured; skipping order insert")
+        }
+
+        // existing log
         const orderData = {
           stripe_session_id: session.id,
           amount_total: session.amount_total,
           currency: session.currency,
           client_reference_id: session.client_reference_id,
-          customer_email: session.customer_email,
           payment_status: session.payment_status,
           created_at: new Date().toISOString(),
         }
