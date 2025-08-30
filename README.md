@@ -88,6 +88,14 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 - `NEXT_PUBLIC_SITE_URL`: Your site URL for redirects
 - `DEMO_ADMIN_KEY`: Admin panel access key
 
+## Resend / Magic link setup
+
+- Create a Resend account and add a sending domain (or use the trial domain).
+- Set EMAIL_FROM to the verified sender (e.g. "Vállalhatatlan <login@vallalhatatlan.online>").
+- Add RESEND_API_KEY to your environment.
+- Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.
+- AUTH_SECRET must be set (used to sign JWTs).
+
 ## Development
 
 \`\`\`bash
