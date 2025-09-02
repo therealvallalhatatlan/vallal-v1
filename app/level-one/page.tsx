@@ -71,18 +71,24 @@ export default async function Page({
 
         {stories.length === 0 ? (
           // Graceful message when no stories are present
-          <div style={{ color: '#39FF14' }}>System offline. No stories found.</div>
+          <div style={{ color: '#6e9e65' }}>System offline. No stories found.</div>
         ) : story ? (
           <>
-            <h1 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#39FF14' }}>
+            <h1
+              style={{
+                marginTop: 0,
+                marginBottom: '0.5rem',
+                color: '#39FF14',
+                fontSize: '2.2rem', // nagyobb title
+              }}
+            >
               {story.title}
             </h1>
             <div
-              // ensure pre-wrap for story text
               className="whitespace-pre-wrap"
               style={{
                 whiteSpace: 'pre-wrap',
-                color: '#39FF14',
+                color: '#89c37e', // új szín a szövegnek
                 fontFamily:
                   'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", "Noto Mono", monospace',
               }}
