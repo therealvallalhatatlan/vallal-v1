@@ -3,6 +3,14 @@ import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "./globals.css"
+import {
+  ClerkProvider,
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs"
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vallalhatatlan.online"),
@@ -95,9 +103,21 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
+  <ClerkProvider>
     <html lang="en" className="dark">
       <body className={`font-mono ${GeistSans.variable} ${GeistMono.variable} bg-black text-green-400 antialiased`}>
-        {/* Fullscreen background video (behind content) */}
+            <SignedOut>
+              <SignInButton />
+              <SignUpButton>
+                <button className="bg-[#6c47ff] text-ceramic-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
+                  Sign Up
+                </button>
+              </SignUpButton>
+              </SignedOut>
+              <SignedIn>
+              <UserButton />
+            </SignedIn>
+
         <div className="bg-video" aria-hidden="true">
           <video
             className="bg-video__media"
@@ -108,13 +128,15 @@ export default function RootLayout({
             playsInline
           />
           <div className="bg-video__overlay" />
-        </div>
+        </div>    
 
         {/* Page content above video */}
         <div className="content-above">
+          
           {children}
         </div>
       </body>
     </html>
+  </ClerkProvider>
   )
 }
