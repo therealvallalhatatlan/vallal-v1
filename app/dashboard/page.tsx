@@ -5,7 +5,7 @@ import { formatCurrency, formatSequence } from "@/lib/format"
 import { mockData, ORDER_MOCK } from "@/lib/mocks"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { verifySessionToken } from "@/lib/auth"
+// verifySessionToken is imported dynamically to avoid requiring AUTH_SECRET at module-load time
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -21,6 +21,8 @@ export default async function DashboardPage() {
   if (!cookieVal) return redirect("/login")
 
   try {
+    // dynamic import to avoid early module initialization that requires AUTH_SECRET
+    const { verifySessionToken } = await import("@/lib/auth")
     const { userId } = await verifySessionToken(cookieVal)
     if (!userId) return redirect("/login")
 
