@@ -128,7 +128,7 @@ export default async function HomePage() {
           </div>
 
           <div className="text-right">
-            <div className="text-green-300/70 text-xs">A következő szabad sorszám</div>
+            <div className="text-green-300/70 text-xs">A Te csomagod sorszáma</div>
             <div className="text-green-400 text-2xl font-bold leading-tight">
               {soldOut ? "—" : `#${formatSequence(yourNumber ?? 1)}`}
             </div>

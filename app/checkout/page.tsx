@@ -62,7 +62,7 @@ export default function CheckoutPage() {
 
   return (
     <Container className="py-12">
-      <div className="mx-auto w-[620px]">
+      <div className="mx-auto w-[min(640px,100vw-32px)] px-4 space-y-12">
         <header className="mb-6 text-center">
           <h1 className="text-3xl font-black tracking-tight text-green-400">Sorszám lefoglalása</h1>
           <p className="mt-2 text-sm text-green-300/70">
