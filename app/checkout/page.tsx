@@ -1,134 +1,155 @@
+// app/checkout/page.tsx
 "use client"
 
 import { Container } from "@/components/Container"
 import { Card } from "@/components/Card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/format"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { getPaymentMode, getPaymentLinkUrl } from "@/lib/config"
 
 export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const router = useRouter()
-  const price = 15000 // 15,000 HUF
+  const price = 15000 // HUF
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && isLoading) {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isLoading) {
         setIsLoading(false)
         setError(null)
       }
     }
-
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
   }, [isLoading])
 
   const handlePayment = async () => {
     setIsLoading(true)
     setError(null)
 
-    // Fallback Payment Link provided by you
+    // Fallback Payment Link (ha az API nem ad vissza session URL-t)
     const PAYMENT_LINK = "https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
 
     try {
-      const response = await fetch("/api/checkout", {
+      const res = await fetch("/api/checkout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}), // send minimal body so endpoint accepts it
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
       })
 
-      // If API call failed, redirect to payment link fallback
-      if (!response.ok) {
-        console.warn("[checkout] API create session failed, redirecting to payment link fallback")
+      if (!res.ok) {
+        console.warn("[checkout] API hiba, fallback Stripe Payment Link")
         window.location.href = PAYMENT_LINK
         return
       }
 
-      const data = await response.json()
+      const data = await res.json()
       const url = data?.url
-
-      // If API returned no url, use fallback link
       if (!url) {
-        console.warn("[checkout] No session URL returned, using fallback payment link")
+        console.warn("[checkout] Nincs session URL, fallback Payment Link")
         window.location.href = PAYMENT_LINK
         return
       }
 
-      // Redirect to Stripe Checkout session URL
       window.location.href = url
     } catch (err) {
       console.error("Checkout error:", err)
-      // On unexpected errors, redirect to the payment link fallback so users can still pay
       window.location.href = PAYMENT_LINK
     } finally {
-      // NOTE: navigation will usually occur before this runs, but keep state consistent
       setIsLoading(false)
     }
   }
 
   return (
     <Container className="py-12">
-      <Card>
-        <div className="space-y-6">
-          {/*<div className="flex justify-center">
-            <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-400/30">
-              Demo mode: real Stripe checkout, no DB yet
-            </Badge>
-          </div>*/}
-
-          <h1 className="text-3xl font-bold text-green-400 text-center">Checkout</h1>
-
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-green-300">Order Summary</h2>
-
-            <div className="border border-green-400/20 rounded-lg p-4 space-y-3">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-green-300 font-medium">Support the Print</h3>
-                  <p className="text-green-300/60 text-sm">Crowdfunding campaign contribution</p>
-                </div>
-                <span className="text-green-400 font-bold text-lg">{formatCurrency(price)}</span>
-              </div>
-
-              <div className="border-t border-green-400/20 pt-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-green-300 font-semibold">Total</span>
-                  <span className="text-green-400 font-bold text-xl">{formatCurrency(price)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-              <p className="text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-
-          <div className="pt-4">
-            <Button
-              onClick={handlePayment}
-              variant="outline"
-              size="lg"
-              className="w-full text-lg py-6 bg-transparent"
-              disabled={isLoading}
-            >
-              {isLoading ? "Redirecting to Stripe…" : "Proceed to payment"}
-            </Button>
-            {isLoading && <p className="text-green-300/60 text-xs text-center mt-2">Press ESC to cancel</p>}
-          </div>
-
-          <p className="text-green-300/60 text-sm text-center">
-            By proceeding, you agree to support our crowdfunding campaign.
+      <div className="mx-auto w-[620px]">
+        <header className="mb-6 text-center">
+          <h1 className="text-3xl font-black tracking-tight text-green-400">Sorszám lefoglalása</h1>
+          <p className="mt-2 text-sm text-green-300/70">
+            „Nem könyvet veszel, hanem <span className="text-green-300">koordinátát</span>.”
           </p>
-        </div>
-      </Card>
+        </header>
+
+        <Card className="p-0 overflow-hidden">
+          {/* Fejléc csík */}
+          <div className="border-b border-green-400/20 bg-black/40 px-5 py-4">
+            <div className="flex items-baseline justify-between">
+              <div>
+                <div className="text-green-300 font-semibold">Vállalhatatlan — limitált drop</div>
+                <div className="text-xs text-green-300/60">Sorszámozott példány • Dead-drop átvétel</div>
+              </div>
+              <div className="text-2xl font-extrabold text-green-400">{formatCurrency(price)}</div>
+            </div>
+          </div>
+
+          {/* Tétel rövid összefoglaló */}
+          <div className="px-5 py-5">
+            <div className="grid grid-cols-[1fr_auto] gap-4">
+              <div className="text-sm leading-relaxed text-green-200/90">
+                A fizetés után kapod a <span className="font-semibold">sorszámodat</span>. Amikor a drop él, e-mailben
+                küldjük a <span className="font-semibold">koordinátát</span> és egy rövid leírást a helyszínről.
+                Nem bolt. Élmény.
+              </div>
+              <div className="hidden sm:block self-start rounded-md border border-green-400/20 bg-black/30 px-3 py-2 text-xs text-green-300/80">
+                <div className="font-mono">TLS 1.3 • AES-256</div>
+                <div className="font-mono">Stripe Secure</div>
+              </div>
+            </div>
+
+            {/* Biztonság, fizetési módok */}
+            <div className="mt-4 text-[12px] text-green-300/70">
+              Titkosított fizetés a Stripe rendszerében. Elfogadott: bankkártya, Apple Pay, Google Pay.
+            </div>
+
+            {/* Hibaüzenet (ha lenne) */}
+            {error && (
+              <div className="mt-4 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                {error}
+              </div>
+            )}
+
+            {/* CTA */}
+            <div className="mt-6">
+              <Button
+                onClick={handlePayment}
+                variant="outline"
+                size="lg"
+                className="w-full py-6 text-lg border-green-400 text-green-400 hover:bg-green-400 hover:text-black"
+                disabled={isLoading}
+              >
+                {isLoading ? "Átirányítás a Stripe-ra…" : "Tovább a fizetéshez"}
+              </Button>
+              {isLoading && (
+                <p className="mt-2 text-center text-[11px] text-green-300/60">Megszakítás: ESC</p>
+              )}
+            </div>
+
+            {/* Garancia / mini-FAQ kivonat */}
+            <div className="mt-5 space-y-2 rounded-md border border-green-400/20 bg-black/30 p-3 text-[12px] leading-relaxed text-green-300/80">
+              <p>
+                <span className="font-semibold text-green-300">Nem jön össze a minimum?</span> Teljes visszatérítés
+                ugyanarra a fizetési módra.
+              </p>
+              <p>
+                <span className="font-semibold text-green-300">Hol lesz elrejtve?</span> Mindig közterületen, biztonságos,
+                könnyen megközelíthető helyen. Fotós jelzéseket is kapsz.
+              </p>
+              <p>
+                <span className="font-semibold text-green-300">Klubkedvezmény?</span> Ha van kuponod, a Stripe-on adhatod meg.
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Footer microcopy */}
+        <p className="mt-4 text-center text-[12px] text-green-300/50">
+          A fizetéssel elfogadod a kampány feltételeit. Kérdésed van?
+          {" "}
+          <a href="mailto:hello@vallalhatatlan.online" className="underline hover:text-green-300">
+            hello@vallalhatatlan.online
+          </a>
+        </p>
+      </div>
     </Container>
   )
 }

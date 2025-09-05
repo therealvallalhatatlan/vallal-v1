@@ -5,11 +5,15 @@ const isPublicRoute = createRouteMatcher([
   '/', // allow homepage without auth
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/checkout(.*)', // allow checkout without auth
+  '/success(.*)', // allow success without auth
 ])
 
 function manualIsPublic(pathname: string | undefined) {
   if (!pathname) return false
   if (pathname === '/') return true
+  if (pathname === '/checkout') return true
+  if (pathname === '/success') return true
   if (/^\/sign-in(.*)/.test(pathname)) return true
   if (/^\/sign-up(.*)/.test(pathname)) return true
   return false
