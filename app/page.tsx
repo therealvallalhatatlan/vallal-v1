@@ -114,7 +114,7 @@ export default async function HomePage() {
         <header className="flex items-start justify-between">
           <div>
             <div className="text-2xl font-black italic tracking-[-0.04em] text-green-400">
-              vállalhatatlan
+              Vállalhatatlan
             </div>
             <div
               className="mt-2 text-[11px] text-green-300/70 font-mono"
@@ -128,9 +128,9 @@ export default async function HomePage() {
           </div>
 
           <div className="text-right">
-            <div className="text-green-300/70 text-xs">A Te csomagod sorszáma</div>
+            <div className="text-green-300/70 text-xs">Következő Drop:</div>
             <div className="text-green-400 text-2xl font-bold leading-tight">
-              {soldOut ? "—" : `#${formatSequence(yourNumber ?? 1)}`}
+              {soldOut ? "—" : `${formatSequence(yourNumber ?? 1)}`}
             </div>
             <Button
               asChild
@@ -144,23 +144,62 @@ export default async function HomePage() {
           </div>
         </header>
 
-        
-
-        {/* 2) VIDEO (1:1) */}
+        {/* 
         <Card className="overflow-hidden">
           <div className="aspect-square w-full bg-black">
-            {/* Replace /promo.mp4 with your asset */}
-            <video
+           
+            <img
+              src="/video.gif"
+              alt="promo animation"
               className="h-full w-full object-cover"
-              src="/video.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-
+              loading="lazy"
             />
           </div>
         </Card>
+*/}
+
+
+        {/* 4) IDÉZET */}
+        <section className="text-green-200/90">
+          <blockquote className="italic leading-relaxed">
+            „A <span className="font-semibold not-italic text-sm">dead drop</span> egy kémkedési módszer,
+            amellyel két személy titkos helyszínen keresztül ad át egymásnak dolgokat — például információt vagy csomagot.”
+          </blockquote>
+          <p className="mt-8 text-lg text-green-300/70">
+             Ez nem egy könyv. 
+             Nincs írója, nincs kiadója, és nem kapható a könyvesboltokban.
+             Összesen 100 példány készült belőle. 
+             Az egyik a tiéd lehet. De meg kell találnod. 
+          </p>
+        </section>
+
+        {/* 8) FUTÓSZÖVEG – lassú, kissé elforgatott marquee */}
+        <div className="relative rotate-[-6deg] bg-green-500 text-black py-2 select-none overflow-hidden">
+          <div className="marquee whitespace-nowrap font-black tracking-wider uppercase">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <span key={i} className="mx-6">
+                Könyv + Adrenalin + Ebook + Zene + Képek
+              </span>
+            ))}
+          </div>
+        </div>
+
+         {/* 7) TÉRKÉP – egyelőre kép */}
+        <section id="terkep">
+          <NetworkMap
+            src="/map-base.png"
+            markers={[
+              { id: "drop-002", x: 0.78, y: 0.72, label: "Drop #002" },
+              { id: "drop-003", x: 0.41, y: 0.58, label: "Drop #003" },
+              { id: "drop-004", x: 0.25, y: 0.33, label: "Drop #004" },
+              { id: "drop-005", x: 0.62, y: 0.21, label: "Drop #005" },
+            ]}
+            maxActive={4}        // 3-4 aktív, átfedéssel
+            appearEveryMs={1200} // ennyi időnként születik az új pont
+            lifetimeMs={2600}    // tovább él, így fedni fog a következővel
+            glitchEveryMs={3200}
+          />
+        </section>
 
         {/* 3) SZÁMLÁLÓ – unchanged */}
         <Card className="p-4">
@@ -191,19 +230,13 @@ export default async function HomePage() {
           </div>
         </Card>
 
-        {/* 4) IDÉZET */}
-        <section className="text-green-200/90">
-          <blockquote className="italic leading-relaxed">
-            „A <span className="font-semibold not-italic">dead drop</span> egy kémkedési módszer,
-            amellyel két személy titkos helyszínen keresztül ad át egymásnak dolgokat — például információt vagy csomagot.”
-          </blockquote>
-        </section>
 
         {/* 5) KÉP – könyvborító */}
         <Card className="overflow-hidden">
           {/* Replace /cover.jpg with your asset */}
           <img src="/vallalhatatlan.png" alt="Vállalhatatlan — könyvborító" className="w-full h-auto object-cover" />
         </Card>
+
 
         {/* 6) SORSZÁM + CTA + KÉT SOR SZÖVEG */}
         <section className="text-center space-y-4">
@@ -224,22 +257,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* 7) TÉRKÉP – egyelőre kép */}
-        <section id="terkep">
-          <NetworkMap
-            src="/map-base.png"
-            markers={[
-              { id: "drop-002", x: 0.78, y: 0.72, label: "Drop #002" },
-              { id: "drop-003", x: 0.41, y: 0.58, label: "Drop #003" },
-              { id: "drop-004", x: 0.25, y: 0.33, label: "Drop #004" },
-              { id: "drop-005", x: 0.62, y: 0.21, label: "Drop #005" },
-            ]}
-            maxActive={4}        // 3-4 aktív, átfedéssel
-            appearEveryMs={1200} // ennyi időnként születik az új pont
-            lifetimeMs={2600}    // tovább él, így fedni fog a következővel
-            glitchEveryMs={3200}
-          />
-        </section>
 
         {/* 8) FUTÓSZÖVEG – lassú, kissé elforgatott marquee */}
         <div className="relative rotate-[-6deg] bg-green-500 text-black py-2 select-none overflow-hidden">
@@ -252,12 +269,12 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* 9) SIMA SZÖVEG */}
+        {/*  
         <section className="text-green-200/80 text-sm leading-relaxed">
           A könyvből csak {goal} darab készül, limitált példányszám, sorszámozott, dedikált.
           Minden példányt elrejtek egy helyen, és a koordinátát kapod meg. Nem bolt — élmény.
         </section>
-
+        */}
         <section className="text-green-200/80 text-sm leading-relaxed">
           <FAQ className="mt-16" />
         </section>
@@ -280,10 +297,8 @@ export default async function HomePage() {
     className="mt-4"
     heightPx={88}                // állítsd ízlés szerint (pl. 72–110)
     messages={[
-      "„Nem könyvet veszel, hanem koordinátát.”",
-      "„A város a boríték.\nA jelszó: a sorszám.”",
-      "„Ha megtalálod, a tiéd. Ha nem, másé.”",
-      "„Könyv + Adrenalin + Ebook + Zene + Képek.”",
+      "„vááá az első könyv elkelt !!!”",
+      "„Dealereket, elosztókat keresek! \n Eladott könyvenként 2500huf jutalék.”",
     ]}
     typeMsPerChar={26}
     eraseMsPerChar={12}
@@ -296,12 +311,12 @@ export default async function HomePage() {
           <p className="text-green-300/60 text-[13px]">
             © 2025 created by:{' '}
             <a
-              href="https://pemandrick.digital"
+              href="https://rickandpam.digital"
               target="_blank"
               rel="noopener noreferrer"
               className="text-green-300/60 hover:text-green-400"
             >
-              pemandrick.digital
+              rickandpam.digital
             </a>
           </p>
           <div className="mt-1">
@@ -346,3 +361,4 @@ export default async function HomePage() {
     </Container>
   )
 }
+

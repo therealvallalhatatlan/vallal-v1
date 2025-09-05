@@ -103,7 +103,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-  <ClerkProvider>
+
     <html lang="en" className="dark">
       <body className={`font-mono ${GeistSans.variable} ${GeistMono.variable} bg-black text-green-400 antialiased`}>
 
@@ -127,6 +127,6 @@ export default function RootLayout({
         </div>
       </body>
     </html>
-  </ClerkProvider>
+
   )
 }
