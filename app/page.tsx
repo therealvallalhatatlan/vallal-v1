@@ -286,9 +286,9 @@ export default async function HomePage() {
             <div>
               <div className="font-semibold text-green-300">Vállalhatatlan</div>
               <div className="text-[14px] text-green-300/70 flex gap-3">
-                <a href="https://reddit.com" target="_blank" className="hover:text-green-400">Reddit</a>
-                <a href="https://x.com" target="_blank" className="hover:text-green-400">X / Twitter</a>
-                <a href="mailto:hello@vallalhatatlan.online" className="hover:text-green-400">Email</a>
+                <a href="https://www.reddit.com/r/vallalhatatlan/" target="_blank" className="hover:text-green-400">Reddit</a>
+                <a href="https://www.facebook.com/vallalhatatlan2000/" target="_blank" className="hover:text-green-400">Facebook</a>
+                <a href="mailto:therealvallalhatatlan@gmail.com" className="hover:text-green-400">Email</a>
               </div>
             </div>
           </div>
