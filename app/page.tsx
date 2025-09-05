@@ -299,6 +299,7 @@ export default async function HomePage() {
     messages={[
       "„vááá az első könyv elkelt !!!”",
       "„Dealereket, elosztókat keresek! \n Eladott könyvenként 2500huf jutalék.”",
+      "„Úristen van aki HÁROM KÖNYVET RENDELT!!”",
     ]}
     typeMsPerChar={26}
     eraseMsPerChar={12}
