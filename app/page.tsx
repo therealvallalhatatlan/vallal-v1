@@ -108,7 +108,7 @@ export default async function HomePage() {
   return (
     <Container className="py-8">
       {/* fixed width column on desktop (no responsiveness needed) */}
-      <div className="mx-auto w-[620px] space-y-12">
+      <div className="mx-auto w-[min(640px,100vw-32px)] px-4 space-y-12">
 
         {/* 1) HEADER */}
         <header className="flex items-start justify-between">
