@@ -162,8 +162,8 @@ export default async function HomePage() {
         {/* 4) IDÉZET */}
         <section className="text-green-200/90">
           <blockquote className="italic leading-relaxed">
-            „A <span className="font-semibold not-italic text-sm">dead drop</span> egy kémkedési módszer,
-            amellyel két személy titkos helyszínen keresztül ad át egymásnak dolgokat — például információt vagy csomagot.”
+            „A <span className="font-semibold not-italic text-sm">dead drop</span> egy titkoszszolgálati módszer,
+           amellyel két személy információt cserélhet anélkül, hogy ismerné egymást.”
           </blockquote>
           <p className="mt-8 text-lg text-green-300/70">
              Ez nem egy könyv. 
