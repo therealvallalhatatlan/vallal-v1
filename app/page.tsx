@@ -113,7 +113,7 @@ export default async function HomePage() {
         {/* 1) HEADER */}
         <header className="flex items-start justify-between">
           <div>
-            <div className="text-2xl font-black italic tracking-[-0.04em] text-green-400">
+            <div className="text-2xl font-black italic tracking-[-0.04em] text-green-400 crt-glitch">
               Vállalhatatlan
             </div>
             <div
@@ -121,13 +121,24 @@ export default async function HomePage() {
               aria-live="polite"
             >
               <span className="inline-flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-green-400 animate-ping" />
-                link established • tls1.3 • aes-256 • hsts • /dead-drop/channel • ok
+                <span className="h-2 w-2 mt-4 rounded-full bg-green-400 animate-ping text-xs" />
+                <TweetRotator
+                  className=""
+                  heightPx={16}
+                  messages={[
+                    "Dead drop mellett postán is rendelhető!",
+                    "",
+                  ]}
+                  typeMsPerChar={26}
+                  eraseMsPerChar={12}
+                  holdAfterTypeMs={1200}
+                  holdAfterEraseMs={420}
+                />
               </span>
             </div>
           </div>
 
-          <div className="text-right">
+          <div className="text-right bg-black/80 rounded-md p-3 border border-green-300/20">
             <div className="text-green-300/70 text-xs">Következő Drop:</div>
             <div className="text-green-400 text-2xl font-bold leading-tight">
               {soldOut ? "—" : `${formatSequence(yourNumber ?? 1)}`}
@@ -286,26 +297,12 @@ export default async function HomePage() {
             <div>
               <div className="font-semibold text-green-300">Vállalhatatlan</div>
               <div className="text-[14px] text-green-300/70 flex gap-3">
-                <a href="https://www.reddit.com/r/vallalhatatlan/" target="_blank" className="hover:text-green-400">Reddit</a>
-                <a href="https://www.facebook.com/vallalhatatlan2000/" target="_blank" className="hover:text-green-400">Facebook</a>
-                <a href="mailto:therealvallalhatatlan@gmail.com" className="hover:text-green-400">Email</a>
+                <a href="https://reddit.com" target="_blank" className="hover:text-green-400">Reddit</a>
+                <a href="https://x.com" target="_blank" className="hover:text-green-400">X / Twitter</a>
+                <a href="mailto:hello@vallalhatatlan.online" className="hover:text-green-400">Email</a>
               </div>
             </div>
           </div>
-
-          <TweetRotator
-    className="mt-4"
-    heightPx={88}                // állítsd ízlés szerint (pl. 72–110)
-    messages={[
-      "„vááá az első könyv elkelt !!!”",
-      "„Dealereket, elosztókat keresek! \n Eladott könyvenként 2500huf jutalék.”",
-      "„Úristen van aki HÁROM KÖNYVET RENDELT!!”",
-    ]}
-    typeMsPerChar={26}
-    eraseMsPerChar={12}
-    holdAfterTypeMs={1200}
-    holdAfterEraseMs={420}
-  />
         </Card>
 
         <footer className="pb-8 text-center">
@@ -337,6 +334,105 @@ export default async function HomePage() {
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         .caret::after { content: '▌'; margin-left: 2px; animation: blink 1s steps(1,end) infinite; }
         @keyframes blink { 50% { opacity: 0; } }
+        
+        /* 90s CRT/Glitch Effects */
+        .crt-glitch {
+          position: relative;
+          animation: flicker 0.15s infinite linear alternate, rgb-shift 2s infinite;
+          text-shadow: 
+            2px 0 #ff0000, 
+            -2px 0 #00ffff,
+            0 0 10px #39FF14;
+        }
+        
+        .crt-glitch::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(transparent 50%, rgba(0, 255, 0, 0.03) 50%);
+          background-size: 100% 4px;
+          pointer-events: none;
+          animation: scanlines 0.1s linear infinite;
+        }
+        
+        .crt-glitch::after {
+          content: attr(data-text);
+          position: absolute;
+          left: 2px;
+          text-shadow: -2px 0 #ff0000;
+          top: 0;
+          color: transparent;
+          background: transparent;
+          overflow: hidden;
+          animation: glitch-1 0.6s infinite linear alternate-reverse;
+        }
+        
+        @keyframes flicker {
+          0% { opacity: 1; }
+          97% { opacity: 1; }
+          98% { opacity: 0.98; }
+          99% { opacity: 0.96; }
+          100% { opacity: 1; }
+        }
+        
+        @keyframes rgb-shift {
+          0% { 
+            text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #39FF14;
+            transform: translate(0);
+          }
+          20% { 
+            text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #39FF14;
+            transform: translate(-1px, 0);
+          }
+          40% { 
+            text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #39FF14;
+            transform: translate(-1px, 1px);
+          }
+          60% { 
+            text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #39FF14;
+            transform: translate(0, 1px);
+          }
+          80% { 
+            text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #39FF14;
+            transform: translate(1px, 0);
+          }
+          100% { 
+            text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #39FF14;
+            transform: translate(0);
+          }
+        }
+        
+        @keyframes scanlines {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(4px); }
+        }
+        
+        @keyframes glitch-1 {
+          0% { clip: rect(42px, 9999px, 44px, 0); }
+          5% { clip: rect(12px, 9999px, 59px, 0); }
+          10% { clip: rect(48px, 9999px, 29px, 0); }
+          15% { clip: rect(42px, 9999px, 73px, 0); }
+          20% { clip: rect(63px, 9999px, 27px, 0); }
+          25% { clip: rect(34px, 9999px, 55px, 0); }
+          30% { clip: rect(86px, 9999px, 73px, 0); }
+          35% { clip: rect(20px, 9999px, 20px, 0); }
+          40% { clip: rect(26px, 9999px, 60px, 0); }
+          45% { clip: rect(25px, 9999px, 66px, 0); }
+          50% { clip: rect(57px, 9999px, 98px, 0); }
+          55% { clip: rect(5px, 9999px, 46px, 0); }
+          60% { clip: rect(82px, 9999px, 31px, 0); }
+          65% { clip: rect(54px, 9999px, 27px, 0); }
+          70% { clip: rect(28px, 9999px, 99px, 0); }
+          75% { clip: rect(45px, 9999px, 69px, 0); }
+          80% { clip: rect(23px, 9999px, 85px, 0); }
+          85% { clip: rect(54px, 9999px, 84px, 0); }
+          90% { clip: rect(45px, 9999px, 47px, 0); }
+          95% { clip: rect(37px, 9999px, 20px, 0); }
+          100% { clip: rect(4px, 9999px, 91px, 0); }
+        }
       `}</style>
 
       <script
