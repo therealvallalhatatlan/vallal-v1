@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vallalhatatlan.online"),
@@ -115,8 +116,10 @@ export default function RootLayout({
 
         {/* Page content above video */}
         <div className="content-above">
-          
+        
           {children}
+          <Analytics />
+          <SpeedInsights/>
         </div>
       </body>
     </html>
