@@ -116,180 +116,40 @@ export default async function HomePage() {
             <div className="text-2xl font-black italic tracking-[-0.04em] text-green-400 crt-glitch">
               Vállalhatatlan
             </div>
-            <div
-              className="mt-2 text-[11px] text-green-300/70 font-mono"
-              aria-live="polite"
-            >
-              <span className="inline-flex items-center gap-2">
-                <span className="h-2 w-2 mt-4 rounded-full bg-green-400 animate-ping text-xs" />
-                <TweetRotator
-                  className=""
-                  heightPx={16}
-                  messages={[
-                    "Összejött a pénz a nyomdára!",
-                    "Posta is játszik!",
-                    "kurvajó lesz !!",
-                  ]}
-                  typeMsPerChar={26}
-                  eraseMsPerChar={12}
-                  holdAfterTypeMs={1200}
-                  holdAfterEraseMs={420}
-                />
-              </span>
-            </div>
-          </div>
-
-          <div className="text-right bg-black/80 rounded-md p-3 border border-green-300/20">
-            <div className="text-green-300/70 text-xs">Következő Drop:</div>
-            <div className="text-green-400 text-2xl font-bold leading-tight">
-              {soldOut ? "—" : `${formatSequence(yourNumber ?? 1)}`}
-            </div>
-            <Button
-              asChild
-              size="sm"
-              className="mt-2 border-green-400 text-green-400 hover:bg-green-400 hover:text-black"
-              variant="outline"
-              disabled={soldOut}
-            >
-              <Link href={soldOut ? "#" : "/checkout"}>{soldOut ? "Elfogyott" : "Megveszem"}</Link>
-            </Button>
           </div>
         </header>
 
-        {/* 
-        <Card className="overflow-hidden">
-          <div className="aspect-square w-full bg-black">
-           
-            <img
-              src="/video.gif"
-              alt="promo animation"
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-          </div>
-        </Card>
-*/}
-
-
-        {/* 4) IDÉZET */}
-        <section className="text-green-200/90">
-          <blockquote className="italic leading-relaxed">
-            „A <span className="font-semibold not-italic text-sm">dead drop</span> egy titkoszszolgálati módszer,
-           amellyel két személy információt cserélhet anélkül, hogy ismerné egymást.”
-          </blockquote>
-          <p className="mt-8 text-lg text-green-300/70">
-             Ez nem egy könyv. 
-             Nincs írója, nincs kiadója, és nem kapható a könyvesboltokban.
-             Összesen 100 példány készült belőle. 
-             Az egyik a tiéd lehet. De meg kell találnod. 
-          </p>
+        <section className="space-y-2 text-center">
+            <h1 className="text-3xl font-extrabold text-green-400">dfdgdghdgh</h1>
+            <p className="text-green-200/85 leading-relaxed max-w-prose mx-auto">fghfghfghfhgfhfh</p>
         </section>
 
-        {/* 8) FUTÓSZÖVEG – lassú, kissé elforgatott marquee */}
-        <div className="relative rotate-[-6deg] bg-green-500 text-black py-2 select-none overflow-hidden">
-          <div className="marquee whitespace-nowrap font-black tracking-wider uppercase">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <span key={i} className="mx-6">
-                Könyv + Adrenalin + Ebook + Zene + Képek
-              </span>
-            ))}
-          </div>
-        </div>
 
-         {/* 7) TÉRKÉP – egyelőre kép */}
-        <section id="terkep">
-          <NetworkMap
-            src="/map-base.png"
-            markers={[
-              { id: "drop-002", x: 0.78, y: 0.72, label: "Drop #002" },
-              { id: "drop-003", x: 0.41, y: 0.58, label: "Drop #003" },
-              { id: "drop-004", x: 0.25, y: 0.33, label: "Drop #004" },
-              { id: "drop-005", x: 0.62, y: 0.21, label: "Drop #005" },
-            ]}
-            maxActive={4}        // 3-4 aktív, átfedéssel
-            appearEveryMs={1200} // ennyi időnként születik az új pont
-            lifetimeMs={2600}    // tovább él, így fedni fog a következővel
-            glitchEveryMs={3200}
-          />
-        </section>
-
-        {/* 3) SZÁMLÁLÓ – unchanged */}
         <Card className="p-4">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-green-400">{preorders}</div>
-              <div className="text-green-300/60 text-xs">Előrendelések</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-green-400">{goal}</div>
-              <div className="text-green-300/60 text-xs">Összes Példány</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-green-400">
-                {soldOut ? "—" : `#${formatSequence(yourNumber ?? 1)}`}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-green-300">Soundtrack</h3>
+            <div className="bg-black/50 rounded-lg overflow-hidden">
+              <iframe 
+                width="100%" 
+                height="300" 
+                scrolling="no" 
+                frameBorder="no" 
+                allow="autoplay" 
+                src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/soundcloud%253Atracks%253A1174725025&color=%2339FF14&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
+                className="w-full"
+              />
+              <div className="p-2 text-xs text-green-300/70 bg-black/80">
+                <a href="https://soundcloud.com/marcoben" title="Marcoben" target="_blank" className="text-green-300/70 hover:text-green-400 no-underline">
+                  Marcoben
+                </a>
+                {' · '}
+                <a href="https://soundcloud.com/marcoben/moodyman-im-doing-fine" title="Moodyman - I'm Doing Fine" target="_blank" className="text-green-300/70 hover:text-green-400 no-underline">
+                  Moodyman - I'm Doing Fine
+                </a>
               </div>
-              <div className="text-green-300/60 text-xs">A Te Sorszámod</div>
-            </div>
-          </div>
-          <div className="mt-3 space-y-1">
-            <div className="flex justify-between text-[11px] text-green-300/80">
-              <span>{percent}% funded</span>
-              <span>{remaining} remaining</span>
-            </div>
-            <div className="w-full bg-green-900/30 rounded-full h-3">
-              <div className="bg-green-400 h-3 rounded-full transition-all" style={{ width: `${percent}%` }} />
             </div>
           </div>
         </Card>
-
-
-        {/* 5) KÉP – könyvborító */}
-        <Card className="overflow-hidden">
-          {/* Replace /cover.jpg with your asset */}
-          <img src="/vallalhatatlan.png" alt="Vállalhatatlan — könyvborító" className="w-full h-auto object-cover" />
-        </Card>
-
-
-        {/* 6) SORSZÁM + CTA + KÉT SOR SZÖVEG */}
-        <section className="text-center space-y-4">
-          <div className="text-green-300/70 text-sm">A Te példányod sorszáma:</div>
-          <div className="text-4xl font-extrabold text-green-400 drop-shadow">#{formatSequence(yourNumber ?? 1)}</div>
-          <Button
-            asChild
-            size="lg"
-            className="mx-auto border-green-400 text-green-400 hover:bg-green-400 hover:text-black"
-            variant="outline"
-            disabled={soldOut}
-          >
-            <Link href={soldOut ? "#" : "/checkout"}>Mutasd Hol Van</Link>
-          </Button>
-          <div className="text-[12px] text-green-300/70 space-y-1">
-            <div>› A drop ára: {formatCurrency(15000)}</div>
-            <div>› Vállalhatatlan Klub Tagoknak: {formatCurrency(10000)}</div>
-          </div>
-        </section>
-
-
-        {/* 8) FUTÓSZÖVEG – lassú, kissé elforgatott marquee */}
-        <div className="relative rotate-[-6deg] bg-green-500 text-black py-2 select-none overflow-hidden">
-          <div className="marquee whitespace-nowrap font-black tracking-wider uppercase">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <span key={i} className="mx-6">
-                Könyv + Adrenalin + Ebook + Zene + Képek
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/*  
-        <section className="text-green-200/80 text-sm leading-relaxed">
-          A könyvből csak {goal} darab készül, limitált példányszám, sorszámozott, dedikált.
-          Minden példányt elrejtek egy helyen, és a koordinátát kapod meg. Nem bolt — élmény.
-        </section>
-        */}
-        <section className="text-green-200/80 text-sm leading-relaxed">
-          <FAQ className="mt-16" />
-        </section>
 
         {/* 10) PROFILKÁRTYA + gépelt „tweet” feed */}
         <Card className="p-4">
