@@ -43,7 +43,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   return (
     <main className="max-w-5xl mx-auto p-6 text-zinc-100">
       <h1 className="text-6xl font-semibold mt-12 mb-4 text-center rgb-title">{displayTitle}</h1>
-      <p className="text-sm text-center opacity-35 mb-10">A heroinban az a legmókásabb, hogy - bár csak egy rövid időre - de Szabad Embernek érzed magad. Megszabadulsz a traumáidtól, a létezés összes nyűgétől, kívülről, mosolyogva nézed magad ahogy csetlesz-botlasz a világban totál bekészülve, és ezt egyáltalán nem érzed gáznak. (...)
+      <p className="text-xs text-center opacity-35 mb-10">Van egy tudatállapot, amiben meg tudjuk hajlítani a valóságot. Nem tudjuk irányítani, de valami érezhetően megváltozik. A dolgok valószínűtlensége növekszik. Furcsa és szürreális dolgok történnek velünk. Nincs más magyarázatom ezekre a történetekre.
 </p>
       <AudioPlayer tracks={tracks} images={visuals} />
       <style>{`

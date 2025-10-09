@@ -113,29 +113,9 @@ export default async function HomePage() {
         {/* 1) HEADER */}
         <header className="flex items-start justify-between">
           <div>
-            <div className="text-2xl font-black italic tracking-[-0.04em] text-green-400 crt-glitch">
-              Vállalhatatlan
-            </div>
-            <div
-              className="mt-2 text-[11px] text-green-300/70 font-mono"
-              aria-live="polite"
-            >
-              <span className="inline-flex items-center gap-2">
-                <span className="h-2 w-2 mt-4 rounded-full bg-green-400 animate-ping text-xs" />
-                <TweetRotator
-                  className=""
-                  heightPx={16}
-                  messages={[
-                    "Összejött a pénz a nyomdára!",
-                    "Posta is játszik!",
-                    "kurvajó lesz !!",
-                  ]}
-                  typeMsPerChar={26}
-                  eraseMsPerChar={12}
-                  holdAfterTypeMs={1200}
-                  holdAfterEraseMs={420}
-                />
-              </span>
+            <div className="mt-2 text-4xl font-black italic tracking-[-0.04em] text-green-400 crt-glitch">
+              Vállalhatatlan <br/>
+              <span className="text-sm uppercase tracking-widest">A könyv</span>
             </div>
           </div>
 
@@ -168,35 +148,50 @@ export default async function HomePage() {
             />
           </div>
         </Card>
+
 */}
+
 
 
         {/* 4) IDÉZET */}
         <section className="text-green-200/90">
           <blockquote className="italic leading-relaxed">
-            „A <span className="font-semibold not-italic text-sm">dead drop</span> egy titkoszszolgálati módszer,
-           amellyel két személy információt cserélhet anélkül, hogy ismerné egymást.”
+            "Van egy tudatállapot, amiben meg tudjuk hajlítani a valóságot. Nem tudjuk irányítani, de valami érezhetően megváltozik. A dolgok valószínűtlensége növekszik. Furcsa és szürreális dolgok történnek velünk. Nincs más magyarázatom ezekre a történetekre."
           </blockquote>
+
+
+          {/* 5) KÉP – könyvborító */}
+        <Card className="overflow-hidden mt-6">
+          {/* Replace /cover.jpg with your asset */}
+          <img src="/vallalhatatlan.png" alt="Vállalhatatlan — könyvborító" className="w-full h-auto object-cover" />
+        </Card>
+
+
           <p className="mt-8 text-lg text-green-300/70">
              Ez nem egy könyv. 
              Nincs írója, nincs kiadója, és nem kapható a könyvesboltokban.
              Összesen 100 példány készült belőle. 
-             Az egyik a tiéd lehet. De meg kell találnod. 
+             Az egyik a tiéd lehet. De meg kell találnod.<br/>
+             <span className="text-green-200/90 text-[11px] mt-2 align-top">*Vagy kérheted postán is.</span>
+          </p>
+          <p className="mt-4 text-sm text-green-300/50">
           </p>
         </section>
+
 
         {/* 8) FUTÓSZÖVEG – lassú, kissé elforgatott marquee */}
         <div className="relative rotate-[-6deg] bg-green-500 text-black py-2 select-none overflow-hidden">
           <div className="marquee whitespace-nowrap font-black tracking-wider uppercase">
             {Array.from({ length: 12 }).map((_, i) => (
               <span key={i} className="mx-6">
-                Könyv + Adrenalin + Ebook + Zene + Képek
+                Könyv + Adrenalin + Soundtrack + Letölthető MP3 + Képek
               </span>
             ))}
           </div>
         </div>
 
-         {/* 7) TÉRKÉP – egyelőre kép */}
+
+          {/* 7) TÉRKÉP – egyelőre kép */}
         <section id="terkep">
           <NetworkMap
             src="/map-base.png"
@@ -212,6 +207,28 @@ export default async function HomePage() {
             glitchEveryMs={3200}
           />
         </section>
+
+            <div
+              className="mt-2 text-[13px] text-green-300/70 font-mono"
+              aria-live="polite"
+            >
+              <span className="inline-flex items-center gap-2">
+                <span className="h-2 w-2 mt-4 rounded-full bg-green-400 animate-ping text-xs" />
+                <TweetRotator
+                  className=""
+                  heightPx={16}
+                  messages={[
+                    "Jövő hét elején megy a nyomdába!",
+                    "Posta is játszik!",
+                    "kurvajó lesz srácoook !!",
+                  ]}
+                  typeMsPerChar={26}
+                  eraseMsPerChar={12}
+                  holdAfterTypeMs={1200}
+                  holdAfterEraseMs={420}
+                />
+              </span>
+            </div>
 
         {/* 3) SZÁMLÁLÓ – unchanged */}
         <Card className="p-4">
@@ -243,17 +260,13 @@ export default async function HomePage() {
         </Card>
 
 
-        {/* 5) KÉP – könyvborító */}
-        <Card className="overflow-hidden">
-          {/* Replace /cover.jpg with your asset */}
-          <img src="/vallalhatatlan.png" alt="Vállalhatatlan — könyvborító" className="w-full h-auto object-cover" />
-        </Card>
+        
 
 
         {/* 6) SORSZÁM + CTA + KÉT SOR SZÖVEG */}
         <section className="text-center space-y-4">
           <div className="text-green-300/70 text-sm">A Te példányod sorszáma:</div>
-          <div className="text-4xl font-extrabold text-green-400 drop-shadow">#{formatSequence(yourNumber ?? 1)}</div>
+          <div className="text-4xl font-extrabold text-green-400 drop-shadow">{formatSequence(yourNumber ?? 1)}</div>
           <Button
             asChild
             size="lg"
