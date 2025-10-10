@@ -110,6 +110,28 @@ export default async function HomePage() {
       {/* fixed width column on desktop (no responsiveness needed) */}
       <div className="mx-auto w-[min(640px,100vw-32px)] px-4 space-y-12">
 
+            <div
+              className="mt-2 text-[13px] text-green-300/70 font-mono"
+              aria-live="polite"
+            >
+              <span className="inline-flex items-center gap-2">
+                <span className="h-2 w-2 mt-4 rounded-full bg-green-400 animate-ping text-xs" />
+                <TweetRotator
+                  className=""
+                  heightPx={16}
+                  messages={[
+                    "Jövő hét elején megy a nyomdába!",
+                    "Posta is játszik!",
+                    "kurvajó lesz srácoook !!",
+                  ]}
+                  typeMsPerChar={26}
+                  eraseMsPerChar={12}
+                  holdAfterTypeMs={1200}
+                  holdAfterEraseMs={420}
+                />
+              </span>
+            </div>
+
         {/* 1) HEADER */}
         <header className="flex items-start justify-between">
           <div>
@@ -208,27 +230,6 @@ export default async function HomePage() {
           />
         </section>
 
-            <div
-              className="mt-2 text-[13px] text-green-300/70 font-mono"
-              aria-live="polite"
-            >
-              <span className="inline-flex items-center gap-2">
-                <span className="h-2 w-2 mt-4 rounded-full bg-green-400 animate-ping text-xs" />
-                <TweetRotator
-                  className=""
-                  heightPx={16}
-                  messages={[
-                    "Jövő hét elején megy a nyomdába!",
-                    "Posta is játszik!",
-                    "kurvajó lesz srácoook !!",
-                  ]}
-                  typeMsPerChar={26}
-                  eraseMsPerChar={12}
-                  holdAfterTypeMs={1200}
-                  holdAfterEraseMs={420}
-                />
-              </span>
-            </div>
 
         {/* 3) SZÁMLÁLÓ – unchanged */}
         <Card className="p-4">
