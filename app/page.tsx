@@ -11,6 +11,7 @@ import { formatCurrency, formatSequence } from "@/lib/format"
 import NetworkMap from "@/components/NetworkMap";
 import TweetRotator from "@/components/TweetRotator";
 import FAQ from "@/components/FAQ";
+import TabbedShowcase from "@/components/TabbedShowcase"
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vallalhatatlan.online"),
@@ -133,7 +134,7 @@ export default async function HomePage() {
             </div>
 
         {/* 1) HEADER */}
-        <header className="flex items-start justify-between">
+        <header className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <div className="mt-2 text-4xl font-black italic tracking-[-0.04em] text-lime-400 crt-glitch">
               Vállalhatatlan <br/>
@@ -141,9 +142,9 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="text-right bg-black/80 rounded-md p-3 border border-lime-300/20">
+          <div className="w-full text-center md:w-auto self-stretch md:self-auto md:text-right bg-black/80 rounded-md p-3 border border-lime-300/20">
             <div className="text-lime-300/70 text-xs">Következő Drop:</div>
-            <div className="text-lime-400 text-2xl font-bold leading-tight">
+            <div className="text-lime-400 text-4xl md:text-2xl font-bold leading-tight crt-glitch">
               {soldOut ? "—" : `${formatSequence(yourNumber ?? 1)}`}
             </div>
             <Button
@@ -181,14 +182,13 @@ export default async function HomePage() {
             "Van egy tudatállapot, amiben meg tudjuk hajlítani a valóságot. Nem tudjuk irányítani, de valami érezhetően megváltozik. A dolgok valószínűtlensége növekszik. Furcsa és szürreális dolgok történnek velünk. Nincs más magyarázatom ezekre a történetekre."
           </blockquote>
 
+          <TabbedShowcase className="mt-10" />
 
           {/* 5) KÉP – könyvborító */}
         <Card className="overflow-hidden mt-6">
           {/* Replace /cover.jpg with your asset */}
           <img src="/vallalhatatlan.png" alt="Vállalhatatlan — könyvborító" className="w-full h-auto object-cover" />
         </Card>
-
-        
 
 
           <p className="mt-8 text-lg text-lime-300/70">
@@ -269,7 +269,7 @@ export default async function HomePage() {
         {/* 6) SORSZÁM + CTA + KÉT SOR SZÖVEG */}
         <section className="text-center space-y-4">
           <div className="text-lime-300/70 text-sm">A Te példányod sorszáma:</div>
-          <div className="text-4xl font-extrabold text-lime-400 drop-shadow">{formatSequence(yourNumber ?? 1)}</div>
+          <div className="crt-glitch text-4xl font-extrabold text-lime-400 drop-shadow">{formatSequence(yourNumber ?? 1)}</div>
           <Button
             asChild
             size="lg"

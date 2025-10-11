@@ -35,6 +35,12 @@ async function loadPlaylistFromJSON(slug: string) {
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
+  
+  // Prevent handling favicon and other static assets
+  if (slug === 'favicon.ico' || slug.includes('.')) {
+    throw new Error('Not found')
+  }
+  
   const json = await loadPlaylistFromJSON(slug)
   const tracks = json?.tracks ?? FALLBACK[slug] ?? FALLBACK.sample
   const visuals = json?.visuals ?? ['/img/visuals/noise-01.jpg','/img/visuals/noise-02.jpg','/img/visuals/noise-03.jpg']

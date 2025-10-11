@@ -115,11 +115,18 @@ export default function RootLayout({
             playsInline
           />
           <div className="bg-video__overlay" />
-        </div>    
+        </div>   
+
+        {/* --- 90s CRT overlays (updated) --- */}
+        <div aria-hidden="true" className="fx-bands fixed inset-0 pointer-events-none" />
+        <div aria-hidden="true" className="fx-stripes fixed inset-0 pointer-events-none" />
+        <div aria-hidden="true" className="fx-vignette fixed inset-0 pointer-events-none" />
+        <div aria-hidden="true" className="fx-vhs fixed inset-0 pointer-events-none" /> {/* <-- LEGYEN A LEGUTOLSÓ */}
+
+
 
         {/* Page content above video */}
-        <div className="content-above">
-        
+        <div className="content-above relative z-20">
           {children}
           <Analytics />
           <SpeedInsights/>

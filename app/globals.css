@@ -161,3 +161,169 @@
   position: relative;
   z-index: 10;
 }
+
+/* ====== 90s CRT – updated ====== */
+
+/* 1) Finom vízszintes sávok (rács helyett) */
+.fx-bands {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(163, 230, 53, 0.05) 0 1px,   /* vékony lime csík */
+    transparent 1px 24px              /* 24px-enként ismétlődik */
+  );
+  mix-blend-mode: screen;
+  opacity: .6;
+}
+
+/* 2) Alap “scanline” textúra – sűrű, halvány csíkozás */
+.fx-stripes {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,.28) 0 1px,
+    rgba(0,0,0,0) 3px 4px
+  );
+  opacity: .55;
+  mix-blend-mode: multiply;
+}
+
+/* VHS tracking-sweep – mozgó, halványuló csík FELÜL MINDENEN */
+.fx-vhs {
+  position: fixed;
+  inset: 0;
+  z-index: 60;                 /* magasabb, mint a content és a többi overlay */
+  pointer-events: none;
+}
+
+/* A futó csík (pszeudo elem) */
+.fx-vhs::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  top: -25%;
+  height: 22%;
+  /* középen fényesebb, széleken halványabb */
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.00) 0%,
+      rgba(255,255,255,0.06) 25%,
+      rgba(255,255,255,0.18) 50%,
+      rgba(255,255,255,0.06) 75%,
+      rgba(255,255,255,0.00) 100%
+    ),
+    /* finom vízszintes szemcse */
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.10) 0 2px,
+      rgba(0,0,0,0.00) 2px 4px
+    );
+  /* NE keverjük el túl erősen – legyen sima overlay */
+  mix-blend-mode: normal;
+  filter: blur(0.3px) contrast(1.06);
+  opacity: .75;
+  will-change: transform, opacity;
+  animation: vhs-line-move 4.6s linear infinite,
+             vhs-line-noise 1.6s linear infinite;
+}
+
+/* Lefelé gurul és közben kifakul */
+@keyframes vhs-line-move {
+  0%   { transform: translateY(-20%); opacity: .75; }
+  70%  { opacity: .25; }
+  100% { transform: translateY(120%); opacity: 0; }
+}
+
+/* Enyhe zaj-csorgás a csíkon belül */
+@keyframes vhs-line-noise {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 0 0, 0 260px; }
+}
+
+/* Ha a user nem kér animációt */
+@media (prefers-reduced-motion: reduce) {
+  .fx-vhs::before { animation: none !important; }
+}
+
+
+
+/* finom, teljes képernyős csíkozás maradhat külön rétegként (ha használod): */
+.fx-stripes { /* ha már létezik, hagyd */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,.28) 0 1px,
+    rgba(0,0,0,0) 3px 4px
+  );
+  opacity: .55;
+  mix-blend-mode: multiply;
+}
+
+/* Animációk: lefelé gurul + enyhe nyüszögő zaj */
+@keyframes vhs-line-move {
+  0%   { transform: translateY(-20%); opacity: .75; }
+  70%  { opacity: .25; }
+  100% { transform: translateY(120%); opacity: 0; }
+}
+
+@keyframes vhs-line-noise {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 0 0, 0 260px; } /* vízszintes zaj lassan csorog */
+}
+
+/* mozgáscsökkentés tisztelete */
+@media (prefers-reduced-motion: reduce) {
+  .fx-vhs::before { animation: none !important; }
+}
+
+
+/* 4) Vignette + enyhe üveghiba (maradhat a régi is) */
+.fx-vignette {
+  background:
+    radial-gradient(closest-corner, rgba(0,0,0,0) 60%, rgba(0,0,0,0.25) 100%),
+    radial-gradient(circle at 20% 15%, rgba(163,230,53,0.06), transparent 40%),
+    radial-gradient(circle at 80% 85%, rgba(163,230,53,0.05), transparent 45%);
+}
+
+/* 5) Tartalom enyhe CRT-flicker-je (változatlanul használható) */
+.crt-flicker {
+  animation: crt-flicker 8s steps(60) infinite;
+}
+
+/* ===== Animációk ===== */
+
+/* a világos sáv végiggördül felülről lefelé */
+@keyframes vhs-sweep {
+  0%   { background-position: 0 -30%, 0 0, 0 0; }
+  100% { background-position: 0 130%, 0 400px, 300px 0; }
+}
+
+/* vízszintes zaj finom lefelé csorgása */
+@keyframes vhs-noise-y {
+  0%   { background-position: 0 0, 0 0, 0 0; }
+  100% { background-position: 0 0, 0 200px, 0 0; }
+}
+
+/* függőleges zaj lassú jobbra mozgása */
+@keyframes vhs-noise-x {
+  0%   { background-position: 0 0, 0 0, 0 0; }
+  100% { background-position: 0 0, 0 0, 300px 0; }
+}
+
+/* meglévő flicker animációdat hagyhatod,
+   vagy ezt használd, ha még nem volt: */
+@keyframes crt-flicker {
+  0%, 100% { filter: none; }
+  12% { filter: brightness(0.985) contrast(1.03) }
+  28% { filter: brightness(1.02) contrast(1.05) }
+  52% { filter: brightness(0.99) }
+  76% { filter: brightness(1.01) contrast(1.04) }
+}
+
+/* Motion-respect */
+@media (prefers-reduced-motion: reduce) {
+  .fx-stripes,
+  .fx-vhs,
+  .crt-flicker {
+    animation: none !important;
+  }
+}
+

@@ -32,13 +32,14 @@ const displayTitle = decodeURIComponent(slug).replace(/-/g, ' ')
 
 
 return (
-<main className="max-w-5xl mx-auto p-6 text-zinc-100">
+<main className="py-8">
+  <div className="mx-auto w-[min(640px,100vw-32px)] px-4 space-y-12">
 
 
 {/* 1) HEADER */}
         <header className="flex items-start justify-between">
           <div>
-            <div className="mt-2 mb-6 text-4xl font-black italic tracking-[-0.04em] text-lime-400 crt-glitch">
+            <div className="mt-2 mb-2 text-4xl font-black italic tracking-[-0.04em] text-lime-400 crt-glitch">
               <Link href="/" className="hover:opacity-80 transition-opacity">
                 Vállalhatatlan
               </Link> <br/>
@@ -64,10 +65,11 @@ className={`px-3 py-1 rounded-lg border ${active ? 'border-lime-400 text-lime-30
 })}
 </nav>
 
-<p className="text-[10px] pt-6 opacity-50">Soundtrack ehhez a novellához:</p>
-
 {/* Címsor erősebb RGB-szétcsúszással */}
-<h1 className="text-6xl font-semibold mt-0 mb-6 rgb-title">{displayTitle}</h1>
+<h1 className="text-6xl font-semibold mt-0 mb-6 text-white tracking-tighter">
+    <span className="text-[11px] opacity-50 tracking-wider">Soundtrack ehhez a novellához</span> <br />
+    {displayTitle}
+</h1>
 
 
 {/* Excerpt, ha van */}
@@ -97,6 +99,7 @@ className={`px-3 py-1 rounded-lg border ${active ? 'border-lime-400 text-lime-30
   </div>
 </div>
 
+  </div>
 
 {/* Stílus a címhez (statikus, nem animált RGB-split) */}
 <style>{`

@@ -1,3 +1,4 @@
+// lib/b2.ts
 import 'server-only'
 
 let accountCache: {
@@ -49,7 +50,19 @@ async function authorizeAccount() {
   return accountCache
 }
 
-export async function getDownloadAuthorization(fileName: string, seconds = 3600) {
+/** -------------------------------
+ *  CACHED DOWNLOAD AUTHORIZATION
+ *  ------------------------------- */
+const dlAuthCache = new Map<string, { token: string; exp: number }>()
+const DL_AUTH_TTL = 3600 // seconds (1h)
+
+export async function getDownloadAuthorization(fileName: string, seconds = DL_AUTH_TTL) {
+  const nowSec = Math.floor(Date.now() / 1000)
+  const cached = dlAuthCache.get(fileName)
+  if (cached && cached.exp - 30 > nowSec) {
+    return cached.token
+  }
+
   const { apiUrl, authorizationToken } = await authorizeAccount()
   const bucketId = process.env.B2_BUCKET_ID!
 
@@ -75,6 +88,7 @@ export async function getDownloadAuthorization(fileName: string, seconds = 3600)
   }
 
   const data = (await res.json()) as { authorizationToken: string }
+  dlAuthCache.set(fileName, { token: data.authorizationToken, exp: nowSec + seconds })
   return data.authorizationToken
 }
 
@@ -85,7 +99,7 @@ export async function fetchPrivateFileStream(fileName: string, rangeHeader?: str
   const encodedName = fileName.split('/').map(encodeURIComponent).join('/')
   const url = `${downloadUrl}/file/${encodeURIComponent(bucketName)}/${encodedName}`
 
-  const downloadAuth = await getDownloadAuthorization(fileName, 3600)
+  const downloadAuth = await getDownloadAuthorization(fileName, DL_AUTH_TTL)
 
   const headers: Record<string, string> = { Authorization: downloadAuth }
   if (rangeHeader) headers['Range'] = rangeHeader
@@ -93,7 +107,8 @@ export async function fetchPrivateFileStream(fileName: string, rangeHeader?: str
   const res = await fetch(url, { method: 'GET', headers, cache: 'no-store' })
   if (!res.ok && res.status !== 206) {
     const text = await res.text().catch(() => '')
-    throw new Error(`B2 download failed: ${res.status} ${text}`)
+    const msg = `B2 download failed: status=${res.status} bucket=${bucketName} fileName=${fileName} url=${url} body=${text}`
+    throw new Error(msg)
   }
   return res
 }

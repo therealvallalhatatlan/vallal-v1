@@ -249,7 +249,7 @@ useEffect(() => {
 
   const track = tracks[index]
   return (
-    <div className="w-full grid md:grid-cols-2 gap-6 items-start">
+    <div className="w-full space-y-6">
       <div className="p-4 bg-black/70 rounded-2xl shadow-xl border border-zinc-800">
         {!userInteracted && shouldAutoplay && (
           <div className="mb-4 p-3 bg-lime-600/20 border border-lime-600/50 rounded-xl text-center">

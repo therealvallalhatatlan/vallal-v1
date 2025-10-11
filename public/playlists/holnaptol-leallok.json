@@ -1,10 +1,10 @@
 {
+  "excerpt": "A heroinban az a legmókásabb, hogy - bár csak egy rövid időre - de Szabad Embernek érzed magad. Megszabadulsz a traumáidtól, a létezés összes nyűgétől, kívülről, mosolyogva nézed magad ahogy csetlesz-botlasz a világban totál bekészülve, és ezt egyáltalán nem érzed gáznak. (...)",
   "tracks": [
-    { "title": "Fiddler - The Unknown River (Alfonso Muchacho Remix)", "file": "holnaptol-leallok/Fiddler - The Unknown River (Alfonso Muchacho Remix).mp3" }
+    { "title": "Librarian - I Hope We Can Live On The Moon Someday", "file": "holnaptol-leallok/Librarian - I Hope We Can Live On The Moon Someday.mp3" }
   ],
   "visuals": [
-    "/img/visuals/noise-01.jpg",
-    "/img/visuals/noise-02.jpg",
-    "/img/visuals/noise-03.jpg"
+    "/img/visuals/noise-24.jpg",
+    "/img/visuals/noise-03.png"
   ]
 }
