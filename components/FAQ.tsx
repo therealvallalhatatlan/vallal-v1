@@ -54,7 +54,7 @@ const items: Item[] = [
 export default function FAQ({ className }: { className?: string }) {
   return (
     <section className={clsx("w-full", className)}>
-      <h2 className="mb-6 text-center font-black tracking-[0.08em] text-green-400">
+      <h2 className="mb-6 text-center font-black tracking-[0.08em] text-lime-400">
         Gy.<span className="inline-block translate-y-[-0.04em]">I.</span>K.
       </h2>
 

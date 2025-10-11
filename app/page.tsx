@@ -111,11 +111,11 @@ export default async function HomePage() {
       <div className="mx-auto w-[min(640px,100vw-32px)] px-4 space-y-12">
 
             <div
-              className="mt-2 text-[13px] text-green-300/70 font-mono"
+              className="mt-2 text-[13px] text-lime-300/70 font-mono"
               aria-live="polite"
             >
               <span className="inline-flex items-center gap-2">
-                <span className="h-2 w-2 mt-4 rounded-full bg-green-400 animate-ping text-xs" />
+                <span className="h-2 w-2 mt-4 rounded-full bg-lime-400 animate-ping text-xs" />
                 <TweetRotator
                   className=""
                   heightPx={16}
@@ -135,21 +135,21 @@ export default async function HomePage() {
         {/* 1) HEADER */}
         <header className="flex items-start justify-between">
           <div>
-            <div className="mt-2 text-4xl font-black italic tracking-[-0.04em] text-green-400 crt-glitch">
+            <div className="mt-2 text-4xl font-black italic tracking-[-0.04em] text-lime-400 crt-glitch">
               Vállalhatatlan <br/>
               <span className="text-sm uppercase tracking-widest">A könyv</span>
             </div>
           </div>
 
-          <div className="text-right bg-black/80 rounded-md p-3 border border-green-300/20">
-            <div className="text-green-300/70 text-xs">Következő Drop:</div>
-            <div className="text-green-400 text-2xl font-bold leading-tight">
+          <div className="text-right bg-black/80 rounded-md p-3 border border-lime-300/20">
+            <div className="text-lime-300/70 text-xs">Következő Drop:</div>
+            <div className="text-lime-400 text-2xl font-bold leading-tight">
               {soldOut ? "—" : `${formatSequence(yourNumber ?? 1)}`}
             </div>
             <Button
               asChild
               size="sm"
-              className="mt-2 border-green-400 text-green-400 hover:bg-green-400 hover:text-black"
+              className="mt-2 border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black"
               variant="outline"
               disabled={soldOut}
             >
@@ -176,7 +176,7 @@ export default async function HomePage() {
 
 
         {/* 4) IDÉZET */}
-        <section className="text-green-200/90">
+        <section className="text-lime-200/90">
           <blockquote className="italic leading-relaxed">
             "Van egy tudatállapot, amiben meg tudjuk hajlítani a valóságot. Nem tudjuk irányítani, de valami érezhetően megváltozik. A dolgok valószínűtlensége növekszik. Furcsa és szürreális dolgok történnek velünk. Nincs más magyarázatom ezekre a történetekre."
           </blockquote>
@@ -188,21 +188,23 @@ export default async function HomePage() {
           <img src="/vallalhatatlan.png" alt="Vállalhatatlan — könyvborító" className="w-full h-auto object-cover" />
         </Card>
 
+        
 
-          <p className="mt-8 text-lg text-green-300/70">
+
+          <p className="mt-8 text-lg text-lime-300/70">
              Ez nem egy könyv. 
              Nincs írója, nincs kiadója, és nem kapható a könyvesboltokban.
              Összesen 100 példány készült belőle. 
              Az egyik a tiéd lehet. De meg kell találnod.<br/>
-             <span className="text-green-200/90 text-[11px] mt-2 align-top">*Vagy kérheted postán is.</span>
+             <span className="text-lime-200/90 text-[11px] mt-2 align-top">*Vagy kérheted postán is.</span>
           </p>
-          <p className="mt-4 text-sm text-green-300/50">
+          <p className="mt-4 text-sm text-lime-300/50">
           </p>
         </section>
 
 
         {/* 8) FUTÓSZÖVEG – lassú, kissé elforgatott marquee */}
-        <div className="relative rotate-[-6deg] bg-green-500 text-black py-2 select-none overflow-hidden">
+        <div className="relative rotate-[-6deg] bg-lime-500 text-black py-2 select-none overflow-hidden">
           <div className="marquee whitespace-nowrap font-black tracking-wider uppercase">
             {Array.from({ length: 12 }).map((_, i) => (
               <span key={i} className="mx-6">
@@ -235,27 +237,27 @@ export default async function HomePage() {
         <Card className="p-4">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold text-green-400">{preorders}</div>
-              <div className="text-green-300/60 text-xs">Előrendelések</div>
+              <div className="text-2xl font-bold text-lime-400">{preorders}</div>
+              <div className="text-lime-300/60 text-xs">Előrendelések</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-green-400">{goal}</div>
-              <div className="text-green-300/60 text-xs">Összes Példány</div>
+              <div className="text-2xl font-bold text-lime-400">{goal}</div>
+              <div className="text-lime-300/60 text-xs">Összes Példány</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-green-400">
+              <div className="text-2xl font-bold text-lime-400">
                 {soldOut ? "—" : `#${formatSequence(yourNumber ?? 1)}`}
               </div>
-              <div className="text-green-300/60 text-xs">A Te Sorszámod</div>
+              <div className="text-lime-300/60 text-xs">A Te Sorszámod</div>
             </div>
           </div>
           <div className="mt-3 space-y-1">
-            <div className="flex justify-between text-[11px] text-green-300/80">
+            <div className="flex justify-between text-[11px] text-lime-300/80">
               <span>{percent}% funded</span>
               <span>{remaining} remaining</span>
             </div>
-            <div className="w-full bg-green-900/30 rounded-full h-3">
-              <div className="bg-green-400 h-3 rounded-full transition-all" style={{ width: `${percent}%` }} />
+            <div className="w-full bg-lime-900/30 rounded-full h-3">
+              <div className="bg-lime-400 h-3 rounded-full transition-all" style={{ width: `${percent}%` }} />
             </div>
           </div>
         </Card>
@@ -266,18 +268,18 @@ export default async function HomePage() {
 
         {/* 6) SORSZÁM + CTA + KÉT SOR SZÖVEG */}
         <section className="text-center space-y-4">
-          <div className="text-green-300/70 text-sm">A Te példányod sorszáma:</div>
-          <div className="text-4xl font-extrabold text-green-400 drop-shadow">{formatSequence(yourNumber ?? 1)}</div>
+          <div className="text-lime-300/70 text-sm">A Te példányod sorszáma:</div>
+          <div className="text-4xl font-extrabold text-lime-400 drop-shadow">{formatSequence(yourNumber ?? 1)}</div>
           <Button
             asChild
             size="lg"
-            className="mx-auto border-green-400 text-green-400 hover:bg-green-400 hover:text-black"
+            className="mx-auto border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black"
             variant="outline"
             disabled={soldOut}
           >
             <Link href={soldOut ? "#" : "/checkout"}>Mutasd Hol Van</Link>
           </Button>
-          <div className="text-[12px] text-green-300/70 space-y-1">
+          <div className="text-[12px] text-lime-300/70 space-y-1">
             <div>› A drop ára: {formatCurrency(15000)}</div>
             <div>› Vállalhatatlan Klub Tagoknak: {formatCurrency(10000)}</div>
           </div>
@@ -285,7 +287,7 @@ export default async function HomePage() {
 
 
         {/* 8) FUTÓSZÖVEG – lassú, kissé elforgatott marquee */}
-        <div className="relative rotate-[-6deg] bg-green-500 text-black py-2 select-none overflow-hidden">
+        <div className="relative rotate-[-6deg] bg-lime-500 text-black py-2 select-none overflow-hidden">
           <div className="marquee whitespace-nowrap font-black tracking-wider uppercase">
             {Array.from({ length: 12 }).map((_, i) => (
               <span key={i} className="mx-6">
@@ -296,47 +298,47 @@ export default async function HomePage() {
         </div>
 
         {/*  
-        <section className="text-green-200/80 text-sm leading-relaxed">
+        <section className="text-lime-200/80 text-sm leading-relaxed">
           A könyvből csak {goal} darab készül, limitált példányszám, sorszámozott, dedikált.
           Minden példányt elrejtek egy helyen, és a koordinátát kapod meg. Nem bolt — élmény.
         </section>
         */}
-        <section className="text-green-200/80 text-sm leading-relaxed">
+        <section className="text-lime-200/80 text-sm leading-relaxed">
           <FAQ className="mt-16" />
         </section>
 
-        {/* 10) PROFILKÁRTYA + gépelt „tweet” feed */}
+        {/* 10) PROFILKÁRTYA + gépelt „tweet" feed */}
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <img src="/swipe.jpg" alt="Vállalhatatlan" className="h-10 w-10 rounded-full object-cover" />
             <div>
-              <div className="font-semibold text-green-300">Vállalhatatlan</div>
-              <div className="text-[14px] text-green-300/70 flex gap-3">
-                <a href="https://www.reddit.com/r/vallalhatatlan/" target="_blank" className="hover:text-green-400">Reddit</a>
-                <a href="https://www.facebook.com/vallalhatatlan2000" target="_blank" className="hover:text-green-400">Facebook</a>
-                <a href="mailto:hello@vallalhatatlan.online" className="hover:text-green-400">Email</a>
+              <div className="font-semibold text-lime-300">Vállalhatatlan</div>
+              <div className="text-[14px] text-lime-300/70 flex gap-3">
+                <a href="https://www.reddit.com/r/vallalhatatlan/" target="_blank" className="hover:text-lime-400">Reddit</a>
+                <a href="https://www.facebook.com/vallalhatatlan2000" target="_blank" className="hover:text-lime-400">Facebook</a>
+                <a href="mailto:hello@vallalhatatlan.online" className="hover:text-lime-400">Email</a>
               </div>
             </div>
           </div>
         </Card>
 
         <footer className="pb-8 text-center">
-          <p className="text-green-300/60 text-[13px]">
+          <p className="text-lime-300/60 text-[13px]">
             © 2025 created by:{' '}
             <a
               href="https://rickandpam.digital"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-green-300/60 hover:text-green-400"
+              className="text-lime-300/60 hover:text-lime-400"
             >
               rickandpam.digital
             </a>
           </p>
           <div className="mt-1">
-            <Link href="/terms" className="text-green-300/40 text-[11px] hover:text-green-400 mr-4">
+            <Link href="/terms" className="text-lime-300/40 text-[11px] hover:text-lime-400 mr-4">
               Terms of Service
             </Link>
-            <Link href="/privacy" className="text-green-300/40 text-[11px] hover:text-green-400">
+            <Link href="/privacy" className="text-lime-300/40 text-[11px] hover:text-lime-400">
               Privacy Policy
             </Link>
           </div>
@@ -357,7 +359,7 @@ export default async function HomePage() {
           text-shadow: 
             2px 0 #ff0000, 
             -2px 0 #00ffff,
-            0 0 10px #39FF14;
+            0 0 10px #a3e635;
         }
         
         .crt-glitch::before {
@@ -367,7 +369,7 @@ export default async function HomePage() {
           left: 0;
           right: 0;
           bottom: 0;
-          background: linear-gradient(transparent 50%, rgba(0, 255, 0, 0.03) 50%);
+          background: linear-gradient(transparent 50%, rgba(163, 230, 53, 0.03) 50%);
           background-size: 100% 4px;
           pointer-events: none;
           animation: scanlines 0.1s linear infinite;
@@ -395,27 +397,27 @@ export default async function HomePage() {
         
         @keyframes rgb-shift {
           0% { 
-            text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #39FF14;
+            text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #a3e635;
             transform: translate(0);
           }
           20% { 
-            text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #39FF14;
+            text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #a3e635;
             transform: translate(-1px, 0);
           }
           40% { 
-            text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #39FF14;
+            text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #a3e635;
             transform: translate(-1px, 1px);
           }
           60% { 
-            text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #39FF14;
+            text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #a3e635;
             transform: translate(0, 1px);
           }
           80% { 
-            text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #39FF14;
+            text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #a3e635;
             transform: translate(1px, 0);
           }
           100% { 
-            text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #39FF14;
+            text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #a3e635;
             transform: translate(0);
           }
         }
