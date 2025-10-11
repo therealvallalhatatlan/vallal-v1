@@ -25,7 +25,7 @@ async function loadPlaylistFromJSON(slug: string) {
   try {
     const res = await fetch(url, { cache: 'no-store' })
     if (!res.ok) return null
-    const data = (await res.json()) as { tracks: { title: string; file: string }[]; visuals?: string[] }
+    const data = (await res.json()) as { tracks: { title: string; file: string }[]; visuals?: string[]; excerpt?: string }
     if (!Array.isArray(data?.tracks)) return null
     return data
   } catch {
@@ -38,13 +38,22 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const json = await loadPlaylistFromJSON(slug)
   const tracks = json?.tracks ?? FALLBACK[slug] ?? FALLBACK.sample
   const visuals = json?.visuals ?? ['/img/visuals/noise-01.jpg','/img/visuals/noise-02.jpg','/img/visuals/noise-03.jpg']
+  const excerpt = json?.excerpt
   const displayTitle = decodeURIComponent(slug).replace(/-/g, ' ')
 
   return (
     <main className="max-w-5xl mx-auto p-6 text-zinc-100">
       <h1 className="text-6xl font-semibold mt-12 mb-4 text-center rgb-title">{displayTitle}</h1>
-      <p className="text-xs text-center opacity-35 mb-10">Van egy tudatállapot, amiben meg tudjuk hajlítani a valóságot. Nem tudjuk irányítani, de valami érezhetően megváltozik. A dolgok valószínűtlensége növekszik. Furcsa és szürreális dolgok történnek velünk. Nincs más magyarázatom ezekre a történetekre.
-</p>
+      {excerpt && (
+        <div className="mb-8 text-center">
+          <p className="text-lg text-zinc-300  max-w-3xl mx-auto leading-relaxed">
+            {excerpt}
+          </p>
+        </div>
+      )}
+      <p className="text-xs text-center opacity-35 mb-10"><code>public/playlists/{slug}.json</code></p>
+      
+      
       <AudioPlayer tracks={tracks} images={visuals} />
       <style>{`
         .rgb-title {

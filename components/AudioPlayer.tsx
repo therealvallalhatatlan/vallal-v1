@@ -12,6 +12,8 @@ export default function AudioPlayer({ tracks, images = [] }: Props) {
   const [progress, setProgress] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [userInteracted, setUserInteracted] = useState(false)
+  const [shouldAutoplay, setShouldAutoplay] = useState(true)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -56,6 +58,28 @@ useEffect(() => {
     return () => ro.disconnect()
   }, [])
 
+  // Detect first user interaction
+  useEffect(() => {
+    const handleInteraction = () => {
+      setUserInteracted(true)
+      if (shouldAutoplay && !playing) {
+        play()
+        setShouldAutoplay(false)
+      }
+    }
+
+    // Listen for any user interaction
+    document.addEventListener('click', handleInteraction, { once: true })
+    document.addEventListener('keydown', handleInteraction, { once: true })
+    document.addEventListener('touchstart', handleInteraction, { once: true })
+
+    return () => {
+      document.removeEventListener('click', handleInteraction)
+      document.removeEventListener('keydown', handleInteraction)
+      document.removeEventListener('touchstart', handleInteraction)
+    }
+  }, [shouldAutoplay, playing])
+
   // Load current track
   useEffect(() => {
     const audio = audioRef.current
@@ -68,7 +92,14 @@ useEffect(() => {
     audio.load()
     setProgress(0); setCurrentTime(0); setDuration(0)
 
-    const onLoaded = () => setDuration(audio.duration || 0)
+    const onLoaded = () => {
+      setDuration(audio.duration || 0)
+      // Try autoplay if user has already interacted
+      if (index === 0 && userInteracted && shouldAutoplay) {
+        play()
+        setShouldAutoplay(false)
+      }
+    }
     const onTime = () => {
       setCurrentTime(audio.currentTime)
       if (audio.duration) setProgress(audio.currentTime / audio.duration)
@@ -83,7 +114,22 @@ useEffect(() => {
       audio.removeEventListener('timeupdate', onTime)
       audio.removeEventListener('ended', onEnd)
     }
-  }, [index, tracks])
+  }, [index, tracks, userInteracted, shouldAutoplay])
+
+  // Start visualizer automatically when component mounts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      startViz()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Restart visualizer when audio context becomes available
+  useEffect(() => {
+    if (analyserRef.current && playing) {
+      startViz()
+    }
+  }, [playing])
 
   async function ensureAudioNodes() {
     const audio = audioRef.current!
@@ -96,12 +142,19 @@ useEffect(() => {
       an.fftSize = 2048; an.smoothingTimeConstant = 0.85
       analyserRef.current = an
       srcNodeRef.current.connect(an); an.connect(ac.destination)
+      // Restart visualizer now that we have audio context
+      startViz()
     }
   }
 
   function play() {
     const audio = audioRef.current; if (!audio) return
-    ensureAudioNodes().then(() => { audio.play(); setPlaying(true); startViz() })
+    ensureAudioNodes().then(() => { 
+      audio.play().catch((err) => {
+        console.log('Autoplay prevented:', err)
+      })
+      setPlaying(true)
+    })
   }
   function pause() { const a = audioRef.current; if (!a) return; a.pause(); setPlaying(false) }
   function toggle() { playing ? pause() : play() }
@@ -116,48 +169,79 @@ useEffect(() => {
   const rafRef = useRef<number | null>(null)
   function startViz() {
     cancelViz()
-    const c = canvasRef.current, ctx = ctxRef.current, an = analyserRef.current
-    if (!c || !ctx || !an) return
-    const buffer = new Uint8Array(an.frequencyBinCount)
+    const c = canvasRef.current, ctx = ctxRef.current
+    if (!c || !ctx) return
+    
+    const buffer = new Uint8Array(1024)
 
     const draw = () => {
-      an.getByteFrequencyData(buffer)
+      // Get frequency data if analyser is available, otherwise use fallback animation
+      if (analyserRef.current && playing) {
+        try {
+          analyserRef.current.getByteFrequencyData(buffer)
+        } catch {
+          // Fallback if analyser fails
+          createFallbackAnimation(buffer)
+        }
+      } else {
+        // Create animated fallback when no audio or not playing
+        createFallbackAnimation(buffer)
+      }
+
       const bass = bandAvg(buffer, 2, 30)
       const mid = bandAvg(buffer, 31, 90)
-      const hi  = bandAvg(buffer, 91, 256)
+      const hi = bandAvg(buffer, 91, Math.min(256, buffer.length - 1))
       const energy = (bass * 1.2 + mid * 0.9 + hi * 0.4) / 3
 
       const W = c.width, H = c.height
       ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H)
 
-      const j = Math.min(20, energy / 6)
-      const sliceH = 16 + Math.floor((energy / 255) * 24)
+      const j = Math.min(20, energy / 6 + 2) // Add minimum movement
+      const sliceH = Math.max(8, 16 + Math.floor((energy / 255) * 24))
 
-      // Draw only images that are fully loaded and have dimensions
-loadedImgs.forEach((img, idx) => {
-  if (!img.complete || img.naturalWidth === 0) return
-  const dx = (Math.sin(Date.now() / 300 + idx) * j) | 0
-  const dy = (Math.cos(Date.now() / 500 + idx * 2) * j) | 0
-  ;(ctx as any).globalCompositeOperation = idx % 2 ? 'lighter' : 'difference'
-  try {
-    ctx.drawImage(img, dx, dy, W, H)
-  } catch { /* ignore rare race conditions */ }
-})
+      // Draw images with glitch effects
+      loadedImgs.forEach((img, idx) => {
+        if (!img.complete || img.naturalWidth === 0) return
+        const dx = (Math.sin(Date.now() / 300 + idx) * j) | 0
+        const dy = (Math.cos(Date.now() / 500 + idx * 2) * j) | 0
+        ;(ctx as any).globalCompositeOperation = idx % 2 ? 'lighter' : 'difference'
+        try {
+          ctx.drawImage(img, dx, dy, W, H)
+        } catch { /* ignore rare race conditions */ }
+      })
 
+      // Glitch effects
       for (let y = 0; y < H; y += sliceH) {
         const offset = ((Math.random() - 0.5) * j * 4) | 0
         const hgt = Math.min(sliceH, H - y)
-        const imgData = ctx.getImageData(0, y, W, hgt)
-        ctx.putImageData(imgData, offset, y)
+        try {
+          const imgData = ctx.getImageData(0, y, W, hgt)
+          ctx.putImageData(imgData, offset, y)
+        } catch { /* ignore if canvas not ready */ }
       }
 
       ctx.globalCompositeOperation = 'source-over'
       ctx.globalAlpha = 0.15
-      for (let y = 0; y < H; y += 2) { ctx.fillStyle = '#000'; ctx.fillRect(0, y, W, 1) }
+      for (let y = 0; y < H; y += 2) { 
+        ctx.fillStyle = '#000'
+        ctx.fillRect(0, y, W, 1) 
+      }
       ctx.globalAlpha = 1
 
       rafRef.current = requestAnimationFrame(draw)
     }
+
+    // Helper function for fallback animation
+    function createFallbackAnimation(buffer: Uint8Array) {
+      const time = Date.now() / 1000
+      for (let i = 0; i < buffer.length; i++) {
+        buffer[i] = Math.max(0, Math.min(255, 
+          Math.sin(time * 2 + i / 20) * 40 + 
+          Math.cos(time * 3 + i / 30) * 30 + 50
+        ))
+      }
+    }
+
     rafRef.current = requestAnimationFrame(draw)
   }
   function cancelViz() { if (rafRef.current) cancelAnimationFrame(rafRef.current); rafRef.current = null }
@@ -167,6 +251,12 @@ loadedImgs.forEach((img, idx) => {
   return (
     <div className="w-full grid md:grid-cols-2 gap-6 items-start">
       <div className="p-4 bg-black/70 rounded-2xl shadow-xl border border-zinc-800">
+        {!userInteracted && shouldAutoplay && (
+          <div className="mb-4 p-3 bg-lime-600/20 border border-lime-600/50 rounded-xl text-center">
+            <p className="text-lime-300 text-sm">Kattints bárhova az automatikus lejátszáshoz</p>
+          </div>
+        )}
+        
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="text-zinc-200 font-medium text-sm leading-tight mb-2 mt-2">{track.title}</div>
