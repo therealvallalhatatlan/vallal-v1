@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const displayTitle = decodeURIComponent(slug).replace(/-/g, ' ')
 
   return (
-    <main className="max-w-5xl mx-auto p-6 text-zinc-100">
+    <main className="w-[min(640px,100vw-32px)] px-4 space-y-12 mx-auto p-6 text-zinc-100">
       <h1 className="text-6xl font-semibold mt-12 mb-4 text-center rgb-title">{displayTitle}</h1>
       {excerpt && (
         <div className="mb-8 text-center">
