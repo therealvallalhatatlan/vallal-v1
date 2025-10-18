@@ -153,7 +153,10 @@ export default function TabbedShowcase({
                 href="/music"
                 className="mt-3 inline-block text-sm font-semibold text-lime-200 underline hover:underline"
               >
-                hallgass bele →
+                hallgass bele 
+                 <svg viewBox="0 0 24 24" className="mt-2 w-6 h-6" aria-hidden="true">
+                    <polygon points="8,5 19,12 8,19" fill="currentColor" />
+                  </svg>
               </Link>
             )}
           </div>

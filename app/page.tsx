@@ -179,7 +179,17 @@ export default async function HomePage() {
         {/* 4) IDÉZET */}
         <section className="text-lime-200/90">
           <blockquote className="italic leading-relaxed">
-            "Van egy tudatállapot, amiben meg tudjuk hajlítani a valóságot. Nem tudjuk irányítani, de valami érezhetően megváltozik. A dolgok valószínűtlensége növekszik. Furcsa és szürreális dolgok történnek velünk. Nincs más magyarázatom ezekre a történetekre."
+            Könyv + Adrenalin + Soundtrack + Letölthető MP3
+                <a
+                  href="/music"
+                  aria-label="Play"
+                  className="ml-4 inline-flex items-center justify-center rounded-full bg-black text-lime-400 ring-1 ring-lime-400 hover:bg-lime-400 hover:text-black transition-colors align-middle leading-none"
+                  style={{ width: '1.25em', height: '1.25em' }}
+                >
+                  <svg viewBox="0 0 24 24" className="w-[60%] h-[60%]" aria-hidden="true">
+                    <polygon points="8,5 19,12 8,19" fill="currentColor" />
+                  </svg>
+                </a>
           </blockquote>
 
           <TabbedShowcase className="mt-10" />
@@ -207,8 +217,9 @@ export default async function HomePage() {
         <div className="relative rotate-[-6deg] bg-lime-500 text-black py-2 select-none overflow-hidden">
           <div className="marquee whitespace-nowrap font-black tracking-wider uppercase">
             {Array.from({ length: 12 }).map((_, i) => (
-              <span key={i} className="mx-6">
-                Könyv + Adrenalin + Soundtrack + Letölthető MP3 + Képek
+              <span key={i} className="mx-6 inline-flex items-center gap-2 align-middle">
+                <span>Könyv + Adrenalin + Soundtrack + Letölthető</span>
+                
               </span>
             ))}
           </div>

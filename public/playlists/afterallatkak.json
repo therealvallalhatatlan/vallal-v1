@@ -1,7 +1,18 @@
 {
   "excerpt": "Egy vadidegen faszival tollasozok a városligetben. Ki a fasz lehet ez? Egy farmersort van rajta amit övvel hord, hozzá szandált visel fehér zoknival. (...)",
   "tracks": [
-    { "title": "Glenn Underground - Jaz Love", "file": "afterallatkak/Glenn Underground - Jaz Love #2.mp3" }
+    { 
+      "title": "Amp Dog Knight - Over U", 
+      "file": "afterallatkak/Amp Dog Knight _– Over U (Instrumental) [iNJ9WuBpvZM].mp3"
+    },
+    { 
+      "title": "Glenn Underground - Jaz Love", 
+      "file": "afterallatkak/Glenn Underground - Jaz Love #2.mp3"
+    },
+    { 
+      "title": "Workerz - Inca Kola", 
+      "file": "afterallatkak/Workerz - Inca Kola.mp3"
+    }
   ],
   "visuals": [
     "/img/visuals/noise-17.jpg",
