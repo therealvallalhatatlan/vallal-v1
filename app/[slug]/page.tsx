@@ -1,7 +1,7 @@
-import { headers } from 'next/headers'
 import AudioPlayer from '@/components/AudioPlayer'
 import { notFound } from 'next/navigation' // +
 import type { Metadata } from 'next'
+import { loadPlaylist } from '@/lib/playlistIndex'
 
 // Fallback in-code playlist (ha nincs JSON a public/playlists alatt)
 const FALLBACK: Record<string, { title: string; file: string }[]> = {
@@ -15,82 +15,32 @@ const FALLBACK: Record<string, { title: string; file: string }[]> = {
   ],
 }
 
-type PlaylistJson = {
-  excerpt?: string
-  tracks: { title: string; file: string }[]
-  visuals?: string[]
-}
-
-function isStringArray(a: unknown): a is string[] {
-  return Array.isArray(a) && a.every((v) => typeof v === 'string')
-}
-function isTracksArray(a: unknown): a is { title: string; file: string }[] {
-  return Array.isArray(a) && a.every(
-    (t) => t && typeof t === 'object' && typeof (t as any).title === 'string' && typeof (t as any).file === 'string'
-  )
-}
-function isPlaylistJson(x: unknown): x is PlaylistJson {
-  if (!x || typeof x !== 'object') return false
-  const obj = x as any
-  if (!isTracksArray(obj.tracks)) return false
-  if (obj.excerpt != null && typeof obj.excerpt !== 'string') return false
-  if (obj.visuals != null && !isStringArray(obj.visuals)) return false
-  return true
-}
-
-async function loadPlaylistFromJSON(slug: string) {
-  // JSON helye: public/playlists/<slug>.json (root-relative fetch -> stabil dev/prod, edge/server)
-  const url = `/playlists/${encodeURIComponent(slug)}.json`
-  try {
-    const res = await fetch(url /* implicit cache (force-cache) on static public assets */)
-    if (!res.ok) {
-      console.warn(`[playlist] fetch failed for slug="${slug}" status=${res.status}`)
-      return null
-    }
-    const data = await res.json().catch((e) => {
-      console.warn(`[playlist] invalid JSON for slug="${slug}":`, e)
-      return null
-    })
-    if (!isPlaylistJson(data)) {
-      console.warn(`[playlist] schema validation failed for slug="${slug}"`)
-      return null
-    }
-    return data as PlaylistJson
-  } catch (err) {
-    console.error(`[playlist] fetch error for slug="${slug}":`, err)
-    return null
-  }
-}
-
-export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+export default async function Page({ params }: { params: { slug: string } }) {
+  const { slug } = params
   
   // Prevent handling favicon and other static assets
   if (slug === 'favicon.ico' || slug.includes('.')) {
     notFound() // replace throw new Error
   }
   
-  const json = await loadPlaylistFromJSON(slug)
-  // Resilient fallback if JSON missing/invalid or has empty/invalid tracks
-  const tracks = (json?.tracks && json.tracks.length > 0) ? json.tracks : (FALLBACK[slug] ?? FALLBACK.sample)
-  const visuals = isStringArray(json?.visuals) && json!.visuals!.length > 0
-    ? json!.visuals!
+  const data = await loadPlaylist(slug)
+  // Resilient fallback if JSON missing/invalid
+  const tracks = data?.tracks?.length ? data.tracks : (FALLBACK[slug] ?? FALLBACK.sample)
+  const visuals = (Array.isArray(data?.visuals) && data!.visuals!.length)
+    ? data!.visuals!
     : ['/img/visuals/noise-01.jpg','/img/visuals/noise-02.jpg','/img/visuals/noise-03.jpg']
-  const excerpt = typeof json?.excerpt === 'string' ? json!.excerpt! : undefined
+  const excerpt = typeof data?.excerpt === 'string' ? data!.excerpt! : undefined
   const displayTitle = decodeURIComponent(slug).replace(/-/g, ' ')
 
   return (
     <main className="w-[min(640px,100vw-32px)] px-4 space-y-12 mx-auto p-6 text-zinc-100">
       <h1 className="text-6xl font-semibold mt-12 mb-4 text-center rgb-title">{displayTitle}</h1>
       {excerpt && (
-        <div className="mb-8 text-center">
-          <p className="text-lg text-zinc-300  max-w-3xl mx-auto leading-relaxed">
-            {excerpt}
-          </p>
-        </div>
+        <p className="text-zinc-300/90 text-lg leading-relaxed mb-8 whitespace-pre-line">
+          {excerpt}
+        </p>
       )}
       <p className="text-xs text-center opacity-35 mb-10"><code>public/playlists/{slug}.json</code></p>
-      
       
       <AudioPlayer tracks={tracks} images={visuals} />
       <script
@@ -161,14 +111,14 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 }
 
 export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: { slug: string } }
 ): Promise<Metadata> {
-  const { slug } = await params
+  const { slug } = params
   if (!slug || slug === 'favicon.ico' || slug.includes('.')) return {}
 
-  const json = await loadPlaylistFromJSON(slug)
+  const data = await loadPlaylist(slug)
   const title = decodeURIComponent(slug).replace(/-/g, ' ')
-  const desc = (json?.excerpt ?? '').slice(0, 160)
+  const desc = (data?.excerpt ?? '').slice(0, 160)
   const url = `/${encodeURIComponent(slug)}`
   return {
     title,

@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
+import Link from "next/link"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import "./globals.css"
@@ -126,6 +127,21 @@ export default function RootLayout({
 
         {/* Page content above video */}
         <div className="content-above relative z-20">
+      <div className="mx-auto w-[min(960px,100vw-32px)] px-4">
+        <nav
+          aria-label="Fő navigáció"
+          className="sticky top-0 z-40 mb-8 flex items-center justify-center rounded-xl border border-lime-400/10 bg-black/60 px-4 py-3 backdrop-blur-sm text-lime-300/80 font-mono text-xs"
+        >
+          <div className="flex flex-wrap gap-6 justify-center">
+            <Link href="/" className="hover:text-lime-400 transition-colors">Home</Link>
+            <Link href="/konyv" className="hover:text-lime-400 transition-colors">Könyv</Link>
+            <Link href="/novellak" className="hover:text-lime-400 transition-colors">Novellák</Link>
+            <Link href="/music" className="hover:text-lime-400 transition-colors">Zene</Link>
+            <Link href="/projektek" className="hover:text-lime-400 transition-colors">Projektek</Link>
+            <Link href="/rolunk" className="hover:text-lime-400 transition-colors">Rólunk</Link>
+          </div>
+        </nav>
+      </div>
           {children}
           <Analytics />
           <SpeedInsights/>
