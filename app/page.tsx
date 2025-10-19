@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
   description:
     "Vállalhatatlan — Y2K: nyers, urbánus novellák a ’90-es évek és az ezredforduló Budapestjéről. Rave/techno éjszakák, underground szcénák, drogkultúra, identitásválság és könyörtelen őszinteség.",
-  alternates: { canonical: "/", languages: { "hu-HU": "/", "en-US": "/en" } },
+  alternates: { canonical: "/" },
   openGraph: {
     type: "book",
     url: "/",

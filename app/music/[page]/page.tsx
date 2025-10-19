@@ -1,13 +1,33 @@
 import AudioPlayer from '@/components/AudioPlayer'
 import { listSlugs, loadPlaylist } from '@/lib/playlistIndex'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 
 export const runtime = 'nodejs'
 
 
-export default async function MusicPaged({ params }: { params: Promise<{ page: string }> }) {
-const { page } = await params
+export async function generateMetadata(
+  { params }: { params: { page: string } }
+): Promise<Metadata> {
+  const { page } = params
+  const pageNum = Math.max(1, Number(page) || 1)
+  const slugs = await listSlugs()
+  const total = slugs.length || 1
+  const n = Math.min(pageNum, total)
+  const title = `Music — #${n} / ${total}`
+  const url = `/music/${n}`
+  return {
+    title,
+    alternates: { canonical: url },
+    openGraph: { title, url, images: [{ url: '/og.jpg' }] },
+    twitter: { card: 'summary_large_image', title, images: ['/og.jpg'] },
+  }
+}
+
+
+export default async function MusicPaged({ params }: { params: { page: string } }) {
+const { page } = params
 const pageNum = Math.max(1, Number(page) || 1)
 
 

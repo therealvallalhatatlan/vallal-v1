@@ -40,10 +40,9 @@ export const metadata: Metadata = {
     "urban fiction",
   ],
   alternates: {
-    canonical: "/",
     languages: {
       "hu-HU": "/",
-      "en-US": "/en",
+      // "en-US": "/en", // remove until /en exists
     },
   },
   openGraph: {
@@ -131,6 +130,40 @@ export default function RootLayout({
           <Analytics />
           <SpeedInsights/>
         </div>
+
+        {/* JSON-LD: Organization + WebSite */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Vállalhatatlan',
+              url: 'https://vallalhatatlan.online',
+              sameAs: [
+                'https://www.reddit.com/r/vallalhatatlan/',
+                'https://www.facebook.com/vallalhatatlan2000',
+                'mailto:hello@vallalhatatlan.online'
+              ]
+            })
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'Vállalhatatlan',
+              url: 'https://vallalhatatlan.online',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: 'https://vallalhatatlan.online/search?q={query}',
+                'query-input': 'required name=query'
+              }
+            })
+          }}
+        />
       </body>
     </html>
 
