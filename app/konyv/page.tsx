@@ -117,12 +117,6 @@ export default function Page() {
             A „Novellák” oldalon listázva; minden cím saját aloldallal nyílik.
           </div>
         </details>
-        <details className="group rounded-lg border border-zinc-800 bg-black/40 p-4">
-          <summary className="cursor-pointer list-none font-semibold text-zinc-200">Kikkel dolgozol?</summary>
-          <div className="mt-2 text-zinc-300">
-            A könyv szerzője Konto Tamás; a zenei és vizuális rétegek kollaborációk.
-          </div>
-        </details>
       </div>
 
       {/* Cycles */}
