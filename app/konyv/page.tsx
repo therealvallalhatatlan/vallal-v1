@@ -72,24 +72,23 @@ export default function Page() {
 
         </header>
 
-      <h1 className="mb-2 tracking-tight text-lime-400">A könyv</h1>
-      <p className="mt-0 text-sm text-zinc-400">Underground Budapest, Y2K hangulat • könyv + digitális réteg</p>
+      <h1 className="mb-2 tracking-tight text-lime-400">Könyv + Soundtrack + Kaland</h1>
+      <p className="mt-0 text-sm text-zinc-400">Budapest Underground, Y2K hangulat • könyv + digitális réteg</p>
 
       {/* TL;DR */}
       <div className="mt-6 rounded-xl border border-lime-400/20 bg-black/50 p-4 leading-relaxed">
         <div className="mb-2 text-[12px] font-mono uppercase tracking-widest text-lime-300/80">⚡ TL;DR</div>
         <p className="m-0 text-zinc-200">
-          A Vállalhatatlan egy kortárs, urbánus novelláskötet és egy élő projekt: QR-kódos aloldalakkal, zenékkel,
-          helyszínekkel és vizuális rétegekkel. A szövegek a tudatmódosítók/függőség/identitásválság/kapcsolatok
-          határtereit járják be — nyersen, sötét humorral, budapesti terepen.
+          A Vállalhatatlan egy Reddites ámokfutásból kinőtt novelláskötet és egy élő, multimédiás, multidimenzionális művészeti projekt, amiben te is részt vehetsz. 
+          <br/><br/>Nyomtatott, igazi könyv, ami QR-kódokkal nyíló online réteget rejt, soundtrackkel, letölthető zenékkel,
+          és valós, felfedezhető helyszínekkel. Egy kaland. Egy védőoltás.
         </p>
       </div>
 
       <h2 className="mt-8">Miről szól?</h2>
       <p>
-        Az anyag a 90-es/2000-es évek városi közérzetéből indul: éjszakákból, klubokból, kórházi folyosókból és rossz
-        döntésekből. Minden novella saját „level-one” aloldalt kap, zenével és képpel. A könyv így egyszerre nyomtatott
-        tárgy és digitális háló.
+        A könyv egy szerelemről, és egy sosemvolt, álomszerű korról szól, amiben egyszerre volt jelen az értelmetlen önpusztítás és a mindent elsöprő optimizmus.
+        Mintha csak újjá akartunk volna születni.
       </p>
 
       {/* Q&A – collapsible */}
@@ -97,56 +96,30 @@ export default function Page() {
       <div className="space-y-3">
         <details className="group rounded-lg border border-zinc-800 bg-black/40 p-4">
           <summary className="cursor-pointer list-none font-semibold text-zinc-200 marker:content-none">
-            Mi a Vállalhatatlan?
+            Ki a Vállalhatatlan?
           </summary>
           <div className="mt-2 text-zinc-300">
-            Egy kortárs novelláskötet + élő, QR-kódos digitális projekt.
+            Egy karakter. Nem létezhet ilyen figura, lehetetlen hogy mindezt túlélte és képes mindezt leírni is.
           </div>
         </details>
         <details className="group rounded-lg border border-zinc-800 bg-black/40 p-4">
           <summary className="cursor-pointer list-none font-semibold text-zinc-200">Mi az a dead-drop?</summary>
           <div className="mt-2 text-zinc-300">
-            Rejtett csomag valós helyszínen; a megtalálónak jutalom és belépő a digitális rétegbe.
-          </div>
-        </details>
-        <details className="group rounded-lg border border-zinc-800 bg-black/40 p-4">
-          <summary className="cursor-pointer list-none font-semibold text-zinc-200">
-            Hol találom a novellákat?
-          </summary>
-          <div className="mt-2 text-zinc-300">
-            A „Novellák” oldalon listázva; minden cím saját aloldallal nyílik.
+            Egy titkosszolgálati módszer: elrejtett csomag egy valós helyszínen.
+            Meg kell találnod. Mintha valami illegálisat csinálnál, pedig nem! Így teljesz az élmény.
+            Nem szivatás - kaland. Mindig olyan helyen van a csomag ahol könnyen, másokkal való interakció nélkül, biztonságosan hozzáférsz.
+            De ha úgy érzed nem kalandoznál postán is megrendelheted. 
           </div>
         </details>
       </div>
 
-      {/* Cycles */}
-      <h2 className="mt-10">Hogyan épül fel? (6 ciklus)</h2>
-      <ul className="!mt-4 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2">
-        <li className="rounded-lg border border-zinc-800 bg-black/40 p-3">
-          <strong>Behatás</strong> — Az első lökés. A kíváncsiság és kísértés korszaka.
-        </li>
-        <li className="rounded-lg border border-zinc-800 bg-black/40 p-3">
-          <strong>Beszippantás</strong> — A kivételből rendszer lesz; a város ritmusa átveszi a pulzust.
-        </li>
-        <li className="rounded-lg border border-zinc-800 bg-black/40 p-3">
-          <strong>Paradicsom</strong> — Rövid fázis, amikor úgy tűnik, hogy működik. A hazug eufória.
-        </li>
-        <li className="rounded-lg border border-zinc-800 bg-black/40 p-3">
-          <strong>Káosz</strong> — Szétesés. Tartozások, balesetek, félreértett szerelmek és rossz mondatok.
-        </li>
-        <li className="rounded-lg border border-zinc-800 bg-black/40 p-3">
-          <strong>Kikúszás</strong> — Lassú kijózanodás. Visszavett tempó, szégyen, önirónia, kapaszkodók.
-        </li>
-        <li className="rounded-lg border border-zinc-800 bg-black/40 p-3">
-          <strong>Visszanézés</strong> — Emlék, tárgy, hegek — és egy könyv, amit már nem lehet visszacsomagolni.
-        </li>
-      </ul>
+
 
       {/* Access */}
       <h2 className="mt-10">Hogyan juthatsz hozzá?</h2>
       <p>
-        Limitált példány, alkalmankénti dead-drop csomagokkal (QR + digitális hozzáférés). Emellett elérhető digitálisan
-        is: web/PDF/EPUB, rövid regisztráció után.
+        Limitált példány, alkalmankénti dead-drop csomagokkal (QR + digitális hozzáférés). Emellett elérhető lesz digitálisan
+        is: web/PDF/EPUB formátumban.
       </p>
 
       {/* Fact box */}
@@ -159,7 +132,7 @@ export default function Page() {
           </div>
           <div className="flex items-center justify-between rounded-lg bg-black/30 px-3 py-2">
             <dt className="text-zinc-400">Terjedelem</dt>
-            <dd className="text-zinc-200">TBD</dd>
+            <dd className="text-zinc-200">168 oldal</dd>
           </div>
           <div className="flex items-center justify-between rounded-lg bg-black/30 px-3 py-2">
             <dt className="text-zinc-400">Média</dt>

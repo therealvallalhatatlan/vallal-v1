@@ -3,21 +3,22 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import path from "path";
 import fs from "fs/promises";
+
 import { Container } from "@/components/Container";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatSequence } from "@/lib/format";
 import NetworkMap from "@/components/NetworkMap";
+import TweetRotator from "@/components/TweetRotator";
 import FAQ from "@/components/FAQ";
 import TabbedShowcase from "@/components/TabbedShowcase";
 
-// ÚJ: kliens komponensek külön fájlokban
-import StickyBuyBar from "@/components/StickyBuyBar";
-import LightboxTrigger from "@/components/LightboxTrigger";
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://vallalhatatlan.online"),
-  title: { default: "Vállalhatatlan — Könyv • Zene • Drop", template: "%s | Vállalhatatlan" },
+  title: {
+    default: "Vállalhatatlan — Könyv • Zene • Drop",
+    template: "%s | Vállalhatatlan",
+  },
   description:
     "Vállalhatatlan: kortárs, urbánus novellák + QR-kódos digitális élmény. Dead-drop, soundtrack, vizuálok. Limitált, sorszámozott példányok.",
   alternates: { canonical: "/" },
@@ -34,7 +35,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Vállalhatatlan — Könyv • Zene • Drop",
-    description: "Nyers, sötét humorú novellák + élő, digitális kiterjesztés. Limitált példányok.",
+    description:
+      "Nyers, sötét humorú novellák + élő, digitális kiterjesztés. Limitált példányok.",
     images: ["/api/og?title=V%C3%A1llalhatatlan"],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
@@ -44,45 +46,61 @@ export const metadata: Metadata = {
   themeColor: "#0ea5a3",
 };
 
-// --- számlálók (szerver) ---
+// ---------------- Counters (változatlan backend logika) ----------------
 async function readCountersSupabase() {
   const url = (process.env.SUPABASE_URL || "").replace(/\/$/, "");
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
-  const resp = await fetch(`${url}/rest/v1/counters?id=eq.main`, {
-    method: "GET",
-    headers: { apikey: key, Authorization: `Bearer ${key}`, Accept: "application/json" },
-    cache: "no-store",
-  });
-  if (!resp.ok) return null;
-  const json = await resp.json();
-  const row = json?.[0];
-  if (!row) return null;
-  return {
-    goal: Number(row.goal ?? 100),
-    total_sold: Number(row.total_sold ?? row.preorders ?? 0),
-    last_sequence_number: Number(row.last_sequence_number ?? 0),
-  };
-}
-
-async function readCountersFile() {
   try {
-    const raw = await fs.readFile(path.join(process.cwd(), "data", "counters.json"), "utf-8");
-    const j = JSON.parse(raw);
+    const resp = await fetch(`${url}/rest/v1/counters?id=eq.main`, {
+      method: "GET",
+      headers: { apikey: key, Authorization: `Bearer ${key}`, Accept: "application/json" },
+      cache: "no-store",
+    });
+    if (!resp.ok) {
+      console.warn("[PAGE] Supabase GET failed:", resp.status, await resp.text());
+      return null;
+    }
+    const json = await resp.json();
+    if (json && json[0]) {
+      const row = json[0];
+      return {
+        goal: Number(row.goal ?? 100),
+        total_sold: Number(row.total_sold ?? row.preorders ?? 0),
+        last_sequence_number: Number(row.last_sequence_number ?? 0),
+      };
+    }
+    return null;
+  } catch (err) {
+    console.error("[PAGE] Supabase fetch error:", err);
+    return null;
+  }
+}
+async function readCountersFile() {
+  const COUNTERS_PATH = path.join(process.cwd(), "data", "counters.json");
+  try {
+    const raw = await fs.readFile(COUNTERS_PATH, "utf-8");
+    const json = JSON.parse(raw);
     return {
-      goal: Number(j.goal ?? 100),
-      total_sold: Number(j.total_sold ?? j.preorders ?? 0),
-      last_sequence_number: Number(j.last_sequence_number ?? 0),
+      goal: Number.isFinite(Number(json.goal)) ? Math.max(1, Number(json.goal)) : 100,
+      total_sold: Number.isFinite(Number(json.total_sold ?? json.preorders))
+        ? Math.max(0, Number(json.total_sold ?? json.preorders))
+        : 0,
+      last_sequence_number: Number.isFinite(Number(json.last_sequence_number ?? 0))
+        ? Math.max(0, Number(json.last_sequence_number ?? 0))
+        : 0,
     };
   } catch {
     return { goal: 100, total_sold: 0, last_sequence_number: 0 };
   }
 }
-
 async function readCounters() {
-  return (await readCountersSupabase()) ?? (await readCountersFile());
+  const sup = await readCountersSupabase();
+  if (sup) return sup;
+  return readCountersFile();
 }
 
+// --------------------------------- Page ---------------------------------
 export default async function HomePage() {
   const { goal, total_sold, last_sequence_number } = await readCounters();
   const preorders = Math.min(total_sold ?? 0, goal);
@@ -93,91 +111,86 @@ export default async function HomePage() {
 
   return (
     <Container>
-      <div className="mx-auto py-10 px-4 space-y-10">
-        {/* HERO */}
-        <header className="flex flex-col gap-6">
-          <div>
-            <h1 className="text-5xl md:text-6xl font-black italic tracking-[-0.04em] text-lime-400 crt-glitch">
+
+      {/* ---------- HERO / ABOVE THE FOLD ---------- */}
+      <div className="mx-auto py-10 px-4 space-y-12">
+        <header className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="">
+            <h1 className="text-4xl md:text-5xl font-black italic tracking-[-0.04em] text-lime-400 crt-glitch">
               Vállalhatatlan
             </h1>
-            <p className="mt-3 text-lime-300/80 leading-relaxed max-w-2xl">
-              100 példány. Egy városi kaland. Nem boltban veszed meg —{" "}
-              <span className="text-lime-200">hanem megtalálod*</span>. Könyv + Adrenalin + MP3
+            <p className="mt-3 text-lime-300/80 leading-relaxed">
+              "Van egy tudatállapot, amiben meg tudjuk hajlítani a valóságot. Nem tudjuk irányítani, de valami érezhetően megváltozik. A dolgok valószínűtlensége növekszik. Furcsa és szürreális dolgok történnek velünk. Nincs más magyarázatom ezekre a történetekre"
             </p>
-            <p className="text-xs text-lime-200">*Kérésre postázom is.</p>
 
-            <div className="mt-5 grid grid-cols-3 gap-4 max-w-lg text-center">
-              <Stat label="Előrendelések" value={preorders} />
-              <Stat label="Összes példány" value={goal} />
-              <Stat
-                label="A te sorszámod"
-                value={soldOut ? "—" : `#${formatSequence(yourNumber ?? 1)}`}
-              />
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Button asChild size="sm" className="border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black" variant="outline">
+                <Link href="/konyv">Mi ez a könyv?</Link>
+              </Button>
+              <Button asChild size="sm" className="bg-lime-400 text-black hover:bg-lime-300">
+                <Link href="/novellak">Ugrás a novellákhoz</Link>
+              </Button>
+              <Button asChild size="sm" className="border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black" variant="outline">
+                <Link href="/music">Hallgasd a soundtracket</Link>
+              </Button>
             </div>
 
-            <div className="mt-5 flex flex-col items-start gap-3">
-              <div className="flex items-center gap-3">
-                <Button
-                  asChild
-                  size="lg"
-                  className="border-lime-400 text-lime-900 bg-lime-400 hover:bg-lime-300 hover:text-black"
-                  data-umami-event="hero_buy_click"
-                  disabled={soldOut}
-                >
-                  <Link href={soldOut ? "#" : "/checkout"}>
-                    Sorszám lefoglalása – {formatCurrency(15000)}
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black"
-                >
-                  <Link href="/konyv">Mi ez?</Link>
-                </Button>
-              </div>
-              <div className="text-[12px] text-lime-300/80 flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span>Stripe • titkosított fizetés</span>
-                <span className="opacity-40">|</span>
-                <span>Nem jön össze? Teljes visszatérítés</span>
-                <span className="opacity-40">|</span>
-                <span>Drop-útmutató e-mailben</span>
-              </div>
-              <div className="mt-1 text-[13px] text-lime-300/70 font-mono">
-                {percent}% funded • {remaining} remaining • #{formatSequence(yourNumber ?? 1)} lenne a tiéd
-              </div>
+            <div className="mt-4 text-[13px] text-lime-300/70 font-mono" aria-live="polite">
+              <span className="inline-flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-lime-400 animate-ping" />
+                <TweetRotator
+                  heightPx={16}
+                  messages={[
+                    "Jövő hét elején megy a nyomdába.",
+                    "Posta is játszik.",
+                    "Számozott, dedikált példányok.",
+                  ]}
+                  typeMsPerChar={26}
+                  eraseMsPerChar={12}
+                  holdAfterTypeMs={1200}
+                  holdAfterEraseMs={420}
+                />
+              </span>
             </div>
           </div>
-        </header>
 
-        {/* Social proof (ide tegyél valós idézeteket) */}
-        <section className="grid  gap-3">
-          <Quote author="u/Aggressive_Toucan">„Nehéz leírni, mennnyire hangulatos a késő esti metrón olvasni ezeket, miközben szól a fülemben valami kétezres évekbeli techno/house mix. Nagyon jól írsz!”</Quote>
-          <Quote author="u/Cherrydarling">„Bizsergetően jó cucc - és persze teljesen legális. Megcsavar, mélyre visz, szórakoztat - deviáns, abszurd, és azt hiszem őszinte ez a strukturált zűrzavar ami egy jószándékú ámokfutás zseniális leirata.
-Sokkal több mint néhány random régi underground story, ez terápiás töltés - élmény.”</Quote>
-          <Quote author="u/bober">„Wow. Igazi audiovizuális élmény lesz ez a könyv, várom már a droppot nagyon. Egyelőre nem akarom lelőni a poént, szóval nem hallgatom végig őket, majd szépen a könyvvel együtt.”</Quote>
-        </section>
-
-        {/* „Lapozz bele” + soundtrack */}
-        <section className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            <LightboxTrigger
-              label="Lapozz bele (8 oldal)"
-              images={["/sample/pages-1-4.png", "/sample/pages-5-8.png"]}
-            />
+          <aside className="w-full md:w-auto self-stretch md:self-auto text-center rounded-xl border border-lime-400/10 bg-black/60 p-4">
+            <div className="text-lime-300/70 text-xs uppercase tracking-widest">Következő Drop</div>
+            <div className="text-lime-400 text-4xl md:text-3xl font-extrabold leading-tight mt-1">
+              {soldOut ? "—" : `${formatSequence(yourNumber ?? 1)}`}
+            </div>
+            <div className="mt-2 text-[12px] text-lime-300/70">maradék: {remaining}</div>
             <Button
               asChild
+              size="sm"
+              className="mt-3 w-full border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black"
               variant="outline"
-              className="border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black"
+              disabled={soldOut}
             >
-              <Link href="/music">Hallgasd bele a soundtrackbe</Link>
+              <Link href={soldOut ? "#" : "/checkout"}>{soldOut ? "Elfogyott" : "Megveszem"}</Link>
             </Button>
-          </div>
-          <TabbedShowcase className="mt-4" />
+          </aside>
+        </header>
+
+        {/* ---------- PROOF / VALUE (TabbedShowcase + Key line) ---------- */}
+        <section aria-labelledby="value">
+          <h2 id="value" className="sr-only">Miért különleges</h2>
+          <blockquote className="italic text-lime-200/90">
+            Könyv + Adrenalin + Soundtrack + MP3
+            <Link
+              href="/music"
+              aria-label="Játssz bele"
+              className="ml-3 inline-flex h-5 w-5 items-center justify-center rounded-full bg-black text-lime-400 ring-1 ring-lime-400 hover:bg-lime-400 hover:text-black transition-colors align-middle"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-[60%] w-[60%]">
+                <polygon points="8,5 19,12 8,19" fill="currentColor" />
+              </svg>
+            </Link>
+          </blockquote>
+          <TabbedShowcase className="mt-8" />
         </section>
 
-        {/* Nagy vizuál */}
+        {/* ---------- COVER / VISUAL ---------- */}
         <Card className="overflow-hidden">
           <img
             src="/vallalhatatlan.png"
@@ -187,26 +200,47 @@ Sokkal több mint néhány random régi underground story, ez terápiás tölté
           />
         </Card>
 
-        {/* Rövid magyarázat */}
+        {/* ---------- STORY STRAPLINE ---------- */}
         <section className="text-lime-300/80 leading-relaxed space-y-2">
           <p>
-            Minden fejezet saját QR-kódot kap, ami a rész világát nyitja meg — zenével, képpel, néha
-            helyszínnel. Sorszámozott, dedikált példányok.
+            Ez nem „csak” irodalom. Ez egy átjáró: minden fejezet saját QR-kódot kap, ami a rész világát nyitja meg —
+            zenével, képpel, néha helyszínnel.
+          </p>
+          <p>
+            Összesen {goal} példány készül. Sorszámozott. Dedikált. Aki megtalálja, annak története lesz belőle.
           </p>
         </section>
 
-        {/* Progress csík */}
+        {/* ---------- COUNTER / PROGRESS ---------- */}
         <Card className="p-4">
-          <div className="flex justify-between text-[11px] text-lime-300/80">
-            <span>{percent}% funded</span>
-            <span>{remaining} remaining</span>
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-lime-400">{preorders}</div>
+              <div className="text-lime-300/60 text-xs">Előrendelések</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-lime-400">{goal}</div>
+              <div className="text-lime-300/60 text-xs">Összes példány</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-lime-400">
+                {soldOut ? "—" : `#${formatSequence(yourNumber ?? 1)}`}
+              </div>
+              <div className="text-lime-300/60 text-xs">A te sorszámod</div>
+            </div>
           </div>
-          <div className="mt-2 w-full bg-lime-900/30 rounded-full h-3">
-            <div className="bg-lime-400 h-3 rounded-full transition-all" style={{ width: `${percent}%` }} />
+          <div className="mt-3 space-y-1">
+            <div className="flex justify-between text-[11px] text-lime-300/80">
+              <span>{percent}% funded</span>
+              <span>{remaining} remaining</span>
+            </div>
+            <div className="w-full bg-lime-900/30 rounded-full h-3">
+              <div className="bg-lime-400 h-3 rounded-full transition-all" style={{ width: `${percent}%` }} />
+            </div>
           </div>
         </Card>
 
-        {/* Másodlagos CTA */}
+        {/* ---------- CTA STRIP ---------- */}
         <section className="text-center space-y-4">
           <div className="text-lime-300/70 text-sm">A te példányod sorszáma</div>
           <div className="crt-glitch text-4xl font-extrabold text-lime-400 drop-shadow">
@@ -217,10 +251,9 @@ Sokkal több mint néhány random régi underground story, ez terápiás tölté
             size="lg"
             className="mx-auto border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black"
             variant="outline"
-            data-umami-event="cta_strip_click"
             disabled={soldOut}
           >
-            <Link href={soldOut ? "#" : "/checkout"}>Sorszám lefoglalása</Link>
+            <Link href={soldOut ? "#" : "/checkout"}>Mutasd, hol van</Link>
           </Button>
           <div className="text-[12px] text-lime-300/70 space-y-1">
             <div>› A drop ára: {formatCurrency(15000)}</div>
@@ -228,7 +261,7 @@ Sokkal több mint néhány random régi underground story, ez terápiás tölté
           </div>
         </section>
 
-        {/* Sárga szalag */}
+        {/* ---------- MARQUEE ---------- */}
         <div className="relative rotate-[-6deg] bg-lime-500 text-black py-2 select-none overflow-hidden">
           <div className="marquee whitespace-nowrap font-black tracking-wider uppercase">
             {Array.from({ length: 12 }).map((_, i) => (
@@ -239,7 +272,7 @@ Sokkal több mint néhány random régi underground story, ez terápiás tölté
           </div>
         </div>
 
-        {/* Térkép */}
+        {/* ---------- MAP / DROPS ---------- */}
         <section id="terkep" aria-labelledby="drops">
           <h2 id="drops" className="sr-only">Drop helyek</h2>
           <NetworkMap
@@ -257,11 +290,27 @@ Sokkal több mint néhány random régi underground story, ez terápiás tölté
           />
         </section>
 
-        {/* GYIK */}
+        {/* ---------- FAQ ---------- */}
         <section className="text-lime-200/80 text-sm leading-relaxed">
           <FAQ className="mt-16" />
         </section>
 
+        {/* ---------- SOCIAL / CONTACT ---------- */}
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <img src="/swipe.jpg" alt="Vállalhatatlan" className="h-10 w-10 rounded-full object-cover" />
+            <div>
+              <div className="font-semibold text-lime-300">Vállalhatatlan</div>
+              <div className="text-[14px] text-lime-300/70 flex gap-3">
+                <a href="https://www.reddit.com/r/vallalhatatlan/" target="_blank" rel="noopener noreferrer" className="hover:text-lime-400">Reddit</a>
+                <a href="https://www.facebook.com/vallalhatatlan2000" target="_blank" rel="noopener noreferrer" className="hover:text-lime-400">Facebook</a>
+                <a href="mailto:hello@vallalhatatlan.online" className="hover:text-lime-400">Email</a>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* ---------- FOOTER ---------- */}
         <footer className="pb-8 text-center">
           <p className="text-lime-300/60 text-[13px]">
             © 2025 created by{" "}
@@ -285,44 +334,26 @@ Sokkal több mint néhány random régi underground story, ez terápiás tölté
         </footer>
       </div>
 
-      {/* Sticky buy bar (mobil) */}
-      <StickyBuyBar
-        soldOut={soldOut}
-        price={15000}
-        sequence={yourNumber ?? 1}
-        percent={percent}
-      />
-
-      {/* stílusok */}
+      {/* ---------- Utilities / Effects ---------- */}
       <style>{`
         .marquee { display:inline-block; will-change: transform; animation: marquee 28s linear infinite; }
         @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
+        /* CRT/Glitch */
         .crt-glitch { position: relative; animation: flicker 0.15s infinite linear alternate, rgb-shift 2s infinite; text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #a3e635; }
         .crt-glitch::before { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 50%, rgba(163,230,53,.03) 50%); background-size: 100% 4px; pointer-events: none; animation: scanlines .1s linear infinite; }
 
         @keyframes flicker { 0%{opacity:1} 97%{opacity:1} 98%{opacity:.98} 99%{opacity:.96} 100%{opacity:1} }
-        @keyframes rgb-shift { 0% { text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #a3e635; transform: translate(0) } 20% { text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #a3e635; transform: translate(-1px,0) } 40% { transform: translate(-1px,1px) } 60% { transform: translate(0,1px) } 80% { transform: translate(1px,0) } 100% { transform: translate(0) } }
+        @keyframes rgb-shift {
+          0% { text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #a3e635; transform: translate(0) }
+          20% { text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #a3e635; transform: translate(-1px,0) }
+          40% { transform: translate(-1px,1px) }
+          60% { transform: translate(0,1px) }
+          80% { transform: translate(1px,0) }
+          100% { transform: translate(0) }
+        }
         @keyframes scanlines { 0%{transform:translateY(0)} 100%{transform:translateY(4px)} }
       `}</style>
     </Container>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div>
-      <div className="text-2xl font-bold text-lime-400">{value}</div>
-      <div className="text-lime-300/60 text-xs">{label}</div>
-    </div>
-  );
-}
-
-function Quote({ author, children }: { author: string; children: React.ReactNode }) {
-  return (
-    <Card className="p-3 border-lime-400/20">
-      <div className="text-lime-200 text-sm leading-relaxed">“{children}”</div>
-      <div className="mt-2 text-[12px] text-lime-400/80">— {author}</div>
-    </Card>
   );
 }
