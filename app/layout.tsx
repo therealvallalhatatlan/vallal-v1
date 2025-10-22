@@ -127,12 +127,7 @@ export default function RootLayout({
 
         {/* Page content above video */}
         <div className="content-above relative z-20">
-      <div className="mx-auto w-[min(960px,100vw-32px)] px-4">
-        
-        
 
-
-      </div>
           {children}
           <Analytics />
           <SpeedInsights/>

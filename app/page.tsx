@@ -110,10 +110,10 @@ export default async function HomePage() {
   const soldOut = remaining === 0;
 
   return (
-    <Container>
+    <div>
 
       {/* ---------- HERO / ABOVE THE FOLD ---------- */}
-      <div className="mx-auto py-10 px-4 space-y-12">
+      <div className="mx-auto max-w-3xl py-10 px-4 space-y-12">
         <header className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="">
             <h1 className="text-4xl md:text-5xl font-black italic tracking-[-0.04em] text-lime-400 crt-glitch">
@@ -354,6 +354,6 @@ export default async function HomePage() {
         }
         @keyframes scanlines { 0%{transform:translateY(0)} 100%{transform:translateY(4px)} }
       `}</style>
-    </Container>
+    </div>
   );
 }

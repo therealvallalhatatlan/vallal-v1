@@ -1,5 +1,6 @@
 // app/novellak/page.tsx
 import type { Metadata } from "next";
+import Link from "next/link";
 import path from "node:path";
 import { promises as fs } from "node:fs";
 
@@ -138,7 +139,21 @@ export default async function Page() {
   const collectionJsonLd = buildCollectionJsonLd(items);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 prose prose-invert">
+    <main className="mx-auto max-w-3xl px-4 py-10 prose prose-invert">
+       {/* 1) HEADER */}
+        <header className="flex items-start justify-between">
+          <div>
+            <div className="mt-2 mb-2 text-4xl font-black italic tracking-[-0.04em] text-lime-400 crt-glitch">
+              <Link href="/" className="hover:opacity-80 transition-opacity">
+                Vállalhatatlan
+              </Link> <br/>
+            </div>
+          </div>
+
+          
+
+        </header>
+
       <h1 className="mb-1 tracking-tight text-lime-400">Novellák</h1>
       <p className="mt-0 text-sm text-zinc-400">Minden cím saját aloldallal, zenével és vizuális rétegekkel</p>
 
@@ -187,6 +202,27 @@ export default async function Page() {
         </ul>
       )}
 
+      {/* ---------- Utilities / Effects ---------- */}
+      <style>{`
+        .marquee { display:inline-block; will-change: transform; animation: marquee 28s linear infinite; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        /* CRT/Glitch */
+        .crt-glitch { position: relative; animation: flicker 0.15s infinite linear alternate, rgb-shift 2s infinite; text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #a3e635; }
+        .crt-glitch::before { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 50%, rgba(163,230,53,.03) 50%); background-size: 100% 4px; pointer-events: none; animation: scanlines .1s linear infinite; }
+
+        @keyframes flicker { 0%{opacity:1} 97%{opacity:1} 98%{opacity:.98} 99%{opacity:.96} 100%{opacity:1} }
+        @keyframes rgb-shift {
+          0% { text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #a3e635; transform: translate(0) }
+          20% { text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #a3e635; transform: translate(-1px,0) }
+          40% { transform: translate(-1px,1px) }
+          60% { transform: translate(0,1px) }
+          80% { transform: translate(1px,0) }
+          100% { transform: translate(0) }
+        }
+        @keyframes scanlines { 0%{transform:translateY(0)} 100%{transform:translateY(4px)} }
+      `}</style>
+
       {/* JSON-LD: Breadcrumb + Collection/ItemList */}
       <script
         type="application/ld+json"
@@ -197,5 +233,6 @@ export default async function Page() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
       />
     </main>
+
   );
 }
