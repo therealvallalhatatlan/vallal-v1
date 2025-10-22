@@ -47,7 +47,7 @@ const TABS: { key: TabKey; label: string; description: string }[] = [
     key: "kaland",
     label: "Kaland",
     description:
-      "Dead drop terjesztés: a könyvet profi csomagolásban rejtem el, a koordinátákat megadom. Publikus, kontaktmentes hely – nem szívatás, hanem tiszta kaland.",
+      "Dead drop terjesztés: a könyvet profi csomagolásban rejtem el, a koordinátákat megadom. Publikus, kontaktmentes hely – nem szívatás, hanem tiszta kaland. (*postán is megrendelheted)",
   },
 ];
 
