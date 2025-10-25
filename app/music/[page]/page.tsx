@@ -2,6 +2,7 @@ import AudioPlayer from '@/components/AudioPlayer'
 import { listSlugs, loadPlaylist } from '@/lib/playlistIndex'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { PlaylistSelector } from '@/components/PlaylistSelector'
 
 
 export const runtime = 'nodejs'
@@ -28,9 +29,8 @@ export async function generateMetadata(
 
 export default async function MusicPaged({ params }: { params: { page: string } }) {
 const { page } = params
-const pageNum = Math.max(1, Number(page) || 1)
-
-
+const parsedPage = Number(page)
+const pageNum = Math.max(1, Number.isNaN(parsedPage) ? 1 : parsedPage)
 const slugs = await listSlugs()
 const total = slugs.length
 if (total === 0) {
@@ -47,6 +47,14 @@ const idx = Math.min(pageNum, total) - 1
 const slug = slugs[idx]
 const data = await loadPlaylist(slug)
 
+// Load all playlist titles for the dropdown
+const playlistOptions = await Promise.all(
+  slugs.map(async (s, i) => {
+    const playlistData = await loadPlaylist(s)
+    const title = (playlistData as any)?.title || decodeURIComponent(s).replace(/-/g, ' ')
+    return { slug: s, title, pageNum: i + 1 }
+  })
+)
 
 const displayTitle = decodeURIComponent(slug).replace(/-/g, ' ')
 
@@ -68,22 +76,12 @@ return (
 
         </header>
 
-{/* Pager felül */}
-<nav className="flex flex-wrap items-center gap-2 mb-6">
-{slugs.map((s, i) => {
-const n = i + 1
-const active = n === pageNum
-return (
-<a
-key={s}
-href={`/music/${n}`}
-className={`px-3 py-1 rounded-lg border ${active ? 'border-lime-400 text-lime-300' : 'border-zinc-700 text-zinc-300 hover:border-zinc-500'}`}
->
-{n}
-</a>
-)
-})}
-</nav>
+{/* Dropdown selector by title */}
+<PlaylistSelector 
+  options={playlistOptions}
+  currentPage={pageNum}
+  total={total}
+/>
 
 {/* Címsor erősebb RGB-szétcsúszással */}
 <h1 className="text-6xl font-semibold mt-0 mb-6 text-white tracking-tighter">

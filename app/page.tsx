@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import path from "path";
 import fs from "fs/promises";
 
-import { Container } from "@/components/Container";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatSequence } from "@/lib/format";
@@ -120,7 +119,7 @@ export default async function HomePage() {
               Vállalhatatlan
             </h1>
             <p className="mt-3 text-lime-300/80 leading-relaxed">
-              "Van egy tudatállapot, amiben meg tudjuk hajlítani a valóságot. Nem tudjuk irányítani, de valami érezhetően megváltozik. A dolgok valószínűtlensége növekszik. Furcsa és szürreális dolgok történnek velünk. Nincs más magyarázatom ezekre a történetekre"
+              A Vállalhatatlan egy interdimenzionális művészeti projekt, ami összekapcsolja az olvasást, a zenét és a városi kalandokat.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-3">
@@ -141,9 +140,10 @@ export default async function HomePage() {
                 <TweetRotator
                   heightPx={16}
                   messages={[
-                    "Jövő hét elején megy a nyomdába.",
+                    "A könyv már a nyomdában!!",
                     "Posta is játszik.",
                     "Számozott, dedikált példányok.",
+                    "Nemsokára indul a terjesztés!",
                   ]}
                   typeMsPerChar={26}
                   eraseMsPerChar={12}
