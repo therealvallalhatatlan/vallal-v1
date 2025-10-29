@@ -61,7 +61,7 @@ const displayTitle = decodeURIComponent(slug).replace(/-/g, ' ')
 
 return (
 <main className="py-8">
-  <div className="mx-auto w-[min(640px,100vw-32px)] px-4 space-y-12">
+  <div className="mx-auto w-[min(640px,100vw-32px)] px-4 space-y-8 text-left">
 
 
 {/* 1) HEADER */}
@@ -81,10 +81,11 @@ return (
   options={playlistOptions}
   currentPage={pageNum}
   total={total}
+  baseUrl="/music"
 />
 
 {/* Címsor erősebb RGB-szétcsúszással */}
-<h1 className="text-6xl font-semibold mt-0 mb-6 text-white tracking-tighter">
+<h1 className="text-4xl font-semibold mt-0 mb-6 text-white tracking-tighter">
     <span className="text-[11px] opacity-50 tracking-wider">Soundtrack ehhez a novellához</span> <br />
     {displayTitle}
 </h1>
@@ -92,7 +93,7 @@ return (
 
 {/* Excerpt, ha van */}
 {data?.excerpt && (
-<p className="text-zinc-300/90 text-lg leading-relaxed mb-8 whitespace-pre-line">
+<p className="text-zinc-300/90 text-base leading-relaxed mb-8 whitespace-pre-line">
 {data.excerpt}
 </p>
 )}

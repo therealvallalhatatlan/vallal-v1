@@ -35,19 +35,19 @@ const TABS: { key: TabKey; label: string; description: string }[] = [
     key: "book",
     label: "Könyv",
     description:
-      "Fizikai könyv, 24 fejezettel. Minden fejezet saját QR‑kódot kap, ami az adott rész világát nyitja meg.",
+      "Fizikai könyv, 28+1 fejezettel. Minden fejezet saját QR‑kódot kap, ami az adott rész világát nyitja meg.",
   },
   {
     key: "mp3",
     label: "MP3",
     description:
-      "24 fejezet × 2–3 track. Az első szám az olvasás ritmusára készült; a többi mélyíti a témát. Minden playlist letölthető MP3‑ban.",
+      "28+1 fejezet × 2–3 track. Az első szám az olvasás ritmusára készült; a többi mélyíti a témát. Minden playlist letölthető MP3‑ban.",
   },
   {
     key: "kaland",
     label: "Kaland",
     description:
-      "Dead drop terjesztés: a könyvet profi csomagolásban rejtem el, a koordinátákat megadom. Publikus, kontaktmentes hely – nem szívatás, hanem tiszta kaland. (*postán is megrendelheted)",
+      "Dead drop terjesztés: a könyvet profi csomagolásban rejtem el, a koordinátákat megadom. Publikus, kontaktmentes hely – nem szívatás, hanem tiszta kaland. (*ha akarod, postán is megrendelheted)",
   },
 ];
 
@@ -116,7 +116,7 @@ export default function TabbedShowcase({
               tabIndex={selected ? 0 : -1}
               onClick={() => setActive(idx)}
               className={clsx(
-                "crt-glitch relative rounded-t-xl px-4 py-2 text-sm font-semibold tracking-wide",
+                "relative rounded-t-xl px-4 py-2 text-lg font-semibold tracking-wide",
                 "transition-colors",
                 selected
                   ? "text-lime-400"

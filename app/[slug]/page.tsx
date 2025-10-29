@@ -3,6 +3,8 @@ import AudioPlayer from "@/components/AudioPlayer";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { loadPlaylist } from "@/lib/playlistIndex";
+import { listSlugs } from "@/lib/playlistIndex";
+import { PlaylistSelector } from "@/components/PlaylistSelector";
 
 // ===== Config =====
 const SITE_ORIGIN = "https://vallalhatatlan.online";
@@ -48,6 +50,19 @@ export default async function Page({ params }: { params: { slug: string } }) {
   }
 
   const data = await loadPlaylist(slug);
+  
+  // Load all available slugs for the dropdown
+  const allSlugs = await listSlugs();
+  const currentIndex = allSlugs.findIndex(s => s === slug);
+  
+  // Load all playlist titles for the dropdown
+  const playlistOptions = await Promise.all(
+    allSlugs.map(async (s, i) => {
+      const playlistData = await loadPlaylist(s);
+      const title = (playlistData as any)?.title || humanize(s);
+      return { slug: s, title, pageNum: i + 1 };
+    })
+  );
 
   // Resilient fallback if JSON missing/invalid
   const tracks = data?.tracks?.length
@@ -62,13 +77,25 @@ export default async function Page({ params }: { params: { slug: string } }) {
   const displayTitle = humanize(slug);
 
   return (
-    <main className="w-[min(640px,100vw-32px)] px-4 space-y-12 mx-auto p-6 text-zinc-100">
-      <h1 className="text-6xl font-semibold mt-12 mb-4 text-center rgb-title">
+    <main className="w-[min(640px,100vw-32px)] px-4 space-y-8 mx-auto p-6 text-zinc-100 text-left">
+      <h1 className="text-4xl font-semibold mt-12 mb-4 text-left rgb-title">
         {displayTitle}
       </h1>
 
+      {/* Dropdown selector by title */}
+      {allSlugs.length > 1 && (
+        <div className="mb-6">
+          <PlaylistSelector 
+            options={playlistOptions}
+            currentPage={currentIndex + 1}
+            total={allSlugs.length}
+            baseUrl=""
+          />
+        </div>
+      )}
+
       {excerpt && (
-        <p className="text-zinc-300/90 text-lg leading-relaxed mb-8 whitespace-pre-line">
+        <p className="text-zinc-300/90 text-base leading-relaxed mb-8 whitespace-pre-line">
           {excerpt}
         </p>
       )}

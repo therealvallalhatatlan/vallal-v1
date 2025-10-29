@@ -112,38 +112,28 @@ export default async function HomePage() {
     <div>
 
       {/* ---------- HERO / ABOVE THE FOLD ---------- */}
-      <div className="mx-auto max-w-3xl py-10 px-4 space-y-12">
+      <div className="mx-auto max-w-3xl py-10 px-4 space-y-12 text-left">
         <header className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="">
-            <h1 className="text-4xl md:text-5xl font-black italic tracking-[-0.04em] text-lime-400 crt-glitch">
+            <h1 className="text-3xl md:text-4xl font-black italic tracking-[-0.04em] text-lime-400 crt-glitch">
               Vállalhatatlan
             </h1>
-            <p className="mt-3 text-lime-300/80 leading-relaxed">
-              A Vállalhatatlan egy interdimenzionális művészeti projekt, ami összekapcsolja az olvasást, a zenét és a városi kalandokat.
+            <p className="mt-4 mb-4 text-base text-lime-300/80 leading-relaxed">
+              Vállalhatatlan, meg sem történt sztorik az ezredvégi Budapest nyüzsgő, drogok fűtötte undergroundjából.<br />Limitált példányszámú, dedikált könyv + QR-kódos digitális élmény + Dead drop* terjesztési mód. Lépj be a történetbe.
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Button asChild size="sm" className="border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black" variant="outline">
-                <Link href="/konyv">Mi ez a könyv?</Link>
-              </Button>
-              <Button asChild size="sm" className="bg-lime-400 text-black hover:bg-lime-300">
-                <Link href="/novellak">Ugrás a novellákhoz</Link>
-              </Button>
-              <Button asChild size="sm" className="border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black" variant="outline">
-                <Link href="/music">Hallgasd a soundtracket</Link>
-              </Button>
-            </div>
 
             <div className="mt-4 text-[13px] text-lime-300/70 font-mono" aria-live="polite">
-              <span className="inline-flex items-center gap-2">
+              <span className="inline-flex items-center gap-2 bg-lime-300/0rounded-md">
                 <span className="h-2 w-2 rounded-full bg-lime-400 animate-ping" />
                 <TweetRotator
                   heightPx={16}
                   messages={[
-                    "A könyv már a nyomdában!!",
-                    "Posta is játszik.",
-                    "Számozott, dedikált példányok.",
+                    "A könyv már a nyomdában van!",
+                    "Köszi nektek kurvajó leesz !!!",
                     "Nemsokára indul a terjesztés!",
+                    "A privát oldalatok készül!",
+                    "Postázás is lehetséges, nem csak dead drop!",
                   ]}
                   typeMsPerChar={26}
                   eraseMsPerChar={12}
@@ -156,15 +146,15 @@ export default async function HomePage() {
 
           <aside className="w-full md:w-auto self-stretch md:self-auto text-center rounded-xl border border-lime-400/10 bg-black/60 p-4">
             <div className="text-lime-300/70 text-xs uppercase tracking-widest">Következő Drop</div>
-            <div className="text-lime-400 text-4xl md:text-3xl font-extrabold leading-tight mt-1">
+            <div className="crt-glitch text-lime-400 text-4xl md:text-3xl font-extrabold leading-tight mt-1">
               {soldOut ? "—" : `${formatSequence(yourNumber ?? 1)}`}
             </div>
             <div className="mt-2 text-[12px] text-lime-300/70">maradék: {remaining}</div>
             <Button
               asChild
               size="sm"
-              className="mt-3 w-full border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black"
-              variant="outline"
+              className="mt-3 w-full border-lime-400 hover:bg-lime-400 hover:text-black"
+              variant="default"
               disabled={soldOut}
             >
               <Link href={soldOut ? "#" : "/checkout"}>{soldOut ? "Elfogyott" : "Megveszem"}</Link>
@@ -172,21 +162,39 @@ export default async function HomePage() {
           </aside>
         </header>
 
+        
+                {/* ---------- COUNTER / PROGRESS ---------- */}
+        <Card className="p-4">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="crt-glitch text-3xl font-bold text-lime-400">{preorders}</div>
+              <div className="text-lime-300/60 text-xs">Előrendelések</div>
+            </div>
+            <div>
+              <div className="crt-glitch text-3xl font-bold text-lime-400">{goal}</div>
+              <div className="text-lime-300/60 text-xs">Összes példány</div>
+            </div>
+            <div>
+              <div className="crt-glitch text-3xl font-bold text-lime-400">
+                {soldOut ? "—" : `${formatSequence(yourNumber ?? 1)}`}
+              </div>
+              <div className="text-lime-300/60 text-xs">A te sorszámod</div>
+            </div>
+          </div>
+          <div className="mt-3 space-y-1">
+            <div className="flex justify-between text-[11px] text-lime-300/80">
+              <span>{percent}% funded</span>
+              <span>{remaining} remaining</span>
+            </div>
+            <div className="w-full bg-lime-900/30 rounded-full h-3">
+              <div className="bg-lime-400 h-3 rounded-full transition-all" style={{ width: `${percent}%` }} />
+            </div>
+          </div>
+        </Card>
+        
         {/* ---------- PROOF / VALUE (TabbedShowcase + Key line) ---------- */}
         <section aria-labelledby="value">
           <h2 id="value" className="sr-only">Miért különleges</h2>
-          <blockquote className="italic text-lime-200/90">
-            Könyv + Adrenalin + Soundtrack + MP3
-            <Link
-              href="/music"
-              aria-label="Játssz bele"
-              className="ml-3 inline-flex h-5 w-5 items-center justify-center rounded-full bg-black text-lime-400 ring-1 ring-lime-400 hover:bg-lime-400 hover:text-black transition-colors align-middle"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-[60%] w-[60%]">
-                <polygon points="8,5 19,12 8,19" fill="currentColor" />
-              </svg>
-            </Link>
-          </blockquote>
           <TabbedShowcase className="mt-8" />
         </section>
 
@@ -201,13 +209,13 @@ export default async function HomePage() {
         </Card>
 
         {/* ---------- STORY STRAPLINE ---------- */}
-        <section className="text-lime-300/80 leading-relaxed space-y-2">
+        <section className="text-lime-300/80 leading-relaxed space-y-4 text-base">
           <p>
-            Ez nem „csak” irodalom. Ez egy átjáró: minden fejezet saját QR-kódot kap, ami a rész világát nyitja meg —
-            zenével, képpel, néha helyszínnel.
+            Ez nem egy könyv. Ez egy átjáró. Minden novella saját QR-kódot kap, ami a rész világát nyitja meg —
+            letölthető zenékkel, képpel, néha helyszínekkel.
           </p>
           <p>
-            Összesen {goal} példány készül. Sorszámozott. Dedikált. Aki megtalálja, annak története lesz belőle.
+            Összesen {goal} példány készül. Sorszámozott. Dedikált. Ha megtalálod, belépsz a történetbe, és emlékké válik számodra.
           </p>
         </section>
 
@@ -249,13 +257,13 @@ export default async function HomePage() {
           <Button
             asChild
             size="lg"
-            className="mx-auto border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black"
-            variant="outline"
+            className="mx-auto border-lime-400 text-black hover:bg-lime-200 hover:text-black"
+            variant="default"
             disabled={soldOut}
           >
-            <Link href={soldOut ? "#" : "/checkout"}>Mutasd, hol van</Link>
+            <Link className="crt-glitch" href={soldOut ? "#" : "/checkout"}>Mutasd, hol van</Link>
           </Button>
-          <div className="text-[12px] text-lime-300/70 space-y-1">
+          <div className="text-[12px] text-lime-300/70 space-y-1 ">
             <div>› A drop ára: {formatCurrency(15000)}</div>
             <div>› Klubtagoknak: {formatCurrency(10000)}</div>
           </div>
@@ -292,8 +300,20 @@ export default async function HomePage() {
 
         {/* ---------- FAQ ---------- */}
         <section className="text-lime-200/80 text-sm leading-relaxed">
-          <FAQ className="mt-16" />
+          <FAQ className="mt-16 mb-16" />
         </section>
+
+        <div className="mt-4 flex flex-wrap gap-3 justify-center">
+              <Button asChild size="sm" className="text-xs  text-lime-400 hover:bg-lime-400 hover:text-black" variant="outline">
+                <Link href="/konyv">Mi ez a könyv?</Link>
+              </Button>
+              <Button asChild size="sm" className="text-xs  text-lime-400 hover:bg-lime-400 hover:text-black" variant="outline">
+                <Link href="/novellak">Ugrás a novellákhoz</Link>
+              </Button>
+              <Button asChild size="sm" className="text-xs  text-lime-400 hover:bg-lime-400 hover:text-black" variant="outline">
+                <Link href="/music">Hallgasd a soundtracket</Link>
+              </Button>
+        </div>
 
         {/* ---------- SOCIAL / CONTACT ---------- */}
         <Card className="p-4">
@@ -304,7 +324,7 @@ export default async function HomePage() {
               <div className="text-[14px] text-lime-300/70 flex gap-3">
                 <a href="https://www.reddit.com/r/vallalhatatlan/" target="_blank" rel="noopener noreferrer" className="hover:text-lime-400">Reddit</a>
                 <a href="https://www.facebook.com/vallalhatatlan2000" target="_blank" rel="noopener noreferrer" className="hover:text-lime-400">Facebook</a>
-                <a href="mailto:hello@vallalhatatlan.online" className="hover:text-lime-400">Email</a>
+                <a href="mailto:therealvallalhatatlan@gmail.com" className="hover:text-lime-400">Email</a>
               </div>
             </div>
           </div>

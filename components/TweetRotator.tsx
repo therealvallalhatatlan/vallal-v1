@@ -52,8 +52,8 @@ export default function TweetRotator({
   return (
     <div
       className={clsx(
-        "relative w-full rounded-md border-b border-green-400/20 bg-black/30 p-3",
-        "font-mono text-[12px] leading-[1.35] text-green-200/90",
+        "relative w-full rounded-none pb-6 bg-black/0 p-3 border-none border-lime-400",
+        "font-mono text-[13px] leading-[1.35] text-lime-200",
         className
       )}
       style={{ height: heightPx }}

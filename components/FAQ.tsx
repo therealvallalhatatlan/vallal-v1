@@ -73,18 +73,18 @@ function DetailsRow({ item }: { item: Item }) {
       className="group open:bg-transparent"
       {...(item.open ? { open: true } : {})}
     >
-      <summary className="flex cursor-pointer select-none items-center justify-between py-4 text-green-300 hover:text-green-200">
+      <summary className="flex cursor-pointer select-none items-center justify-between py-4 text-lime-300 hover:text-lime-200">
         <span className="text-[15px] md:text-base">{item.q}</span>
         {/* caret */}
         <svg
-          className="ml-4 h-4 w-4 shrink-0 text-green-400 transition-transform duration-200 group-open:rotate-180"
+          className="ml-4 h-4 w-4 shrink-0 text-lime-300 transition-transform duration-200 group-open:rotate-180"
           viewBox="0 0 24 24" fill="none" aria-hidden="true"
         >
           <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </summary>
 
-      <div className="mb-4 rounded-md border border-green-400/20 bg-black/30 p-4 text-sm leading-relaxed text-green-200/90">
+      <div className="mb-4 rounded-md border border-lime-400/20 bg-black/30 p-4 text-sm leading-relaxed text-lime-200/90">
         {item.a}
       </div>
     </details>
