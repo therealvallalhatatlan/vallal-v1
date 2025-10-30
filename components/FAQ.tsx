@@ -12,15 +12,7 @@ const items: Item[] = [
     open: true,
     a: (
       <>
-        Amint legalább 10 előrendelés beérkezik, elindítjuk a nyomdát. Onnantól a gyártás–száradás–csomagolás 3–4 hét. Készenlétkor kapsz visszaigazolást és sorszámot, majd a kézbesítés módjáról (drop/átvétel) részletes instrukciót.
-      </>
-    ),
-  },
-  {
-    q: "Mi történik, ha a kampány nem éri el a célját?",
-    a: (
-      <>
-        Ha a kampány nem fut be (vagy leállítjuk), visszautaljuk a teljes összeget arra a fizetési módra, amivel fizettél (Stripe). A banktól függően a jóváírás jellemzően 5–10 munkanap.
+        A kampány elérte a célját, és a könyv már kinyomtatásra került! Mindenkivel egyenként felveszem a kapcsolatot a megrendelés beérkezésének sorrendjében. Kapni fogsz egy személyes üzenetet a kézbesítés módjáról (drop/postázás) és a pontos részletekről. Ha még nem kerestelek meg, türelem – sorra kerülsz!
       </>
     ),
   },

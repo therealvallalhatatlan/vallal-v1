@@ -51,12 +51,16 @@ const data = await loadPlaylist(slug)
 const playlistOptions = await Promise.all(
   slugs.map(async (s, i) => {
     const playlistData = await loadPlaylist(s)
-    const title = (playlistData as any)?.title || decodeURIComponent(s).replace(/-/g, ' ')
+    // For dropdown: keep the numbering prefix, but clean the rest
+    const cleanTitle = decodeURIComponent(s).replace(/-/g, ' ')
+    const title = (playlistData as any)?.title || cleanTitle
     return { slug: s, title, pageNum: i + 1 }
   })
 )
 
-const displayTitle = decodeURIComponent(slug).replace(/-/g, ' ')
+const displayTitle = decodeURIComponent(slug)
+  .replace(/^\d+-/, "") // Remove leading numbers and dash  
+  .replace(/-/g, ' ')
 
 
 return (

@@ -105,41 +105,24 @@ export default async function MusicLayout({ children }: { children: ReactNode })
     )
   }
 
-  // 2) Már jogosult, és VAN friss success üzenet → előbb loader, aztán üzenet, majd redirect /music/1
+  // 2) Már jogosult, és VAN friss success üzenet → rövid üzenet, majd redirect
   if (okMsg) {
     return (
       <main className="min-h-[60vh] flex flex-col items-center justify-center gap-6 text-zinc-100">
-        {/* Loader (először ez látszik ~1.5s-ig) */}
-        <div id="loader" className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 rounded-full border-2 border-zinc-700 border-t-lime-400 animate-spin" />
-          <p className="text-sm text-zinc-400">beléptetés…</p>
+        {/* Meta refresh fallback */}
+        <meta httpEquiv="refresh" content="1;url=/music/1" />
+        
+        <div className="max-w-md text-center rounded-xl border border-lime-400/40 bg-zinc-900/90 px-4 py-3 text-lime-200 shadow-lg backdrop-blur-sm">
+          <p>{okMsg}</p>
+          <p className="text-xs text-lime-400 mt-2">Átirányítás 1 másodperc alatt...</p>
         </div>
 
-        {/* Üzenet (csak a loader után jelenik meg ~4s-ig) */}
-        <div
-          id="okmsg"
-          className="hidden max-w-md text-center rounded-xl border border-lime-400/40 bg-zinc-900/90 px-4 py-3 text-lime-200 shadow-lg backdrop-blur-sm"
-        >
-          {okMsg}
-        </div>
-
-        {/* Időzítés: 1.5s loader → 4s üzenet → átirányítás /music/1 */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              (function(){
-                var loader = document.getElementById('loader');
-                var ok = document.getElementById('okmsg');
-                // 1) 1.5s loader
-                setTimeout(function(){
-                  if (loader) loader.style.display = 'none';
-                  if (ok) ok.style.display = 'block';
-                  // 2) 4s üzenet, aztán redirect
-                  setTimeout(function(){
-                    window.location.href = '/music/1';
-                  }, 4000);
-                }, 1500);
-              })();
+              setTimeout(function() {
+                window.location.href = '/music/1';
+              }, 1000);
             `,
           }}
         />

@@ -129,11 +129,12 @@ export default async function HomePage() {
                 <TweetRotator
                   heightPx={16}
                   messages={[
-                    "A könyv már a nyomdában van!",
+                    "KÖNYV KINYOMTATVA !",
+                    "Indul a terjesztés",
+                    "Mindenkivel egyenként kontaktálok",
+                    "első a dead drop, de postázni is tudom",
+                    "a postázás pár ezer forint plusz",
                     "Köszi nektek kurvajó leesz !!!",
-                    "Nemsokára indul a terjesztés!",
-                    "A privát oldalatok készül!",
-                    "Postázás is lehetséges, nem csak dead drop!",
                   ]}
                   typeMsPerChar={26}
                   eraseMsPerChar={12}
@@ -168,7 +169,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <div className="crt-glitch text-3xl font-bold text-lime-400">{preorders}</div>
-              <div className="text-lime-300/60 text-xs">Előrendelések</div>
+              <div className="text-lime-300/60 text-xs">Megrendelések</div>
             </div>
             <div>
               <div className="crt-glitch text-3xl font-bold text-lime-400">{goal}</div>
@@ -224,7 +225,7 @@ export default async function HomePage() {
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-lime-400">{preorders}</div>
-              <div className="text-lime-300/60 text-xs">Előrendelések</div>
+              <div className="text-lime-300/60 text-xs">Megrendelések</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-lime-400">{goal}</div>

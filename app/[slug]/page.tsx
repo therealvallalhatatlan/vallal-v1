@@ -31,7 +31,9 @@ const FALLBACK: Record<string, { title: string; file: string }[]> = {
 
 // ===== Helpers =====
 function humanize(slug: string) {
-  return decodeURIComponent(slug).replace(/-/g, " ");
+  return decodeURIComponent(slug)
+    .replace(/^\d+-/, "") // Remove leading numbers and dash (e.g., "01-", "02-")
+    .replace(/-/g, " ");
 }
 function firstVisualFrom(data?: { visuals?: string[] } | null) {
   const arr =
@@ -59,7 +61,9 @@ export default async function Page({ params }: { params: { slug: string } }) {
   const playlistOptions = await Promise.all(
     allSlugs.map(async (s, i) => {
       const playlistData = await loadPlaylist(s);
-      const title = (playlistData as any)?.title || humanize(s);
+      // For dropdown: keep the numbering prefix, but clean the rest
+      const cleanTitle = decodeURIComponent(s).replace(/-/g, ' ')
+      const title = (playlistData as any)?.title || cleanTitle
       return { slug: s, title, pageNum: i + 1 };
     })
   );
