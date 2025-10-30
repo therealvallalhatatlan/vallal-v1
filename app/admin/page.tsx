@@ -1,14 +1,17 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Container } from "@/components/Container"
-import { Card } from "@/components/Card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/Badge"
-import { Progress } from "@/components/Progress"
-import { validateAdminKey } from "@/lib/actions"
-import { COUNTERS_MOCK } from "@/lib/mocks"
+// Simple mock data since external dependencies are missing
+const COUNTERS_MOCK = {
+  totalGoal: 100,
+  totalPreorders: 42,
+}
+
+async function validateAdminKey(key: string): Promise<boolean> {
+  // Simple validation - replace with real logic
+  return key === "telikabat"
+}
 
 export default function AdminPage() {
   const [adminKey, setAdminKey] = useState("")
@@ -54,54 +57,52 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <Container className="py-12">
+      <div className="max-w-4xl mx-auto py-12 px-4">
         <div className="max-w-md mx-auto">
-          <Card>
-            <div className="space-y-6">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-green-400 mb-2">Admin Access</h1>
-                <p className="text-green-300/60">Enter admin key to continue</p>
-              </div>
-
-              <div className="space-y-4">
-                <Input
-                  type="password"
-                  placeholder="Admin key"
-                  value={adminKey}
-                  onChange={(e) => setAdminKey(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && !isValidating && handleLogin()}
-                  disabled={isValidating}
-                  className="bg-gray-800/50 border-gray-600 text-green-400"
-                />
-                <Button
-                  onClick={handleLogin}
-                  disabled={isValidating}
-                  className="w-full bg-green-400 text-black hover:bg-green-300 disabled:opacity-50"
-                >
-                  {isValidating ? "Validating..." : "Access Admin Panel"}
-                </Button>
-              </div>
+          <div className="space-y-6">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-green-400 mb-2">Admin Access</h1>
+              <p className="text-green-300/60">Enter admin key to continue</p>
             </div>
-          </Card>
+
+            <div className="space-y-4">
+              <input
+                type="password"
+                placeholder="Admin key"
+                value={adminKey}
+                onChange={(e) => setAdminKey(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !isValidating && handleLogin()}
+                disabled={isValidating}
+                className="w-full px-3 py-2 rounded-md bg-gray-800/50 border border-gray-600 text-green-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+              <Button
+                onClick={handleLogin}
+                disabled={isValidating}
+                className="w-full bg-green-400 text-black hover:bg-green-300 disabled:opacity-50"
+              >
+                {isValidating ? "Validating..." : "Access Admin Panel"}
+              </Button>
+            </div>
+          </div>
         </div>
-      </Container>
+      </div>
     )
   }
 
   return (
-    <Container className="py-12">
+    <div className="max-w-4xl mx-auto py-12 px-4">
       <div className="space-y-8">
         {/* Demo warning banner */}
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
           <div className="flex items-center justify-center gap-2">
-            <Badge variant="outline" className="border-yellow-500/50 text-yellow-400">
+            <span className="px-2 py-1 border border-yellow-500/50 text-yellow-400 rounded text-xs">
               DEMO
-            </Badge>
+            </span>
             <p className="text-yellow-400 font-medium">Demo admin – changes not persistent across sessions</p>
           </div>
         </div>
 
-        <Card>
+        <div>
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-green-400">Admin Panel</h1>
             <Button
@@ -120,7 +121,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-green-300">Total Goal</label>
-                <Input
+                <input
                   type="number"
                   value={tempCounters.totalGoal}
                   onChange={(e) =>
@@ -135,7 +136,7 @@ export default function AdminPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-green-300">Total Preorders</label>
-                <Input
+                <input
                   type="number"
                   value={tempCounters.totalPreorders}
                   onChange={(e) =>
@@ -153,20 +154,17 @@ export default function AdminPage() {
               Save Changes
             </Button>
           </div>
-        </Card>
+        </div>
 
         {/* Preview Card */}
-        <Card>
+        <div>
           <h2 className="text-xl font-semibold text-green-300 mb-4">Live Preview</h2>
           <div className="bg-gray-800/30 rounded-lg p-6 border border-gray-700">
             <h3 className="text-lg font-medium text-green-400 mb-4">Community Support</h3>
 
-            <Progress
-              value={counters.totalPreorders}
-              max={counters.totalGoal}
-              label="Preorders Progress"
-              className="mb-4"
-            />
+            <div className="mb-4">
+              <div className="h-2.5 bg-green-600 rounded-full" style={{ width: `${progressPercent}%` }} />
+            </div>
 
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
@@ -183,8 +181,8 @@ export default function AdminPage() {
               <span className="text-lg font-semibold text-green-400">{progressPercent}% funded</span>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
-    </Container>
+    </div>
   )
 }
