@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
+    "build": "npm install --force && next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "postinstall": "npm rebuild lightningcss --silent || true"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.31.6",
@@ -54,7 +55,7 @@
     "gray-matter": "^4.0.3",
     "input-otp": "1.4.1",
     "jose": "^4.15.9",
-    "lucide-react": "^0.454.0",
+    "lightningcss": "^1.21.0",
     "nanoid": "latest",
     "next": "^15.2.4",
     "next-themes": "latest",
@@ -82,3 +83,4 @@
     "vitest": "^3.2.4"
   }
 }
+
