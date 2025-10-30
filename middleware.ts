@@ -1,21 +1,105 @@
-// middleware.ts — kizárjuk a Stripe webhookot a middleware-ből (különben 405/verify hibákat okozhat)
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-// Ha volt korábban bármi header-módosításod / auth-od, tedd vissza a NEXTRESPONSE.NEXT() ELÉ,
-// de NE a /api/stripe/webhook útvonalra fusson rá.
+export async function middleware(request: NextRequest) {
+  // Skip authentication middleware for Stripe webhook
+  if (request.nextUrl.pathname === '/api/stripe/webhook') {
+    return NextResponse.next();
+  }
 
-export function middleware(_req: NextRequest) {
-  // pass-through
-  return NextResponse.next();
+  // Check if Supabase environment variables are available
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn('Supabase environment variables not found, skipping auth middleware');
+    return NextResponse.next();
+  }
+
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  const supabase = createServerClient(
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value: "",
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value: "",
+            ...options,
+          });
+        },
+      },
+    }
+  );
+
+  let user = null;
+  try {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    user = authUser;
+  } catch (error) {
+    console.warn('Failed to get user from Supabase:', error);
+    return NextResponse.next();
+  }
+
+  // Protected routes that require authentication
+  if (
+    request.nextUrl.pathname.startsWith("/profile") ||
+    request.nextUrl.pathname.startsWith("/drop")
+  ) {
+    if (!user) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
+
+  // Redirect authenticated users away from auth pages
+  if (user && (request.nextUrl.pathname === "/login" || 
+               request.nextUrl.pathname === "/signup")) {
+    return NextResponse.redirect(new URL("/profile", request.url));
+  }
+
+  return response;
 }
 
-// Matcher: mindenre fusson, KIVÉVE:
-// - api/stripe/webhook (Stripe POST)
-// - Next statikus fájlok és assetek
 export const config = {
   matcher: [
-    // negative lookahead: kizárjuk az alábbiakat
+    // Exclude Stripe webhook, Next.js internals, and static files
     "/((?!api/stripe/webhook|_next/|static/|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$|.*\\.(?:png|jpg|jpeg|gif|svg|webp|avif|ico|css|js|map|txt|woff2?)$).*)",
   ],
 };
+
