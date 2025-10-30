@@ -1,229 +1,239 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { AuthHeader } from '@/components/AuthHeader'
-import { supabase } from '@/lib/supabase-client'
+import { useState } from 'react'
 
 export default function DropPage() {
-  const [user, setUser] = useState<any>(null)
-  const [canDrop, setCanDrop] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
+  const [hasAccess, setHasAccess] = useState(false)
+  const [password, setPassword] = useState('')
+  const [accessError, setAccessError] = useState('')
+  const [unlocking, setUnlocking] = useState(false)
+
+  // Main form state
+  const [latitude, setLatitude] = useState('')
+  const [longitude, setLongitude] = useState('')
   const [message, setMessage] = useState('')
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const [image, setImage] = useState<File | null>(null)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [recipientEmail, setRecipientEmail] = useState('')
+  const [files, setFiles] = useState<FileList | null>(null)
+  const [gettingGPS, setGettingGPS] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [result, setResult] = useState('')
 
-  useEffect(() => {
-    async function checkAuth() {
-      const { data: { user }, error } = await supabase.auth.getUser()
-      
-      if (error || !user) {
-        window.location.href = '/login'
-        return
+  const handleUnlock = async () => {
+    setAccessError('')
+    setUnlocking(true)
+
+    try {
+      const res = await fetch('/api/check-pass', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      })
+      const data = await res.json()
+
+      if (data.allowed) {
+        setHasAccess(true)
+      } else {
+        setAccessError('Access denied')
       }
-
-      setUser(user)
-
-      // Check if user can drop
-      const { data: userProfile } = await supabase
-        .from('users')
-        .select('can_drop')
-        .eq('email', user.email)
-        .single()
-
-      setCanDrop(!!userProfile?.can_drop)
-      setLoading(false)
+    } catch (err) {
+      setAccessError('Error checking password')
+    } finally {
+      setUnlocking(false)
     }
+  }
 
-    checkAuth()
-  }, [])
-
-  const getLocation = () => {
+  const handleGetGPS = () => {
     if (!navigator.geolocation) {
-      setError('Geolokáció nem támogatott a böngésződben')
+      alert('Geolocation not supported')
       return
     }
 
+    setGettingGPS(true)
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        })
-        setError('')
+        setLatitude(position.coords.latitude.toString())
+        setLongitude(position.coords.longitude.toString())
+        setGettingGPS(false)
       },
       (error) => {
-        setError('Nem sikerült megszerezni a pozíciót: ' + error.message)
-      }
+        console.error('GPS error:', error)
+        alert('GPS failed: ' + error.message)
+        setGettingGPS(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     )
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!user || !canDrop) return
-
     setSubmitting(true)
-    setError('')
-    setSuccess('')
+    setResult('')
 
     try {
-      // Basic validation
-      if (!message.trim()) {
-        setError('Üzenet megadása kötelező')
-        return
-      }
+      const formData = new FormData()
+      formData.append('password', password)
+      formData.append('latitude', latitude)
+      formData.append('longitude', longitude)
+      formData.append('message', message)
+      formData.append('recipientEmail', recipientEmail)
 
-      let imageUrl = null
-      
-      // Upload image if provided
-      if (image) {
-        const fileExt = image.name.split('.').pop()
-        const fileName = `${user.id}-${Date.now()}.${fileExt}`
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('drops')
-          .upload(fileName, image)
-
-        if (uploadError) {
-          throw uploadError
-        }
-
-        imageUrl = uploadData.path
-      }
-
-      // Submit drop data
-      const { error: insertError } = await supabase
-        .from('drops')
-        .insert({
-          user_email: user.email,
-          message: message.trim(),
-          latitude: location?.lat || null,
-          longitude: location?.lng || null,
-          image_url: imageUrl,
-          status: 'pending'
+      if (files) {
+        Array.from(files).forEach((file, index) => {
+          formData.append(`image_${index}`, file)
         })
-
-      if (insertError) {
-        throw insertError
       }
 
-      setSuccess('Drop sikeresen beküldve! Köszönjük.')
-      setMessage('')
-      setLocation(null)
-      setImage(null)
-      
-    } catch (err: any) {
-      setError(err.message || 'Hiba történt a beküldés során')
+      const res = await fetch('/api/drop', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (res.ok) {
+        setResult('Drop sent.')
+        // Clear form
+        setLatitude('')
+        setLongitude('')
+        setMessage('')
+        setRecipientEmail('')
+        setFiles(null)
+        // Reset file input
+        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+        if (fileInput) fileInput.value = ''
+      } else {
+        setResult('Error.')
+      }
+    } catch (err) {
+      setResult('Error.')
     } finally {
       setSubmitting(false)
     }
   }
 
-  if (loading) {
+  if (!hasAccess) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-black">
-        <div className="text-lime-400">Betöltés...</div>
-      </main>
-    )
-  }
+      <main className="min-h-screen flex items-center justify-center bg-black px-4">
+        <div className="max-w-md w-full space-y-4">
+          <h1 className="text-3xl font-black italic tracking-[-0.04em] text-lime-400 text-center">
+            Drop Access
+          </h1>
+          
+          <div className="space-y-4">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password..."
+              className="w-full px-3 py-2 rounded-md bg-zinc-900 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-lime-500 text-zinc-100"
+              onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+              disabled={unlocking}
+            />
+            
+            <button
+              onClick={handleUnlock}
+              disabled={unlocking || !password}
+              className="w-full py-2 px-4 rounded-md bg-lime-600 hover:bg-lime-500 disabled:bg-zinc-700 disabled:cursor-not-allowed text-black font-semibold"
+            >
+              {unlocking ? 'Checking...' : 'Unlock'}
+            </button>
 
-  if (!canDrop) {
-    return (
-      <div className="min-h-screen bg-black">
-        <AuthHeader />
-        <main className="flex items-center justify-center px-4 py-8">
-          <div className="max-w-md text-center space-y-4">
-            <h1 className="text-2xl text-lime-400">Nincs jogosultság</h1>
-            <p className="text-zinc-400">
-              Jelenleg nem vagy jogosult drop beküldésére.
-            </p>
+            {accessError && (
+              <p className="text-red-400 text-sm text-center">{accessError}</p>
+            )}
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     )
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      <AuthHeader />
-      <main className="px-4 py-8">
-        <div className="max-w-md mx-auto">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="message" className="block text-sm text-zinc-300 mb-2">
-                Üzenet *
-              </label>
-              <textarea
-                id="message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="w-full px-3 py-2 rounded-md bg-zinc-900 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-lime-500 text-zinc-100"
-                placeholder="Írj pár szót a dropról..."
-                rows={4}
-                disabled={submitting}
-                required
-              />
-            </div>
+    <main className="min-h-screen bg-black px-4 py-8">
+      <div className="max-w-md mx-auto space-y-6">
+        <h1 className="text-3xl font-black italic tracking-[-0.04em] text-lime-400 text-center">
+          Drop Form
+        </h1>
 
-            <div>
-              <label className="block text-sm text-zinc-300 mb-2">
-                GPS pozíció
-              </label>
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={getLocation}
-                  className="w-full px-3 py-2 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors"
-                  disabled={submitting}
-                >
-                  📍 Jelenlegi pozíció meghatározása
-                </button>
-                {location && (
-                  <p className="text-xs text-lime-400">
-                    Pozíció: {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="image" className="block text-sm text-zinc-300 mb-2">
-                Kép (opcionális)
-              </label>
-              <input
-                id="image"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImage(e.target.files?.[0] || null)}
-                className="w-full px-3 py-2 rounded-md bg-zinc-900 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-lime-500 text-zinc-100"
-                disabled={submitting}
-              />
-            </div>
-
-            {error && (
-              <div className="p-3 bg-red-900/20 border border-red-600/50 rounded-md">
-                <p className="text-red-300 text-sm">{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="p-3 bg-lime-900/20 border border-lime-600/50 rounded-md">
-                <p className="text-lime-300 text-sm">{success}</p>
-              </div>
-            )}
-
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* GPS */}
+          <div className="space-y-2">
             <button
-              type="submit"
-              disabled={submitting || !message.trim()}
-              className="w-full py-2 px-4 rounded-md bg-lime-600 hover:bg-lime-500 disabled:bg-zinc-700 disabled:cursor-not-allowed text-black font-semibold transition-colors"
+              type="button"
+              onClick={handleGetGPS}
+              disabled={gettingGPS}
+              className="w-full py-2 px-4 rounded-md bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-700 text-white font-semibold"
             >
-              {submitting ? 'Küldés...' : 'Drop beküldése'}
+              {gettingGPS ? 'Getting GPS...' : 'Get GPS'}
             </button>
-          </form>
-        </div>
-      </main>
-    </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="text"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+                placeholder="Latitude"
+                className="px-3 py-2 rounded-md bg-zinc-900 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-lime-500 text-zinc-100"
+              />
+              <input
+                type="text"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+                placeholder="Longitude"
+                className="px-3 py-2 rounded-md bg-zinc-900 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-lime-500 text-zinc-100"
+              />
+            </div>
+          </div>
+
+          {/* Images */}
+          <div>
+            <label className="block text-sm text-zinc-300 mb-2">Photos</label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => setFiles(e.target.files)}
+              className="w-full px-3 py-2 rounded-md bg-zinc-900 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-lime-500 text-zinc-100"
+            />
+          </div>
+
+          {/* Message */}
+          <div>
+            <label className="block text-sm text-zinc-300 mb-2">Message</label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Drop message..."
+              rows={4}
+              className="w-full px-3 py-2 rounded-md bg-zinc-900 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-lime-500 text-zinc-100"
+            />
+          </div>
+
+          {/* Recipient */}
+          <div>
+            <label className="block text-sm text-zinc-300 mb-2">Recipient Email</label>
+            <input
+              type="email"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+              placeholder="recipient@example.com"
+              required
+              className="w-full px-3 py-2 rounded-md bg-zinc-900 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-lime-500 text-zinc-100"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting || !recipientEmail}
+            className="w-full py-2 px-4 rounded-md bg-lime-600 hover:bg-lime-500 disabled:bg-zinc-700 disabled:cursor-not-allowed text-black font-semibold"
+          >
+            {submitting ? 'Sending...' : 'Send Drop'}
+          </button>
+
+          {result && (
+            <p className={`text-sm text-center ${result.includes('Error') ? 'text-red-400' : 'text-lime-400'}`}>
+              {result}
+            </p>
+          )}
+        </form>
+      </div>
+    </main>
   )
 }

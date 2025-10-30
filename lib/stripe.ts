@@ -23,7 +23,7 @@ function createStripeClient(): Stripe | null {
   }
 
   return new Stripe(secretKey, {
-    apiVersion: "2024-06-20",
+    apiVersion: "2025-07-30.basil",
   })
 }
 

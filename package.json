@@ -6,8 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start",
-    "postinstall": "npm rebuild lightningcss --silent || true"
+    "start": "next start"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.31.6",
@@ -55,7 +54,7 @@
     "gray-matter": "^4.0.3",
     "input-otp": "1.4.1",
     "jose": "^4.15.9",
-    "lightningcss": "^1.21.0",
+    "lucide-react": "^0.454.0",
     "nanoid": "latest",
     "next": "^15.2.4",
     "next-themes": "latest",
@@ -83,4 +82,3 @@
     "vitest": "^3.2.4"
   }
 }
-
