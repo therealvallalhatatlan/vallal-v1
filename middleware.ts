@@ -18,6 +18,7 @@ const redirectMap: Record<string, string> = {
   "a-mersekelten-hires": "08-a-mersekelten-hires",
   "bortonbe-kerulok": "09-bortonbe-kerulok",
   "agressziv-laci": "10-agressziv-laci",
+  
   // stb…
   //
   // FONTOS:
