@@ -45,6 +45,9 @@ function firstVisualFrom(data?: { visuals?: string[] } | null) {
 
 export default async function Page({ params }: { params: { slug: string } }) {
   const { slug } = params;
+  if (typeof slug !== "string" || !slug.trim()) {
+    notFound();
+  }
 
   // Prevent handling favicon and other static assets
   if (slug === "favicon.ico" || slug.includes(".")) {
@@ -188,7 +191,8 @@ export async function generateMetadata({
   params: { slug: string };
 }): Promise<Metadata> {
   const { slug } = params;
-  if (!slug || slug === "favicon.ico" || slug.includes(".")) return {};
+  if (typeof slug !== "string" || !slug.trim()) return {};
+  if (slug === "favicon.ico" || slug.includes(".")) return {};
 
   const data = await loadPlaylist(slug);
   const title = humanize(slug);
