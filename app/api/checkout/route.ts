@@ -1,64 +1,55 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { nanoid } from "nanoid"
-import { stripe, getSiteUrl } from "@/lib/stripe"
+// /checkout/route.ts
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
 
-export async function POST(request: NextRequest) {
+const stripeKey = process.env.STRIPE_SECRET_KEY!;
+const stripe = new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" });
+
+export async function POST() {
   try {
-    if (!process.env.STRIPE_SECRET_KEY || !stripe) {
+    if (!stripeKey) {
       return NextResponse.json(
-        {
-          error: "Stripe configuration missing. Please set STRIPE_SECRET_KEY environment variable.",
-        },
-        { status: 500 },
-      )
+        { error: "Missing STRIPE_SECRET_KEY" },
+        { status: 500 }
+      );
     }
 
-    let body
-    try {
-      body = await request.json()
-    } catch (jsonError) {
-      console.error("Invalid JSON in request body:", jsonError)
-      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
-    }
-
-    const { email, quantity = 1 } = body
-
-    // Create Stripe checkout session
+    // Legyszerűbb, stabil megoldás: fix típusok, helyes struktúra.
+    // (Ha később testre akarod szabni, átemelheted a body-ból,
+    // de ügyelj rá, hogy az értékek integer/boolean típusok legyenek.)
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       currency: "huf",
-      // HUF is a zero-decimal currency, so 15000 = 15000 HUF (not 150.00)
-      line_items: [
-        {
-          price_data: {
-            currency: "huf",
-            product_data: {
-              name: "Vállalhatatlan – Preorder",
-            },
-            unit_amount: 15000, // 15000 HUF (zero-decimal currency)
-          },
-          quantity,
-        },
-      ],
-      automatic_tax: {
-        enabled: false, // Can be revisited later
-      },
-      allow_promotion_codes: false,
-      billing_address_collection: "auto",
-      customer_email: email || undefined,
       locale: "hu",
-      client_reference_id: nanoid(12),
+      allow_promotion_codes: false,
+      automatic_tax: { enabled: false },
+      billing_address_collection: "auto",
+      success_url:
+        "https://vallalhatatlan.online/success?session_id={CHECKOUT_SESSION_ID}",
+      cancel_url: "https://vallalhatatlan.online/cancelled",
+      client_reference_id: "hpp-" + Math.random().toString(36).slice(2, 10),
       metadata: {
         project: "vallalhatatlan",
         type: "preorder",
       },
-      success_url: `${getSiteUrl()}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${getSiteUrl()}/cancelled`,
-    })
+      line_items: [
+        {
+          price_data: {
+            currency: "huf",
+            product_data: { name: "Vállalhatatlan – Preorder" },
+            // FONTOS: integer (fillér/pénzegység), nem string!
+            unit_amount: 15000,
+          },
+          // FONTOS: integer, nem string!
+          quantity: 1,
+        },
+      ],
+    });
 
-    return NextResponse.json({ url: session.url })
-  } catch (error) {
-    console.error("Checkout session creation failed:", error)
-    return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 })
+    return NextResponse.json({ id: session.id, url: session.url });
+  } catch (err: any) {
+    const message = err?.message || "Stripe error";
+    console.error("Stripe Checkout create error:", message);
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }
