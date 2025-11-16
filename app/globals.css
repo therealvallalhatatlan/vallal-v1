@@ -327,3 +327,133 @@
   }
 }
 
+
+/* ------------------------------------------------------- */
+/*  INTENSE CRT HEADING EFFECT – stronger RGB, flicker,    */
+/*  micro-glitch jumps, boosted glow                       */
+/* ------------------------------------------------------- */
+
+.crt-heading {
+  position: relative;
+  display: inline-block;
+  color: #00c950; /* enyhén foszfor-zöld */
+  text-shadow:
+    0 0 3px rgba(0, 255, 140, 0.7),
+    0 0 6px rgba(0, 255, 140, 0.5),
+    0 0 12px rgba(0, 255, 140, 0.3);
+  animation:
+    crt-flicker 1.8s infinite,
+    crt-glow 1.4s infinite alternate,
+    crt-jump 4.5s infinite;
+}
+
+/* RGB split – erősebb */
+.crt-heading::before,
+.crt-heading::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  /* Add animated RGB distortion */
+  animation:
+    crt-rgb-left 3.2s ease-in-out infinite alternate,
+    crt-jitter 420ms steps(2, end) infinite;
+  will-change: transform, filter, opacity;
+}
+
+.crt-heading::before {
+  color: rgba(54, 7, 7, 0.35); /* erős piros ghost */
+  z-index: -1;
+  transform: translate(-1.8px, 0);
+  filter: blur(0.3px);
+}
+
+/* Keep the cyan ghost moving in the opposite direction and timing */
+.crt-heading::after {
+  color: rgba(255, 57, 57, 0.35); /* erős cián ghost */
+  z-index: -1;
+  transform: translate(1.8px, 0);
+  filter: blur(0.6px);
+  animation:
+    crt-rgb-right 3.6s ease-in-out infinite alternate,
+    crt-jitter 480ms steps(2, end) infinite;
+  will-change: transform, filter, opacity;
+}
+
+/* Subtle channel drift for the red ghost (left) */
+@keyframes crt-rgb-left {
+  0%   { transform: translate(-1.8px, 0) skewX(0deg); filter: blur(0.3px); opacity: 0.35; }
+  25%  { transform: translate(-2.6px, -0.4px) skewX(0.2deg); filter: blur(0.45px); opacity: 0.4; }
+  50%  { transform: translate(-1.2px, 0.2px) skewX(-0.15deg); filter: blur(0.3px); opacity: 0.33; }
+  75%  { transform: translate(-2.2px, 0.6px) skewX(0.1deg); filter: blur(0.5px); opacity: 0.38; }
+  100% { transform: translate(-1.8px, 0) skewX(0deg); filter: blur(0.3px); opacity: 0.35; }
+}
+
+/* Subtle channel drift for the cyan ghost (right) */
+@keyframes crt-rgb-right {
+  0%   { transform: translate(1.8px, 0) skewX(0deg); filter: blur(0.6px); opacity: 0.35; }
+  25%  { transform: translate(2.4px, 0.5px) skewX(-0.2deg); filter: blur(0.7px); opacity: 0.38; }
+  50%  { transform: translate(1.2px, -0.2px) skewX(0.15deg); filter: blur(0.55px); opacity: 0.32; }
+  75%  { transform: translate(2.0px, -0.6px) skewX(-0.1deg); filter: blur(0.75px); opacity: 0.4; }
+  100% { transform: translate(1.8px, 0) skewX(0deg); filter: blur(0.6px); opacity: 0.35; }
+}
+
+/* Micro-glitch jitter for both ghosts */
+@keyframes crt-jitter {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(0.5px, -0.25px); }
+  100% { transform: translate(0, 0); }
+}
+
+
+/* ------------------------------------------------------- */
+/*  Book cover glitch animations                           */
+/* ------------------------------------------------------- */
+
+@keyframes glitch-slice {
+  0% { clip-path: inset(0 0 0 0); transform: translate(0,0); }
+  20% { clip-path: inset(10% 0 60% 0); transform: translate(-2px, -1px); }
+  40% { clip-path: inset(40% 0 20% 0); transform: translate(2px, 1px); }
+  60% { clip-path: inset(20% 0 40% 0); transform: translate(-1px, 2px); }
+  80% { clip-path: inset(5% 0 30% 0); transform: translate(1px, -1px); }
+  100% { clip-path: inset(0 0 0 0); transform: translate(0,0); }
+}
+
+@keyframes glitch-slice2 {
+  0% { clip-path: inset(0 0 0 0); transform: translate(0,0); }
+  25% { clip-path: inset(30% 0 10% 0); transform: translate(2px, -2px); }
+  50% { clip-path: inset(10% 0 50% 0); transform: translate(-2px, 2px); }
+  75% { clip-path: inset(50% 0 5% 0); transform: translate(1px, 1px); }
+  100% { clip-path: inset(0 0 0 0); transform: translate(0,0); }
+}
+
+.animate-glitch-slice {
+  animation: glitch-slice 0.45s steps(2, jump-none) infinite;
+}
+
+.animate-glitch-slice2 {
+  animation: glitch-slice2 0.35s steps(2, jump-none) infinite;
+}
+
+
+.marquee { display:inline-block; will-change: transform; animation: marquee 28s linear infinite; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        /* CRT/Glitch */
+        .crt-glitch { position: relative; animation: flicker 0.15s infinite linear alternate, rgb-shift 2s infinite; text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #a3e635; }
+        .crt-glitch::before { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 50%, rgba(163,230,53,.03) 50%); background-size: 100% 4px; pointer-events: none; animation: scanlines .1s linear infinite; }
+
+        @keyframes flicker { 0%{opacity:1} 97%{opacity:1} 98%{opacity:.98} 99%{opacity:.96} 100%{opacity:1} }
+        @keyframes rgb-shift {
+          0% { text-shadow: 2px 0 #ff0000, -2px 0 #00ffff, 0 0 10px #a3e635; transform: translate(0) }
+          20% { text-shadow: -2px 0 #ff0000, 2px 0 #00ffff, 0 0 10px #a3e635; transform: translate(-1px,0) }
+          40% { transform: translate(-1px,1px) }
+          60% { transform: translate(0,1px) }
+          80% { transform: translate(1px,0) }
+          100% { transform: translate(0) }
+        }
+        @keyframes scanlines { 0%{transform:translateY(0)} 100%{transform:translateY(4px)} }
+
+
+

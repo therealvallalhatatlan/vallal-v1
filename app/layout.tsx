@@ -100,37 +100,49 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-
     <html lang="en" className="dark">
-      <body className={`font-mono ${GeistSans.variable} ${GeistMono.variable} bg-black text-green-400 antialiased`}>
-
-
-        <div className="bg-video" aria-hidden="true">
+      <body
+        className={`font-mono ${GeistSans.variable} ${GeistMono.variable} bg-black text-green-400 antialiased`}
+      >
+        {/* Háttérvideó – full screen, fixed, a content alatt */}
+        <div
+          className="bg-video fixed inset-0 -z-10 pointer-events-none"
+          aria-hidden="true"
+        >
           <video
-            className="bg-video__media"
+            className="bg-video__media w-full h-full object-cover"
             src="/video.mp4"
             autoPlay
             muted
             loop
             playsInline
           />
-          <div className="bg-video__overlay" />
-        </div>   
+          <div className="bg-video__overlay absolute inset-0" />
+        </div>
 
-        {/* --- 90s CRT overlays (updated) --- */}
-        <div aria-hidden="true" className="fx-bands fixed inset-0 pointer-events-none" />
-        <div aria-hidden="true" className="fx-stripes fixed inset-0 pointer-events-none" />
-        <div aria-hidden="true" className="fx-vignette fixed inset-0 pointer-events-none" />
-        <div aria-hidden="true" className="fx-vhs fixed inset-0 pointer-events-none" /> {/* <-- LEGYEN A LEGUTOLSÓ */}
+        {/* --- 90s CRT overlays (megmaradnak) --- */}
+        <div
+          aria-hidden="true"
+          className="fx-bands fixed inset-0 pointer-events-none z-0"
+        />
+        <div
+          aria-hidden="true"
+          className="fx-stripes fixed inset-0 pointer-events-none z-0"
+        />
+        <div
+          aria-hidden="true"
+          className="fx-vignette fixed inset-0 pointer-events-none z-0"
+        />
+        <div
+          aria-hidden="true"
+          className="fx-vhs fixed inset-0 pointer-events-none z-0"
+        />
 
-
-
-        {/* Page content above video */}
+        {/* Page content a legfelül */}
         <div className="content-above relative z-20">
-
           {children}
           <Analytics />
-          <SpeedInsights/>
+          <SpeedInsights />
         </div>
 
         {/* JSON-LD: Organization + WebSite */}
@@ -138,36 +150,35 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'Organization',
-              name: 'Vállalhatatlan',
-              url: 'https://vallalhatatlan.online',
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Vállalhatatlan",
+              url: "https://vallalhatatlan.online",
               sameAs: [
-                'https://www.reddit.com/r/vallalhatatlan/',
-                'https://www.facebook.com/vallalhatatlan2000',
-                'mailto:hello@vallalhatatlan.online'
-              ]
-            })
+                "https://www.reddit.com/r/vallalhatatlan/",
+                "https://www.facebook.com/vallalhatatlan2000",
+                "mailto:therealvallalhatatlan@gmail.com",
+              ],
+            }),
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'WebSite',
-              name: 'Vállalhatatlan',
-              url: 'https://vallalhatatlan.online',
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Vállalhatatlan",
+              url: "https://vallalhatatlan.online",
               potentialAction: {
-                '@type': 'SearchAction',
-                target: 'https://vallalhatatlan.online/search?q={query}',
-                'query-input': 'required name=query'
-              }
-            })
+                "@type": "SearchAction",
+                target: "https://vallalhatatlan.online/search?q={query}",
+                "query-input": "required name=query",
+              },
+            }),
           }}
         />
       </body>
     </html>
-
-  )
+  );
 }

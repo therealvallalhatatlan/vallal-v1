@@ -8,7 +8,7 @@ import { StoryPicker } from "../ui/StoryPicker";
 
 // --- Minimal markdown to HTML (paragraphs, *italic*, **bold**, line breaks) ---
 function mdToHtml(md: string) {
-  // Normalize literal "\n" to real newlines if author used them
+  // Normalize literal "\\n" to real newlines if author used them
   const normalized = md.replace(/\\n/g, "\n");
   // Basic escape to avoid accidental HTML; content is author-controlled
   const escaped = normalized
@@ -20,7 +20,10 @@ function mdToHtml(md: string) {
   // Paragraphs: two or more newlines → new paragraph
   const paragraphs = withEm.trim().split(/\n\n+/);
   const html = paragraphs
-    .map((p) => `<p class="mb-4 leading-relaxed">${p.replace(/\n/g, "<br />")}</p>`)
+    .map(
+      (p) =>
+        `<p class="mb-4 leading-relaxed">${p.replace(/\n/g, "<br />")}</p>`
+    ) // single newline → <br>
     .join("");
   return html;
 }
@@ -38,10 +41,10 @@ export default function StoryPage({ params }: { params: { slug: string } }) {
     if (!story) return;
     // persist: last slug
     localStorage.setItem("reader:last:slug", story.slug);
-    // restore per‑story scroll
+    // restore per-story scroll
     const key = `reader:scroll:${story.slug}`;
     const y = Number(localStorage.getItem(key) || 0);
-    // Use 'auto' to satisfy TS; 'instant' is non‑standard
+    // Use 'auto' to satisfy TS; 'instant' is non-standard
     setTimeout(() => window.scrollTo({ top: y, behavior: "auto" }), 0);
     const onScroll = () => localStorage.setItem(key, String(window.scrollY));
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -66,7 +69,10 @@ export default function StoryPage({ params }: { params: { slug: string } }) {
       <header className="sticky top-0 z-20 -mx-4 mb-4 border-b bg-[var(--bg)/0.8] backdrop-blur supports-[backdrop-filter]:bg-[var(--bg)/0.6]">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <Link href="/reader" className="text-sm opacity-80 hover:opacity-100">
+            <Link
+              href="/reader"
+              className="text-sm opacity-80 hover:opacity-100"
+            >
               Olvasó
             </Link>
             <span className="text-xs opacity-60">
@@ -103,7 +109,9 @@ export default function StoryPage({ params }: { params: { slug: string } }) {
       </header>
 
       <article ref={articleRef} className="pt-2" style={{ fontSize: font }}>
-        <h1 className="mb-4 text-2xl font-semibold leading-snug">{story.title}</h1>
+        <h1 className="mb-4 text-2xl font-semibold leading-snug">
+          {story.title}
+        </h1>
         <div dangerouslySetInnerHTML={{ __html: mdToHtml(story.content) }} />
       </article>
 

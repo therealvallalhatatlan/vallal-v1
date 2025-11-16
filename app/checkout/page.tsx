@@ -70,7 +70,7 @@ export default function CheckoutPage() {
         <header className="mb-6 text-center space-y-2">
           <div className="inline-flex items-center gap-2 rounded-full border border-lime-400/30 px-3 py-1 text-[11px] text-lime-300/80">
             <span className="h-1.5 w-1.5 rounded-full bg-lime-400" />
-            Finanszírozva • Nyomdában
+            Finanszírozva • Kinyomtatva
           </div>
           <h1 className="text-3xl font-black tracking-tight text-green-400">
             Lépj be a történetbe
@@ -106,7 +106,7 @@ export default function CheckoutPage() {
             {/* ajánlat röviden */}
             <div className="text-sm leading-relaxed text-green-200/90">
               A fizetés a <span className="font-semibold">belépőd</span> a Vállalhatatlan világába.
-              A kötet finanszírozva van és <span className="font-semibold">nyomdában</span>.
+              A kötet elkészült, és <span className="font-semibold">azonnal megkaphatod.</span>.
               Amikor az átadás indul, kapsz egy részletes útmutatót: hol és hogyan veszed fel
               a példányod (dead-drop), plusz megnyílik a digitális felület a teljes anyaghoz.
             </div>
@@ -146,7 +146,7 @@ export default function CheckoutPage() {
                 onClick={handlePayment}
                 variant="outline"
                 size="lg"
-                className="w-full py-6 text-lg border-green-400 text-green-400 hover:bg-green-400 hover:text-black"
+                className="w-full py-6 text-lg bg-green-400/20 border-green-400 text-green-400 hover:bg-green-400 hover:text-black"
                 disabled={isLoading}
                 data-umami-event="checkout_pay_click"
               >
