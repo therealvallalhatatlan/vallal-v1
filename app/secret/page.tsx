@@ -1,15 +1,33 @@
 // app/secret/page.tsx
 'use client'
 
+import { Suspense, FormEvent, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { FormEvent, useState } from 'react'
 
-const PASSWORD = 'cici'           // itt tudod átírni
+const PASSWORD = 'cici' // itt tudod átírni
 const COOKIE_NAME = 'vallalhatatlan_pass'
 const COOKIE_VALUE_OK = 'ok'
-const COOKIE_MAX_AGE_DAYS = 7     // ennyi napig maradjon bent a cookie
+const COOKIE_MAX_AGE_DAYS = 7 // ennyi napig maradjon bent a cookie
 
+// Külső page-komponens: csak Suspense-t renderel
 export default function SecretPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center bg-black text-zinc-100 px-4">
+          <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-950/80 backdrop-blur-md shadow-[0_0_50px_rgba(0,0,0,.7)] p-6 md:p-8 space-y-4">
+            <p className="text-xs text-zinc-500">Betöltés…</p>
+          </div>
+        </main>
+      }
+    >
+      <SecretPageInner />
+    </Suspense>
+  )
+}
+
+// Belső komponens: itt használjuk a hookokat
+function SecretPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [value, setValue] = useState('')
@@ -36,7 +54,7 @@ export default function SecretPage() {
 
     setLoading(true)
 
-    // Egyszerű frontendes cookie – nem banki szintű védelem, de erre bőven elég
+    // Egyszerű frontendes cookie – erre bőven elég
     const maxAgeSec = COOKIE_MAX_AGE_DAYS * 24 * 60 * 60
     document.cookie = `${COOKIE_NAME}=${COOKIE_VALUE_OK}; Max-Age=${maxAgeSec}; Path=/; SameSite=Lax`
 
