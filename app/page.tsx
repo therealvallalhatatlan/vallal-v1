@@ -17,9 +17,6 @@ export default function Page() {
     <main className="text-white">
       <Hero />
       <Reviews />
-      <TweetRotator messages={["hello", "world"]} />
-      <BookCover />
-      <CtaBuyBox />
       <MiEz />
       <FAQ />
       <Deliverables />

@@ -29,6 +29,12 @@ export default function MiEz() {
             <h3 className="text-lime-400 font-semibold text-xl mb-2">
               100 könyv
             </h3>
+            <img
+              src="/features/1.png"
+              alt="Limitált, sorszámozott fizikai példányok"
+              className="w-full h-36 object-cover rounded-xl border border-lime-400/20 mb-4"
+              loading="lazy"
+            />
             <p className="text-gray-300 text-sm md:text-base leading-relaxed">
               100 példány készült. Mind sorszámozott, dedikált, és nyers, mint a
               betontörmelék. Ha elfogy, nincs utánnyomás.
@@ -46,14 +52,20 @@ export default function MiEz() {
             <h3 className="text-lime-400 font-semibold text-xl mb-2">
               29 QR-világ
             </h3>
+            <img
+              src="/features/2.png"
+              alt="QR-kódokkal nyíló digitális rétegek"
+              className="w-full h-36 object-cover rounded-xl border border-lime-400/20 mb-4"
+              loading="lazy"
+            />
             <p className="text-gray-300 text-sm md:text-base leading-relaxed">
               Minden novella saját QR-kódokkal él tovább: képek, zenék, hangok,
-              helyszínek, titkos oldalak. A sztori kilép a papírból.
+              helyszínek, kaland + adrenalin.
             </p>
           </div>
         </article>
 
-        {/* Kaland + adrenalin */}
+        {/* kaland */}
         <article className="relative overflow-hidden rounded-2xl border border-lime-400/30 bg-black/70 p-6 md:p-7 transition-transform duration-200 hover:-translate-y-1 hover:border-lime-400/70">
           <div className="absolute inset-0 opacity-20 pointer-events-none" />
           <div className="relative">
@@ -63,6 +75,12 @@ export default function MiEz() {
             <h3 className="text-lime-400 font-semibold text-xl mb-2">
               Kaland + adrenalin
             </h3>
+            <img
+              src="/features/3.png"
+              alt="QR-kódokkal nyíló digitális rétegek"
+              className="w-full h-36 object-cover rounded-xl border border-lime-400/20 mb-4"
+              loading="lazy"
+            />
             <p className="text-gray-300 text-sm md:text-base leading-relaxed">
               A példányod egy dead drop része lesz. A saját könyvedet GPS
               koordináták és fotó alapján vadászod le. A történet ott kezdődik,
@@ -70,12 +88,13 @@ export default function MiEz() {
             </p>
           </div>
         </article>
+
       </div>
 
       {/* Footnote */}
       <p className="mt-6 text-[11px] text-center text-gray-500 italic">
         Ha nem akarsz bokor alá mászni: kérheted automatába vagy postán is —
-        de akkor kimaradsz a játék feléről.
+        de akkor kimaradsz a játék feléből.
       </p>
     </section>
   )
