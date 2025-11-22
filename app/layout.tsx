@@ -85,13 +85,13 @@ export const metadata: Metadata = {
   category: "books",
   authors: [{ name: "Vállalhatatlan" }],
   icons: {
-    icon: "/favicon.ico",
+    icon: "/img/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#9ae600",
 };
 
 export default function RootLayout({
