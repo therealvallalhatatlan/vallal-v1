@@ -1,49 +1,60 @@
 // middleware.ts
-// - Stripe webhook és statikus assetek kihagyása, hogy ne basszuk szét őket
+import type { NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+const COOKIE_NAME = 'vallalhatatlan_pass'
+const COOKIE_VALUE_OK = 'ok'
 
-const COOKIE_NAME = process.env.SECRET_ACCESS_COOKIE_NAME ?? "secret_access";
+// Ezeket az útvonalakat NEM védjük jelszóval.
+const PUBLIC_PATHS = new Set<string>([
+  '/',
+  '/secret',      // a jelszó bekérő oldal
+  '/novellak',    // ha ezt szabadon akarod hagyni
+])
 
 export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-  const path = pathname.startsWith("/") ? pathname.slice(1) : pathname;
+  const { pathname } = req.nextUrl
 
-  // 1. PASSWORD PROTECTION /secret-area alatt
-  // ide rakod a csak-jelszós aloldalt (lehet más route is, csak írd át)
-  if (pathname.startsWith("/secret-area")) {
-    const cookie = req.cookies.get(COOKIE_NAME);
-
-    // ha nincs cookie vagy rossz az értéke → dobjuk a login oldalra
-    if (!cookie || cookie.value !== "1") {
-      const url = req.nextUrl.clone();
-      url.pathname = "/secret"; // login/jelszó oldal
-      url.searchParams.set("from", pathname);
-      return NextResponse.redirect(url);
-    }
-  }
-
-  // 2. EREDTI KIZÁRÁSOK – EZEKHEZ NEM NYULTAM
+  // Statikus / technikai cuccok: hagyjuk békén
   if (
-    !path ||
-    path.includes("/") ||
-    path.startsWith("api") ||
-    path.startsWith("_next") ||
-    path.startsWith("static") ||
-    path.startsWith("assets") ||
-    /\.(png|jpe?g|gif|svg|webp|avif|ico|css|js|map|txt|woff2?|xml)$/i.test(path) ||
-    ["favicon.ico", "robots.txt", "sitemap.xml"].includes(path.toLowerCase())
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/robots') ||
+    pathname.startsWith('/sitemap')
   ) {
-    return NextResponse.next();
+    return NextResponse.next()
   }
 
-  return NextResponse.next();
+  // Publikus oldalak (home, /novellak, /secret, stb.)
+  if (PUBLIC_PATHS.has(pathname)) {
+    return NextResponse.next()
+  }
+
+  // Csak az olyan oldalt védjük, ami egyetlen path-szegmens: /valami
+  // (tehát NEM /valami/masik, nem /app/akarmi, stb.)
+  const segments = pathname.split('/').filter(Boolean)
+  const isSingleSegment = segments.length === 1
+
+  if (!isSingleSegment) {
+    return NextResponse.next()
+  }
+
+  // Ha már van jó cookie → mehet tovább
+  const cookie = req.cookies.get(COOKIE_NAME)?.value
+  if (cookie === COOKIE_VALUE_OK) {
+    return NextResponse.next()
+  }
+
+  // Nincs jogosultság → irány a /secret, és vigyük magunkkal honnan jöttünk
+  const url = req.nextUrl.clone()
+  url.pathname = '/secret'
+  url.searchParams.set('from', pathname)
+
+  return NextResponse.redirect(url)
 }
 
-// Matcher:
-// A middleware CSAK olyan kéréseknél fusson le, ahol értelme van a slug redirectnek.
-// Megmarad az eredeti globális matcher.
+// Csak root szintű pathokra fut ("/valami", de nem "/valami/masik").
 export const config = {
-  matcher: ["/:path*"],
-};
+  matcher: ['/:path*'],
+}

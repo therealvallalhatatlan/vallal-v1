@@ -14,8 +14,6 @@ export default function AudioPlayer({ tracks, images = [] }: Props) {
   const [progress, setProgress] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [userInteracted, setUserInteracted] = useState(false)
-  const [shouldAutoplay, setShouldAutoplay] = useState(true)
   const [copied, setCopied] = useState(false)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -67,27 +65,6 @@ export default function AudioPlayer({ tracks, images = [] }: Props) {
     return () => ro.disconnect()
   }, [])
 
-  // ---- First interaction (autoplay engedély) ----
-  useEffect(() => {
-    const handleInteraction = () => {
-      setUserInteracted(true)
-      if (shouldAutoplay && !playing) {
-        play()
-        setShouldAutoplay(false)
-      }
-    }
-
-    document.addEventListener('click', handleInteraction, { once: true })
-    document.addEventListener('keydown', handleInteraction, { once: true })
-    document.addEventListener('touchstart', handleInteraction, { once: true })
-
-    return () => {
-      document.removeEventListener('click', handleInteraction)
-      document.removeEventListener('keydown', handleInteraction)
-      document.removeEventListener('touchstart', handleInteraction)
-    }
-  }, [shouldAutoplay, playing])
-
   // ---- Track betöltése ----
   useEffect(() => {
     const audio = audioRef.current
@@ -104,10 +81,6 @@ export default function AudioPlayer({ tracks, images = [] }: Props) {
 
     const onLoaded = () => {
       setDuration(audio.duration || 0)
-      if (index === 0 && userInteracted && shouldAutoplay) {
-        play()
-        setShouldAutoplay(false)
-      }
     }
     const onTime = () => {
       setCurrentTime(audio.currentTime)
@@ -123,7 +96,7 @@ export default function AudioPlayer({ tracks, images = [] }: Props) {
       audio.removeEventListener('timeupdate', onTime)
       audio.removeEventListener('ended', onEnd)
     }
-  }, [index, tracks, userInteracted, shouldAutoplay])
+  }, [index, tracks])
 
   // ---- Visualizer indulás / cleanup ----
   const rafRef = useRef<number | null>(null)
@@ -348,22 +321,11 @@ export default function AudioPlayer({ tracks, images = [] }: Props) {
   )
 
   const track = tracks[index]
-  const apiUrl = `/api/audio/${track.file
-    .split('/')
-    .map(encodeURIComponent)
-    .join('/')}`
+  const apiUrl = `/api/audio/${track.file.split('/').map(encodeURIComponent).join('/')}`
 
   return (
     <div className="w-full space-y-6">
       <div className="p-5 md:p-6 bg-black/70 rounded-3xl shadow-[0_0_40px_rgba(0,0,0,.45)] border border-zinc-800/80 backdrop-blur-sm">
-        {!userInteracted && shouldAutoplay && (
-          <div className="mb-4 p-3 rounded-2xl bg-lime-600/15 border border-lime-600/40 text-center">
-            <p className="text-lime-300 text-xs md:text-sm">
-              Kattints bárhova az automatikus lejátszáshoz.
-            </p>
-          </div>
-        )}
-
         {/* fejléc: cím + vezérlők, mobilon egymás alatt */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
           <div className="min-w-0 flex-1">

@@ -26,8 +26,8 @@ const PLAYLIST_ORDER: string[] = [
   "negyedkilo-heroin",
 "bosnyak-ter",
 "ibolya-presszo",
-"elso-nap-a-paradicsomban",
-"a-mersekelten-hires",
+"elso-nap",
+"mersekelten-hires",
 "bortonbe-kerulok",
 "agressziv-laci",
    "afterallatkak",
@@ -47,14 +47,7 @@ const PLAYLIST_ORDER: string[] = [
    "atropina-3",
    "atropina-4",
    "hatodik-nap-a-zartosztalyon",
-   "private-link-netcafe"
-  // 
-  // 
-  // 
-  // 
-  // 
-  // 
-  // "agressziv-laci",
+   "private-link-netcafe",
 ];
 
 const getOrderIndex = (slug: string) => {
