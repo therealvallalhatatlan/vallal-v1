@@ -52,14 +52,14 @@ export default function TweetRotator({
   return (
     <div
       className={clsx(
-        "relative w-full rounded-none pb-6 bg-black/0 p-3 border-none border-lime-400",
-        "font-mono text-[13px] leading-[1.35] text-lime-200",
+        "relative w-xl mx-auto rounded-none pb-6 bg-black/0 p-3",
+        "font-mono text-md leading-[1.35] text-lime-200",
         className
       )}
       style={{ height: heightPx }}
       aria-live="polite"
     >
-      <span className="opacity-60">latest › </span>
+      <span className="opacity-60">Latest › </span>
       <span className="align-top whitespace-pre-wrap break-words">{txt}</span>
       <span className="ml-1 inline-block animate-[blink_1s_steps(1,end)_infinite]">▌</span>
 

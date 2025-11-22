@@ -102,7 +102,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`font-mono ${GeistSans.variable} ${GeistMono.variable} bg-black text-green-400 antialiased`}
+        className={`font-mono ${GeistSans.variable} ${GeistMono.variable} bg-black text-lime-400 antialiased`}
       >
         {/* Háttérvideó – full screen, fixed, a content alatt */}
         <div

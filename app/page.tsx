@@ -10,13 +10,15 @@ import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 import BookCover from "@/components/BookCover";
 import CtaBuyBox from "@/components/CtaBuyBox";
+import TweetRotator from "@/components/TweetRotator";
 
 export default function Page() {
   return (
     <main className="text-white">
       <Hero />
-      <BookCover />
       <Reviews />
+      <TweetRotator messages={["hello", "world"]} />
+      <BookCover />
       <CtaBuyBox />
       <MiEz />
       <FAQ />
