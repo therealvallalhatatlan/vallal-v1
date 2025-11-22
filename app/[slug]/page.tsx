@@ -14,6 +14,54 @@ const FALLBACK_VISUALS = [
   "/img/visuals/noise-03.jpg",
 ];
 
+// Itt adod meg a saját, könyvsorrend szerinti sorrendet.
+// Csak az URL slugokat írd ide, NEM kell 01- előtag, semmi, sima slug.
+// Ha egy slug nincs benne a listában, a végére kerül.
+const PLAYLIST_ORDER: string[] = [
+  // példa:
+  "jezus-megszoktet",
+  "teleki-ter",
+  "utazas-fuegyhazara",
+  "tartozunk-egy-ukrannak",
+  "negyedkilo-heroin",
+"bosnyak-ter",
+"ibolya-presszo",
+"elso-nap-a-paradicsomban",
+"a-mersekelten-hires",
+"bortonbe-kerulok",
+"agressziv-laci",
+   "afterallatkak",
+   "sose-bizz",
+   "fefe-elromlott",
+   "kirandulas-a-marsra",
+   "leharapott-huvelykujj",
+   "pucer-nyaralas",
+   "vori-es-a-mentostaska",
+   "elgazolom-az-egyik-vasarlomat",
+   "holnaptol-leallok",
+   "szelvedo-nelkul",
+   "stazi",
+   "dr-csernus-rambassza",
+   "atropina-1",
+   "atropina-2",
+   "atropina-3",
+   "atropina-4",
+   "hatodik-nap-a-zartosztalyon",
+   "private-link-netcafe"
+  // 
+  // 
+  // 
+  // 
+  // 
+  // 
+  // "agressziv-laci",
+];
+
+const getOrderIndex = (slug: string) => {
+  const idx = PLAYLIST_ORDER.indexOf(slug);
+  return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+};
+
 // Fallback in-code playlist (ha nincs JSON a public/playlists alatt)
 const FALLBACK: Record<string, { title: string; file: string }[]> = {
   "holnaptol-leallok": [
@@ -35,6 +83,7 @@ function humanize(slug: string) {
     .replace(/^\d+-/, "") // Remove leading numbers and dash (e.g., "01-", "02-")
     .replace(/-/g, " ");
 }
+
 function firstVisualFrom(data?: { visuals?: string[] } | null) {
   const arr =
     Array.isArray(data?.visuals) && data!.visuals!.length
@@ -43,8 +92,13 @@ function firstVisualFrom(data?: { visuals?: string[] } | null) {
   return arr[0];
 }
 
-export default async function Page({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+
   if (typeof slug !== "string" || !slug.trim()) {
     notFound();
   }
@@ -55,18 +109,25 @@ export default async function Page({ params }: { params: { slug: string } }) {
   }
 
   const data = await loadPlaylist(slug);
-  
-  // Load all available slugs for the dropdown
-  const allSlugs = await listSlugs();
-  const currentIndex = allSlugs.findIndex(s => s === slug);
-  
+
+  // Load all available slugs for the dropdown, EGYEDI sorrenddel
+  const allSlugs = (await listSlugs()).sort((a, b) => {
+    const ia = getOrderIndex(a);
+    const ib = getOrderIndex(b);
+    if (ia !== ib) return ia - ib;
+    // ha egyik sincs PLAYLIST_ORDER-ben, maradjon stabil-ish ABC fallback
+    return a.localeCompare(b);
+  });
+
+  const currentIndex = allSlugs.findIndex((s) => s === slug);
+
   // Load all playlist titles for the dropdown
   const playlistOptions = await Promise.all(
     allSlugs.map(async (s, i) => {
       const playlistData = await loadPlaylist(s);
-      // For dropdown: keep the numbering prefix, but clean the rest
-      const cleanTitle = decodeURIComponent(s).replace(/-/g, ' ')
-      const title = (playlistData as any)?.title || cleanTitle
+      // For dropdown: keep the slug-based clean title as fallback
+      const cleanTitle = decodeURIComponent(s).replace(/-/g, " ");
+      const title = (playlistData as any)?.title || cleanTitle;
       return { slug: s, title, pageNum: i + 1 };
     })
   );
@@ -75,12 +136,15 @@ export default async function Page({ params }: { params: { slug: string } }) {
   const tracks = data?.tracks?.length
     ? data.tracks
     : FALLBACK[slug] ?? FALLBACK.sample;
+
   const visuals =
     Array.isArray(data?.visuals) && data!.visuals!.length
       ? data!.visuals!
       : FALLBACK_VISUALS;
+
   const excerpt =
     typeof data?.excerpt === "string" ? (data!.excerpt as string) : undefined;
+
   const displayTitle = humanize(slug);
 
   return (
@@ -92,7 +156,7 @@ export default async function Page({ params }: { params: { slug: string } }) {
       {/* Dropdown selector by title */}
       {allSlugs.length > 1 && (
         <div className="mb-6">
-          <PlaylistSelector 
+          <PlaylistSelector
             options={playlistOptions}
             currentPage={currentIndex + 1}
             total={allSlugs.length}
@@ -188,9 +252,10 @@ export default async function Page({ params }: { params: { slug: string } }) {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
+
   if (typeof slug !== "string" || !slug.trim()) return {};
   if (slug === "favicon.ico" || slug.includes(".")) return {};
 
