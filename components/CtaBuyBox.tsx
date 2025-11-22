@@ -11,7 +11,8 @@ export default function CtaBuyBox() {
   // ---------------------------------------------------
 
   return (
-    <div className="
+    <div
+      className="
       w-full max-w-2xl mt-12 mx-auto
       rounded-2xl 
       border border-lime-500/40 
@@ -22,14 +23,17 @@ export default function CtaBuyBox() {
       flex flex-col items-center gap-6
       relative
       overflow-hidden
-    ">
+    "
+    >
       {/* Glowing border accent */}
-      <div className="
+      <div
+        className="
         absolute inset-0 rounded-2xl 
         pointer-events-none
         border border-lime-500/10
         shadow-[0_0_30px_rgba(132,204,22,0.35)]
-      "></div>
+      "
+      ></div>
 
       {/* Text */}
       <div className="text-center text-white">
@@ -48,10 +52,11 @@ export default function CtaBuyBox() {
         />
       </div>
 
-      {/* Button */}
+      {/* Button + glitch overlay */}
       <a
         href="/checkout"
         className="
+          relative
           inline-flex items-center justify-center
           rounded-lg 
           bg-lime-500
@@ -62,9 +67,27 @@ export default function CtaBuyBox() {
           shadow-[0_0_18px_rgba(132,204,22,0.6)]
           hover:shadow-[0_0_28px_rgba(132,204,22,0.9)]
           transition-all
+          overflow-hidden
+          glitch-button
         "
       >
-        Megveszem a Könyvet
+        <span className="relative z-10">Megveszem a Könyvet</span>
+
+        {/* finom scanline réteg */}
+        <span
+          className="
+            pointer-events-none
+            absolute inset-0
+            opacity-30
+            mix-blend-soft-light
+            bg-[linear-gradient(to_bottom,rgba(0,0,0,0)_0,rgba(0,0,0,0)_48%,rgba(0,0,0,0.6)_49%,rgba(0,0,0,0.6)_51%,rgba(0,0,0,0)_52%,rgba(0,0,0,0)_100%)]
+            bg-[length:100%_3px]
+          "
+        />
+
+        {/* glitch csíkok */}
+        <span className="glitch-layer glitch-layer--1" aria-hidden="true" />
+        <span className="glitch-layer glitch-layer--2" aria-hidden="true" />
       </a>
     </div>
   );

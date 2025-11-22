@@ -9,6 +9,10 @@ export default function Reviews() {
       author: "Szilvi",
     },
     {
+      text: "Bizsergetően jó cucc - és persze teljesen legális. Megcsavar, mélyre visz, szórakoztat - deviáns, abszurd, és azt hiszem őszinte ez a strukturált zűrzavar ami egy jószándékú ámokfutás zseniális leirata. Sokkal több mint néhány random régi underground story, ez terápiás töltés - élmény.",
+      author: "Cherrydarling",
+    },
+    {
       text: "Megtaláltam a könyvecskét. Nagyon szépen köszönöm ezt a kis kalandot. Ha még tervezel ilyet kérlek tudasd róla a népet, mert szükségünk van ilyen gyöngyszemekre.",
       author: "Alexandra",
     },
@@ -30,7 +34,7 @@ export default function Reviews() {
     },
   ];
 
-  const featured = reviews[1]; // válaszd ki, melyik legyen kiemelt
+  const featured = reviews[2]; // válaszd ki, melyik legyen kiemelt
 
   return (
     <section id="velemenyek" className="mt-16 px-6 max-w-6xl mx-auto">
