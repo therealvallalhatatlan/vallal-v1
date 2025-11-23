@@ -1,15 +1,23 @@
+// app/login/page.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/browser";
 
-export default function LoginPage({ searchParams }: { searchParams: any }) {
+type LoginPageProps = {
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
   const supabase = createClient();
   const router = useRouter();
 
-  // redirect param from server props (SSR-safe)
-  const redirectTo = searchParams?.redirect || "/reader";
+  // redirect param SSR-biztosan
+  const redirectParam = searchParams?.redirect;
+  const redirectTo =
+    (Array.isArray(redirectParam) ? redirectParam[0] : redirectParam) ||
+    "/reader";
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -23,14 +31,35 @@ export default function LoginPage({ searchParams }: { searchParams: any }) {
     setError(null);
 
     try {
+      const auth: any = supabase.auth;
+
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
+        let err: any | null = null;
+
+        if (typeof auth.signInWithPassword === "function") {
+          // Supabase JS v2
+          const { error } = await auth.signInWithPassword({
+            email,
+            password,
+          });
+          err = error;
+        } else if (typeof auth.signIn === "function") {
+          // Supabase JS v1
+          const { error } = await auth.signIn({
+            email,
+            password,
+          });
+          err = error;
+        } else {
+          throw new Error(
+            "Supabase auth kliens rosszul van beállítva (nincs signIn / signInWithPassword)."
+          );
+        }
+
+        if (err) throw err;
       } else {
-        const { error } = await supabase.auth.signUp({
+        // Regisztráció – signUp mindkét verzióban létezik
+        const { error } = await auth.signUp({
           email,
           password,
         });
@@ -58,7 +87,7 @@ export default function LoginPage({ searchParams }: { searchParams: any }) {
             <input
               type="email"
               required
-              className="w-full rounded-md bg-black border border-neutral-700 px-3 py-2 text-sm text-neutral-100"
+              className="w-full rounded-md bg-black border border-neutral-700 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-neutral-300"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -70,7 +99,7 @@ export default function LoginPage({ searchParams }: { searchParams: any }) {
               type="password"
               required
               minLength={6}
-              className="w-full rounded-md bg-black border border-neutral-700 px-3 py-2 text-sm text-neutral-100"
+              className="w-full rounded-md bg-black border border-neutral-700 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-neutral-300"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -95,7 +124,7 @@ export default function LoginPage({ searchParams }: { searchParams: any }) {
 
         <button
           type="button"
-          onClick={() => setMode(mode === "login" ? "register" : "login")}
+          onClick={() => setMode((m) => (m === "login" ? "register" : "login"))}
           className="w-full text-xs text-neutral-400 hover:text-neutral-200"
         >
           {mode === "login"
