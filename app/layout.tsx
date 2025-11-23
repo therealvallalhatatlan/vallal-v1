@@ -6,6 +6,13 @@ import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
+import { Crimson_Pro } from "next/font/google";
+
+const crimson = Crimson_Pro({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"], // regular → bold
+  variable: "--font-serif",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vallalhatatlan.online"),
@@ -102,7 +109,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`font-mono ${GeistSans.variable} ${GeistMono.variable} bg-black text-lime-400 antialiased`}
+        className={`${crimson.variable} bg-black antialiased`}
       >
         {/* Háttérvideó – full screen, fixed, a content alatt */}
         <div

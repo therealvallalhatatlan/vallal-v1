@@ -142,7 +142,7 @@ export default async function Page({
 
   return (
     <main className="w-[min(640px,100vw-32px)] px-4 space-y-8 mx-auto p-6 text-zinc-100 text-left">
-      <h1 className="text-4xl font-semibold mt-12 mb-4 text-left rgb-title">
+      <h1 className="text-5xl md:text-6xl font-semibold mt-12 mb-4 leading-tight text-left rgb-title">
         {displayTitle}
       </h1>
 
@@ -159,7 +159,7 @@ export default async function Page({
       )}
 
       {excerpt && (
-        <p className="text-zinc-300/90 text-base leading-relaxed mb-8 whitespace-pre-line">
+        <p className="text-zinc-300/90 text-lg md:text-xl leading-relaxed md:leading-8 mb-8 whitespace-pre-line">
           {excerpt}
         </p>
       )}

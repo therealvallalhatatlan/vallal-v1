@@ -14,7 +14,7 @@ import TweetRotator from "@/components/TweetRotator";
 
 export default function Page() {
   return (
-    <main className="text-white">
+    <main className="text-zinc-200">
       <Hero />
       <Reviews />
       <MiEz />

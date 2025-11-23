@@ -23,23 +23,6 @@ export default function Hero() {
             Vállalhatatlan, meg sem történt sztorik az ezredvégi Budapest nyüzsgő, drogok fűtötte, föld alatti alvilágából.
           </p>
 
-          {/* Social proof chip */}
-          <div className="inline-flex items-center gap-3 bg-black/60 border border-lime-400/30 rounded-xl px-4 py-3 text-sm mb-6">
-            <div className="text-2xl leading-none">★</div>
-            <div>
-              <div className="font-semibold text-white">4.9 / 5</div>
-              <div className="text-[11px] uppercase tracking-[0.18em] text-lime-300/80">
-                olvasói értékelés{" "}
-                <span className="text-gray-500 ml-1">
-                  / spontán review-kból
-                </span>
-              </div>
-              <p className="text-xs text-gray-400 mt-1 italic">
-                „Majdnem komolyabb élmény, mint az Irvine Welsh vagy Bukowski
-                könyvek.”
-              </p>
-            </div>
-          </div>
 
           {/* Bullet list */}
           <ul className="space-y-2 text-sm md:text-base text-gray-200 mb-6">
