@@ -1,7 +1,7 @@
 // app/login/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/browser";
 
@@ -46,7 +46,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-neutral-100 flex items-center justify-center px-4">
+    <Suspense fallback={<div className="p-4 text-sm text-zinc-400">Betöltés…</div>}>
       <div className="w-full max-w-sm border border-neutral-800 rounded-2xl bg-neutral-950/80 p-6 space-y-6">
         <h1 className="text-xl font-semibold">
           {mode === "login" ? "Belépés" : "Regisztráció"}
@@ -105,6 +105,6 @@ export default function LoginPage() {
             : "Már van fiókod? Lépj be."}
         </button>
       </div>
-    </div>
+    </Suspense>
   );
 }
