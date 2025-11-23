@@ -9,6 +9,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { createBrowserClient } from "@supabase/ssr";
+import { useRouter } from "next/navigation";
 
 export type Story = {
   id: string;
@@ -21,6 +23,7 @@ export type Story = {
 
 type ReaderAppProps = {
   stories: Story[];
+  userEmail?: string;
 };
 
 const STORAGE_KEY = "vallalhatatlan-reader-state";
@@ -31,7 +34,14 @@ type ReaderState = {
   finishedStories?: string[];
 };
 
-export default function ReaderApp({ stories }: ReaderAppProps) {
+function createSupabaseBrowserClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
+export default function ReaderApp({ stories, userEmail }: ReaderAppProps) {
   const firstStory = stories[0];
   const [currentSlug, setCurrentSlug] = useState<string | undefined>(
     firstStory?.slug
@@ -41,6 +51,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
 
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const router = useRouter();
 
   const currentIndex = useMemo(
     () => stories.findIndex((s) => s.slug === currentSlug),
@@ -51,6 +62,8 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     () => (currentIndex >= 0 ? stories[currentIndex] : firstStory),
     [stories, currentIndex, firstStory]
   );
+
+  const userInitial = userEmail?.[0]?.toUpperCase() ?? "?";
 
   // Betöltés localStorage-ból
   useEffect(() => {
@@ -158,16 +171,54 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const finishedCount = readerState.finishedStories?.length || 0;
   const bookProgress = totalStories > 0 ? finishedCount / totalStories : 0;
 
+  const handleLogout = async () => {
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("Logout hiba:", e);
+    } finally {
+      router.push("/login");
+    }
+  };
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar - tartalomjegyzék (desktop) */}
       <aside className="hidden md:flex w-72 flex-col border-r border-neutral-800 bg-neutral-950/80">
-        <div className="px-4 py-4 border-b border-neutral-800">
-          <div className="text-xs uppercase tracking-[0.2em] text-neutral-500">
-            Vállalhatatlan
+        {/* Brand + user blokk */}
+        <div className="px-4 py-4 border-b border-neutral-800 space-y-4">
+          <div>
+            <div className="text-xs uppercase tracking-[0.2em] text-neutral-500">
+              Vállalhatatlan
+            </div>
+            <div className="text-sm font-medium text-neutral-300">
+              Digitális Reader
+            </div>
           </div>
-          <div className="text-sm font-medium text-neutral-300">
-            Digitális Reader
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-neutral-800 flex items-center justify-center text-sm font-medium text-neutral-200">
+                {userInitial}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-neutral-300 truncate max-w-[120px]">
+                  {userEmail ?? "Ismeretlen user"}
+                </span>
+                <span className="text-[10px] text-neutral-500 uppercase tracking-[0.18em]">
+                  bejelentkezve
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 hover:text-neutral-200"
+            >
+              kilépés
+            </button>
           </div>
         </div>
 
@@ -251,13 +302,39 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           {/* Mobil TOC Sheet tartalom */}
           <SheetContent
             side="left"
-            className="w-[80vw] max-w-xs bg-neutral-950 border-r border-neutral-800 p-0"
+            className="w-[80vw] max-w-xs bg-neutral-950 border-r border-neutral-800 p-0 flex flex-col"
           >
             <SheetHeader className="px-4 py-3 border-b border-neutral-800">
               <SheetTitle className="text-sm text-neutral-300">
                 Tartalomjegyzék
               </SheetTitle>
             </SheetHeader>
+
+            {/* MOBIL: user blokk a sheet tetején */}
+            <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-medium text-neutral-200">
+                  {userInitial}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs text-neutral-300 truncate max-w-[120px]">
+                    {userEmail ?? "Ismeretlen user"}
+                  </span>
+                  <span className="text-[10px] text-neutral-500 uppercase tracking-[0.18em]">
+                    bejelentkezve
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 hover:text-neutral-200"
+              >
+                kilépés
+              </button>
+            </div>
+
             <div className="flex-1 overflow-y-auto py-3">
               {stories.map((story) => {
                 const isActive = story.slug === currentStory?.slug;
