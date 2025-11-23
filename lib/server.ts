@@ -1,19 +1,11 @@
 // lib/supabase/server.ts
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export async function createClient() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
+  // no cookie handling here; non-persistent server client
+  return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
+    { auth: { persistSession: false } }
   );
 }
