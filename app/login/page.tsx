@@ -1,15 +1,15 @@
-// app/login/page.tsx
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/browser";
 
-export default function LoginPage() {
+export default function LoginPage({ searchParams }: { searchParams: any }) {
   const supabase = createClient();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/reader";
+
+  // redirect param from server props (SSR-safe)
+  const redirectTo = searchParams?.redirect || "/reader";
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -58,7 +58,7 @@ export default function LoginPage() {
             <input
               type="email"
               required
-              className="w-full rounded-md bg-black border border-neutral-700 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-neutral-300"
+              className="w-full rounded-md bg-black border border-neutral-700 px-3 py-2 text-sm text-neutral-100"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -70,7 +70,7 @@ export default function LoginPage() {
               type="password"
               required
               minLength={6}
-              className="w-full rounded-md bg-black border border-neutral-700 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-neutral-300"
+              className="w-full rounded-md bg-black border border-neutral-700 px-3 py-2 text-sm text-neutral-100"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
