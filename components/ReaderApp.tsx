@@ -1,7 +1,7 @@
 // components/reader/ReaderApp.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -28,7 +28,6 @@ const STORAGE_KEY = "vallalhatatlan-reader-state";
 
 type ReaderState = {
   lastStorySlug?: string;
-  positions?: Record<string, number>; // storySlug -> 0..1 scroll arány
   finishedStories?: string[];
 };
 
@@ -37,11 +36,9 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const [currentSlug, setCurrentSlug] = useState<string | undefined>(
     firstStory?.slug
   );
-  const [progress, setProgress] = useState(0); // aktuális novella olvasási arány
   const [readerState, setReaderState] = useState<ReaderState>({});
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
 
-  const contentRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
   const currentIndex = useMemo(
@@ -54,13 +51,28 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     [stories, currentIndex, firstStory]
   );
 
-  const userInitial = "V"; // Vállalhatatlan Klubtag :)
+  const userInitial = "V"; // Vállalhatatlan Klubtag
 
   // Betöltés localStorage-ból
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+      if (!raw) {
+        if (firstStory) {
+          const initialState: ReaderState = {
+            lastStorySlug: firstStory.slug,
+            finishedStories: [firstStory.slug],
+          };
+          setReaderState(initialState);
+          setCurrentSlug(firstStory.slug);
+          window.localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(initialState)
+          );
+        }
+        return;
+      }
+
       const parsed: ReaderState = JSON.parse(raw);
       setReaderState(parsed);
 
@@ -69,78 +81,48 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         stories.some((s) => s.slug === parsed.lastStorySlug)
       ) {
         setCurrentSlug(parsed.lastStorySlug);
+      } else if (firstStory) {
+        setCurrentSlug(firstStory.slug);
       }
     } catch {
-      // ha elszáll, nem érdekel, marad a default
+      if (firstStory) {
+        setCurrentSlug(firstStory.slug);
+      }
     }
-  }, [stories]);
+  }, [stories, firstStory]);
 
-  // Mentés localStorage-ba, ha state változik
+  // Mentés localStorage-ba
   const persistState = (next: ReaderState) => {
     setReaderState(next);
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     } catch {
-      // ha nincs storage, hát nincs
+      // ignore
     }
   };
 
-  // Story váltáskor progress reset + lastStorySlug frissítés
-  useEffect(() => {
-    if (!currentStory) return;
-
-    setProgress(0);
-
-    const next: ReaderState = {
+  const markAsFinished = (slug: string) => {
+    const finished = new Set(readerState.finishedStories || []);
+    finished.add(slug);
+    persistState({
       ...readerState,
-      lastStorySlug: currentStory.slug,
-    };
+      lastStorySlug: slug,
+      finishedStories: Array.from(finished),
+    });
+  };
 
-    persistState(next);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStory?.slug]);
-
-  // Scroll handler a contentre
-  const handleScroll = () => {
-    const el = contentRef.current;
-    if (!el) return;
-
-    const total = el.scrollHeight - el.clientHeight;
-    const current = el.scrollTop;
-    const ratio = total > 0 ? current / total : 0;
-
-    setProgress(ratio);
-
-    if (!currentStory) return;
-
-    const next: ReaderState = {
-      ...readerState,
-      lastStorySlug: currentStory.slug,
-      positions: {
-        ...(readerState.positions || {}),
-        [currentStory.slug]: ratio,
-      },
-    };
-
-    // Ha a végéhez közel járunk, jelöljük befejezettnek
-    if (ratio > 0.95) {
-      next.finishedStories = Array.from(
-        new Set([...(readerState.finishedStories || []), currentStory.slug])
-      );
+  const scrollToTop = () => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     }
-
-    persistState(next);
   };
 
   const handleSelectStory = (slug: string) => {
     setCurrentSlug(slug);
-
-    if (contentRef.current) {
-      contentRef.current.scrollTop = 0;
-    }
+    markAsFinished(slug);
+    scrollToTop();
   };
 
-  // Mobil TOC-ból választva zárjuk a sheet-et is
   const handleSelectStoryFromMobileToc = (slug: string) => {
     handleSelectStory(slug);
     setMobileTocOpen(false);
@@ -164,7 +146,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
 
   const handleLogout = () => {
     try {
-      // töröljük a klub sütit
       document.cookie =
         "reader_session=; Max-Age=0; path=/; SameSite=Lax; Secure";
     } catch (e) {
@@ -265,173 +246,167 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 </button>
               </SheetTrigger>
 
-              <div className="flex flex-col">
-                <span className="text-xs uppercase tracking-[0.2em] text-neutral-500">
-                  Vállalhatatlan
-                </span>
-                <span className="text-sm font-medium text-neutral-200">
-                  {currentStory
-                    ? `${currentStory.order}. novella / ${totalStories}`
-                    : "Reader"}
-                </span>
-              </div>
-            </div>
-
-            {/* Könyv progress mini-bar (desktop) */}
-            <div className="hidden md:flex flex-col items-end gap-1">
-              <span className="text-[11px] text-neutral-400">
-                Könyv progress: {Math.round(bookProgress * 100)}%
+            <div className="flex flex-col">
+              <span className="text-xs uppercase tracking-[0.2em] text-neutral-500">
+                Vállalhatatlan
               </span>
-              <div className="h-1 w-36 rounded-full bg-neutral-900 overflow-hidden">
-                <div
-                  className="h-full bg-neutral-300"
-                  style={{ width: `${bookProgress * 100}%` }}
-                />
-              </div>
+              <span className="text-sm font-medium text-neutral-200">
+                {currentStory
+                  ? `${currentStory.order}. novella / ${totalStories}`
+                  : "Reader"}
+              </span>
             </div>
-          </header>
+          </div>
 
-          {/* Mobil TOC Sheet tartalom */}
-          <SheetContent
-            side="left"
-            className="w-[80vw] max-w-xs bg-neutral-950 border-r border-neutral-800 p-0 flex flex-col"
-          >
-            <SheetHeader className="px-4 py-3 border-b border-neutral-800">
-              <SheetTitle className="text-sm text-neutral-300">
-                Tartalomjegyzék
-              </SheetTitle>
-            </SheetHeader>
-
-            {/* MOBIL: user blokk a sheet tetején */}
-            <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-medium text-neutral-200">
-                  {userInitial}
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs text-neutral-300 truncate max-w-[120px]">
-                    Klubtag
-                  </span>
-                  <span className="text-[10px] text-neutral-500 uppercase tracking-[0.18em]">
-                    belépve
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 hover:text-neutral-200"
-              >
-                kilépés
-              </button>
+          {/* Könyv progress mini-bar (desktop) */}
+          <div className="hidden md:flex flex-col items-end gap-1">
+            <span className="text-[11px] text-neutral-400">
+              Könyv progress: {Math.round(bookProgress * 100)}%
+            </span>
+            <div className="h-1 w-36 rounded-full bg-neutral-900 overflow-hidden">
+              <div
+                className="h-full bg-neutral-300 transition-[width]"
+                style={{ width: `${bookProgress * 100}%` }}
+              />
             </div>
+          </div>
+        </header>
 
-            <div className="flex-1 overflow-y-auto py-3">
-              {stories.map((story) => {
-                const isActive = story.slug === currentStory?.slug;
-                const isFinished =
-                  readerState.finishedStories?.includes(story.slug) ?? false;
-
-                return (
-                  <button
-                    key={story.slug}
-                    onClick={() => handleSelectStoryFromMobileToc(story.slug)}
-                    className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                      isActive
-                        ? "bg-neutral-900 text-neutral-200"
-                        : "text-neutral-400 hover:bg-neutral-900/70"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate">{story.title}</span>
-                      {isFinished && (
-                        <span className="text-[10px] text-emerald-300 uppercase tracking-[0.15em]">
-                          kész
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
-                      <span>
-                        {story.order}. novella • ~{story.readingTime} perc
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </SheetContent>
-        </Sheet>
-
-        {/* Progress bar az aktuális novellán belül */}
-        <div className="h-1 w-full bg-neutral-900">
-          <div
-            className="h-1 bg-neutral-300 transition-[width]"
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
-
-        {/* Tartalom */}
-        <div
-          ref={contentRef}
-          onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8"
+        {/* Mobil TOC Sheet tartalom */}
+        <SheetContent
+          side="left"
+          className="w-[80vw] max-w-xs bg-neutral-950 border-r border-neutral-800 p-0 flex flex-col"
         >
-          {currentStory ? (
-            <article className="mx-auto max-w-[720px]">
-              <header className="mb-6">
-                <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-neutral-200">
-                  {currentStory.title}
-                </h1>
-                <div className="mt-2 text-xs text-neutral-400 flex items-center gap-2 flex-wrap">
-                  <span>
-                    {currentStory.order}. a(z) {totalStories} novellából
-                  </span>
-                  <span>•</span>
-                  <span>~{currentStory.readingTime} perc olvasás</span>
-                </div>
-              </header>
+          <SheetHeader className="px-4 py-3 border-b border-neutral-800">
+            <SheetTitle className="text-sm text-neutral-300">
+              Tartalomjegyzék
+            </SheetTitle>
+          </SheetHeader>
 
-              <section className="mt-6 text-[18px] md:text-[20px] leading-relaxed md:leading-8 text-neutral-400 whitespace-pre-wrap">
-                {currentStory.text}
-              </section>
-            </article>
-          ) : (
-            <div className="mx-auto max-w-[720px] text-sm text-neutral-400">
-              Nincs elérhető novella.
-            </div>
-          )}
-        </div>
-
-        {/* Alsó navigáció */}
-        <footer className="border-t border-neutral-800 bg-neutral-950/80 px-4 py-3">
-          <div className="mx-auto flex max-w-[720px] items-center justify-between gap-3">
-            <button
-              onClick={goPrev}
-              disabled={currentIndex <= 0}
-              className="text-xs md:text-sm px-3 py-2 rounded-full border border-neutral-700 text-neutral-300 disabled:opacity-40 disabled:cursor-default hover:bg-neutral-900 transition-colors"
-            >
-              ← Előző
-            </button>
-
-            <div className="text-[11px] text-neutral-500">
-              {currentStory
-                ? `${currentStory.order}. / ${totalStories}`
-                : "\u00A0"}
+          {/* MOBIL: user blokk a sheet tetején */}
+          <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-medium text-neutral-200">
+                {userInitial}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-neutral-300 truncate max-w-[120px]">
+                  Klubtag
+                </span>
+                <span className="text-[10px] text-neutral-500 uppercase tracking-[0.18em]">
+                  belépve
+                </span>
+              </div>
             </div>
 
             <button
-              onClick={goNext}
-              disabled={
-                currentIndex === -1 || currentIndex >= stories.length - 1
-              }
-              className="text-xs md:text-sm px-3 py-2 rounded-full border border-neutral-700 text-neutral-300 disabled:opacity-40 disabled:cursor-default hover:bg-neutral-900 transition-colors"
+              type="button"
+              onClick={handleLogout}
+              className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 hover:text-neutral-200"
             >
-              Következő →
+              kilépés
             </button>
           </div>
-        </footer>
+
+          <div className="flex-1 overflow-y-auto py-3">
+            {stories.map((story) => {
+              const isActive = story.slug === currentStory?.slug;
+              const isFinished =
+                readerState.finishedStories?.includes(story.slug) ?? false;
+
+              return (
+                <button
+                  key={story.slug}
+                  onClick={() => handleSelectStoryFromMobileToc(story.slug)}
+                  className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                    isActive
+                      ? "bg-neutral-900 text-neutral-200"
+                      : "text-neutral-400 hover:bg-neutral-900/70"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate">{story.title}</span>
+                    {isFinished && (
+                      <span className="text-[10px] text-emerald-300 uppercase tracking-[0.15em]">
+                        kész
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
+                    <span>
+                      {story.order}. novella • ~{story.readingTime} perc
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Egyszerű csík a könyv progresshez mobilon is */}
+      <div className="h-1 w-full bg-neutral-900 md:hidden">
+        <div
+          className="h-1 bg-neutral-300 transition-[width]"
+          style={{ width: `${bookProgress * 100}%` }}
+        />
       </div>
+
+      {/* Tartalom */}
+      <div className="flex-1 px-4 py-6 md:px-8 md:py-8">
+        {currentStory ? (
+          <article className="mx-auto max-w-[720px]">
+            <header className="mb-6">
+              <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-neutral-200">
+                {currentStory.title}
+              </h1>
+              <div className="mt-2 text-xs text-neutral-400 flex items-center gap-2 flex-wrap">
+                <span>
+                  {currentStory.order}. a(z) {totalStories} novellából
+                </span>
+                <span>•</span>
+                <span>~{currentStory.readingTime} perc olvasás</span>
+              </div>
+            </header>
+
+            <section className="mt-6 text-[18px] md:text-[20px] leading-relaxed md:leading-8 text-neutral-400 whitespace-pre-wrap">
+              {currentStory.text}
+            </section>
+          </article>
+        ) : (
+          <div className="mx-auto max-w-[720px] text-sm text-neutral-400">
+            Nincs elérhető novella.
+          </div>
+        )}
+      </div>
+
+      {/* Alsó navigáció */}
+      <footer className="border-t border-neutral-800 bg-neutral-950/80 px-4 py-3">
+        <div className="mx-auto flex max-w-[720px] items-center justify-between gap-3">
+          <button
+            onClick={goPrev}
+            disabled={currentIndex <= 0}
+            className="text-xs md:text-sm px-3 py-2 rounded-full border border-neutral-700 text-neutral-300 disabled:opacity-40 disabled:cursor-default hover:bg-neutral-900 transition-colors"
+          >
+            ← Előző
+          </button>
+
+          <div className="text-[11px] text-neutral-500">
+            {currentStory ? `${currentStory.order}. / ${totalStories}` : "\u00A0"}
+          </div>
+
+          <button
+            onClick={goNext}
+            disabled={
+              currentIndex === -1 || currentIndex >= stories.length - 1
+            }
+            className="text-xs md:text-sm px-3 py-2 rounded-full border border-neutral-700 text-neutral-300 disabled:opacity-40 disabled:cursor-default hover:bg-neutral-900 transition-colors"
+          >
+            Következő →
+          </button>
+        </div>
+      </footer>
     </div>
+  </div>
   );
 }
