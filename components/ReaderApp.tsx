@@ -241,7 +241,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         {/* Header + mobil TOC Sheet */}
         <Sheet open={mobileTocOpen} onOpenChange={setMobileTocOpen}>
           <header
-            className={`border-b border-neutral-800 bg-neutral-950/80 px-4 py-3 flex items-center justify-between sticky top-0 z-20 transition-all duration-300 ease-out ${
+            className={`border-b border-neutral-800 bg-black px-4 py-3 flex items-center justify-between sticky top-0 z-20 transition-all duration-300 ease-out ${
               headerHidden
                 ? "opacity-0 -translate-y-3 pointer-events-none"
                 : "opacity-100 translate-y-0"
@@ -277,8 +277,12 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
               </span>
               <div className="h-0.5 w-36 rounded-full bg-neutral-900 overflow-hidden">
                 <div
-                  className="h-full bg-lime-400 transition-[width]"
-                  style={{ width: `${bookProgress * 100}%` }}
+                  className="h-full transition-[width]"
+                  style={{
+                    width: `${bookProgress * 100}%`,
+                    background:
+                      "linear-gradient(90deg,#000000 0%,#1a2d14 20%,#2d4f25 40%,#4f7f38 65%,#65a740 80%,#a3e635 100%)",
+                  }}
                 />
               </div>
             </div>
@@ -349,10 +353,14 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         </Sheet>
 
         {/* Egyszerű csík a könyv progresshez mobilon is */}
-        <div className="h-0.5 w-full bg-neutral-900 md:hidden">
+        <div className="h-0.5 w-full bg-neutral-900 md:hidden overflow-hidden">
           <div
-            className="h-full bg-lime-400 transition-[width]"
-            style={{ width: `${bookProgress * 100}%` }}
+            className="h-full transition-[width]"
+            style={{
+              width: `${bookProgress * 100}%`,
+              background:
+                "linear-gradient(90deg,#000000 0%,#1a2d14 20%,#2d4f25 40%,#4f7f38 65%,#65a740 80%,#a3e635 100%)",
+            }}
           />
         </div>
         {showLoader && (
