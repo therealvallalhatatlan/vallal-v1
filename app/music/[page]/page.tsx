@@ -65,7 +65,7 @@ const displayTitle = decodeURIComponent(slug)
 
 return (
 <main className="py-8">
-  <div className="mx-auto w-[min(640px,100vw-32px)] px-4 space-y-8 text-left">
+  <div className="mx-auto w-[min(640px,100vw-32px)] px-6 md:px-4 space-y-8 text-left">
 
 
 {/* 1) HEADER */}
