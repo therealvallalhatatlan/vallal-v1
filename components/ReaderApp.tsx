@@ -87,6 +87,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
   const [effectsEnabled, setEffectsEnabled] = useState<boolean>(true);
+  const [showPlayer, setShowPlayer] = useState<boolean>(true);
 
   // playlist state
   const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
@@ -151,9 +152,12 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
       if (typeof parsed.fontSize === "number") {
         setFontSize(parsed.fontSize);
       }
-     if (typeof parsed.effectsEnabled === "boolean") {
-       setEffectsEnabled(parsed.effectsEnabled);
-     }
+      if (typeof parsed.effectsEnabled === "boolean") {
+        setEffectsEnabled(parsed.effectsEnabled);
+      }
+      if (typeof parsed.showPlayer === "boolean") {
+        setShowPlayer(parsed.showPlayer);
+      }
     } catch {
       // ignore
     }
@@ -278,11 +282,11 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const persistSettings = (nextFontSize: number, nextEffects: boolean) => {
+  const persistSettings = (nextFontSize: number, nextEffects: boolean, nextShowPlayer: boolean) => {
     try {
       window.localStorage.setItem(
         SETTINGS_KEY,
-        JSON.stringify({ fontSize: nextFontSize, effectsEnabled: nextEffects })
+        JSON.stringify({ fontSize: nextFontSize, effectsEnabled: nextEffects, showPlayer: nextShowPlayer })
       );
     } catch {
       // ignore
@@ -293,17 +297,24 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const changeFontSize = (delta: number) => {
     setFontSize((prev) => {
       const next = Math.min(36, Math.max(14, prev + delta));
-      persistSettings(next, effectsEnabled);
+      persistSettings(next, effectsEnabled, showPlayer);
       return next;
     });
   };
- const toggleEffects = () => {
-   setEffectsEnabled((prev) => {
-     const next = !prev;
-     persistSettings(fontSize, next);
-     return next;
-   });
- };
+  const toggleEffects = () => {
+    setEffectsEnabled((prev) => {
+      const next = !prev;
+      persistSettings(fontSize, next, showPlayer);
+      return next;
+    });
+  };
+  const togglePlayer = () => {
+    setShowPlayer((prev) => {
+      const next = !prev;
+      persistSettings(fontSize, effectsEnabled, next);
+      return next;
+    });
+  };
 
   return (
     <div className={`flex min-h-[100dvh] ${effectsEnabled ? 'effects-on' : 'effects-off'}`}>
@@ -379,7 +390,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         {/* Header + mobil TOC Sheet */}
         <Sheet open={mobileTocOpen} onOpenChange={setMobileTocOpen}>
           <header
-            className={`border-b border-neutral-800 bg-transparent px-4 py-3 flex items-center justify-between sticky top-0 z-20 transition-all duration-300 ease-out ${
+            className={`border-b border-neutral-800 bg-black px-4 py-3 flex items-center justify-between sticky top-0 z-20 transition-all duration-300 ease-out ${
               headerHidden
                 ? "opacity-0 -translate-y-3 pointer-events-none"
                 : "opacity-100 translate-y-0"
@@ -499,6 +510,19 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                         Kikapcsolás: eltűnnek a színes glitch / CRT rétegek.
                       </p>
                     </div>
+                    {/* Audio Player toggle */}
+                    <div className="space-y-2">
+                      <p className="text-sm text-neutral-400">Audio Player</p>
+                      <button
+                        type="button"
+                        onClick={togglePlayer}
+                        className="px-3 py-2 text-sm border border-neutral-600 rounded-full hover:bg-neutral-800 text-neutral-300"
+                        aria-pressed={showPlayer}
+                      >
+                        {showPlayer ? 'Látható' : 'Rejtett'}
+                      </button>
+                      <p className="text-[11px] text-neutral-500">Elrejti vagy megjeleníti a playlist lejátszót.</p>
+                    </div>
 
                     {/* Theme placeholder */}
                     <div className="space-y-2 opacity-50">
@@ -606,12 +630,14 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 playlist &&
                 playlist.tracks &&
                 playlist.tracks.length > 0 && (
-                  <section className="mb-6 space-y-3 max-w-[380px]">
-                    <AudioPlayer2
-                      tracks={playlist.tracks}
-                      images={playlist.visuals ?? []}
-                    />
-                  </section>
+                  showPlayer && (
+                    <section className="mb-6 space-y-3 max-w-[360px]">
+                      <AudioPlayer2
+                        tracks={playlist.tracks}
+                        images={playlist.visuals ?? []}
+                      />
+                    </section>
+                  )
                 )}
              {!playlistLoading && !playlist && (
                <div className="mb-6 text-[11px] text-neutral-600">
