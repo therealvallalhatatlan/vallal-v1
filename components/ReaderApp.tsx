@@ -247,6 +247,16 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 : "opacity-100 translate-y-0"
             }`}
           >
+            {/* Mobil progress legfelül */}
+            <div className="absolute left-0 top-0 w-full h-0.5 bg-neutral-900 md:hidden">
+              <div
+                className="h-full transition-[width]"
+                style={{
+                  width: `${bookProgress * 100}%`,
+                  background: "linear-gradient(90deg,#000,#d4d4d8)",
+                }}
+              />
+            </div>
             <div className="flex items-center gap-3">
               {/* Mobil tartalomjegyzék gomb */}
               <SheetTrigger asChild>
@@ -281,7 +291,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                   style={{
                     width: `${bookProgress * 100}%`,
                     background:
-                      "linear-gradient(90deg,#000000 0%,#1a2d14 20%,#2d4f25 40%,#4f7f38 65%,#65a740 80%,#a3e635 100%)",
+                      "linear-gradient(90deg,#000,#2e2e30 35%,#6e6e72 70%,#d4d4d8 100%)",
                   }}
                 />
               </div>
@@ -352,20 +362,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           </SheetContent>
         </Sheet>
 
-        {/* Egyszerű csík a könyv progresshez mobilon is */}
-        <div className="h-0.5 w-full bg-neutral-900 md:hidden overflow-hidden">
-          <div
-            className="h-full transition-[width]"
-            style={{
-              width: `${bookProgress * 100}%`,
-              background:
-                "linear-gradient(90deg,#000000 0%,#1a2d14 20%,#2d4f25 40%,#4f7f38 65%,#65a740 80%,#a3e635 100%)",
-            }}
-          />
-        </div>
-        {showLoader && (
-          <div className="story-loader" aria-hidden="true" />
-        )}
         {/* Tartalom */}
         <div key={currentStory?.slug} className="flex-1 px-6 py-6 md:px-8 md:py-8 fade-in">
           {currentStory ? (
