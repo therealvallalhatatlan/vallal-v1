@@ -65,7 +65,7 @@ const displayTitle = decodeURIComponent(slug)
 
 return (
 <main className="py-8">
-  <div className="mx-auto w-[min(640px,100vw-32px)] px-6 md:px-4 space-y-8 text-left">
+  <div className="mx-auto w-[min(640px,100vw-32px)] px-6 md:px-4 space-y-8 text-left fade-in">
 
 
 {/* 1) HEADER */}
@@ -123,19 +123,22 @@ return (
 </div>
 
   </div>
-
-{/* Stílus a címhez (statikus, nem animált RGB-split) */}
-<style>{`
-.rgb-title {
-position: relative;
-text-shadow:
-3px 0 0 rgba(255,0,0,0.85),
--3px 0 0 rgba(0,255,255,0.85),
-0 2px 0 rgba(0,0,0,0.35);
-filter: contrast(140%) saturate(140%);
-}
-`}</style>
-
+  {/* Stílus a címhez (statikus, nem animált RGB-split) */}
+  <style>{`
+    .rgb-title {
+      position: relative;
+      text-shadow:
+        3px 0 0 rgba(255,0,0,0.85),
+        -3px 0 0 rgba(0,255,255,0.85),
+        0 2px 0 rgba(0,0,0,0.35);
+      filter: contrast(140%) saturate(140%);
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeInUp .45s ease-out both; }
+  `}</style>
       {/* tiny utilities: marquee + caret + tweet typer */}
       <style>{`
         .marquee { display:inline-block; will-change: transform; animation: marquee 28s linear infinite; }

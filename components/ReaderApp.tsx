@@ -178,7 +178,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   }, []);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-[100dvh]">
       {/* Sidebar - tartalomjegyzék (desktop) */}
       <aside className="hidden md:flex w-72 flex-col border-r border-neutral-800 bg-neutral-950/80">
         {/* Brand + user blokk */}
@@ -381,7 +381,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         </div>
 
         {/* Tartalom */}
-        <div className="flex-1 px-6 py-6 md:px-8 md:py-8">
+        <div key={currentStory?.slug} className="flex-1 px-6 py-6 md:px-8 md:py-8 fade-in">
           {currentStory ? (
             <article className="mx-auto max-w-[560px] md:max-w-[600px]">
               <header className="mb-6">
@@ -435,6 +435,15 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           </div>
         </footer>
       </div>
+
+      {/* Local fade-in styles */}
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeInUp .45s ease-out both; }
+      `}</style>
     </div>
   );
 }

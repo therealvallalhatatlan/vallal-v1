@@ -20,6 +20,12 @@ export const metadata: Metadata = {
     default: "Vállalhatatlan — Y2K | Budapest underground a ’90-es évekből",
     template: "%s | Vállalhatatlan",
   },
+  manifest: "/manifest.webmanifest",
+  themeColor: "#000000",
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/icon-192.png",
+  },
   description:
     "Vállalhatatlan — Y2K: nyers, urbánus novellák a ’90-es évek és az ezredforduló Budapestjéről. Rave/techno éjszakák, underground szcénák, drogkultúra, identitásválság és könyörtelen őszinteség.",
   keywords: [
@@ -91,10 +97,6 @@ export const metadata: Metadata = {
   },
   category: "books",
   authors: [{ name: "Vállalhatatlan" }],
-  icons: {
-    icon: "/img/favicon.ico",
-    apple: "/apple-touch-icon.png",
-  },
 };
 
 export const viewport: Viewport = {
