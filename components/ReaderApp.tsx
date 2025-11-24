@@ -9,8 +9,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { createClient as createSupabaseClient } from "@/lib/browser";
 
 export type Story = {
   id: string;
@@ -33,13 +33,6 @@ type ReaderState = {
   positions?: Record<string, number>; // storySlug -> 0..1 scroll arány
   finishedStories?: string[];
 };
-
-function createSupabaseBrowserClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
 
 export default function ReaderApp({ stories, userEmail }: ReaderAppProps) {
   const firstStory = stories[0];
@@ -173,8 +166,10 @@ export default function ReaderApp({ stories, userEmail }: ReaderAppProps) {
 
   const handleLogout = async () => {
     try {
-      const supabase = createSupabaseBrowserClient();
-      await supabase.auth.signOut();
+      const supabase: any = createSupabaseClient();
+      if (supabase?.auth?.signOut) {
+        await supabase.auth.signOut();
+      }
     } catch (e) {
       console.error("Logout hiba:", e);
     } finally {
@@ -182,10 +177,12 @@ export default function ReaderApp({ stories, userEmail }: ReaderAppProps) {
     }
   };
 
-  // Client-side guard: if not logged in, bounce to /login with redirect
+  // Opcionális client-side guard – ha valamiért nincs user, visszadobjuk loginra
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    supabase.auth.getUser().then(({ data }) => {
+    const supabase: any = createSupabaseClient();
+    if (!supabase?.auth?.getUser) return;
+
+    supabase.auth.getUser().then(({ data }: any) => {
       if (!data?.user) {
         const to = "/reader";
         router.push(`/login?redirect=${encodeURIComponent(to)}`);
