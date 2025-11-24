@@ -606,7 +606,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 playlist &&
                 playlist.tracks &&
                 playlist.tracks.length > 0 && (
-                  <section className="mb-6 space-y-3">
+                  <section className="mb-6 space-y-3 max-w-[420px]">
                     <AudioPlayer2
                       tracks={playlist.tracks}
                       images={playlist.visuals ?? []}
