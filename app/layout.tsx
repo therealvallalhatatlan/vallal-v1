@@ -101,6 +101,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: "#000000",
 };
 
@@ -112,7 +116,8 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${crimson.variable} bg-black antialiased`}
+        className={`${crimson.variable} bg-black antialiased overflow-x-hidden`}
+        style={{ touchAction: 'pan-y' }}
       >
         {/* Háttérvideó – full screen, fixed, a content alatt */}
         <div
@@ -190,6 +195,12 @@ export default function RootLayout({
             }),
           }}
         />
+        <style>{`
+          html,body { overscroll-behavior-x:none; overflow-x:hidden; }
+          @media (hover:none) {
+            html,body { touch-action:pan-y; }
+          }
+        `}</style>
       </body>
     </html>
   );

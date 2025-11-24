@@ -607,7 +607,10 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 playlist.tracks &&
                 playlist.tracks.length > 0 && (
                   <section className="mb-6 space-y-3">
-                    
+                    <AudioPlayer2
+                      tracks={playlist.tracks}
+                      images={playlist.visuals ?? []}
+                    />
                   </section>
                 )}
              {!playlistLoading && !playlist && (

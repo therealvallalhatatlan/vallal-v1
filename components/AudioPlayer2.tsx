@@ -325,7 +325,7 @@ export default function AudioPlayer2({ tracks, images = [] }: Props) {
   const apiUrl = `/api/audio/${track.file.split('/').map(encodeURIComponent).join('/')}`
   const toggleTools = () => setShowTools((v) => !v)
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full max-w-[560px] mx-auto space-y-6">
       <div className="p-5 md:p-6 bg-transparent border border-zinc-800 rounded-3xl">
         {/* fejléc: cím + vezérlők, mobilon egymás alatt */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
@@ -442,7 +442,7 @@ export default function AudioPlayer2({ tracks, images = [] }: Props) {
         <audio ref={audioRef} preload="none" className="hidden" />
       </div>
 
-      <div className="rounded-3xl overflow-hidden border border-zinc-800 bg-black">
+      <div className="rounded-3xl overflow-hidden border border-zinc-800 bg-black max-w-full">
         <CanvasResponsive ref={canvasRef} />
       </div>
       <style>{`
@@ -487,8 +487,8 @@ export default function AudioPlayer2({ tracks, images = [] }: Props) {
 }
 
 const CanvasResponsive = forwardRef<HTMLCanvasElement, {}>((_props, ref) => (
-  <div className="w-full" style={{ aspectRatio: '16/9' }}>
-    <canvas ref={ref as any} className="w-full h-full" />
+  <div className="w-full max-w-full" style={{ aspectRatio: '16/9' }}>
+    <canvas ref={ref as any} className="w-full h-full max-w-full" />
   </div>
 ))
 CanvasResponsive.displayName = 'CanvasResponsive'
