@@ -20,7 +20,11 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml"
+    pathname === "/sitemap.xml" || 
+    pathname === "/manifest.webmanifest" ||      // ⬅️ KELL
+  pathname.startsWith("/icons") ||             // ⬅️ ikonok is kellenek
+  pathname.endsWith(".png") ||                 // ⬅️ ha máshol hívjuk az ikonokat
+  pathname.endsWith(".webmanifest")        
   ) {
     return NextResponse.next();
   }
