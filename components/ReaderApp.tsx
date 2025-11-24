@@ -9,7 +9,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useRouter } from "next/navigation";
 
 export type Story = {
   id: string;
@@ -25,6 +24,7 @@ type ReaderAppProps = {
 };
 
 const STORAGE_KEY = "vallalhatatlan-reader-state";
+const SETTINGS_KEY = "vallalhatatlan-reader-settings";
 
 type ReaderState = {
   lastStorySlug?: string;
@@ -42,7 +42,9 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const lastYRef = useRef(0);
   const [showLoader, setShowLoader] = useState(false);
 
-  const router = useRouter();
+  // settings
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
 
   const currentIndex = useMemo(
     () => stories.findIndex((s) => s.slug === currentSlug),
@@ -56,7 +58,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
 
   const userInitial = "V"; // Vállalhatatlan Klubtag
 
-  // Betöltés localStorage-ból
+  // Betöltés localStorage-ból (novella progress)
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -94,7 +96,21 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     }
   }, [stories, firstStory]);
 
-  // Mentés localStorage-ba
+  // Betűméret betöltése localStorage-ból
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.fontSize === "number") {
+        setFontSize(parsed.fontSize);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Mentés localStorage-ba (progress)
   const persistState = (next: ReaderState) => {
     setReaderState(next);
     try {
@@ -169,8 +185,26 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Betűméret módosítása + mentése
+  const changeFontSize = (delta: number) => {
+    setFontSize((prev) => {
+      const next = Math.min(36, Math.max(14, prev + delta));
+      try {
+        window.localStorage.setItem(
+          SETTINGS_KEY,
+          JSON.stringify({ fontSize: next })
+        );
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="flex min-h-[100dvh]">
+      {showLoader && <div className="story-loader" />}
+
       {/* Sidebar - tartalomjegyzék (desktop) */}
       <aside className="hidden md:flex w-72 flex-col border-r border-neutral-800 bg-neutral-950/80">
         {/* Brand + user blokk */}
@@ -280,21 +314,82 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
               </div>
             </div>
 
-            {/* Könyv progress mini-bar (desktop) */}
-            <div className="hidden md:flex flex-col items-end gap-1">
-              <span className="text-[11px] text-neutral-400">
-                Könyv progress: {Math.round(bookProgress * 100)}%
-              </span>
-              <div className="h-0.5 w-36 rounded-full bg-neutral-900 overflow-hidden">
-                <div
-                  className="h-full transition-[width]"
-                  style={{
-                    width: `${bookProgress * 100}%`,
-                    background:
-                      "linear-gradient(90deg,#000,#2e2e30 35%,#6e6e72 70%,#d4d4d8 100%)",
-                  }}
-                />
+            {/* Könyv progress + Settings (desktop jobb oldal) */}
+            <div className="flex items-center gap-3">
+              <div className="hidden md:flex flex-col items-end gap-1">
+                <span className="text-[11px] text-neutral-400">
+                  Könyv progress: {Math.round(bookProgress * 100)}%
+                </span>
+                <div className="h-0.5 w-36 rounded-full bg-neutral-900 overflow-hidden">
+                  <div
+                    className="h-full transition-[width]"
+                    style={{
+                      width: `${bookProgress * 100}%`,
+                      background:
+                        "linear-gradient(90deg,#000,#2e2e30 35%,#6e6e72 70%,#d4d4d8 100%)",
+                    }}
+                  />
+                </div>
               </div>
+
+              {/* Settings Sheet */}
+              <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+                <SheetTrigger asChild>
+                  <button
+                    type="button"
+                    className="h-9 w-9 flex items-center justify-center rounded-full border border-neutral-700 text-neutral-300 hover:bg-neutral-800 transition"
+                    aria-label="Beállítások"
+                  >
+                    ⚙️
+                  </button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="w-72 bg-black text-neutral-100 border-l border-neutral-800"
+                >
+                  <SheetHeader className="px-4 pt-4">
+                    <SheetTitle className="text-sm text-neutral-200">
+                      Beállítások
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="p-4 space-y-6">
+                    {/* Betűméret */}
+                    <div className="space-y-2">
+                      <p className="text-sm text-neutral-400">Betűméret</p>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => changeFontSize(-2)}
+                          className="px-3 py-1 text-lg border border-neutral-600 rounded hover:bg-neutral-800"
+                        >
+                          –
+                        </button>
+                        <span className="text-base font-medium w-12 text-center">
+                          {fontSize}px
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => changeFontSize(2)}
+                          className="px-3 py-1 text-lg border border-neutral-600 rounded hover:bg-neutral-800"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-neutral-500">
+                        Kisebb kijelzőn 16–20px, desktopon 18–24px körül
+                        kényelmes.
+                      </p>
+                    </div>
+
+                    {/* Theme placeholder */}
+                    <div className="space-y-2 opacity-50">
+                      <p className="text-sm text-neutral-500">
+                        Theme váltás (hamarosan)
+                      </p>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </header>
 
@@ -363,7 +458,10 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         </Sheet>
 
         {/* Tartalom */}
-        <div key={currentStory?.slug} className="flex-1 px-6 py-6 md:px-8 md:py-8 fade-in">
+        <div
+          key={currentStory?.slug}
+          className="flex-1 px-6 py-6 md:px-8 md:py-8 fade-in"
+        >
           {currentStory ? (
             <article className="mx-auto max-w-[560px] md:max-w-[600px]">
               <header className="mb-6">
@@ -379,7 +477,10 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 </div>
               </header>
 
-              <section className="mt-6 text-[19px] md:text-[21px] leading-relaxed md:leading-8 text-neutral-400 whitespace-pre-wrap">
+              <section
+                className="mt-6 leading-relaxed md:leading-8 text-neutral-400 whitespace-pre-wrap"
+                style={{ fontSize: `${fontSize}px` }}
+              >
                 {currentStory.text}
               </section>
             </article>
@@ -418,7 +519,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         </footer>
       </div>
 
-      {/* Local fade-in styles */}
+      {/* Local styles */}
       <style>{`
         @keyframes fadeCrt {
           0% { opacity:0; transform:scaleY(.03) scaleX(1.25); filter:blur(40px) brightness(550%); }
@@ -431,16 +532,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           84% { transform:scale(1) translateX(1px); }
           90% { transform:scale(1) translateX(-1px); }
           100% { opacity:1; filter:blur(0); transform:scale(1) translate(0); }
-        }
-        @keyframes rgbShift {
-          0%,100% { filter:contrast(140%) saturate(140%); }
-          25% { filter:hue-rotate(15deg) contrast(155%) saturate(160%); }
-          50% { filter:hue-rotate(-12deg) contrast(150%) saturate(150%); }
-          75% { filter:hue-rotate(22deg) contrast(160%) saturate(165%); }
-        }
-        @keyframes scanRoll {
-          0% { background-position:0 0; }
-          100% { background-position:0 4px; }
         }
         @keyframes jitter {
           0%,100% { transform:translate(0,0); }
@@ -455,12 +546,31 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
             fadeCrt 3.2s cubic-bezier(.25,.01,.12,1) .2s both,
             jitter 2.8s steps(2,end) .2s 1;
         }
+        @keyframes scanRoll {
+          0% { background-position:0 0; }
+          100% { background-position:0 4px; }
+        }
+        @keyframes rgbShift {
+          0%,100% { filter:contrast(140%) saturate(140%); }
+          25% { filter:hue-rotate(15deg) contrast(155%) saturate(160%); }
+          50% { filter:hue-rotate(-12deg) contrast(150%) saturate(150%); }
+          75% { filter:hue-rotate(22deg) contrast(160%) saturate(165%); }
+        }
+        .fade-in::before,
+        .fade-in::after {
+          content:"";
+          position:absolute;
+          inset:-40px;
+          pointer-events:none;
+        }
         .fade-in::before {
           background:
             radial-gradient(circle at 35% 40%,rgba(0,255,170,.28),transparent 65%),
             radial-gradient(circle at 70% 65%,rgba(255,0,110,.25),transparent 72%);
           filter:blur(22px);
           animation: rgbShift 9s linear infinite;
+          opacity:.65;
+          mix-blend-mode:screen;
         }
         .fade-in::after {
           background:
@@ -469,11 +579,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           mix-blend-mode:overlay;
           opacity:.18;
         }
-        @keyframes driftLines {
-          0% { transform:translateY(0); }
-          100% { transform:translateY(-160px); }
-        }
-        /* Loader glitch bar */
         .story-loader {
           position:fixed; top:0; left:0; right:0;
           height:4px;
