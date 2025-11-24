@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import AudioPlayer from "@/components/AudioPlayer";
+import AudioPlayer2 from "@/components/AudioPlayer2";
 
 export type Story = {
   id: string;
@@ -43,6 +43,34 @@ type PlaylistData = {
   tracks?: PlaylistTrack[];
   visuals?: string[];
 };
+
+// ===== Playlist config / alias mapping =====
+const PLAYLIST_BASE = "/playlists"; // physical: /public/playlists/*.json
+const PLAYLIST_ALIASES: Record<string, string> = {
+  // storySlug: playlistSlug
+  "k-hole": "teleki-ter",
+  fefe: "fefe-elromlott",
+  kirandulas: "kirandulas-a-marsra",
+  leharapott: "leharapott-huvelykujj",
+  pucer: "pucer-nyaralas",
+  vori: "vori-es-a-mentostaska",
+  elgazolom: "elgazolom-az-egyik-vasarlomat",
+  holnaptol: "holnaptol-leallok",
+  szelvedo: "szelvedo-nelkul",
+  csernus: "dr-csernus-rambassza",
+  hatodik: "hatodik-nap-a-zartosztalyon",
+  private: "private-link-netcafe",
+};
+function buildPlaylistCandidates(slug: string): string[] {
+  const out = new Set<string>();
+  if (PLAYLIST_ALIASES[slug]) out.add(PLAYLIST_ALIASES[slug]);
+  out.add(slug); // raw
+  // heuristic expansions (only if not alias already)
+  if (!PLAYLIST_ALIASES[slug]) {
+    if (slug.startsWith("atropina-")) out.add(slug); // already matches
+  }
+  return Array.from(out);
+}
 
 export default function ReaderApp({ stories }: ReaderAppProps) {
   const firstStory = stories[0];
@@ -137,18 +165,29 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     const load = async () => {
       setPlaylistLoading(true);
       try {
-        // a public/playlist/<slug>.json fájlokat feltételezzük
-        const res = await fetch(`/playlist/${currentStory.slug}.json`, {
-          cache: "no-store",
-        });
-
-        if (!res.ok) {
-          setPlaylist(null);
-          return;
+        const candidates = buildPlaylistCandidates(currentStory.slug);
+        let found: PlaylistData | null = null;
+        for (const c of candidates) {
+          const url = `${PLAYLIST_BASE}/${c}.json`;
+          try {
+            const res = await fetch(url, { cache: "no-store" });
+            if (!res.ok) {
+              console.warn("[playlist][miss]", res.status, url);
+              continue;
+            }
+            const json = (await res.json()) as PlaylistData;
+            if (json && (json.tracks?.length || json.excerpt || json.visuals?.length)) {
+              console.log("[playlist][hit]", url);
+              found = json;
+              break;
+            } else {
+              console.warn("[playlist][empty-structure]", url, json);
+            }
+          } catch (err) {
+            console.warn("[playlist][fetch-error]", c, err);
+          }
         }
-
-        const data = (await res.json()) as PlaylistData;
-        setPlaylist(data);
+        setPlaylist(found);
       } catch (e) {
         console.error("Playlist betöltési hiba:", e);
         setPlaylist(null);
@@ -533,25 +572,23 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                   Playlist betöltése…
                 </div>
               )}
-
               {!playlistLoading &&
                 playlist &&
                 playlist.tracks &&
                 playlist.tracks.length > 0 && (
                   <section className="mb-6 space-y-3">
-                    {playlist.excerpt && (
-                      <p className="text-sm text-neutral-400 italic">
-                        {playlist.excerpt}
-                      </p>
-                    )}
-
-                    <AudioPlayer
+                    <AudioPlayer2
                       tracks={playlist.tracks}
                       images={playlist.visuals ?? []}
                     />
                   </section>
                 )}
-
+             {!playlistLoading && !playlist && (
+               <div className="mb-6 text-[11px] text-neutral-600">
+                 Nincs kapcsolódó playlist (.json nem található a /public{PLAYLIST_BASE} alatt ehhez a slughoz:
+                 <code className="ml-1">{currentStory.slug}</code>)
+               </div>
+             )}
               <section
                 className="mt-6 leading-relaxed md:leading-8 text-neutral-400 whitespace-pre-wrap"
                 style={{ fontSize: `${fontSize}px` }}
