@@ -10,7 +10,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useRouter } from "next/navigation";
-import { createClient as createSupabaseClient } from "@/lib/browser";
 
 export type Story = {
   id: string;
@@ -23,7 +22,6 @@ export type Story = {
 
 type ReaderAppProps = {
   stories: Story[];
-  userEmail?: string;
 };
 
 const STORAGE_KEY = "vallalhatatlan-reader-state";
@@ -34,7 +32,7 @@ type ReaderState = {
   finishedStories?: string[];
 };
 
-export default function ReaderApp({ stories, userEmail }: ReaderAppProps) {
+export default function ReaderApp({ stories }: ReaderAppProps) {
   const firstStory = stories[0];
   const [currentSlug, setCurrentSlug] = useState<string | undefined>(
     firstStory?.slug
@@ -56,7 +54,7 @@ export default function ReaderApp({ stories, userEmail }: ReaderAppProps) {
     [stories, currentIndex, firstStory]
   );
 
-  const userInitial = userEmail?.[0]?.toUpperCase() ?? "?";
+  const userInitial = "V"; // Vállalhatatlan Klubtag :)
 
   // Betöltés localStorage-ból
   useEffect(() => {
@@ -164,31 +162,17 @@ export default function ReaderApp({ stories, userEmail }: ReaderAppProps) {
   const finishedCount = readerState.finishedStories?.length || 0;
   const bookProgress = totalStories > 0 ? finishedCount / totalStories : 0;
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
-      const supabase: any = createSupabaseClient();
-      if (supabase?.auth?.signOut) {
-        await supabase.auth.signOut();
-      }
+      // töröljük a klub sütit
+      document.cookie =
+        "reader_session=; Max-Age=0; path=/; SameSite=Lax; Secure";
     } catch (e) {
-      console.error("Logout hiba:", e);
+      console.error("Logout cookie hiba:", e);
     } finally {
-      router.push("/login");
+      router.push("/reader-access");
     }
   };
-
-  // Opcionális client-side guard – ha valamiért nincs user, visszadobjuk loginra
-  useEffect(() => {
-    const supabase: any = createSupabaseClient();
-    if (!supabase?.auth?.getUser) return;
-
-    supabase.auth.getUser().then(({ data }: any) => {
-      if (!data?.user) {
-        const to = "/reader";
-        router.push(`/login?redirect=${encodeURIComponent(to)}`);
-      }
-    });
-  }, [router]);
 
   return (
     <div className="flex min-h-screen">
@@ -212,10 +196,10 @@ export default function ReaderApp({ stories, userEmail }: ReaderAppProps) {
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-neutral-300 truncate max-w-[120px]">
-                  {userEmail ?? "Ismeretlen user"}
+                  Klubtag
                 </span>
                 <span className="text-[10px] text-neutral-500 uppercase tracking-[0.18em]">
-                  bejelentkezve
+                  belépve
                 </span>
               </div>
             </div>
@@ -326,10 +310,10 @@ export default function ReaderApp({ stories, userEmail }: ReaderAppProps) {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs text-neutral-300 truncate max-w-[120px]">
-                    {userEmail ?? "Ismeretlen user"}
+                    Klubtag
                   </span>
                   <span className="text-[10px] text-neutral-500 uppercase tracking-[0.18em]">
-                    bejelentkezve
+                    belépve
                   </span>
                 </div>
               </div>
