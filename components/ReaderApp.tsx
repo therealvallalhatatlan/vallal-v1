@@ -355,7 +355,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
       {/* Tartalom */}
       <div className="flex-1 px-4 py-6 md:px-8 md:py-8">
         {currentStory ? (
-          <article className="mx-auto max-w-[720px]">
+          <article className="mx-auto max-w-[600px]">
             <header className="mb-6">
               <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-neutral-200">
                 {currentStory.title}
@@ -369,7 +369,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
               </div>
             </header>
 
-            <section className="mt-6 text-[18px] md:text-[20px] leading-relaxed md:leading-8 text-neutral-400 whitespace-pre-wrap">
+            <section className="mt-6 text-[19px] md:text-[21px] leading-relaxed md:leading-8 text-neutral-400 whitespace-pre-wrap">
               {currentStory.text}
             </section>
           </article>
