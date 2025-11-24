@@ -133,28 +133,35 @@ return (
         0 2px 0 rgba(0,0,0,0.35);
       filter: contrast(140%) saturate(140%);
     }
-    @keyframes fadeDream {
-      0% { opacity:0; filter:blur(14px) saturate(55%) hue-rotate(15deg); transform:translateY(18px) scale(.985); }
-      25% { opacity:.35; filter:blur(11px) }
-      55% { opacity:.7; filter:blur(7px) }
-      85% { opacity:.95; filter:blur(3px) }
-      100% { opacity:1; filter:blur(0) transform:translateY(0) scale(1); }
+    @keyframes fadeCrtMusic {
+      0% { opacity:0; transform:scaleY(.02) scaleX(1.3); filter:blur(38px) brightness(540%); }
+      8% { opacity:1; transform:scaleY(.4) scaleX(1.08); filter:blur(22px) brightness(300%); }
+      20% { opacity:.95; transform:scale(1.01); filter:blur(12px); }
+      38% { filter:blur(7px); }
+      65% { filter:blur(4px); }
+      100% { opacity:1; filter:blur(0) transform:scale(1); }
     }
-    .fade-in { animation: fadeDream 3.1s cubic-bezier(.33,.02,.15,1) .45s both; position:relative; }
+    @keyframes rgbShiftMusic {
+      0%,100% { filter:contrast(140%) saturate(140%); }
+      50% { filter:hue-rotate(18deg) contrast(155%) saturate(165%); }
+    }
+    .fade-in {
+      position:relative;
+      animation: fadeCrtMusic 3.4s cubic-bezier(.26,.01,.18,1) .35s both;
+    }
     .fade-in::before {
       content:""; position:absolute; inset:0;
-      background:radial-gradient(circle at 30% 40%,rgba(0,255,160,.15),transparent 70%),
-                 radial-gradient(circle at 70% 65%,rgba(255,0,120,.18),transparent 75%);
-      mix-blend-mode:screen; pointer-events:none;
-      filter:blur(18px);
+      background:
+        radial-gradient(circle at 32% 38%,rgba(0,255,160,.25),transparent 60%),
+        radial-gradient(circle at 72% 62%,rgba(255,0,120,.28),transparent 70%);
+      filter:blur(26px);
+      animation: rgbShiftMusic 8s linear infinite;
     }
     .fade-in::after {
       content:""; position:absolute; inset:0;
-      background:
-        repeating-linear-gradient(0deg,rgba(0,0,0,0) 0 2px,rgba(0,255,140,.05) 2px 3px);
-      animation: musicLines 7s linear infinite;
-      mix-blend-mode:overlay; pointer-events:none;
-      opacity:.25;
+      background:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,0) 1px 3px);
+      animation: musicLines 6s linear infinite;
+      opacity:.22;
     }
     @keyframes musicLines {
       0% { transform:translateY(0); }

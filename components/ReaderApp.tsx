@@ -424,31 +424,54 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
 
       {/* Local fade-in styles */}
       <style>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(6px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes fadeCrt {
+          0% { opacity:0; transform:scaleY(.03) scaleX(1.25); filter:blur(40px) brightness(550%); }
+          6% { opacity:1; transform:scaleY(.25) scaleX(1.08); filter:blur(24px) brightness(300%); }
+          14% { opacity:.85; transform:scaleY(.92) scaleX(1.02); filter:blur(14px) brightness(180%); }
+          28% { opacity:1; transform:scale(1) translate(0); filter:blur(8px) brightness(140%); }
+          46% { filter:blur(5px) brightness(120%); }
+          64% { filter:blur(3px); }
+          78% { transform:scale(1) translateX(0); }
+          84% { transform:scale(1) translateX(1px); }
+          90% { transform:scale(1) translateX(-1px); }
+          100% { opacity:1; filter:blur(0); transform:scale(1) translate(0); }
         }
-        @keyframes fadeDream {
-          0% { opacity:0; filter:blur(12px) saturate(60%) hue-rotate(10deg); transform:translateY(14px) scale(.985); }
-          20% { opacity:.28; filter:blur(10px) saturate(85%) hue-rotate(25deg); }
-          55% { opacity:.7; filter:blur(6px) }
-          80% { opacity:.92; filter:blur(3px) }
-          100% { opacity:1; filter:blur(0) transform:translateY(0) scale(1); }
+        @keyframes rgbShift {
+          0%,100% { filter:contrast(140%) saturate(140%); }
+          25% { filter:hue-rotate(15deg) contrast(155%) saturate(160%); }
+          50% { filter:hue-rotate(-12deg) contrast(150%) saturate(150%); }
+          75% { filter:hue-rotate(22deg) contrast(160%) saturate(165%); }
         }
-        .fade-in { animation: fadeDream 2.8s cubic-bezier(.33,.01,.15,1) .35s both; position:relative; }
-        .fade-in::before,
-        .fade-in::after {
-          content:"";
-          position:absolute; inset:0;
-          pointer-events:none;
-          mix-blend-mode:screen;
-          opacity:.22;
+        @keyframes scanRoll {
+          0% { background-position:0 0; }
+          100% { background-position:0 4px; }
         }
-        .fade-in::before { background:linear-gradient(120deg,rgba(255,0,90,0.25),transparent 40%,rgba(0,255,190,0.25)); filter:blur(8px); }
+        @keyframes jitter {
+          0%,100% { transform:translate(0,0); }
+          20% { transform:translate(1px,-1px); }
+          40% { transform:translate(-1px,1px); }
+          60% { transform:translate(1px,0); }
+          80% { transform:translate(-1px,-1px); }
+        }
+        .fade-in {
+          position:relative;
+          animation:
+            fadeCrt 3.2s cubic-bezier(.25,.01,.12,1) .2s both,
+            jitter 2.8s steps(2,end) .2s 1;
+        }
+        .fade-in::before {
+          background:
+            radial-gradient(circle at 35% 40%,rgba(0,255,170,.28),transparent 65%),
+            radial-gradient(circle at 70% 65%,rgba(255,0,110,.25),transparent 72%);
+          filter:blur(22px);
+          animation: rgbShift 9s linear infinite;
+        }
         .fade-in::after {
           background:
-            repeating-linear-gradient(0deg,rgba(0,0,0,0) 0 2px,rgba(0,255,140,0.055) 2px 3px);
-          animation: driftLines 6s linear infinite;
+            repeating-linear-gradient(0deg,rgba(255,255,255,0.07) 0 1px,rgba(0,0,0,0) 1px 3px);
+          animation: scanRoll .22s linear infinite;
+          mix-blend-mode:overlay;
+          opacity:.18;
         }
         @keyframes driftLines {
           0% { transform:translateY(0); }
