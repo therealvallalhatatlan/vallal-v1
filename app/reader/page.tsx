@@ -90,7 +90,7 @@ const storiesMeta: Omit<Story, "text">[] = [
   },
   {
     id: "13",
-    slug: "after",
+    slug: "afterallatkak",
     title: "Afterállatkák",
     readingTime: 8,
     order: 13,

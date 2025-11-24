@@ -9,6 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import AudioPlayer from "@/components/AudioPlayer";
 
 export type Story = {
   id: string;
@@ -31,6 +32,18 @@ type ReaderState = {
   finishedStories?: string[];
 };
 
+type PlaylistTrack = {
+  title: string;
+  file: string;
+  durationSec?: number;
+};
+
+type PlaylistData = {
+  excerpt?: string;
+  tracks?: PlaylistTrack[];
+  visuals?: string[];
+};
+
 export default function ReaderApp({ stories }: ReaderAppProps) {
   const firstStory = stories[0];
   const [currentSlug, setCurrentSlug] = useState<string | undefined>(
@@ -45,6 +58,10 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   // settings
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
+
+  // playlist state
+  const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
+  const [playlistLoading, setPlaylistLoading] = useState(false);
 
   const currentIndex = useMemo(
     () => stories.findIndex((s) => s.slug === currentSlug),
@@ -109,6 +126,39 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
       // ignore
     }
   }, []);
+
+  // Playlist betöltése az aktuális sztorihoz
+  useEffect(() => {
+    if (!currentStory?.slug) {
+      setPlaylist(null);
+      return;
+    }
+
+    const load = async () => {
+      setPlaylistLoading(true);
+      try {
+        // a public/playlist/<slug>.json fájlokat feltételezzük
+        const res = await fetch(`/playlist/${currentStory.slug}.json`, {
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          setPlaylist(null);
+          return;
+        }
+
+        const data = (await res.json()) as PlaylistData;
+        setPlaylist(data);
+      } catch (e) {
+        console.error("Playlist betöltési hiba:", e);
+        setPlaylist(null);
+      } finally {
+        setPlaylistLoading(false);
+      }
+    };
+
+    load();
+  }, [currentStory?.slug]);
 
   // Mentés localStorage-ba (progress)
   const persistState = (next: ReaderState) => {
@@ -254,7 +304,9 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate">{story.title}</span>
                   {isFinished && (
-                    <span aria-label="kész" className="text-lime-400 text-xs">✓</span>
+                    <span aria-label="kész" className="text-lime-400 text-xs">
+                      ✓
+                    </span>
                   )}
                 </div>
                 <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
@@ -435,10 +487,12 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                         : "text-neutral-400 hover:bg-neutral-900/70"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify_between gap-2">
                       <span className="truncate">{story.title}</span>
                       {isFinished && (
-                        <span aria-label="kész" className="text-lime-400 text-xs">✓</span>
+                        <span aria-label="kész" className="text-lime-400 text-xs">
+                          ✓
+                        </span>
                       )}
                     </div>
                     <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
@@ -460,7 +514,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         >
           {currentStory ? (
             <article className="mx-auto max-w-[560px] md:max-w-[600px]">
-              <header className="mb-6">
+              <header className="mb-4 md:mb-6">
                 <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-neutral-200">
                   {currentStory.title}
                 </h1>
@@ -472,6 +526,31 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                   <span>~{currentStory.readingTime} perc olvasás</span>
                 </div>
               </header>
+
+              {/* Playlist blokk a címsor alatt – AudioPlayer-rel */}
+              {playlistLoading && (
+                <div className="mb-4 text-xs text-neutral-500">
+                  Playlist betöltése…
+                </div>
+              )}
+
+              {!playlistLoading &&
+                playlist &&
+                playlist.tracks &&
+                playlist.tracks.length > 0 && (
+                  <section className="mb-6 space-y-3">
+                    {playlist.excerpt && (
+                      <p className="text-sm text-neutral-400 italic">
+                        {playlist.excerpt}
+                      </p>
+                    )}
+
+                    <AudioPlayer
+                      tracks={playlist.tracks}
+                      images={playlist.visuals ?? []}
+                    />
+                  </section>
+                )}
 
               <section
                 className="mt-6 leading-relaxed md:leading-8 text-neutral-400 whitespace-pre-wrap"
@@ -499,7 +578,9 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
             </button>
 
             <div className="text-[11px] text-neutral-500">
-              {currentStory ? `${currentStory.order}. / ${totalStories}` : "\u00A0"}
+              {currentStory
+                ? `${currentStory.order}. / ${totalStories}`
+                : "\u00A0"}
             </div>
 
             <button
@@ -536,39 +617,44 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           60% { transform:translate(1px,0); }
           80% { transform:translate(-1px,-1px); }
         }
+        @keyframes rgbShift {
+          0%,100% { filter:contrast(140%) saturate(140%); }
+          25% { filter:hue-rotate(18deg) contrast(155%) saturate(160%); }
+          50% { filter:hue-rotate(-14deg) contrast(150%) saturate(155%); }
+          75% { filter:hue-rotate(26deg) contrast(160%) saturate(165%); }
+        }
+        @keyframes scanRoll {
+          0% { background-position:0 0; }
+          100% { background-position:0 4px; }
+        }
         .fade-in {
           position:relative;
           animation:
             fadeCrt 3.2s cubic-bezier(.25,.01,.12,1) .2s both,
             jitter 2.8s steps(2,end) .2s 1;
         }
-        @keyframes scanRoll {
-          0% { background-position:0 0; }
-          100% { background-position:0 4px; }
+        .fade-in::before,
+        .fade-in::after {
+          content:"";
+          position:absolute;
+          inset:-40px;
+          pointer-events:none;
         }
-         .fade-in::before,
-         .fade-in::after {
-           content:"";
-           position:absolute;
-           inset:-40px;
-           pointer-events:none;
-         }
         .fade-in::before {
           background:
-            radial-gradient(circle at 35% 40%,rgba(255,255,255,.12),transparent 60%),
-            radial-gradient(circle at 70% 65%,rgba(255,255,255,.10),transparent 70%),
-            linear-gradient(120deg,rgba(190,230,210,.05),transparent 50%,rgba(200,210,240,.04));
-          filter:blur(22px);
-          opacity:.32;
-          mix-blend-mode:soft-light;
+            radial-gradient(circle at 35% 40%,rgba(0,255,170,.28),transparent 65%),
+            radial-gradient(circle at 70% 65%,rgba(255,0,110,.25),transparent 72%);
+          filter:blur(26px);
+          mix-blend-mode:screen;
+          animation: rgbShift 9s linear infinite;
+          opacity:.55;
         }
-         .fade-in::after {
-           background:
-             repeating-linear-gradient(0deg,rgba(255,255,255,0.09) 0 1px,rgba(0,0,0,0) 1px 3px);
-           animation: scanRoll .22s linear infinite;
-           mix-blend-mode:overlay;
-           opacity:.12;
-         }
+        .fade-in::after {
+          background:repeating-linear-gradient(0deg,rgba(255,255,255,0.12) 0 1px,rgba(0,0,0,0) 1px 3px);
+          animation: scanRoll .22s linear infinite;
+          mix-blend-mode:overlay;
+          opacity:.18;
+        }
         .story-loader {
           position:fixed; top:0; left:0; right:0;
           height:4px;
@@ -599,3 +685,5 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     </div>
   );
 }
+
+// :contentReference[oaicite:0]{index=0}
