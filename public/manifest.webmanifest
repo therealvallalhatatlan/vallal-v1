@@ -1,6 +1,6 @@
 {
   "name": "Vállalhatatlan Reader",
-  "short_name": "Reader",
+  "short_name": "Vállalhatatlan",
   "start_url": "/reader",
   "display": "standalone",
   "background_color": "#000000",
