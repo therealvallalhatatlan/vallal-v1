@@ -384,7 +384,7 @@ export default function AudioPlayer2({ tracks, images = [] }: Props) {
             max={1000}
             value={Math.floor(progress * 1000)}
             onChange={(e) => seek(Number(e.target.value) / 1000)}
-            className="player-range"
+            className="player-range bg-neutral-200"
             aria-label="Idővonal"
           />
           <div className="flex justify-between text-[11px] text-zinc-500">
@@ -459,14 +459,14 @@ export default function AudioPlayer2({ tracks, images = [] }: Props) {
         .player-range::-webkit-slider-thumb {
           -webkit-appearance:none;
           width:14px; height:14px;
-          background:#e5e7eb; /* neutral-200 */
-          border:1px solid #d4d4d8;
+          background:#d4d4d8; /* neutral-300 */
+          border:1px solid #cfd2d6;
           border-radius:50%;
           margin-top:-5px;
           transition:.15s;
         }
         .player-range:hover::-webkit-slider-thumb {
-          background:#f3f4f6;
+          background:#e5e7eb;
         }
         .player-range::-moz-range-track {
           height:4px;
@@ -475,12 +475,12 @@ export default function AudioPlayer2({ tracks, images = [] }: Props) {
         }
         .player-range::-moz-range-thumb {
           width:14px; height:14px;
-          background:#e5e7eb;
-          border:1px solid #d4d4d8;
+          background:#d4d4d8;
+          border:1px solid #cfd2d6;
           border-radius:50%;
           transition:.15s;
         }
-        .player-range:hover::-moz-range-thumb { background:#f3f4f6; }
+        .player-range:hover::-moz-range-thumb { background:#e5e7eb; }
       `}</style>
     </div>
   )

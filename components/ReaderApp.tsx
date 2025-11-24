@@ -86,6 +86,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   // settings
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
+  const [effectsEnabled, setEffectsEnabled] = useState<boolean>(true);
 
   // playlist state
   const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
@@ -150,6 +151,9 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
       if (typeof parsed.fontSize === "number") {
         setFontSize(parsed.fontSize);
       }
+     if (typeof parsed.effectsEnabled === "boolean") {
+       setEffectsEnabled(parsed.effectsEnabled);
+     }
     } catch {
       // ignore
     }
@@ -274,24 +278,35 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const persistSettings = (nextFontSize: number, nextEffects: boolean) => {
+    try {
+      window.localStorage.setItem(
+        SETTINGS_KEY,
+        JSON.stringify({ fontSize: nextFontSize, effectsEnabled: nextEffects })
+      );
+    } catch {
+      // ignore
+    }
+  };
+
   // Betűméret módosítása + mentése
   const changeFontSize = (delta: number) => {
     setFontSize((prev) => {
       const next = Math.min(36, Math.max(14, prev + delta));
-      try {
-        window.localStorage.setItem(
-          SETTINGS_KEY,
-          JSON.stringify({ fontSize: next })
-        );
-      } catch {
-        // ignore
-      }
+      persistSettings(next, effectsEnabled);
       return next;
     });
   };
+ const toggleEffects = () => {
+   setEffectsEnabled((prev) => {
+     const next = !prev;
+     persistSettings(fontSize, next);
+     return next;
+   });
+ };
 
   return (
-    <div className="flex min-h-[100dvh]">
+    <div className={`flex min-h-[100dvh] ${effectsEnabled ? 'effects-on' : 'effects-off'}`}>
       {showLoader && <div className="story-loader" />}
 
       {/* Sidebar - tartalomjegyzék (desktop) */}
@@ -469,6 +484,21 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                         kényelmes.
                       </p>
                     </div>
+                    {/* Háttéreffektek toggle */}
+                    <div className="space-y-2">
+                      <p className="text-sm gradient-effekt-label">Pszichedelikus Effekt™</p>
+                      <button
+                        type="button"
+                        onClick={toggleEffects}
+                        className="px-3 py-2 text-sm border border-neutral-600 rounded-full hover:bg-neutral-800 text-neutral-300"
+                        aria-pressed={effectsEnabled}
+                      >
+                        {effectsEnabled ? 'Bekapcsolva' : 'Kikapcsolva'}
+                      </button>
+                      <p className="text-[11px] text-neutral-500">
+                        Kikapcsolás: eltűnnek a színes glitch / CRT rétegek.
+                      </p>
+                    </div>
 
                     {/* Theme placeholder */}
                     <div className="space-y-2 opacity-50">
@@ -577,10 +607,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 playlist.tracks &&
                 playlist.tracks.length > 0 && (
                   <section className="mb-6 space-y-3">
-                    <AudioPlayer2
-                      tracks={playlist.tracks}
-                      images={playlist.visuals ?? []}
-                    />
+                    
                   </section>
                 )}
              {!playlistLoading && !playlist && (
@@ -670,14 +697,22 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
             fadeCrt 3.2s cubic-bezier(.25,.01,.12,1) .2s both,
             jitter 2.8s steps(2,end) .2s 1;
         }
-        .fade-in::before,
-        .fade-in::after {
+        .gradient-effekt-label {
+          background:linear-gradient(90deg,#00ffa8,#ff2ecf 38%,#6dd3ff 65%,#b5ff5a);
+          -webkit-background-clip:text;
+          color:transparent;
+          filter:brightness(1.15) contrast(1.1);
+          letter-spacing:.5px;
+        }
+        /* Effects ON */
+        .effects-on .fade-in::before,
+        .effects-on .fade-in::after {
           content:"";
           position:absolute;
           inset:-40px;
           pointer-events:none;
         }
-        .fade-in::before {
+        .effects-on .fade-in::before {
           background:
             radial-gradient(circle at 35% 40%,rgba(0,255,170,.28),transparent 65%),
             radial-gradient(circle at 70% 65%,rgba(255,0,110,.25),transparent 72%);
@@ -686,13 +721,13 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           animation: rgbShift 9s linear infinite;
           opacity:.55;
         }
-        .fade-in::after {
+        .effects-on .fade-in::after {
           background:repeating-linear-gradient(0deg,rgba(255,255,255,0.12) 0 1px,rgba(0,0,0,0) 1px 3px);
           animation: scanRoll .22s linear infinite;
           mix-blend-mode:overlay;
           opacity:.18;
         }
-        .story-loader {
+        .effects-on .story-loader {
           position:fixed; top:0; left:0; right:0;
           height:4px;
           background:linear-gradient(90deg,#00ff95,#ff0055,#00d0ff,#00ff95);
@@ -701,7 +736,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           z-index:40;
           filter:contrast(140%) brightness(1.1);
         }
-        .story-loader::after {
+        .effects-on .story-loader::after {
           content:"";
           position:absolute; inset:0;
           background:repeating-linear-gradient(90deg,rgba(255,255,255,.6) 0 4px,rgba(0,0,0,0) 4px 8px);
@@ -718,6 +753,12 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           0% { background-position:0 0; }
           100% { background-position:160px 0; }
         }
+        /* Effects OFF overrides */
+        .effects-off .fade-in { animation: fadeCrt 0.8s ease-out .1s both; }
+        .effects-off .fade-in::before,
+        .effects-off .fade-in::after { content:none; display:none; }
+        .effects-off .story-loader,
+        .effects-off .story-loader::after { display:none; content:none; }
       `}</style>
     </div>
   );
