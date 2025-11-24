@@ -237,11 +237,30 @@ export default async function Page({
             0 2px 0 rgba(0,0,0,0.35);
           filter: contrast(140%) saturate(140%);
         }
-       @keyframes fadeInUp {
-         from { opacity: 0; transform: translateY(6px); }
-         to { opacity: 1; transform: translateY(0); }
+       @keyframes fadeDream {
+         0% { opacity:0; filter:blur(13px) saturate(60%) hue-rotate(20deg); transform:translateY(16px) scale(.985); }
+         30% { opacity:.4; filter:blur(10px) }
+         60% { opacity:.75; filter:blur(6px) }
+         90% { opacity:.97; filter:blur(2px) }
+         100% { opacity:1; filter:blur(0) transform:translateY(0) scale(1); }
        }
-       .fade-in { animation: fadeInUp .45s ease-out both; }
+       .fade-in { animation: fadeDream 2.9s cubic-bezier(.32,.03,.16,1) .4s both; position:relative; }
+       .fade-in::before {
+         content:""; position:absolute; inset:0;
+         background:linear-gradient(125deg,rgba(0,255,170,.18),transparent 45%,rgba(255,0,110,.18)),
+                   radial-gradient(circle at 80% 20%,rgba(0,180,255,.2),transparent 70%);
+         mix-blend-mode:screen; pointer-events:none; filter:blur(12px);
+       }
+       .fade-in::after {
+         content:""; position:absolute; inset:0;
+         background:repeating-linear-gradient(0deg,rgba(255,255,255,0) 0 2px,rgba(0,255,150,.05) 2px 3px);
+         animation: slugLines 6.5s linear infinite;
+         opacity:.28; pointer-events:none; mix-blend-mode:overlay;
+       }
+       @keyframes slugLines {
+         0% { transform:translateY(0); }
+         100% { transform:translateY(-180px); }
+       }
       `}</style>
     </main>
   );

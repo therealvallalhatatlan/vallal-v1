@@ -40,6 +40,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [headerHidden, setHeaderHidden] = useState(false);
   const lastYRef = useRef(0);
+  const [showLoader, setShowLoader] = useState(false);
 
   const router = useRouter();
 
@@ -123,6 +124,8 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     setCurrentSlug(slug);
     markAsFinished(slug);
     scrollToTop();
+    setShowLoader(true);
+    setTimeout(() => setShowLoader(false), 700);
   };
 
   const handleSelectStoryFromMobileToc = (slug: string) => {
@@ -145,17 +148,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const totalStories = stories.length;
   const finishedCount = readerState.finishedStories?.length || 0;
   const bookProgress = totalStories > 0 ? finishedCount / totalStories : 0;
-
-  const handleLogout = () => {
-    try {
-      document.cookie =
-        "reader_session=; Max-Age=0; path=/; SameSite=Lax; Secure";
-    } catch (e) {
-      console.error("Logout cookie hiba:", e);
-    } finally {
-      router.push("/reader-access");
-    }
-  };
 
   // Header show/hide on scroll
   useEffect(() => {
@@ -206,14 +198,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 </span>
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 hover:text-neutral-200"
-            >
-              kilépés
-            </button>
           </div>
         </div>
 
@@ -236,7 +220,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate">{story.title}</span>
                   {isFinished && (
-                    <span className="text-[10px] text-emerald-300 uppercase tracking-[0.15em]">
+                    <span className="text-[10px] text-lime-400 uppercase tracking-[0.15em]">
                       kész
                     </span>
                   )}
@@ -291,9 +275,9 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
               <span className="text-[11px] text-neutral-400">
                 Könyv progress: {Math.round(bookProgress * 100)}%
               </span>
-              <div className="h-1 w-36 rounded-full bg-neutral-900 overflow-hidden">
+              <div className="h-0.5 w-36 rounded-full bg-neutral-900 overflow-hidden">
                 <div
-                  className="h-full bg-neutral-300 transition-[width]"
+                  className="h-full bg-lime-400 transition-[width]"
                   style={{ width: `${bookProgress * 100}%` }}
                 />
               </div>
@@ -326,14 +310,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                   </span>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 hover:text-neutral-200"
-              >
-                kilépés
-              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto py-3">
@@ -355,7 +331,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate">{story.title}</span>
                       {isFinished && (
-                        <span className="text-[10px] text-emerald-300 uppercase tracking-[0.15em]">
+                        <span className="text-[10px] text-lime-400 uppercase tracking-[0.15em]">
                           kész
                         </span>
                       )}
@@ -373,13 +349,15 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         </Sheet>
 
         {/* Egyszerű csík a könyv progresshez mobilon is */}
-        <div className="h-1 w-full bg-neutral-900 md:hidden">
+        <div className="h-0.5 w-full bg-neutral-900 md:hidden">
           <div
-            className="h-1 bg-neutral-300 transition-[width]"
+            className="h-full bg-lime-400 transition-[width]"
             style={{ width: `${bookProgress * 100}%` }}
           />
         </div>
-
+        {showLoader && (
+          <div className="story-loader" aria-hidden="true" />
+        )}
         {/* Tartalom */}
         <div key={currentStory?.slug} className="flex-1 px-6 py-6 md:px-8 md:py-8 fade-in">
           {currentStory ? (
@@ -442,7 +420,59 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           from { opacity: 0; transform: translateY(6px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .fade-in { animation: fadeInUp .45s ease-out both; }
+        @keyframes fadeDream {
+          0% { opacity:0; filter:blur(12px) saturate(60%) hue-rotate(10deg); transform:translateY(14px) scale(.985); }
+          20% { opacity:.28; filter:blur(10px) saturate(85%) hue-rotate(25deg); }
+          55% { opacity:.7; filter:blur(6px) }
+          80% { opacity:.92; filter:blur(3px) }
+          100% { opacity:1; filter:blur(0) transform:translateY(0) scale(1); }
+        }
+        .fade-in { animation: fadeDream 2.8s cubic-bezier(.33,.01,.15,1) .35s both; position:relative; }
+        .fade-in::before,
+        .fade-in::after {
+          content:"";
+          position:absolute; inset:0;
+          pointer-events:none;
+          mix-blend-mode:screen;
+          opacity:.22;
+        }
+        .fade-in::before { background:linear-gradient(120deg,rgba(255,0,90,0.25),transparent 40%,rgba(0,255,190,0.25)); filter:blur(8px); }
+        .fade-in::after {
+          background:
+            repeating-linear-gradient(0deg,rgba(0,0,0,0) 0 2px,rgba(0,255,140,0.055) 2px 3px);
+          animation: driftLines 6s linear infinite;
+        }
+        @keyframes driftLines {
+          0% { transform:translateY(0); }
+          100% { transform:translateY(-160px); }
+        }
+        /* Loader glitch bar */
+        .story-loader {
+          position:fixed; top:0; left:0; right:0;
+          height:4px;
+          background:linear-gradient(90deg,#00ff95,#ff0055,#00d0ff,#00ff95);
+          background-size:300% 100%;
+          animation:glitchBar 0.9s cubic-bezier(.6,.01,.4,1) infinite;
+          z-index:40;
+          filter:contrast(140%) brightness(1.1);
+        }
+        .story-loader::after {
+          content:"";
+          position:absolute; inset:0;
+          background:repeating-linear-gradient(90deg,rgba(255,255,255,.6) 0 4px,rgba(0,0,0,0) 4px 8px);
+          mix-blend-mode:overlay;
+          opacity:.35;
+          animation:scan 1.2s linear infinite;
+        }
+        @keyframes glitchBar {
+          0% { background-position:0% 50%; transform:translateY(0); }
+          50% { background-position:100% 50%; transform:translateY(1px); }
+          100% { background-position:0% 50%; transform:translateY(0); }
+        }
+        @keyframes scan {
+          0% { background-position:0 0; }
+          100% { background-position:160px 0; }
+        }
       `}</style>
     </div>
   );

@@ -101,7 +101,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#9ae600",
 };
 
 export default function RootLayout({
@@ -151,6 +151,7 @@ export default function RootLayout({
         {/* Page content a legfelül */}
         <div className="content-above relative z-20">
           {children}
+          <div id="glitch-root"></div>
           <Analytics />
           <SpeedInsights />
           <ServiceWorkerRegister />

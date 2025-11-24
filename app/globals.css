@@ -410,4 +410,152 @@
 
 
 
+/* === VÁLLALHATATLAN GLITCH LOGO === */
+
+.glitch-logo {
+  color: #e5e5e5;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+
+.glitch-logo .glitch-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.glitch-logo .glitch-layer-main {
+  position: relative;
+  mix-blend-mode: screen;
+}
+
+/* RGB csatornák */
+.glitch-logo .glitch-layer-r {
+  color: #ff004c;
+  animation: glitch-r 0.6s infinite;
+}
+
+.glitch-logo .glitch-layer-g {
+  color: #1bff9e;
+  animation: glitch-g 0.7s infinite;
+}
+
+.glitch-logo .glitch-layer-b {
+  color: #00c8ff;
+  animation: glitch-b 0.8s infinite;
+}
+
+/* VHS noise overlay */
+.glitch-logo::before {
+  content: "";
+  position: absolute;
+  inset: -40px;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    repeating-linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.4),
+      rgba(0, 0, 0, 0.4) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  mix-blend-mode: soft-light;
+  opacity: 0.7;
+  animation: glitch-noise 0.4s steps(3) infinite;
+}
+
+/* Glitch keyframe-ek */
+
+@keyframes glitch-r {
+  0% {
+    transform: translate(0, 0);
+  }
+  10% {
+    transform: translate(-3px, -1px);
+  }
+  20% {
+    transform: translate(2px, 1px);
+  }
+  30% {
+    transform: translate(-1px, 2px);
+  }
+  40% {
+    transform: translate(3px, -2px);
+  }
+  50% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes glitch-g {
+  0% {
+    transform: translate(0, 0);
+  }
+  15% {
+    transform: translate(2px, 2px);
+  }
+  30% {
+    transform: translate(-2px, 1px);
+  }
+  45% {
+    transform: translate(1px, -2px);
+  }
+  60% {
+    transform: translate(-3px, 0);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes glitch-b {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(3px, -1px);
+  }
+  60% {
+    transform: translate(-1px, -2px);
+  }
+  80% {
+    transform: translate(2px, 1px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes glitch-noise {
+  0% {
+    clip-path: inset(0 0 60% 0);
+  }
+  20% {
+    clip-path: inset(20% 0 20% 0);
+  }
+  40% {
+    clip-path: inset(40% 0 10% 0);
+  }
+  60% {
+    clip-path: inset(10% 0 40% 0);
+  }
+  80% {
+    clip-path: inset(30% 0 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
 
