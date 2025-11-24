@@ -134,39 +134,37 @@ return (
       filter: contrast(140%) saturate(140%);
     }
     @keyframes fadeCrtMusic {
-      0% { opacity:0; transform:scaleY(.02) scaleX(1.3); filter:blur(38px) brightness(540%); }
-      8% { opacity:1; transform:scaleY(.4) scaleX(1.08); filter:blur(22px) brightness(300%); }
+      0% { opacity:0; transform:scaleY(.02) scaleX(1.3); filter:blur(38px) brightness(235%); }
+      8% { opacity:1; transform:scaleY(.4) scaleX(1.08); filter:blur(22px) brightness(170%); }
       20% { opacity:.95; transform:scale(1.01); filter:blur(12px); }
       38% { filter:blur(7px); }
       65% { filter:blur(4px); }
       100% { opacity:1; filter:blur(0) transform:scale(1); }
     }
-    @keyframes rgbShiftMusic {
-      0%,100% { filter:contrast(140%) saturate(140%); }
-      50% { filter:hue-rotate(18deg) contrast(155%) saturate(165%); }
-    }
-    .fade-in {
-      position:relative;
-      animation: fadeCrtMusic 3.4s cubic-bezier(.26,.01,.18,1) .35s both;
-    }
-    .fade-in::before {
-      content:""; position:absolute; inset:0;
-      background:
-        radial-gradient(circle at 32% 38%,rgba(0,255,160,.25),transparent 60%),
-        radial-gradient(circle at 72% 62%,rgba(255,0,120,.28),transparent 70%);
-      filter:blur(26px);
-      animation: rgbShiftMusic 8s linear infinite;
-    }
-    .fade-in::after {
-      content:""; position:absolute; inset:0;
-      background:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,0) 1px 3px);
-      animation: musicLines 6s linear infinite;
-      opacity:.22;
-    }
-    @keyframes musicLines {
-      0% { transform:translateY(0); }
-      100% { transform:translateY(-200px); }
-    }
+     .fade-in {
+       position:relative;
+       animation: fadeCrtMusic 3.4s cubic-bezier(.26,.01,.18,1) .35s both;
+     }
+     .fade-in::before {
+       content:""; position:absolute; inset:0;
+       background:
+        radial-gradient(circle at 32% 38%,rgba(255,255,255,.12),transparent 56%),
+        radial-gradient(circle at 72% 62%,rgba(255,255,255,.10),transparent 66%),
+        linear-gradient(120deg,rgba(200,220,210,.04),transparent 55%,rgba(210,220,235,.035));
+      filter:blur(23px);
+      mix-blend-mode:soft-light;
+      opacity:.26;
+     }
+     .fade-in::after {
+       content:""; position:absolute; inset:0;
+       background:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,0) 1px 3px);
+       animation: musicLines 6s linear infinite;
+       opacity:.16;
+     }
+     @keyframes musicLines {
+       0% { transform:translateY(0); }
+       100% { transform:translateY(-200px); }
+     }
   `}</style>
       
 </main>

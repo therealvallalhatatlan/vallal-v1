@@ -254,9 +254,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate">{story.title}</span>
                   {isFinished && (
-                    <span className="text-[10px] text-lime-400 uppercase tracking-[0.15em]">
-                      kész
-                    </span>
+                    <span aria-label="kész" className="text-lime-400 text-xs">✓</span>
                   )}
                 </div>
                 <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
@@ -275,7 +273,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         {/* Header + mobil TOC Sheet */}
         <Sheet open={mobileTocOpen} onOpenChange={setMobileTocOpen}>
           <header
-            className={`border-b border-neutral-800 bg-black px-4 py-3 flex items-center justify-between sticky top-0 z-20 transition-all duration-300 ease-out ${
+            className={`border-b border-neutral-800 bg-transparent px-4 py-3 flex items-center justify-between sticky top-0 z-20 transition-all duration-300 ease-out ${
               headerHidden
                 ? "opacity-0 -translate-y-3 pointer-events-none"
                 : "opacity-100 translate-y-0"
@@ -440,9 +438,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate">{story.title}</span>
                       {isFinished && (
-                        <span className="text-[10px] text-lime-400 uppercase tracking-[0.15em]">
-                          kész
-                        </span>
+                        <span aria-label="kész" className="text-lime-400 text-xs">✓</span>
                       )}
                     </div>
                     <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
@@ -522,11 +518,11 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
       {/* Local styles */}
       <style>{`
         @keyframes fadeCrt {
-          0% { opacity:0; transform:scaleY(.03) scaleX(1.25); filter:blur(40px) brightness(550%); }
-          6% { opacity:1; transform:scaleY(.25) scaleX(1.08); filter:blur(24px) brightness(300%); }
-          14% { opacity:.85; transform:scaleY(.92) scaleX(1.02); filter:blur(14px) brightness(180%); }
-          28% { opacity:1; transform:scale(1) translate(0); filter:blur(8px) brightness(140%); }
-          46% { filter:blur(5px) brightness(120%); }
+          0% { opacity:0; transform:scaleY(.03) scaleX(1.25); filter:blur(40px) brightness(240%); }
+          6% { opacity:1; transform:scaleY(.25) scaleX(1.08); filter:blur(24px) brightness(175%); }
+          14% { opacity:.85; transform:scaleY(.92) scaleX(1.02); filter:blur(14px) brightness(145%); }
+          28% { opacity:1; transform:scale(1) translate(0); filter:blur(8px) brightness(120%); }
+          46% { filter:blur(5px) brightness(110%); }
           64% { filter:blur(3px); }
           78% { transform:scale(1) translateX(0); }
           84% { transform:scale(1) translateX(1px); }
@@ -550,35 +546,29 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           0% { background-position:0 0; }
           100% { background-position:0 4px; }
         }
-        @keyframes rgbShift {
-          0%,100% { filter:contrast(140%) saturate(140%); }
-          25% { filter:hue-rotate(15deg) contrast(155%) saturate(160%); }
-          50% { filter:hue-rotate(-12deg) contrast(150%) saturate(150%); }
-          75% { filter:hue-rotate(22deg) contrast(160%) saturate(165%); }
-        }
-        .fade-in::before,
-        .fade-in::after {
-          content:"";
-          position:absolute;
-          inset:-40px;
-          pointer-events:none;
-        }
+         .fade-in::before,
+         .fade-in::after {
+           content:"";
+           position:absolute;
+           inset:-40px;
+           pointer-events:none;
+         }
         .fade-in::before {
           background:
-            radial-gradient(circle at 35% 40%,rgba(0,255,170,.28),transparent 65%),
-            radial-gradient(circle at 70% 65%,rgba(255,0,110,.25),transparent 72%);
+            radial-gradient(circle at 35% 40%,rgba(255,255,255,.12),transparent 60%),
+            radial-gradient(circle at 70% 65%,rgba(255,255,255,.10),transparent 70%),
+            linear-gradient(120deg,rgba(190,230,210,.05),transparent 50%,rgba(200,210,240,.04));
           filter:blur(22px);
-          animation: rgbShift 9s linear infinite;
-          opacity:.65;
-          mix-blend-mode:screen;
+          opacity:.32;
+          mix-blend-mode:soft-light;
         }
-        .fade-in::after {
-          background:
-            repeating-linear-gradient(0deg,rgba(255,255,255,0.07) 0 1px,rgba(0,0,0,0) 1px 3px);
-          animation: scanRoll .22s linear infinite;
-          mix-blend-mode:overlay;
-          opacity:.18;
-        }
+         .fade-in::after {
+           background:
+             repeating-linear-gradient(0deg,rgba(255,255,255,0.09) 0 1px,rgba(0,0,0,0) 1px 3px);
+           animation: scanRoll .22s linear infinite;
+           mix-blend-mode:overlay;
+           opacity:.12;
+         }
         .story-loader {
           position:fixed; top:0; left:0; right:0;
           height:4px;

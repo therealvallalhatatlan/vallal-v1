@@ -237,35 +237,31 @@ export default async function Page({
             0 2px 0 rgba(0,0,0,0.35);
           filter: contrast(140%) saturate(140%);
         }
-       @keyframes fadeCrtSlug {
-         0% { opacity:0; transform:scaleY(.015) scaleX(1.4); filter:blur(42px) brightness(600%); }
-         7% { opacity:1; transform:scaleY(.35) scaleX(1.1); filter:blur(26px) brightness(320%); }
+        @keyframes fadeCrtSlug {
+         0% { opacity:0; transform:scaleY(.015) scaleX(1.4); filter:blur(42px) brightness(255%); }
+         7% { opacity:1; transform:scaleY(.35) scaleX(1.1); filter:blur(26px) brightness(175%); }
          18% { opacity:.9; transform:scale(1.02); filter:blur(15px); }
          34% { filter:blur(9px); }
          58% { filter:blur(5px); }
          82% { filter:blur(2px); }
          100% { opacity:1; filter:blur(0) transform:scale(1); }
        }
-       @keyframes rgbSlug {
-         0%,100% { filter:contrast(145%) saturate(150%); }
-         40% { filter:hue-rotate(25deg) contrast(160%) saturate(165%); }
-         70% { filter:hue-rotate(-18deg) contrast(155%) saturate(160%); }
-       }
        .fade-in {
          position:relative;
          animation: fadeCrtSlug 3.2s cubic-bezier(.28,.01,.15,1) .35s both;
        }
-        .fade-in::before {
+       .fade-in::before {
          background:
-           linear-gradient(120deg,rgba(0,255,170,.24),transparent 45%,rgba(255,0,110,.22)),
-           radial-gradient(circle at 78% 24%,rgba(0,180,255,.28),transparent 72%);
-         mix-blend-mode:screen; pointer-events:none; filter:blur(24px);
-         animation: rgbSlug 10s linear infinite;
+           linear-gradient(120deg,rgba(255,255,255,.12),transparent 45%,rgba(255,255,255,.10)),
+           radial-gradient(circle at 78% 24%,rgba(255,255,255,.12),transparent 68%),
+           linear-gradient(160deg,rgba(210,230,220,.035),transparent 60%,rgba(220,228,238,.03));
+         mix-blend-mode:soft-light; pointer-events:none; filter:blur(24px);
+         opacity:.28;
         }
-        .fade-in::after {
-         background:repeating-linear-gradient(0deg,rgba(255,255,255,.09) 0 1px,rgba(0,0,0,0) 1px 3px);
-         animation: slugLines 7s linear infinite;
-         opacity:.24; pointer-events:none; mix-blend-mode:overlay;
+       .fade-in::after {
+          background:repeating-linear-gradient(0deg,rgba(255,255,255,.10) 0 1px,rgba(0,0,0,0) 1px 3px);
+          animation: slugLines 7s linear infinite;
+          opacity:.16; pointer-events:none; mix-blend-mode:overlay;
         }
         @keyframes slugLines {
           0% { transform:translateY(0); }
