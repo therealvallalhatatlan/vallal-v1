@@ -1,9 +1,7 @@
 // app/reader/page.tsx
-import { redirect } from "next/navigation";
 import ReaderApp, { Story } from "@/components/ReaderApp";
 import fs from "fs";
 import path from "path";
-import { createClient } from "@/lib/server";
 
 const storiesMeta: Omit<Story, "text">[] = [
   {
@@ -238,22 +236,8 @@ function loadStoryText(slug: string): string {
 }
 
 export default async function ReaderPage() {
-  // Supabase server client
-  const supabase = await createClient();
-
-  // 1) Auth check – csak belépett user láthatja a /reader oldalt
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    // ha nincs login, dobjuk el a /login oldalra, visszairányítással
-    redirect(`/login?redirect=${encodeURIComponent("/reader")}`);
-  }
-
-  // 2) Ha idáig eljutottunk, van user → betöltjük a novellákat
+  // Betöltjük a novellákat (auth guard kliens oldalon)
   const sortedMeta = [...storiesMeta].sort((a, b) => a.order - b.order);
-
   const stories: Story[] = sortedMeta.map((meta) => ({
     ...meta,
     text: loadStoryText(meta.slug),

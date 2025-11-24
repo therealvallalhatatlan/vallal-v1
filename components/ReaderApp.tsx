@@ -182,6 +182,17 @@ export default function ReaderApp({ stories, userEmail }: ReaderAppProps) {
     }
   };
 
+  // Client-side guard: if not logged in, bounce to /login with redirect
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data?.user) {
+        const to = "/reader";
+        router.push(`/login?redirect=${encodeURIComponent(to)}`);
+      }
+    });
+  }, [router]);
+
   return (
     <div className="flex min-h-screen">
       {/* Sidebar - tartalomjegyzék (desktop) */}
