@@ -95,7 +95,7 @@ export default function AudioPlayer2({ tracks, images = [] }: Props) {
   const toggleTools = () => setShowTools(v => !v)
 
   return (
-    <div className="w-full max-w-[560px] mx-auto space-y-6">
+    <div className="min-w-max mx-auto space-y-6">
       <div className="p-5 md:p-6 bg-transparent border border-zinc-800 rounded-3xl">
         {/* Fejléc + vezérlők */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
@@ -115,11 +115,9 @@ export default function AudioPlayer2({ tracks, images = [] }: Props) {
             <div className="mt-1 text-[11px] text-zinc-500">{index + 1} / {tracks.length}</div>
           </div>
           <div className="flex items-center gap-2 self-start md:self-auto">
-            <button onClick={prev} className="h-9 w-9 rounded-full border border-zinc-700 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center text-sm transition-colors" aria-label="Előző">⏮</button>
             <button onClick={toggle} className="h-9 px-5 rounded-full border border-neutral-300 bg-neutral-200 hover:bg-neutral-300 text-neutral-900 text-sm font-semibold flex items-center justify-center transition-colors" aria-label={playing ? 'Szünet' : 'Lejátszás'}>
               {playing ? 'Szünet' : 'Lejátszás'}
             </button>
-            <button onClick={next} className="h-9 w-9 rounded-full border border-zinc-700 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 flex items-center justify-center text-sm transition-colors" aria-label="Következő">⏭</button>
           </div>
         </div>
 
@@ -173,29 +171,43 @@ export default function AudioPlayer2({ tracks, images = [] }: Props) {
 
         <audio ref={audioRef} preload="none" className="hidden" />
       </div>
-
+      
       <style>{`
-        .player-range { width:100%; background:transparent; }
+        .player-range {
+          width:100%;
+          background:transparent;
+        }
         .player-range:focus { outline:none; }
         .player-range::-webkit-slider-runnable-track {
-          height:4px; background:linear-gradient(90deg,#111,#222); border-radius:2px;
+          height:1px;
+          background:linear-gradient(90deg,#111,#222);
+          border-radius:0.5px;
         }
         .player-range::-webkit-slider-thumb {
           -webkit-appearance:none;
           width:14px; height:14px;
-          background:#d4d4d8; border:1px solid #cfd2d6;
-          border-radius:50%; margin-top:-5px; transition:.15s;
+          background:#ffffff;
+          border:1px solid #e5e7eb;
+          border-radius:50%;
+          margin-top:-5px;
+          transition:.15s;
         }
-        .player-range:hover::-webkit-slider-thumb { background:#e5e7eb; }
+        .player-range:hover::-webkit-slider-thumb {
+          background:#ffffff;
+        }
         .player-range::-moz-range-track {
-          height:4px; background:linear-gradient(90deg,#111,#222); border-radius:2px;
+          height:1px;
+          background:linear-gradient(90deg,#111,#222);
+          border-radius:0.5px;
         }
         .player-range::-moz-range-thumb {
           width:14px; height:14px;
-          background:#d4d4d8; border:1px solid #cfd2d6;
-          border-radius:50%; transition:.15s;
+          background:#ffffff;
+          border:1px solid #e5e7eb;
+          border-radius:50%;
+          transition:.15s;
         }
-        .player-range:hover::-moz-range-thumb { background:#e5e7eb; }
+        .player-range:hover::-moz-range-thumb { background:#ffffff; }
       `}</style>
     </div>
   )

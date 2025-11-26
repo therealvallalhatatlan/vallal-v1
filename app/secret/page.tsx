@@ -216,7 +216,7 @@ function PurchaseBox() {
       </header>
 
       <div className="space-y-3">
-        <p className="text-4xl font-semibold text-zinc-100">15 EUR</p>
+        <p className="text-4xl font-semibold text-zinc-100">2500 Huf</p>
         <p className="text-xs text-zinc-500 leading-relaxed">
           • Azonnali hozzáférés  
           <br />• Teljes digitális könyv  
