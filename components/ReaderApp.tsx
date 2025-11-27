@@ -392,7 +392,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         {/* Header + mobil TOC Sheet */}
         <Sheet open={mobileTocOpen} onOpenChange={setMobileTocOpen}>
           <header
-            className={`border-b border-neutral-800 bg-transparent px-4 py-3 flex items-center justify-between fixed top-0 left-0 right-0 z-30 transition-all duration-300 ease-out md:left-72 md:w-[calc(100%-18rem)] ${
+            className={`bg-transparent px-4 py-3 flex items-center justify-between fixed top-0 left-0 right-0 z-30 transition-all duration-300 ease-out md:left-72 md:w-[calc(100%-18rem)] ${
               headerHidden
                 ? "opacity-0 -translate-y-3 pointer-events-none"
                 : "opacity-100 translate-y-0"
@@ -413,7 +413,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
               <SheetTrigger asChild>
                 <button
                   type="button"
-                  className="md:hidden text-xs px-2 py-1 border border-neutral-700 rounded-full text-neutral-300"
+                  className="md:hidden text-xs px-2 py-1 rounded-full text-neutral-300"
                 >
                   Tartalom
                 </button>
@@ -423,7 +423,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 <span className="text-xs uppercase tracking-[0.2em] text-neutral-500">
                   Vállalhatatlan
                 </span>
-                <span className="text-sm font-medium text-neutral-200">
+                <span className="text-sm font-medium text-neutral-500">
                   {currentStory
                     ? `${currentStory.order}. novella / ${totalStories}`
                     : "Reader"}
@@ -439,7 +439,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 <SheetTrigger asChild>
                   <button
                     type="button"
-                    className="h-9 w-9 flex items-center justify-center rounded-full border border-neutral-700 text-neutral-300 hover:bg-neutral-800 transition"
+                    className="h-9 w-9 flex items-center justify-center rounded-fulls text-neutral-300 hover:bg-neutral-800 transition"
                     aria-label="Beállítások"
                   >
                     ⚙️
