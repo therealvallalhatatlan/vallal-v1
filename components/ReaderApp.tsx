@@ -404,7 +404,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 className="h-full transition-[width]"
                 style={{
                   width: `${bookProgress * 100}%`,
-                  background: "#e5e7eb",
+                  background: "#a3e635",
                 }}
               />
             </div>
