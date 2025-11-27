@@ -8,12 +8,14 @@ import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 import { Crimson_Pro } from "next/font/google";
+import { Special_Elite } from "next/font/google";
 
 const crimson = Crimson_Pro({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"], // regular → bold
   variable: "--font-serif",
 });
+const specialElite = Special_Elite({ subsets: ["latin"], weight: "400", variable: "--font-heading" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vallalhatatlan.online"),
@@ -116,7 +118,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${crimson.variable} bg-black antialiased overflow-x-hidden`}
+        className={`${crimson.variable} ${specialElite.variable} bg-black antialiased overflow-x-hidden`}
         style={{ touchAction: 'pan-y' }}
       >
         {/* Háttérvideó – full screen, fixed, a content alatt */}
@@ -225,6 +227,11 @@ export default function RootLayout({
           @media (hover:none) {
             html,body { touch-action:pan-y; }
           }
+         h1, h2, h3, .heading-serif {
+           font-family: var(--font-heading), serif;
+           font-weight: 400;
+           letter-spacing: -0.01em;
+         }
         `}</style>
       </body>
     </html>

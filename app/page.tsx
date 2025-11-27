@@ -11,10 +11,12 @@ import Footer from "@/components/Footer";
 import BookCover from "@/components/BookCover";
 import CtaBuyBox from "@/components/CtaBuyBox";
 import TweetRotator from "@/components/TweetRotator";
+import Navigation from "@/components/Navigation";
 
 export default function Page() {
   return (
     <main className="text-zinc-200">
+      <Navigation />  
       <Hero />
       <Reviews />
       <MiEz />
