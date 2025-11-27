@@ -266,14 +266,16 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   useEffect(() => {
     if (typeof window === "undefined") return;
     lastYRef.current = window.scrollY || 0;
+    const HIDE_DELTA = 12;
+    const SHOW_DELTA = 6;
     const onScroll = () => {
       const y = window.scrollY || 0;
       const last = lastYRef.current;
       if (y < 16) {
         setHeaderHidden(false);
-      } else if (y > last && y > 48) {
+      } else if (y > last && y - last > HIDE_DELTA && y > 48) {
         setHeaderHidden(true);
-      } else if (y < last - 2) {
+      } else if (last - y > SHOW_DELTA) {
         setHeaderHidden(false);
       }
       lastYRef.current = y;
@@ -390,7 +392,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         {/* Header + mobil TOC Sheet */}
         <Sheet open={mobileTocOpen} onOpenChange={setMobileTocOpen}>
           <header
-            className={`border-b border-neutral-800 bg-transparent px-4 py-3 flex items-center justify-between sticky top-0 z-20 transition-all duration-300 ease-out ${
+            className={`border-b border-neutral-800 bg-transparent px-4 py-3 flex items-center justify-between fixed top-0 left-0 right-0 z-30 transition-all duration-300 ease-out md:left-72 md:w-[calc(100%-18rem)] ${
               headerHidden
                 ? "opacity-0 -translate-y-3 pointer-events-none"
                 : "opacity-100 translate-y-0"
@@ -520,7 +522,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
               </Sheet>
             </div>
           </header>
-
+          <div aria-hidden="true" className="h-16" />
           {/* Mobil TOC Sheet tartalom */}
           <SheetContent
             side="left"
