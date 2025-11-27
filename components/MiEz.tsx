@@ -10,7 +10,7 @@ export default function MiEz() {
           Ez nem csak egy könyv. Ez egy játék, amiben te vagy a főszereplő.
         </h2>
         <p className="text-sm md:text-base text-gray-400">
-          Limitált példányszámú könyv, digitális mélymerülés és dead drop kincsvadászat egyben. 
+          Limitált példányszámú könyv, digitális mélymerülés, és dead drop kincsvadászat egyben. 
           Nem polcdísznek készült, hanem hogy emlékké váljon.
         </p>
       </div>
