@@ -4,7 +4,7 @@ import React from "react";
 
 export default function CtaBuyBox() {
   // ---- EZT A HÁROM SZÁMOT kell majd csak átírnod ----
-  const sold = 45;
+  const sold = 47;
   const total = 50;
   const remaining = total - sold;
   const progress = (sold / total) * 100;

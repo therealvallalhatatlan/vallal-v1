@@ -15,6 +15,7 @@ export default function AudioPlayer({ tracks, images = [] }: Props) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [copied, setCopied] = useState(false)
+  const [showTools, setShowTools] = useState(false)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -159,6 +160,7 @@ export default function AudioPlayer({ tracks, images = [] }: Props) {
   function toggle() {
     playing ? pause() : play()
   }
+  const toggleTools = () => setShowTools((prev) => !prev)
 
   function next() {
     setIndex((i) => (i + 1) % tracks.length)
@@ -252,8 +254,6 @@ export default function AudioPlayer({ tracks, images = [] }: Props) {
         )
       }
     }
-
-    rafRef.current = requestAnimationFrame(draw)
   }
 
   function cancelViz() {
