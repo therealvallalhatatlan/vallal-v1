@@ -64,15 +64,22 @@ export default function Deliverables() {
 
       {/* Price + CTA */}
       <div className="mt-12 flex flex-col items-center gap-6">
-        <div className="inline-flex flex-col items-center justify-center px-6 py-4 rounded-2xl border border-lime-400/40 bg-black/70">
+        <div className="text-center inline-flex flex-col items-center justify-center px-6 py-4 rounded-2xl border border-lime-400/40 bg-black/70">
           <p className="text-xs uppercase tracking-[0.2em] text-lime-300/80 mb-1">
-            Teljes csomag ár
+            A Fullos Élmény Ára
           </p>
           <p className="text-2xl font-semibold">
             15 000 Ft
           </p>
           <p className="text-gray-400 text-sm mt-1">
-            Klubtagoknak: <span className="text-lime-300 font-medium">10 000 Ft</span>
+            <a href="https://www.patreon.com/vallalhatatlan" className="text-lime-300 hover:text-lime-200 underline">
+              Patreon Klubtagoknak
+            </a>, és/vagy a {" "}
+            <a href="/reader" className="text-lime-300 hover:text-lime-200 underline">
+              Digitális Reader
+            </a> megvásárlóinak 
+            <br/>
+            <span className="text-lime-300 font-medium">10 000 Ft</span>
           </p>
         </div>
 

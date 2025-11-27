@@ -7,11 +7,11 @@ export default function MiEz() {
           Mi ez az egész?
         </p>
         <h2 className="text-2xl md:text-3xl font-bold mb-3">
-          Ez nem csak egy könyv. Ez egy játék, amiben te is szereplő leszel.
+          Ez nem csak egy könyv. Ez egy játék, amiben te vagy a főszereplő.
         </h2>
         <p className="text-sm md:text-base text-gray-400">
-          Limitált példányszám, QR-kódos mélymerülés és dead drop vadászat egy
-          csomagban. Nem polcdísznek készült, hanem terepre.
+          Limitált példányszámú könyv, digitális mélymerülés és dead drop kincsvadászat egyben. 
+          Nem polcdísznek készült, hanem hogy emlékké váljon.
         </p>
       </div>
 
@@ -27,7 +27,7 @@ export default function MiEz() {
               Fizikai példány
             </p>
             <h3 className="text-lime-400 font-semibold text-xl mb-2">
-              100 könyv
+              100db könyv
             </h3>
             <img
               src="/features/1.png"
@@ -42,15 +42,15 @@ export default function MiEz() {
           </div>
         </article>
 
-        {/* 29 QR-világ */}
+        {/* 30 QR-világ */}
         <article className="relative overflow-hidden rounded-2xl border border-lime-400/30 bg-black/70 p-6 md:p-7 transition-transform duration-200 hover:-translate-y-1 hover:border-lime-400/70">
           <div className="absolute inset-0 opacity-20 pointer-events-none" />
           <div className="relative">
             <p className="text-[11px] uppercase tracking-[0.2em] text-lime-300/80 mb-2">
-              Digitális mélymerülés
+              Vállalhatatlan Reader
             </p>
             <h3 className="text-lime-400 font-semibold text-xl mb-2">
-              29 QR-világ
+              30 novella - 30 digitális világ
             </h3>
             <img
               src="/features/2.png"
