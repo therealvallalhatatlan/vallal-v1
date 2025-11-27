@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import AudioPlayer2 from "@/components/AudioPlayer2";
+import AudioPlayer3 from "@/components/AudioPlayer3";
 
 export type Story = {
   id: string;
@@ -390,19 +390,19 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         {/* Header + mobil TOC Sheet */}
         <Sheet open={mobileTocOpen} onOpenChange={setMobileTocOpen}>
           <header
-            className={`border-b border-neutral-800 bg-black px-4 py-3 flex items-center justify-between sticky top-0 z-20 transition-all duration-300 ease-out ${
+            className={`border-b border-neutral-800 bg-transparent px-4 py-3 flex items-center justify-between sticky top-0 z-20 transition-all duration-300 ease-out ${
               headerHidden
                 ? "opacity-0 -translate-y-3 pointer-events-none"
                 : "opacity-100 translate-y-0"
             }`}
           >
-            {/* Mobil progress legfelül */}
-            <div className="absolute left-0 top-0 w-full h-0.5 bg-neutral-900 md:hidden">
+            {/* Felső progress bar minden nézetben */}
+            <div className="absolute left-0 top-0 w-full h-0.5 bg-neutral-900">
               <div
                 className="h-full transition-[width]"
                 style={{
                   width: `${bookProgress * 100}%`,
-                  background: "linear-gradient(90deg,#000,#d4d4d8)",
+                  background: "#e5e7eb",
                 }}
               />
             </div>
@@ -431,21 +431,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
 
             {/* Könyv progress + Settings (desktop jobb oldal) */}
             <div className="flex items-center gap-3">
-              <div className="hidden md:flex flex-col items-end gap-1">
-                <span className="text-[11px] text-neutral-400">
-                  Könyv progress: {Math.round(bookProgress * 100)}%
-                </span>
-                <div className="h-0.5 w-36 rounded-full bg-neutral-900 overflow-hidden">
-                  <div
-                    className="h-full transition-[width]"
-                    style={{
-                      width: `${bookProgress * 100}%`,
-                      background:
-                        "linear-gradient(90deg,#000,#2e2e30 35%,#6e6e72 70%,#d4d4d8 100%)",
-                    }}
-                  />
-                </div>
-              </div>
 
               {/* Settings Sheet */}
               <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
@@ -588,7 +573,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                         </span>
                       )}
                     </div>
-                    <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-800">
                       <span>
                         {story.order}. novella • ~{story.readingTime} perc
                       </span>
@@ -608,10 +593,10 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           {currentStory ? (
             <article className="mx-auto max-w-[560px] md:max-w-[600px]">
               <header className="mb-4 md:mb-6">
-                <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-neutral-200">
+                <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-neutral-200">
                   {currentStory.title}
                 </h1>
-                <div className="mt-2 text-xs text-neutral-400 flex items-center gap-2 flex-wrap">
+                <div className="mt-4 text-sm text-neutral-500 flex items-center gap-2 flex-wrap">
                   <span>
                     {currentStory.order}. a(z) {totalStories} novellából
                   </span>
@@ -631,8 +616,8 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 playlist.tracks &&
                 playlist.tracks.length > 0 && (
                   showPlayer && (
-                    <section className="mb-6 space-y-3 max-w-[360px]">
-                      <AudioPlayer2
+                    <section className="mb-6 space-y-3 w-full">
+                      <AudioPlayer3
                         tracks={playlist.tracks}
                         images={playlist.visuals ?? []}
                       />
@@ -646,7 +631,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                </div>
              )}
               <section
-                className="mt-6 leading-relaxed md:leading-8 text-neutral-400 whitespace-pre-wrap"
+                className="mt-6 leading-relaxed md:leading-8 text-neutral-400/80 whitespace-pre-wrap"
                 style={{ fontSize: `${fontSize}px` }}
               >
                 {currentStory.text}

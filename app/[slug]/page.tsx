@@ -228,59 +228,7 @@ export default async function Page({
         }}
       />
 
-      <style>{`
-        .rgb-title {
-          position: relative;
-          text-shadow:
-            3px 0 0 rgba(255,0,0,0.85),
-            -3px 0 0 rgba(0,255,255,0.85),
-            0 2px 0 rgba(0,0,0,0.35);
-          filter: contrast(140%) saturate(140%);
-        }
-        @keyframes fadeCrtSlug {
-         0% { opacity:0; transform:scaleY(.015) scaleX(1.4); filter:blur(42px) brightness(255%); }
-         7% { opacity:1; transform:scaleY(.35) scaleX(1.1); filter:blur(26px) brightness(175%); }
-         18% { opacity:.9; transform:scale(1.02); filter:blur(15px); }
-         34% { filter:blur(9px); }
-         58% { filter:blur(5px); }
-         82% { filter:blur(2px); }
-         100% { opacity:1; filter:blur(0) transform:scale(1); }
-       }
-       @keyframes slugRgb {
-         0%,100% { filter:contrast(145%) saturate(150%); }
-         40% { filter:hue-rotate(28deg) contrast(160%) saturate(165%); }
-         70% { filter:hue-rotate(-20deg) contrast(155%) saturate(160%); }
-       }
-       @keyframes slugLines {
-         0% { transform:translateY(0); }
-         100% { transform:translateY(-180px); }
-       }
-       .fade-in {
-         position:relative;
-         animation: fadeCrtSlug 3.2s cubic-bezier(.28,.01,.15,1) .35s both;
-       }
-       .fade-in::before,
-       .fade-in::after {
-         content:"";
-         position:absolute; inset:0;
-         pointer-events:none;
-       }
-       .fade-in::before {
-         background:
-           linear-gradient(120deg,rgba(0,255,170,.30),transparent 45%,rgba(255,0,110,.28)),
-           radial-gradient(circle at 78% 24%,rgba(0,180,255,.30),transparent 70%);
-         mix-blend-mode:screen;
-         filter:blur(26px);
-         animation: slugRgb 10s linear infinite;
-         opacity:.55;
-       }
-       .fade-in::after {
-         background:repeating-linear-gradient(0deg,rgba(255,255,255,.12) 0 1px,rgba(0,0,0,0) 1px 3px);
-         animation: slugLines 7s linear infinite;
-         mix-blend-mode:overlay;
-         opacity:.22;
-       }
-      `}</style>
+
     </main>
   );
 }
