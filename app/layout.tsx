@@ -125,15 +125,17 @@ export default function RootLayout({
           aria-hidden="true"
         >
           <video
-            className="bg-video__media w-full h-full object-cover"
-            src="/video.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-          />
-          <div className="bg-video__overlay absolute inset-0" />
-        </div>
+            id="bg-video"
+             className="bg-video__media w-full h-full object-cover"
+             src="/video.mp4"
+             autoPlay
+             muted
+             loop
+             playsInline
+             preload="auto"
+           />
+           <div className="bg-video__overlay absolute inset-0" />
+         </div>
 
         {/* --- 90s CRT overlays (megmaradnak) --- */}
         <div
@@ -161,7 +163,30 @@ export default function RootLayout({
           <SpeedInsights />
           <ServiceWorkerRegister />
         </div>
-
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var video = document.getElementById('bg-video');
+                if (!video) return;
+                function attemptPlay() {
+                  var playPromise = video.play();
+                  if (playPromise) {
+                    playPromise.catch(function() {
+                      video.muted = true;
+                      video.play().catch(function(){});
+                    });
+                  }
+                }
+                if (document.readyState === 'complete') {
+                  attemptPlay();
+                } else {
+                  window.addEventListener('load', attemptPlay, { once: true });
+                }
+              })();
+            `,
+          }}
+        />
         {/* JSON-LD: Organization + WebSite */}
         <script
           type="application/ld+json"

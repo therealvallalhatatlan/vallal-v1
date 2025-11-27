@@ -1,3 +1,5 @@
+const VERSION = 'v1'
+
 // public/sw.js
 
 // Nagyon minimál SW – csak azért létezik, hogy a PWA feltétele teljesüljön.
@@ -9,6 +11,7 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   // későbbi cache-takarítás stb. ide jöhetne
+  event.waitUntil(self.clients.claim())
   console.log("Vallalhatatlan Reader service worker aktiválva");
 });
 
