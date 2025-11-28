@@ -10,6 +10,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import AudioPlayer3 from "@/components/AudioPlayer3";
+import Comments from "@/components/Comments";
+
+// import BookCover from "@/components/BookCover";
 
 export type Story = {
   id: string;
@@ -18,6 +21,8 @@ export type Story = {
   readingTime: number; // perc
   order: number;
   text: string;
+  type?: "story" | "cover";
+  coverImage?: string;
 };
 
 type ReaderAppProps = {
@@ -86,7 +91,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   // settings
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
-  const [effectsEnabled, setEffectsEnabled] = useState<boolean>(true);
+  const [effectsEnabled, setEffectsEnabled] = useState<boolean>(false);
   const [showPlayer, setShowPlayer] = useState<boolean>(true);
 
   // playlist state
@@ -354,6 +359,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
 
         <div className="flex-1 overflow-y-auto py-3">
           {stories.map((story) => {
+            const isCover = story.type === "cover";
             const isActive = story.slug === currentStory?.slug;
             const isFinished =
               readerState.finishedStories?.includes(story.slug) ?? false;
@@ -376,11 +382,13 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                     </span>
                   )}
                 </div>
-                <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
-                  <span>
-                    {story.order}. novella • ~{story.readingTime} perc
-                  </span>
-                </div>
+                {!isCover && (
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
+                    <span>
+                      {story.order}. novella • ~{story.readingTime} perc
+                    </span>
+                  </div>
+                )}
               </button>
             );
           })}
@@ -594,18 +602,20 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
         >
           {currentStory ? (
             <article className="mx-auto max-w-[560px] md:max-w-[600px]">
-              <header className="mb-4 md:mb-6">
-                <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-neutral-200">
-                  {currentStory.title}
-                </h1>
-                <div className="mt-4 text-sm text-neutral-500 flex items-center gap-2 flex-wrap">
-                  <span>
-                    {currentStory.order}. a(z) {totalStories} novellából
-                  </span>
-                  <span>•</span>
-                  <span>~{currentStory.readingTime} perc olvasás</span>
-                </div>
-              </header>
+              {currentStory.type !== "cover" && (
+                <header className="mb-4 md:mb-6">
+                  <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-neutral-200">
+                    {currentStory.title}
+                  </h1>
+                  <div className="mt-4 text-sm text-neutral-500 flex items-center gap-2 flex-wrap">
+                    <span>
+                      {currentStory.order}. a(z) {totalStories} novellából
+                    </span>
+                    <span>•</span>
+                    <span>~{currentStory.readingTime} perc olvasás</span>
+                  </div>
+                </header>
+              )}
 
               {/* Playlist blokk a címsor alatt – AudioPlayer-rel */}
               {playlistLoading && (
@@ -616,28 +626,47 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
               {!playlistLoading &&
                 playlist &&
                 playlist.tracks &&
-                playlist.tracks.length > 0 && (
-                  showPlayer && (
-                    <section className="mb-6 space-y-3 min-w-max">
-                      <AudioPlayer3
-                        tracks={playlist.tracks}
-                        images={playlist.visuals ?? []}
-                      />
-                    </section>
-                  )
-                )}
+                playlist.tracks.length > 0 &&
+                currentStory.type !== "cover" && (
+                   showPlayer && (
+                     <section className="mb-6 space-y-3 min-w-max">
+                       <AudioPlayer3
+                         tracks={playlist.tracks}
+                         images={playlist.visuals ?? []}
+                       />
+                     </section>
+                   )
+                 )}
              {!playlistLoading && !playlist && (
                <div className="mb-6 text-[11px] text-neutral-600">
                  Nincs kapcsolódó playlist (.json nem található a /public{PLAYLIST_BASE} alatt ehhez a slughoz:
                  <code className="ml-1">{currentStory.slug}</code>)
                </div>
              )}
-              <section
-                className="mt-6 leading-relaxed md:leading-8 text-neutral-400/80 whitespace-pre-wrap"
-                style={{ fontSize: `${fontSize}px` }}
-              >
-                {currentStory.text}
-              </section>
+              {currentStory.type === "cover" ? (
+                <div className="mt-6">
+                  <img
+                    src="/cover.png"
+                    alt="Vállalhatatlan könyvborító"
+                    className="w-full h-auto"
+                  />
+                </div>
+              ) : (
+                <section
+                  className="mt-6 leading-relaxed md:leading-8 text-neutral-400/80 whitespace-pre-wrap"
+                  style={{ fontSize: `${fontSize}px` }}
+                >
+                  {currentStory.text}
+                </section>
+              )}
+
+
+              {currentStory && (
+                <div className="mt-32">
+                  <Comments slug={currentStory.slug} />
+                </div>
+              )}
+
             </article>
           ) : (
             <div className="mx-auto max-w-[720px] text-sm text-neutral-400">

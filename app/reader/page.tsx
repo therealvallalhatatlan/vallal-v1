@@ -5,6 +5,14 @@ import path from "path";
 
 const storiesMeta: Omit<Story, "text">[] = [
   {
+    id: "00",
+    slug: "konyvborito",
+    title: "Könyvborító",
+    readingTime: 0,
+    order: 0,
+    type: "cover",
+  },
+  {
     id: "01",
     slug: "vizsgalati-jegyzokonyv",
     title: "Vizsgálati jegyzőkönyv",
@@ -232,7 +240,7 @@ export default async function ReaderPage() {
   const sortedMeta = [...storiesMeta].sort((a, b) => a.order - b.order);
   const stories: Story[] = sortedMeta.map((meta) => ({
     ...meta,
-    text: loadStoryText(meta.slug),
+    text: meta.type === "cover" ? "" : loadStoryText(meta.slug),
   }));
 
   return (
