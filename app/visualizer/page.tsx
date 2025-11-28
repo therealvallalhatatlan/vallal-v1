@@ -1,7 +1,7 @@
 // app/visualizer/page.tsx
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { Suspense, useEffect, useRef, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 
 type BlendMode =
@@ -19,6 +19,14 @@ function lerp(a: number, b: number, t: number) {
 }
 
 export default function VisualizerPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center text-white">Loading…</div>}>
+      <VisualizerContent />
+    </Suspense>
+  );
+}
+
+function VisualizerContent() {
   const search = useSearchParams();
   const q1 = search.get("img1");
   const q2 = search.get("img2");
