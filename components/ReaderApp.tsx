@@ -1,7 +1,8 @@
 // components/reader/ReaderApp.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import dynamic from "next/dynamic";
 import {
   Sheet,
   SheetContent,
@@ -10,9 +11,16 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import AudioPlayer3 from "@/components/AudioPlayer3";
-import Comments from "@/components/Comments";
 
 // import BookCover from "@/components/BookCover";
+
+const CommentsWidget =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+    ? (dynamic(() => import("@/components/Comments"), {
+        ssr: false,
+        loading: () => null,
+      }) as ComponentType<{ slug: string }>)
+    : null;
 
 export type Story = {
   id: string;
@@ -661,9 +669,9 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
               )}
 
 
-              {currentStory && (
+              {CommentsWidget && currentStory && (
                 <div className="mt-32">
-                  <Comments slug={currentStory.slug} />
+                  <CommentsWidget slug={currentStory.slug} />
                 </div>
               )}
 
