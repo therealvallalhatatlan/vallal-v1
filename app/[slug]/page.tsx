@@ -1,5 +1,5 @@
 // app/[slug]/page.tsx
-import AudioPlayer from "@/components/AudioPlayer";
+import AudioPlayer3 from "@/components/AudioPlayer3";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { loadPlaylist } from "@/lib/playlistIndex";
@@ -168,7 +168,7 @@ export default async function Page({
         <code>public/playlists/{slug}.json</code>
       </p>
 
-      <AudioPlayer tracks={tracks} images={visuals} />
+      <AudioPlayer3 tracks={tracks} images={visuals} />
 
       {/* MusicPlaylist JSON-LD */}
       <script
