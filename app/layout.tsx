@@ -140,22 +140,12 @@ export default function RootLayout({
          </div>
 
         {/* --- 90s CRT overlays (megmaradnak) --- */}
-        <div
-          aria-hidden="true"
-          className="fx-bands fixed inset-0 pointer-events-none z-0"
-        />
-        <div
-          aria-hidden="true"
-          className="fx-stripes fixed inset-0 pointer-events-none z-0"
-        />
-        <div
-          aria-hidden="true"
-          className="fx-vignette fixed inset-0 pointer-events-none z-0"
-        />
-        <div
-          aria-hidden="true"
-          className="fx-vhs fixed inset-0 pointer-events-none z-0"
-        />
+        <div aria-hidden="true" className="fixed inset-0 -z-5 pointer-events-none">
+          <div className="fx-bands absolute inset-0 mix-blend-screen opacity-30" />
+          <div className="fx-stripes absolute inset-0 mix-blend-screen opacity-20" />
+          <div className="fx-vignette absolute inset-0 mix-blend-multiply opacity-40" />
+          <div className="fx-vhs absolute inset-0 mix-blend-screen opacity-25" />
+        </div>
 
         {/* Page content a legfelül */}
         <div className="content-above relative z-20">
