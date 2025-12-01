@@ -5,6 +5,10 @@ export default function Reviews() {
       author: "bober",
     },
     {
+      text: "Hát amikor egy unalmas hazafelé buszozáson rákattintottam egy random reddit posztra, aminek valami olyasmi címe volt, hogy vállalhatlan történetek a 200-as évekből, majd nem sokkal később már a 20000-es évekből, nem gondoltam volna, hogy pár hónap múlva dél pesten fogok a fűben botorkálva, telefonnal világítva egy könyvet keresgélni. De így történt, és most a hazafeleúton amikor kicsomagoltam, beleolvastam, hiába ismertem már az első két fejezetet, megint ugyanúgy beszippantott mint elsőre, talán még jobban is, mert azért egészen más egy valódi könyvet a kezemben tartani. Hatalmas up, hogy ezt így összehoztad, tényleg nagy élmény volt a keresés is, meg persze a történetek. És külön örülök, hogy még ha minimálisan is, de a része voltam!",
+      author: "Agressive_Toucan",
+    },
+    {
       text: "A könyv felénél tartok és azt kell mondjam majdnem komolyabb élmény mint az Irvine Welsh vagy Bukowski könyvek.",
       author: "Szilvi",
     },

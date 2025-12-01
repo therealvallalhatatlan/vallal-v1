@@ -50,16 +50,10 @@ export default function Hero() {
 
       </div>
 
-      
-
       <section className="mt-16 w-full">
         <div className="mx-auto max-w-5xl px-4">
           <div className="grid gap-6 md:grid-cols-3">
             {([
-              {
-                code: "#048",
-                text: "A 048-as példány Kőbányán van, egy börtön melletti erdő szélén.",
-              },
               {
                 code: "#049",
                 text: "A 049-es példány egy vadkacsás tó körül bújkál, dél-pesten.",
