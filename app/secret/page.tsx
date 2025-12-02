@@ -216,13 +216,14 @@ function PurchaseBox() {
       </header>
 
       <div className="space-y-3">
-        <p className="text-4xl font-semibold text-zinc-100">2500 Huf</p>
+        <p className="text-4xl font-semibold text-zinc-100">5000 Huf</p>
         <p className="text-xs text-zinc-500 leading-relaxed">
           • Azonnali hozzáférés  
           <br />• Teljes digitális könyv  
-          <br />• Story-playlistek  
-          <br />• Pszich. Effekt™  
-          <br />• Jövőbeli frissítések  
+          <br />• Story + Soundtrack  
+          <br />• Pszichedelikus Effekt™  
+          <br />• Jövőbeli frissítések 
+          <br />• Egyszeri díj, élethosszig tartó hozzáférés 
         </p>
       </div>
 
