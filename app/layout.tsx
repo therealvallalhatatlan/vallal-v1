@@ -9,6 +9,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 import { Crimson_Pro } from "next/font/google";
 import { Special_Elite } from "next/font/google";
+import PWAInstallManager from "@/components/PWAInstallManager";
+
 
 const crimson = Crimson_Pro({
   subsets: ["latin"],
@@ -123,21 +125,21 @@ export default function RootLayout({
       >
         {/* Háttérvideó – full screen, fixed, a content alatt */}
         <div
-          className="bg-video fixed inset-0 -z-10 pointer-events-none"
+          className="bg-video fixed inset-0 z-0 pointer-events-none"
           aria-hidden="true"
         >
           <video
             id="bg-video"
-             className="bg-video__media w-full h-full object-cover"
-             src="/video.mp4"
-             autoPlay
-             muted
-             loop
-             playsInline
-             preload="auto"
-           />
-           <div className="bg-video__overlay absolute inset-0" />
-         </div>
+            className="bg-video__media w-full h-full object-cover"
+            src="/video.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+          />
+          <div className="bg-video__overlay absolute inset-0" />
+        </div>
 
         {/* --- 90s CRT overlays (megmaradnak) --- */}
         <div aria-hidden="true" className="fixed inset-0 -z-5 pointer-events-none">
@@ -149,12 +151,14 @@ export default function RootLayout({
 
         {/* Page content a legfelül */}
         <div className="content-above relative z-20">
+          <PWAInstallManager />
           {children}
           <div id="glitch-root"></div>
           <Analytics />
           <SpeedInsights />
           <ServiceWorkerRegister />
         </div>
+        
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -222,6 +226,9 @@ export default function RootLayout({
            font-weight: 400;
            letter-spacing: -0.01em;
          }
+        .bg-video { position:fixed; inset:0; overflow:hidden; }
+        .bg-video__media { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:1; pointer-events:none; }
+        .bg-video__overlay { position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 50% 20%,rgba(0,0,0,0.2),transparent 55%),linear-gradient(to bottom,rgba(0,0,0,0.45),rgba(0,0,0,0.75)); }
         `}</style>
       </body>
     </html>

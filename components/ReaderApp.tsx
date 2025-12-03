@@ -99,7 +99,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   // settings
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
-  const [effectsEnabled, setEffectsEnabled] = useState<boolean>(false);
+  const [effectsEnabled, setEffectsEnabled] = useState<boolean>(true);
   const [showPlayer, setShowPlayer] = useState<boolean>(true);
 
   // playlist state

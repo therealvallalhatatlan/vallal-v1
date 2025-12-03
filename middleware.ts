@@ -11,6 +11,8 @@ const PUBLIC_PATHS = new Set<string>([
   "/secret",    // jelszó bekérő oldal
   "/novellak",  // ha ezt szabadon akarod hagyni
   "/checkout",  // ha ezt szabadon akarod hagyni
+  "/visualizer",
+  "/video.mp4",
 ]);
 
 export function middleware(req: NextRequest) {
