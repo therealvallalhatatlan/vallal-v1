@@ -336,7 +336,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
       {showLoader && <div className="story-loader" />}
 
       {/* Sidebar - tartalomjegyzék (desktop) */}
-      <aside className="hidden md:flex w-72 flex-col border-r border-neutral-800 bg-black md:bg-transparent">
+      <aside className="hidden md:flex w-72 flex-col  bg-black md:bg-transparent">
         {/* Brand + user blokk */}
         <div className="px-4 py-4 border-b border-neutral-800 space-y-4">
           <div>
@@ -385,8 +385,8 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate">{story.title}</span>
                   {isFinished && (
-                    <span aria-label="kész" className="text-lime-400 text-xs">
-                      ✓
+                    <span aria-label="kész" className="text-white text-xs">
+                      ☠️
                     </span>
                   )}
                 </div>
@@ -586,8 +586,8 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                     <div className="flex items-center justify_between gap-2">
                       <span className="truncate">{story.title}</span>
                       {isFinished && (
-                        <span aria-label="kész" className="text-lime-400 text-xs">
-                          ✓
+                        <span aria-label="kész" className="text-white text-xs">
+                          ☠️
                         </span>
                       )}
                     </div>

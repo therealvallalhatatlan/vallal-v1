@@ -9,7 +9,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.31.6",
     "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "latest",
