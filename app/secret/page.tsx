@@ -206,7 +206,12 @@ function FeatureBox() {
 ---------------------------*/
 function PurchaseBox() {
   return (
-    <section className="rounded-3xl border border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md shadow-[0_0_60px_rgba(0,0,0,.7)] p-6 md:p-7 space-y-6">
+    <section className="relative rounded-3xl border border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md shadow-[0_0_60px_rgba(0,0,0,.7)] p-6 md:p-7 space-y-6">
+      <img
+        src="/img/lifetime.png"
+        alt="Lifetime hozzáférés"
+        className="absolute -top-4 -right-4 w-16 md:w-20 lg:w-24"
+      />
       <header className="space-y-2">
         <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">
           MEGVÁSÁRLÁS

@@ -351,7 +351,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
       return next;
     });
   };
-  const contentTextColor = themeMode === 'light' ? 'text-neutral-700' : 'text-neutral-600';
+  const contentTextColor = themeMode === 'light' ? 'text-neutral-700' : 'text-neutral-400';
   const headingTextColor = themeMode === 'light' ? 'text-neutral-600' : 'text-neutral-200';
 
   return (
