@@ -19,8 +19,8 @@ export default function SecretPage() {
 
 function LoadingScreen() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-black text-zinc-100 px-4">
-      <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-zinc-950/80 p-6 space-y-4">
+    <main className="min-h-screen flex items-center justify-center bg-transparent text-zinc-100 px-4">
+      <div className="w-full max-w-md rounded-3xl border border-zinc-800 bg-transparent p-6 space-y-4">
         <p className="text-xs text-zinc-500">Betöltés…</p>
       </div>
     </main>
@@ -55,7 +55,7 @@ function SecretPageInner() {
   };
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center bg-black text-zinc-100 px-4 py-10">
+    <main className="relative min-h-screen flex items-center justify-center bg-transparent text-zinc-100 px-4 py-10">
       
       {/* HÁTTÉR */}
       <div className="pointer-events-none absolute inset-0">
@@ -104,7 +104,7 @@ function LoginBox({
   handleSubmit: (e: FormEvent) => void;
 }) {
   return (
-    <section className="rounded-3xl border border-zinc-800 bg-zinc-950/90 backdrop-blur-md shadow-[0_0_50px_rgba(0,0,0,.7)] p-6 md:p-7 space-y-6">
+    <section className="rounded-3xl border border-zinc-800 bg-zinc-950/80 backdrop-blur-md shadow-[0_0_50px_rgba(0,0,0,.7)] p-6 md:p-7 space-y-6">
       <header className="space-y-2">
         <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-500">
           BELÉPÉS
@@ -124,7 +124,7 @@ function LoginBox({
             autoComplete="off"
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Írd be a jelszót…"
-            className="w-full rounded-2xl border border-zinc-700 bg-black/70 px-3 py-2.5 text-sm outline-none focus:border-lime-500 focus:ring-1 focus:ring-lime-500/60 transition"
+            className="w-full rounded-2xl border border-zinc-700 bg-black/50 px-3 py-2.5 text-sm outline-none focus:border-lime-500 focus:ring-1 focus:ring-lime-500/60 transition"
           />
           {error && <p className="text-xs text-red-400">{error}</p>}
         </div>
@@ -166,7 +166,8 @@ function FeatureBox() {
 
       <div className="flex flex-wrap gap-2 text-[11px] text-zinc-300">
         <Tag>30+ novella</Tag>
-        <Tag>Story playlist</Tag>
+        <Tag>Audiobook</Tag>
+        <Tag>Story tracklist</Tag>
         <Tag>Pszichedelikus Effekt™</Tag>
         <Tag>Progress tracking</Tag>
         <Tag>Micro-SFX</Tag>
@@ -206,7 +207,7 @@ function FeatureBox() {
 ---------------------------*/
 function PurchaseBox() {
   return (
-    <section className="relative rounded-3xl border border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md shadow-[0_0_60px_rgba(0,0,0,.7)] p-6 md:p-7 space-y-6">
+    <section className="relative rounded-3xl border border-zinc-800/80 bg-transparent backdrop-blur-md shadow-[0_0_60px_rgba(0,0,0,.7)] p-6 md:p-7 space-y-6">
       <img
         src="/img/lifetime.png"
         alt="Lifetime hozzáférés"

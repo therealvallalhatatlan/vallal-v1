@@ -102,7 +102,7 @@ function PreorderCard({ onOpenDetails }: { onOpenDetails: () => void }) {
 
       <div className="mt-6 flex items-center gap-3">
         <a
-          href="/checkout"
+          href="https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
           className="inline-flex items-center justify-center rounded-lg border border-lime-500 bg-lime-500 px-4 py-2 text-sm font-semibold text-black transition hover:border-lime-400 hover:bg-lime-400"
           aria-label="Előrendelés"
         >
@@ -134,7 +134,7 @@ function HeroCtas() {
       title: "Megveszem a könyvet",
       description:
         "Limitált, sorszámozott példány. Dead drop és digitális extra tartalmak.",
-      href: "/checkout",
+      href: "https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h",
       button: "Megveszem",
     },
     {
@@ -228,7 +228,7 @@ function DetailsModal({ onClose }: { onClose: () => void }) {
 
         <div className="mt-6 flex justify-end gap-3">
           <a
-            href="/checkout"
+            href="https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
             className="inline-flex items-center justify-center rounded-lg border border-lime-500 bg-lime-500 px-4 py-2 text-sm font-semibold text-black transition hover:border-lime-400 hover:bg-lime-400"
           >
             Előrendelés / Megveszem
