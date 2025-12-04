@@ -101,6 +101,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
   const [effectsEnabled, setEffectsEnabled] = useState<boolean>(true);
   const [showPlayer, setShowPlayer] = useState<boolean>(true);
+  const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark');
 
   // playlist state
   const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
@@ -170,6 +171,9 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
       }
       if (typeof parsed.showPlayer === "boolean") {
         setShowPlayer(parsed.showPlayer);
+      }
+      if (parsed.themeMode === "light" || parsed.themeMode === "dark") {
+        setThemeMode(parsed.themeMode);
       }
     } catch {
       // ignore
@@ -297,42 +301,65 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const persistSettings = (nextFontSize: number, nextEffects: boolean, nextShowPlayer: boolean) => {
-    try {
-      window.localStorage.setItem(
-        SETTINGS_KEY,
-        JSON.stringify({ fontSize: nextFontSize, effectsEnabled: nextEffects, showPlayer: nextShowPlayer })
-      );
-    } catch {
-      // ignore
-    }
-  };
+  const persistSettings = (
+    nextFontSize: number,
+    nextEffects: boolean,
+    nextShowPlayer: boolean,
+    nextTheme: 'dark' | 'light' = themeMode
+  ) => {
+     try {
+       window.localStorage.setItem(
+         SETTINGS_KEY,
+         JSON.stringify({
+           fontSize: nextFontSize,
+           effectsEnabled: nextEffects,
+           showPlayer: nextShowPlayer,
+           themeMode: nextTheme,
+         })
+       );
+     } catch {
+       // ignore
+     }
+   };
 
   // Betűméret módosítása + mentése
   const changeFontSize = (delta: number) => {
     setFontSize((prev) => {
       const next = Math.min(36, Math.max(14, prev + delta));
-      persistSettings(next, effectsEnabled, showPlayer);
+      persistSettings(next, effectsEnabled, showPlayer, themeMode);
       return next;
     });
   };
   const toggleEffects = () => {
     setEffectsEnabled((prev) => {
       const next = !prev;
-      persistSettings(fontSize, next, showPlayer);
+      persistSettings(fontSize, next, showPlayer, themeMode);
       return next;
     });
   };
   const togglePlayer = () => {
     setShowPlayer((prev) => {
       const next = !prev;
-      persistSettings(fontSize, effectsEnabled, next);
+      persistSettings(fontSize, effectsEnabled, next, themeMode);
       return next;
     });
   };
+  const toggleThemeMode = () => {
+    setThemeMode((prev) => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      persistSettings(fontSize, effectsEnabled, showPlayer, next);
+      return next;
+    });
+  };
+  const contentTextColor = themeMode === 'light' ? 'text-neutral-700' : 'text-neutral-600';
+  const headingTextColor = themeMode === 'light' ? 'text-neutral-600' : 'text-neutral-200';
 
   return (
-    <div className={`flex min-h-[100dvh] ${effectsEnabled ? 'effects-on' : 'effects-off'}`}>
+    <div
+      className={`flex min-h-[100dvh] ${effectsEnabled ? 'effects-on' : 'effects-off'} ${
+        themeMode === 'light' ? 'reader-theme-light' : 'reader-theme-dark'
+      }`}
+    >
       {showLoader && <div className="story-loader" />}
 
       {/* Sidebar - tartalomjegyzék (desktop) */}
@@ -527,6 +554,22 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                       <p className="text-[11px] text-neutral-500">Elrejti vagy megjeleníti a playlist lejátszót.</p>
                     </div>
 
+                    {/* Theme switcher */}
+                    <div className="space-y-2">
+                      <p className="text-sm text-neutral-400">Megjelenés</p>
+                      <button
+                        type="button"
+                        onClick={toggleThemeMode}
+                        className="px-3 py-2 text-sm border border-neutral-600 rounded-full hover:bg-neutral-800 text-neutral-300"
+                        aria-pressed={themeMode === 'light'}
+                      >
+                        {themeMode === 'light' ? 'Világos mód aktív' : 'Váltás világos módra'}
+                      </button>
+                      <p className="text-[11px] text-neutral-500">
+                        Csak a tartalmi felület világosodik ki, a vezérlők maradnak sötétek.
+                      </p>
+                    </div>
+
                     {/* Theme placeholder */}
                     <div className="space-y-2 opacity-50">
                       <p className="text-sm text-neutral-500">
@@ -612,7 +655,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
             <article className="mx-auto max-w-[560px] md:max-w-[600px]">
               {currentStory.type !== "cover" && (
                 <header className="mb-4 md:mb-6">
-                  <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-neutral-200">
+                  <h1 className={`text-5xl md:text-6xl font-semibold tracking-tight ${headingTextColor}`}>
                     {currentStory.title}
                   </h1>
                   <div className="mt-4 text-sm text-neutral-500 flex items-center gap-2 flex-wrap">
@@ -660,13 +703,13 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                   />
                 </div>
               ) : (
-                <section
-                  className="mt-6 leading-relaxed md:leading-8 text-neutral-400/80 whitespace-pre-wrap"
-                  style={{ fontSize: `${fontSize}px` }}
-                >
-                  {currentStory.text}
-                </section>
-              )}
+                 <section
+                  className={`mt-6 leading-relaxed md:leading-8 whitespace-pre-wrap ${contentTextColor}`}
+                   style={{ fontSize: `${fontSize}px` }}
+                 >
+                   {currentStory.text}
+                 </section>
+               )}
 
 
               {CommentsWidget && currentStory && (
@@ -774,11 +817,20 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           animation: rgbShift 9s linear infinite;
           opacity:.55;
         }
+        @keyframes tvNoise {
+          0% { opacity:.06; transform:translate3d(0,0,0); filter:brightness(1) contrast(1); }
+          12% { opacity:.16; transform:translate3d(-2px,1px,0); filter:brightness(1.2) contrast(1.15); }
+          33% { opacity:.09; transform:translate3d(1.5px,-1px,0); filter:brightness(0.95) contrast(0.9); }
+          51% { opacity:.18; transform:translate3d(-3px,2px,0); filter:brightness(1.25) contrast(1.2); }
+          74% { opacity:.1; transform:translate3d(2px,-1.5px,0); filter:brightness(0.9) contrast(0.95); }
+          100% { opacity:.13; transform:translate3d(-1px,0.5px,0); filter:brightness(1.1) contrast(1.05); }
+        }
         .effects-on .fade-in::after {
-          background:repeating-linear-gradient(0deg,rgba(255,255,255,0.12) 0 1px,rgba(0,0,0,0) 1px 3px);
-          animation: scanRoll .22s linear infinite;
-          mix-blend-mode:overlay;
-          opacity:.18;
+          background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23n)' opacity='0.65'/%3E%3C/svg%3E");
+          background-size:200px 200px;
+          mix-blend-mode:screen;
+          opacity:.15;
+          animation:tvNoise 3.6s steps(6,end) infinite alternate;
         }
         .effects-on .story-loader {
           position:fixed; top:0; left:0; right:0;
@@ -806,15 +858,52 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
           0% { background-position:0 0; }
           100% { background-position:160px 0; }
         }
-        /* Effects OFF overrides */
-        .effects-off .fade-in { animation: fadeCrt 0.8s ease-out .1s both; }
-        .effects-off .fade-in::before,
-        .effects-off .fade-in::after { content:none; display:none; }
-        .effects-off .story-loader,
-        .effects-off .story-loader::after { display:none; content:none; }
-      `}</style>
-    </div>
-  );
-}
-
-// :contentReference[oaicite:0]{index=0}
+        .reader-theme-dark {
+          background: radial-gradient(circle at 20% 20%, rgba(45,45,45,.45), rgba(0,0,0,1));
+          color: #d1d5db;
+        }
+        .reader-theme-light {
+          background: radial-gradient(circle at 50% 10%, rgba(255,255,255,.85), rgba(243,243,245,.95));
+          color: #374151;
+        }
+        .reader-theme-light .fade-in {
+          color: inherit;
+        }
+        .reader-theme-light article {
+          background: transparent;
+          border-radius: 0;
+          border: none;
+          box-shadow: none;
+          padding: 0;
+        }
+        .reader-theme-light .fade-in::before {
+          background:
+            radial-gradient(circle at 32% 38%, rgba(122,199,255,.35), transparent 62%),
+            radial-gradient(circle at 68% 58%, rgba(255,170,205,.32), transparent 70%);
+          filter: blur(24px);
+          opacity: .35;
+        }
+        .reader-theme-light .fade-in::after {
+          mix-blend-mode: multiply;
+          opacity: .08;
+        }
+        .reader-theme-light .text-neutral-400,
+        .reader-theme-light .text-neutral-500,
+        .reader-theme-light .text-neutral-600 {
+          color: #374151;
+        }
+        .reader-theme-light .border-neutral-800 {
+          border-color: rgba(148,163,184,0.3);
+        }
+        .reader-theme-light .bg-neutral-950\/80 {
+          background: rgba(248,250,252,0.92);
+        }
+        .reader-theme-light .bg-neutral-900 {
+          background: rgba(226,232,240,0.45);
+        }
+       `}</style>
+     </div>
+   );
+ }
+ 
+ // :contentReference[oaicite:0]{index=0}

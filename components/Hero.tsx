@@ -77,23 +77,21 @@ export default function Hero() {
    Preorder card component
    ------------------------- */
 function PreorderCard({ onOpenDetails }: { onOpenDetails: () => void }) {
-  const title = "Karácsonyi különkiadás — előrendelés";
+  const title = "Karácsonyi különkiadás — előrendelhető";
   const subtitle = "Limitált, csak egyszeri újranyomás (50 példány).";
-  const body = `Ha legalább 10 előrendelés összejön, elindítom a 50 példányos, sorszámozott és dedikált utánnyomást. Ez a batch egy karácsonyi különkiadás — minden példányhoz jár egy kézzel írt rövid dedikáció és egy kis, exkluzív kártya.
-
-Előrendelés = elköteleződés: feliratkozol most, és ha összejön a minimum, megy a nyomda; ha nem, visszajelzek és töröljük az előjegyzést (vagy lehetséges alternatívát ajánlok).`;
-  const badge = "LIMITÁLT • 50 példány (indul, ha 10 előrendelés összeáll)";
+  const body = `Még idén elindítom az 50 példányos, sorszámozott és dedikált utánnyomást. Ez a batch egy karácsonyi különkiadás — minden példányhoz jár egy kézzel írt rövid dedikáció és egy kis, exkluzív kártya.`;
+  const badge = "🎅 LIMITÁLT • 50 dedikált példány";
 
   return (
     <div className="rounded-3xl border border-neutral-800 bg-black/60 p-6 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between relative">
         <div>
           <h3 className="text-2xl md:text-3xl font-semibold text-lime-400">
             {title}
           </h3>
           <p className="mt-1 text-sm text-neutral-300">{subtitle}</p>
         </div>
-        <span className="text-[11px] font-medium uppercase tracking-wider bg-lime-700/10 text-lime-300 px-3 py-1 rounded-full border border-lime-800">
+        <span className="absolute -top-14 right-0 md:-right-14 text-[12px] font-medium uppercase tracking-wider bg-neutral-200/0 text-lime-100 px-3 py-1 md:py-3 rounded-full border border-lime-400">
           {badge}
         </span>
       </div>

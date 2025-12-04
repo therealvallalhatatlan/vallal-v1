@@ -327,7 +327,7 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
 
   return (
     <div className="min-w-max">
-      <div className="relative p-5 md:p-6 bg-transparent rounded-3xl shadow-[0_0_40px_rgba(0,0,0,.45)] border border-zinc-800/80 backdrop-blur-sm overflow-hidden">
+      <div className="relative p-5 md:p-6 bg-transparent rounded-3xl shadow-[0_0_40px_rgba(0,0,0,.45)] border border-neutral-600/40 overflow-hidden">
         <div className="absolute inset-0 -z-10 pointer-events-none opacity-60">
           <CanvasResponsive ref={canvasRef} />
           <div className="absolute inset-0 bg-transparent" />
@@ -448,6 +448,6 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
 }
 
 const CanvasResponsive = forwardRef<HTMLCanvasElement, {}>((_props, ref) => (
-  <canvas ref={ref as any} className="w-full h-full" />
+  <canvas ref={ref as any} className="w-full h-full bg-transparent" />
 ))
 CanvasResponsive.displayName = 'CanvasResponsive'
