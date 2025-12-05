@@ -109,18 +109,9 @@ function PreorderCard({ onOpenDetails }: { onOpenDetails: () => void }) {
           Előrendelés / Megveszem
         </a>
 
-        <button
-          type="button"
-          className="text-sm text-gray-400 underline-offset-2 hover:underline"
-          onClick={onOpenDetails}
-        >
-          További részletek
-        </button>
+    
       </div>
 
-      <p className="mt-3 text-xs text-gray-500 italic">
-        Tipp: írok egy rövid emailt az előrendelőknek, amint megvan a 10 fő — így nem kell most rögtön fizetni, csak elköteleződni.
-      </p>
     </div>
   );
 }
