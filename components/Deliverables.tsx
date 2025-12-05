@@ -83,9 +83,7 @@ export default function Deliverables() {
           </p>
         </div>
 
-        <div className="w-full max-w-md">
-          <CtaBuyBox />
-        </div>
+
       </div>
     </section>
   );
