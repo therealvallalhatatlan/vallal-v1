@@ -177,18 +177,16 @@ export default function Home() {
 
         <div className="flex flex-col items-center gap-8">
           {/* Header */}
-          <div className="text-start md:text-center mt-6 md:mt-16">
+          <div className="text-start md:text-center mt-0 md:mt-16">
             {giftId && (
-              <h1 className="text-5xl md:text-6xl text-neutral-200/80 mt-6 tracking-wide">
+              <h1 className="text-5xl md:text-6xl text-neutral-200/80 tracking-wide">
                 Kedves <span className="font-semibold text-white">{formattedGiftId}!</span>
               </h1>
             )}
 
             <div className="text-start relative text-2xl text-neutral-100 max-w-md mx-auto bg-white/0 md:py-12 rounded-lg border border-lime-400/0">
-              Valaki annyira szeret téged, hogy meglepett a <span className="text-neutral-100">Vállalhatatlan <br/>Karácsonyi Különkiadásával!<br/></span>
+              Valaki annyira szeret téged, hogy meglepett a <span className="text-lime-400 font-bold">Vállalhatatlan <br/>Karácsonyi Különkiadásával!<br/></span>
             </div>
-
-            
 
             <p className="text-neutral-300 text-sm max-w-md mx-auto">
               {isRevealed
