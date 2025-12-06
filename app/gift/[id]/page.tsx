@@ -179,18 +179,13 @@ export default function Home() {
           {/* Header */}
           <div className="text-center md:mt-16">
             {giftId && (
-              <h1 className="text-6xl text-neutral-200/80 mt-1 tracking-wide">
+              <h1 className="text-6xl text-neutral-200/80 mt-6 tracking-wide">
                 Kedves <span className="font-semibold text-white">{formattedGiftId}!</span>
               </h1>
             )}
 
-            <div className="text-start relative text-xl text-neutral-100 max-w-md mx-auto bg-white/0 px-4 py-12 rounded-lg border border-lime-400/0">
-        <img
-          src="/img/lifetime.png"
-          alt="Lifetime hozzáférés jelvény"
-          className="float-left h-32 w-auto"
-        />
-              Valaki annyira szeret téged, hogy meglepett a <span className="text-lime-400">Vállalhatatlan <br/>Karácsonyi Különkiadásával!<br/></span>
+            <div className="text-start relative text-2xl text-neutral-100 max-w-md mx-auto bg-white/0 px-4 py-12 rounded-lg border border-lime-400/0">
+              Valaki annyira szeret téged, hogy meglepett a <span className="text-neutral-100">Vállalhatatlan <br/>Karácsonyi Különkiadásával!<br/></span>
             </div>
 
             
