@@ -170,7 +170,7 @@ export default function Home() {
       />
 
       {/* Overlay for better text visibility */}
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-black/70" />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex md:border-8 md:border-black rounded-bl-2xl items-center justify-center p-4">
