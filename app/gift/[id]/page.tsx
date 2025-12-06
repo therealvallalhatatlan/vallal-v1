@@ -173,15 +173,11 @@ export default function Home() {
       <div className="absolute inset-0 bg-black/40" />
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen flex border-8 border-black rounded-bl-2xl items-center justify-center p-4">
+      <div className="relative z-10 min-h-screen flex md:border-8 md:border-black rounded-bl-2xl items-center justify-center p-4">
 
         <div className="flex flex-col items-center gap-8">
           {/* Header */}
-          <div className="text-center mt-16">
-            <h1 className="text-xl md:text-2xl font-bold text-white mb-2 text-pretty">
-              <span className="text-lime-400">Vállalhatatlan </span>
-              Karácsony
-            </h1>
+          <div className="text-center md:mt-16">
             {giftId && (
               <h1 className="text-6xl text-neutral-200/80 mt-1 tracking-wide">
                 Kedves <span className="font-semibold text-white">{formattedGiftId}!</span>
@@ -194,7 +190,7 @@ export default function Home() {
           alt="Lifetime hozzáférés jelvény"
           className="float-left h-32 w-auto"
         />
-              Valaki annyira szeret téged, hogy meglepett a Vállalhatatlan<br/>Karácsonyi Különkiadásával!<br/>Gratulálok!
+              Valaki annyira szeret téged, hogy meglepett a <span className="text-lime-400">Vállalhatatlan <br/>Karácsonyi Különkiadásával!<br/></span>
             </div>
 
             
