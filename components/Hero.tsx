@@ -91,7 +91,7 @@ function PreorderCard({ onOpenDetails }: { onOpenDetails: () => void }) {
           </h3>
           <p className="mt-1 text-sm text-neutral-300">{subtitle}</p>
         </div>
-        <span className="absolute -top-14 right-0 md:-right-14 text-[12px] font-medium uppercase tracking-wider bg-neutral-200/0 text-lime-100 px-3 py-1 md:py-3 rounded-full border border-lime-400">
+        <span className=" text-[12px] font-medium uppercase tracking-wider bg-neutral-200/0 text-lime-100 px-3 py-1 md:py-3 rounded-full border border-lime-400">
           {badge}
         </span>
       </div>
