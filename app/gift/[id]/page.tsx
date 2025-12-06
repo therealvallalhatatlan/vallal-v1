@@ -173,10 +173,11 @@ export default function Home() {
       <div className="absolute inset-0 bg-black/40" />
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen flex border-8 border-white rounded-bl-2xl items-center justify-center p-4">
+      <div className="relative z-10 min-h-screen flex border-8 border-black rounded-bl-2xl items-center justify-center p-4">
+
         <div className="flex flex-col items-center gap-8">
           {/* Header */}
-          <div className="text-center">
+          <div className="text-center mt-16">
             <h1 className="text-xl md:text-2xl font-bold text-white mb-2 text-pretty">
               <span className="text-lime-400">Vállalhatatlan </span>
               Karácsony
@@ -186,7 +187,19 @@ export default function Home() {
                 Kedves <span className="font-semibold text-white">{formattedGiftId}!</span>
               </h1>
             )}
-            <p className="text-neutral-300 text-lg">
+
+            <div className="text-start relative text-xl text-neutral-100 max-w-md mx-auto bg-white/0 px-4 py-12 rounded-lg border border-lime-400/0">
+        <img
+          src="/img/lifetime.png"
+          alt="Lifetime hozzáférés jelvény"
+          className="float-left h-32 w-auto"
+        />
+              Valaki annyira szeret téged, hogy meglepett a Vállalhatatlan<br/>Karácsonyi Különkiadásával!<br/>Gratulálok!
+            </div>
+
+            
+
+            <p className="text-neutral-300 text-sm max-w-md mx-auto">
               {isRevealed
                 ? "És a jelszó nem más mint:"
                 : "Kapard le ezt a szürke szart a digitális hozzáféréshez szükséges jelszóért."}
