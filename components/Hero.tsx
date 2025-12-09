@@ -64,7 +64,6 @@ export default function Hero() {
         </div>
       </section>
 
-      <HeroCtas />
 
       {isModalOpen && (
         <DetailsModal onClose={() => setModalOpen(false)} />
@@ -116,50 +115,7 @@ function PreorderCard({ onOpenDetails }: { onOpenDetails: () => void }) {
   );
 }
 
-/* -------------------------
-   CTA section (kept)
-   ------------------------- */
-function HeroCtas() {
-  const heroCtas = [
-    {
-      title: "Megveszem a könyvet",
-      description:
-        "Limitált, sorszámozott példány. Dead drop és digitális extra tartalmak.",
-      href: "https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h",
-      button: "Megveszem",
-    },
-    {
-      title: "Letöltöm az alkalmazást",
-      description:
-        "Digitális Reader: novellák, zenék és vizuálok mobilra optimalizálva.",
-      href: "/reader",
-      button: "Letöltöm",
-    },
-  ];
 
-  return (
-    <div className="mt-12 max-w-5xl mx-auto px-4 grid gap-4 md:grid-cols-2">
-      {heroCtas.map((c) => (
-        <a
-          key={c.href}
-          href={c.href}
-          className="flex items-center justify-between gap-4 rounded-lg border border-neutral-800 bg-neutral-900/40 p-4"
-        >
-          <div>
-            <p className="text-sm text-neutral-300">{c.title}</p>
-            <p className="mt-1 text-xs text-gray-400">{c.description}</p>
-          </div>
-
-          <div>
-            <span className="inline-flex items-center rounded-md bg-lime-500 px-3 py-2 text-xs font-semibold text-black">
-              {c.button}
-            </span>
-          </div>
-        </a>
-      ))}
-    </div>
-  );
-}
 
 /* -------------------------
    Simple accessible modal

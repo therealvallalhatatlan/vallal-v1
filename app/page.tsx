@@ -12,10 +12,12 @@ import BookCover from "@/components/BookCover";
 import CtaBuyBox from "@/components/CtaBuyBox";
 import TweetRotator from "@/components/TweetRotator";
 import Navigation from "@/components/Navigation";
+import { T } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
 
 export default function Page() {
   return (
     <main className="text-zinc-200">
+      <TweetRotator messages={["Veronika aki dec.8.-án vásárolt- rossz az emailcímed jelentkezz!"]} />
       <Navigation />  
       <Hero />
       <Reviews />
