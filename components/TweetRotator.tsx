@@ -52,7 +52,7 @@ export default function TweetRotator({
   return (
     <div
       className={clsx(
-        "relative px-6 max-w-3xl mx-auto rounded-none pb-6 bg-black/0 p-3",
+        "relative px-6 max-w-3xl mx-auto rounded-none bg-black/0 py-8 border-b ",
         "font-mono text-md leading-[1.35] text-lime-200",
         className
       )}
@@ -60,7 +60,7 @@ export default function TweetRotator({
       aria-live="polite"
     >
       <span className="opacity-60">Latest › </span>
-      <span className="align-top whitespace-pre-wrap break-words">{txt}</span>
+      <span className="align-top whitespace-pre-wrap break-words italic">{txt}</span>
       <span className="ml-1 inline-block animate-[blink_1s_steps(1,end)_infinite]">▌</span>
 
       <style jsx>{`

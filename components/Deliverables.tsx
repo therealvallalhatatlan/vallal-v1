@@ -2,7 +2,7 @@ import CtaBuyBox from "@/components/CtaBuyBox";
 
 export default function Deliverables() {
   return (
-    <section className="px-6 py-24 max-w-5xl mx-auto">
+    <section className="px-6 py-24 max-w-3xl mx-auto">
       {/* Header */}
       <div className="text-center mb-14">
         <p className="text-[11px] uppercase tracking-[0.25em] text-lime-300/80 mb-2">

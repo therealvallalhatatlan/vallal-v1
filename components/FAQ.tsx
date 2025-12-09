@@ -28,7 +28,7 @@ export default function FAQ() {
   const [open, setOpen] = useState<number | null>(null)
 
   return (
-    <section id="gyik" className="px-6 py-24 max-w-4xl mx-auto">
+    <section id="gyik" className="px-6 py-24 max-w-3xl mx-auto">
       {/* Header */}
       <div className="text-center mb-14">
         <p className="text-[11px] uppercase tracking-[0.25em] text-lime-300/80 mb-2">

@@ -31,8 +31,8 @@ function VisualizerContent() {
   const q1 = search.get("img1");
   const q2 = search.get("img2");
 
-  const defaultA = "/img/visuals/noise-24.jpg";
-  const defaultB = "/img/visuals/noise.avif";
+  const defaultA = "/img/visuals/noise-54.jpg";
+  const defaultB = "/img/visuals/noise-52.jpg";
 
   const [imageA, setImageA] = useState(q1 || defaultA);
   const [imageB, setImageB] = useState(q2 || defaultB);

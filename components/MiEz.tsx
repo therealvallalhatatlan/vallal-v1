@@ -1,6 +1,6 @@
 export default function MiEz() {
   return (
-    <section id="mi-ez" className="px-6 py-20 max-w-6xl mx-auto">
+    <section id="mi-ez" className="px-6 py-20 max-w-3xl mx-auto">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto mb-12">
         <p className="text-[11px] uppercase tracking-[0.25em] text-lime-300/80 mb-3">
