@@ -13,7 +13,7 @@ const PUBLIC_PATHS = new Set<string>([
   "/checkout",  // ha ezt szabadon akarod hagyni
   "/visualizer",
   "/video.mp4",
-  "/gift/",
+  "/gift",
 ]);
 
 export function middleware(req: NextRequest) {
