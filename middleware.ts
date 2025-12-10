@@ -43,7 +43,7 @@ export function middleware(req: NextRequest) {
   }
 
   // PUBLIC route-ok szabadon (ide NEM rakjuk a /reader-t!)
-  if (PUBLIC_PATHS.has(pathname)) {
+  if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/gift/")) {
     return NextResponse.next();
   }
 
