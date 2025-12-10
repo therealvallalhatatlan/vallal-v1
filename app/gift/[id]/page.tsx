@@ -15,7 +15,8 @@ export default function Home() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
   const swapDoneRef = useRef(false)
   const [copied, setCopied] = useState(false)
-  const { id: giftId } = useParams<{ id: string }>()
+  const params = useParams<{ id: string }>()
+  const giftId = params?.id
 
   const formattedGiftId = giftId
     ? giftId
@@ -177,18 +178,18 @@ export default function Home() {
 
         <div className="flex flex-col items-center gap-8">
           {/* Header */}
-          <div className="text-start md:text-center mt-0 md:mt-16">
+          <div className="text-center mt-0 md:mt-16">
             {giftId && (
               <h1 className="text-5xl md:text-6xl text-neutral-200/80 tracking-wide">
                 Kedves <span className="font-semibold text-white">{formattedGiftId}!</span>
               </h1>
             )}
 
-            <div className="text-start relative text-2xl text-neutral-100 max-w-md mx-auto bg-white/0 md:py-12 rounded-lg border border-lime-400/0">
+            <div className="text-center relative text-2xl text-neutral-100 max-w-md mx-auto bg-white/0 md:py-6 rounded-lg border border-lime-400/0">
               Valaki annyira szeret téged, hogy meglepett a <span className="text-lime-400 font-bold">Vállalhatatlan <br/>Karácsonyi Különkiadásával!<br/></span>
             </div>
 
-            <p className="text-neutral-300 text-sm max-w-md mx-auto">
+            <p className="text-neutral-400 text-sm max-w-md mx-auto">
               {isRevealed
                 ? "És a jelszó nem más mint:"
                 : "Kapard le ezt a szürke szart a digitális hozzáféréshez szükséges jelszóért."}
