@@ -28,11 +28,13 @@ export function middleware(req: NextRequest) {
     pathname === "/manifest.webmanifest" ||      // ⬅️ KELL
   pathname.startsWith("/icons") ||             // ⬅️ ikonok is kellenek
   pathname.endsWith(".png") ||                 // ⬅️ ha máshol hívjuk az ikonokat
+  pathname.endsWith(".mp4") ||
   pathname.endsWith(".webmanifest") ||          // ⬅️ ha máshol hívjuk a manifestet
     pathname.startsWith("/api/") ||
     pathname.startsWith("/static/") ||
     pathname.startsWith("/icons/") ||
     pathname.startsWith("/img/") ||  // vagy pontosan /og.jpg
+    pathname.startsWith("/videos/") ||
     pathname === "/og.jpg" ||
     pathname.startsWith("/manifest.webmanifest") ||
     pathname.startsWith("/favicon") ||
