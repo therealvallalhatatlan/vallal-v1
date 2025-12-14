@@ -885,7 +885,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
           100% { background-position:160px 0; }
         }
         .reader-theme-dark {
-          background: radial-gradient(circle at 20% 20%, rgba(45,45,45,.45), rgba(0,0,0,1));
+          background: #000;
           color: #d1d5db;
         }
         .reader-theme-light {
