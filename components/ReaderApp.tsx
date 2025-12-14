@@ -35,6 +35,9 @@ export type Story = {
 
 type ReaderAppProps = {
   stories: Story[];
+  userEmail?: string | null;
+  avatarUrl?: string | null;
+  onSignOut?: () => Promise<void> | void;
 };
 
 const STORAGE_KEY = "vallalhatatlan-reader-state";
@@ -85,7 +88,7 @@ function buildPlaylistCandidates(slug: string): string[] {
   return Array.from(out);
 }
 
-export default function ReaderApp({ stories }: ReaderAppProps) {
+export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: ReaderAppProps) {
   const firstStory = stories[0];
   const [currentSlug, setCurrentSlug] = useState<string | undefined>(
     firstStory?.slug
@@ -100,7 +103,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
   const [effectsEnabled, setEffectsEnabled] = useState<boolean>(true);
-  const [showPlayer, setShowPlayer] = useState<boolean>(true);
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark');
 
   // playlist state
@@ -117,7 +119,18 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
     [stories, currentIndex, firstStory]
   );
 
-  const userInitial = "V"; // Vállalhatatlan Klubtag
+  const userInitial = (userEmail?.[0]?.toUpperCase() ?? "V").slice(0, 1); // Vállalhatatlan Klubtag
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOutClick = async () => {
+    if (!onSignOut) return;
+    setSigningOut(true);
+    try {
+      await onSignOut();
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   // Betöltés localStorage-ból (novella progress)
   useEffect(() => {
@@ -168,9 +181,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
       }
       if (typeof parsed.effectsEnabled === "boolean") {
         setEffectsEnabled(parsed.effectsEnabled);
-      }
-      if (typeof parsed.showPlayer === "boolean") {
-        setShowPlayer(parsed.showPlayer);
       }
       if (parsed.themeMode === "light" || parsed.themeMode === "dark") {
         setThemeMode(parsed.themeMode);
@@ -304,7 +314,6 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const persistSettings = (
     nextFontSize: number,
     nextEffects: boolean,
-    nextShowPlayer: boolean,
     nextTheme: 'dark' | 'light' = themeMode
   ) => {
      try {
@@ -313,8 +322,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
          JSON.stringify({
            fontSize: nextFontSize,
            effectsEnabled: nextEffects,
-           showPlayer: nextShowPlayer,
-           themeMode: nextTheme,
+             themeMode: nextTheme,
          })
        );
      } catch {
@@ -326,28 +334,21 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
   const changeFontSize = (delta: number) => {
     setFontSize((prev) => {
       const next = Math.min(36, Math.max(14, prev + delta));
-      persistSettings(next, effectsEnabled, showPlayer, themeMode);
+      persistSettings(next, effectsEnabled, themeMode);
       return next;
     });
   };
   const toggleEffects = () => {
     setEffectsEnabled((prev) => {
       const next = !prev;
-      persistSettings(fontSize, next, showPlayer, themeMode);
-      return next;
-    });
-  };
-  const togglePlayer = () => {
-    setShowPlayer((prev) => {
-      const next = !prev;
-      persistSettings(fontSize, effectsEnabled, next, themeMode);
+      persistSettings(fontSize, next, themeMode);
       return next;
     });
   };
   const toggleThemeMode = () => {
     setThemeMode((prev) => {
       const next = prev === 'dark' ? 'light' : 'dark';
-      persistSettings(fontSize, effectsEnabled, showPlayer, next);
+      persistSettings(fontSize, effectsEnabled, next);
       return next;
     });
   };
@@ -363,7 +364,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
       {showLoader && <div className="story-loader" />}
 
       {/* Sidebar - tartalomjegyzék (desktop) */}
-      <aside className="hidden md:flex w-72 flex-col  bg-black md:bg-transparent">
+      <aside className="hidden md:flex w-72 flex-col  bg-black">
         {/* Brand + user blokk */}
         <div className="px-4 py-4 border-b border-neutral-800 space-y-4">
           <div>
@@ -375,20 +376,39 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-neutral-800 bg-neutral-950/60 px-3 py-2">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-neutral-800 flex items-center justify-center text-sm font-medium text-neutral-200">
-                {userInitial}
-              </div>
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt="avatar"
+                  className="h-9 w-9 rounded-full object-cover ring-1 ring-lime-500/50"
+                />
+              ) : (
+                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-lime-500/80 to-emerald-500/60 flex items-center justify-center text-sm font-semibold text-black ring-1 ring-lime-300/50">
+                  {userInitial}
+                </div>
+              )}
               <div className="flex flex-col">
-                <span className="text-xs text-neutral-300 truncate max-w-[120px]">
-                  Klubtag
+                <span className="text-xs text-neutral-200 truncate max-w-[140px]">
+                  {userEmail || "Belépett olvasó"}
                 </span>
                 <span className="text-[10px] text-neutral-500 uppercase tracking-[0.18em]">
-                  belépve
+                  aktív session
                 </span>
               </div>
             </div>
+
+            {onSignOut && (
+              <button
+                type="button"
+                onClick={handleSignOutClick}
+                disabled={signingOut}
+                className="text-[11px] px-2.5 py-1 rounded-full border border-neutral-700 text-neutral-200 hover:border-lime-400 hover:text-lime-200 transition disabled:opacity-50"
+              >
+                {signingOut ? "Kilépés..." : "Kilépés"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -541,18 +561,7 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                       </p>
                     </div>
                     {/* Audio Player toggle */}
-                    <div className="space-y-2">
-                      <p className="text-sm text-neutral-400">Audio Player</p>
-                      <button
-                        type="button"
-                        onClick={togglePlayer}
-                        className="px-3 py-2 text-sm border border-neutral-600 rounded-full hover:bg-neutral-800 text-neutral-300"
-                        aria-pressed={showPlayer}
-                      >
-                        {showPlayer ? 'Látható' : 'Rejtett'}
-                      </button>
-                      <p className="text-[11px] text-neutral-500">Elrejti vagy megjeleníti a playlist lejátszót.</p>
-                    </div>
+
 
                     {/* Theme switcher */}
                     <div className="space-y-2">
@@ -594,20 +603,39 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
             </SheetHeader>
 
             {/* MOBIL: user blokk a sheet tetején */}
-            <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between gap-3">
+            <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between gap-3 bg-neutral-950/70">
               <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-full bg-neutral-800 flex items-center justify-center text-xs font-medium text-neutral-200">
-                  {userInitial}
-                </div>
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="avatar"
+                    className="h-9 w-9 rounded-full object-cover ring-1 ring-lime-500/50"
+                  />
+                ) : (
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-lime-500/80 to-emerald-500/60 flex items-center justify-center text-sm font-semibold text-black ring-1 ring-lime-300/50">
+                    {userInitial}
+                  </div>
+                )}
                 <div className="flex flex-col">
-                  <span className="text-xs text-neutral-300 truncate max-w-[120px]">
-                    Klubtag
+                  <span className="text-xs text-neutral-200 truncate max-w-[140px]">
+                    {userEmail || "Belépett olvasó"}
                   </span>
                   <span className="text-[10px] text-neutral-500 uppercase tracking-[0.18em]">
-                    belépve
+                    aktív session
                   </span>
                 </div>
               </div>
+
+              {onSignOut && (
+                <button
+                  type="button"
+                  onClick={handleSignOutClick}
+                  disabled={signingOut}
+                  className="text-[11px] px-2.5 py-1 rounded-full border border-neutral-700 text-neutral-200 hover:border-lime-400 hover:text-lime-200 transition disabled:opacity-50"
+                >
+                  {signingOut ? "Kilépés..." : "Kilépés"}
+                </button>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto py-3">
@@ -679,15 +707,13 @@ export default function ReaderApp({ stories }: ReaderAppProps) {
                 playlist.tracks &&
                 playlist.tracks.length > 0 &&
                 currentStory.type !== "cover" && (
-                   showPlayer && (
-                     <section className="mb-6 space-y-3 min-w-max">
-                       <AudioPlayer3
-                         tracks={playlist.tracks}
-                         images={playlist.visuals ?? []}
-                       />
-                     </section>
-                   )
-                 )}
+                  <section className="mb-6 space-y-3 min-w-max">
+                    <AudioPlayer3
+                      tracks={playlist.tracks}
+                      images={playlist.visuals ?? []}
+                    />
+                  </section>
+                )}
              {!playlistLoading && !playlist && (
                <div className="mb-6 text-[11px] text-neutral-600">
                  Nincs kapcsolódó playlist (.json nem található a /public{PLAYLIST_BASE} alatt ehhez a slughoz:

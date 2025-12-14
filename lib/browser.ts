@@ -20,7 +20,12 @@ export function createClient() {
     return {
       auth: {
         getUser: async () => ({ data: { user: null }, error: null }),
+        getSession: async () => ({ data: { session: null }, error: null }),
+        signInWithOtp: async () => ({ data: null, error: new Error("Supabase env hiányzik") }),
+        exchangeCodeForSession: async () => ({ data: null, error: new Error("Supabase env hiányzik") }),
+        getSessionFromUrl: async () => ({ data: null, error: new Error("Supabase env hiányzik") }),
         signOut: async () => ({ error: null }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
       },
     } as any;
   }

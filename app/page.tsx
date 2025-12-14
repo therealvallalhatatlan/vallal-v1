@@ -14,6 +14,7 @@ import TweetRotator from "@/components/TweetRotator";
 import Navigation from "@/components/Navigation";
 import CrewCoupon from "@/components/CrewCoupon";
 import { T } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
+import Matricak from "@/components/matricak";
 
 export default function Page() {
   return (
@@ -21,6 +22,7 @@ export default function Page() {
       <TweetRotator messages={["Veronika aki dec.8.-án vásároltál - rossz emailcímet adtál meg, jelentkezz!","Ha postán szeretnéd megkapni jelezz emailben vagy bárhol"]} />
       <Hero />
       <CrewCoupon />
+      <Matricak />
       <Reviews />
       <MiEz />
       <FAQ />

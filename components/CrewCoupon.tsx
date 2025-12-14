@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 
 const TOTAL_SLOTS = 20;
-const CLAIMED_SLOTS = 11;
+const CLAIMED_SLOTS = 17;
 const REMAINING_SLOTS = TOTAL_SLOTS - CLAIMED_SLOTS;
 const PROGRESS_PERCENT = Math.min(
   100,
@@ -40,15 +40,18 @@ function CrewCouponCard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-2xl md:text-3xl font-semibold text-lime-400">
-            5000 Ft kedvezmény az előrendelőknek
+            5000 Ft kedvezmény a könyv előrendelőinek
           </h3>
           <p className="mt-1 text-sm text-neutral-300">
             Az első {TOTAL_SLOTS} megrendelőnek jár a kedvezmény. Jelenleg {CLAIMED_SLOTS} foglalás
             elkelt, {REMAINING_SLOTS} hely maradt.
           </p>
         </div>
-        <span className="text-[12px] font-semibold uppercase tracking-wider text-white bg-lime-400/0 border border-lime-400 px-3 py-3 rounded-full">
-          még {REMAINING_SLOTS}
+        <span className="text-center text-[12px] font-semibold uppercase tracking-wider text-white bg-lime-400/0 border border-lime-400 px-6 py-2 rounded-full">
+          még <br/>
+          <span className="text-[26px] font-semibold">
+           {REMAINING_SLOTS}
+          </span>
         </span>
       </div>
 

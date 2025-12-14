@@ -14,6 +14,8 @@ const PUBLIC_PATHS = new Set<string>([
   "/visualizer",
   "/video.mp4",
   "/gift",
+  "/auth",      // Supabase magic link auth UI
+  "/dashboard", // Supabase protected in-app; allow page load
 ]);
 
 export function middleware(req: NextRequest) {
@@ -45,7 +47,13 @@ export function middleware(req: NextRequest) {
   }
 
   // PUBLIC route-ok szabadon (ide NEM rakjuk a /reader-t!)
-  if (PUBLIC_PATHS.has(pathname) || pathname.startsWith("/gift/")) {
+  if (
+    PUBLIC_PATHS.has(pathname) ||
+    pathname.startsWith("/gift/") ||
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/reader")
+  ) {
     return NextResponse.next();
   }
 

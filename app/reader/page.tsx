@@ -1,251 +1,111 @@
-// app/reader/page.tsx
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import ReaderApp, { Story } from "@/components/ReaderApp";
-import fs from "fs";
-import path from "path";
+import { createClient } from "@/lib/browser";
+import { useSessionGuard } from "@/hooks/useSessionGuard";
 
-const storiesMeta: Omit<Story, "text">[] = [
-  {
-    id: "00",
-    slug: "konyvborito",
-    title: "Könyvborító",
-    readingTime: 0,
-    order: 0,
-    type: "cover",
-  },
-  {
-    id: "01",
-    slug: "vizsgalati-jegyzokonyv",
-    title: "Vizsgálati jegyzőkönyv",
-    readingTime: 3,
-    order: 1,
-  },
-  {
-    id: "02",
-    slug: "jezus-megszoktet",
-    title: "Jézus megszöktet a rehabról",
-    readingTime: 14,
-    order: 2,
-  },
-   {
-    id: "03",
-    slug: "k-hole",
-    title: "K-hole a teleki téren",
-    readingTime: 14,
-    order: 3,
-  },
-   {
-    id: "04",
-    slug: "utazas-fuegyhazara",
-    title: "Utazás Fűegyházára",
-    readingTime: 14,
-    order: 4,
-  },
-   {
-    id: "05",
-    slug: "tartozunk-egy-ukrannak",
-    title: "Tartozunk egy ukránnak",
-    readingTime: 14,
-    order: 5,
-  },
-   {
-    id: "06",
-    slug: "negyedkilo-heroin",
-    title: "negyedkiló heroin",
-    readingTime: 6,
-    order: 6,
-  },
-     {
-    id: "07",
-    slug: "bosnyak-ter",
-    title: "Bosnyák tér",
-    readingTime: 6,
-    order: 7,
-  },
-     {
-    id: "08",
-    slug: "ibolya-presszo",
-    title: "Ibolya Presszo",
-    readingTime: 6,
-    order: 8,
-  },
-   {
-    id: "09",
-    slug: "elso-nap",
-    title: "Első nap a paradicsomban",
-    readingTime: 6,
-    order: 9,
-  },
-   {
-    id: "10",
-    slug: "mersekelten-hires",
-    title: "A mérsékelten híres rapper",
-    readingTime: 6,
-    order: 10,
-  },
-   {
-    id: "11",
-    slug: "bortonbe-kerulok",
-    title: "Börtönbe kerülök",
-    readingTime: 6,
-    order: 11,
-  },
-  {
-    id: "12",
-    slug: "agressziv-laci",
-    title: "agresszív Laci",
-    readingTime: 8,
-    order: 12,
-  },
-  {
-    id: "13",
-    slug: "afterallatkak",
-    title: "Afterállatkák",
-    readingTime: 8,
-    order: 13,
-  },
-    {
-    id: "14",
-    slug: "sose-bizz",
-    title: "Sose bízz egy herkásban",
-    readingTime: 8,
-    order: 14,
-  },
-    {
-    id: "15",
-    slug: "fefe",
-    title: "Fefe elromlott cerkája",
-    readingTime: 8,
-    order: 15,
-  },
-    {
-    id: "16",
-    slug: "kirandulas",
-    title: "Kirándulás a Marsra",
-    readingTime: 11,
-    order: 16,
-  },
-    {
-    id: "17",
-    slug: "leharapott",
-    title: "a leharapott hüvelykujj",
-    readingTime: 11,
-    order: 17,
-  },
-    {
-    id: "18",
-    slug: "pucer",
-    title: "A pucér nyaralás",
-    readingTime:9,
-    order: 18,
-  },
-    {
-    id: "19",
-    slug: "vori",
-    title: "Vöri és a mentőstáska",
-    readingTime:9,
-    order: 19,
-  },
-      {
-    id: "20",
-    slug: "elgazolom",
-    title: "Elgázolom az egyik vásárlómat",
-    readingTime:9,
-    order: 20,
-  },
-        {
-    id: "21",
-    slug: "holnaptol",
-    title: "Holnaptól leállok",
-    readingTime:9,
-    order: 21,
-  },
-        {
-    id: "22",
-    slug: "szelvedo",
-    title: "Szélvédő nélkül",
-    readingTime:16,
-    order: 22,
-  },
-          {
-    id: "23",
-    slug: "stazi",
-    title: "Stázi",
-    readingTime:16,
-    order: 23,
-  },
-            {
-    id: "24",
-    slug: "csernus",
-    title: "dr. Csernus rámbassza a telefont",
-    readingTime:16,
-    order: 24,
-  },
-              {
-    id: "25",
-    slug: "atropina-1",
-    title: "Atropina Belladonna 1",
-    readingTime:16,
-    order: 25,
-  },
-  {
-    id: "26",
-    slug: "atropina-2",
-    title: "Atropina Belladonna 2",
-    readingTime:16,
-    order: 26,
-  },
-  {
-    id: "27",
-    slug: "atropina-3",
-    title: "Atropina Belladonna 3",
-    readingTime:16,
-    order: 27,
-  },
-    {
-    id: "28",
-    slug: "atropina-4",
-    title: "Atropina Belladonna 4",
-    readingTime:16,
-    order: 28,
-  },
-      {
-    id: "29",
-    slug: "hatodik",
-    title: "Hatodik nap a zárt osztályon",
-    readingTime:16,
-    order: 29,
-  },
-        {
-    id: "30",
-    slug: "private",
-    title: "Private link netcafé",
-    readingTime:16,
-    order: 30,
-  },
-  // ... a többi novella
-];
+const supabase = createClient();
 
-function loadStoryText(slug: string): string {
-  const filePath = path.join(process.cwd(), "content", "stories", `${slug}.txt`);
+export default function ReaderPage() {
+  const router = useRouter();
+  const { session, loading } = useSessionGuard();
+  const [stories, setStories] = useState<Story[] | null>(null);
+  const [fetching, setFetching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  try {
-    return fs.readFileSync(filePath, "utf8");
-  } catch (e) {
-    console.error("Nem találom a story file-t:", filePath, e);
-    return "[Hiányzó szöveg – ellenőrizd a .txt fájlokat]";
+  useEffect(() => {
+    if (loading) return;
+
+    if (!session) {
+      router.replace("/auth?from=/reader");
+      return;
+    }
+
+    const fetchStories = async () => {
+      setFetching(true);
+      setError(null);
+
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) {
+        setError("Nincs aktív bejelentkezés.");
+        setFetching(false);
+        return;
+      }
+
+      const res = await fetch("/api/reader-stories", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setError(body?.error || "Hiba a történetek betöltésekor.");
+        setFetching(false);
+        return;
+      }
+
+      const body = (await res.json()) as { stories?: Story[] };
+      setStories(body.stories || null);
+      setFetching(false);
+    };
+
+    fetchStories();
+  }, [loading, session, router]);
+
+  if (loading || fetching) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <img
+          src="/cover.png"
+          alt="Vállalhatatlan borító"
+          className="w-48 md:w-64 h-auto rounded-xl shadow-[0_10px_50px_rgba(0,0,0,0.35)]"
+        />
+      </div>
+    );
   }
-}
 
-export default async function ReaderPage() {
-  const sortedMeta = [...storiesMeta].sort((a, b) => a.order - b.order);
-  const stories: Story[] = sortedMeta.map((meta) => ({
-    ...meta,
-    text: meta.type === "cover" ? "" : loadStoryText(meta.slug),
-  }));
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="rounded-xl border border-neutral-800 bg-black/70 px-6 py-4 text-sm text-neutral-200">
+          <p className="text-red-300 mb-2 font-semibold">Hiba</p>
+          <p>{error}</p>
+          <button
+            onClick={() => router.replace("/auth?from=/reader")}
+            className="mt-3 inline-flex items-center justify-center rounded-md border border-lime-500 bg-lime-500 px-3 py-2 text-xs font-semibold text-black transition hover:border-lime-400 hover:bg-lime-400"
+          >
+            Újra belépek
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stories) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-sm text-neutral-400">
+        Nem találtam történeteket.
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
-      <ReaderApp stories={stories} />
+      <ReaderApp
+        stories={stories}
+        userEmail={(session as any)?.user?.email ?? null}
+        avatarUrl={(session as any)?.user?.user_metadata?.avatar_url ?? null}
+        onSignOut={async () => {
+          setLoggingOut(true);
+          await supabase.auth.signOut();
+          router.replace("/auth?from=/reader");
+          setLoggingOut(false);
+        }}
+      />
     </div>
   );
 }

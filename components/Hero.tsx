@@ -28,34 +28,35 @@ export default function Hero() {
           <ul className="space-y-2 text-md md:text-base text-gray-200 mb-6">
             <li>
               <span className="text-lime-400 font-semibold mr-2">✓</span>
-              Limitált példányszámú, sorszámozott, dedikált könyv
+              <div className="inline-block align-middle">
+                <div>Limitált, sorszámozott, dedikált könyv</div>
+                <div className="text-xs text-neutral-400">Csak 100 darabot nyomtatok belőle. Egyenként címezem, sorszámozom és dedikálom.</div>
+              </div>
             </li>
             <li>
               <span className="text-lime-400 font-semibold mr-2">✓</span>
-              Digitális hangoskönyv, zenék, folyamatosan frissülő extra sztorik
+              <div className="inline-block align-middle">
+                <div>Hangoskönyv, zenék, life time hozzáférés</div>
+                <div className="text-xs text-neutral-400">Néhány sztori felolvasva + 30 letölthető soundtrack + frissítések</div>
+              </div>
             </li>
             <li>
               <span className="text-lime-400 font-semibold mr-2">✓</span>
-              Dead drop* terjesztés – te vadászod le a saját példányod
+              <div className="inline-block align-middle">
+                <div>Dead drop* terjesztés - könyvesboltba ne keresd</div>
+                <div className="text-xs text-neutral-400">GPS-koordináta, fotó és 48 órás időablak, hogy megtaláld. Nem szivatás - kaland.</div>
+              </div>
             </li>
           </ul>
-
-          <p className="text-sm text-gray-300 mb-2">
-            *A saját sorszámozott könyvedet{" "}
-            <span className="text-lime-400 font-semibold">
-              24 órán belül elrejtem
-            </span>{" "}
-            a városban, és elküldöm a GPS-koordinátákat, fotóval együtt.
-          </p>
-          <p className="text-xs text-gray-500 italic">
-            **Ha nem akarsz bokorba mászni: kérheted posta automatába is.
+          <p className="text-sm text-gray-500 italic">
+            *Ha nem akarsz bokorba mászni: kérheted posta automatába is.
           </p>
         </div>
       </div>
 
       <section className="mt-16 w-full">
         <div className="mx-auto">
-          <div className="grid gap-6 md:grid-cols-2 max-w-5xl">
+          <div className="grid gap-6 md:grid-cols-1 max-w-5xl">
             <div className="w-full">
               <PreorderCard onOpenDetails={() => setModalOpen(true)} />
             </div>
@@ -80,15 +81,15 @@ export default function Hero() {
 function PreorderCard({ onOpenDetails }: { onOpenDetails: () => void }) {
   const title = "Karácsonyi különkiadás";
   const subtitle = "Limitált, egyszeri újranyomás (50 példány).";
-  const body = `Még idén elindítom az 50 példányos, sorszámozott és dedikált utánnyomást. Ez a batch egy karácsonyi különkiadás. Minden példányhoz jár egy kézzel írt rövid dedikáció és egy kis, exkluzív kártya.`;
+  const body = `Még idén elindítom az 50 példányos, sorszámozott és dedikált utánnyomást. Ez a batch egy karácsonyi különkiadás. Minden példányhoz jár egy kézzel írt rövid dedikáció, egy kis exkluzív kártya és matricák.`;
   const badge = "🎅 LIMITÁLT • 50 dedikált példány";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-neutral-800 bg-black/60 p-6 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
+    <div className="relative overflow-hidden rounded-3xl border border-neutral-800 bg-black/60 p-6 pr-16 md:pr-24 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
       <img
         src="/img/50.png"
         alt="Limitált 50 példány"
-        className="pointer-events-none select-none absolute -top-2 -right-2 w-32 rotate-12 opacity-90"
+        className="pointer-events-none select-none w-64 float-right"
       />
       <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">
         nyomtatott könyv
@@ -98,7 +99,6 @@ function PreorderCard({ onOpenDetails }: { onOpenDetails: () => void }) {
           <h3 className="text-2xl md:text-3xl font-semibold text-lime-400">
             {title}
           </h3>
-          <p className="mt-1 text-sm text-neutral-300">{subtitle}</p>
         </div>
       </div>
 
@@ -130,12 +130,22 @@ function PreorderCard({ onOpenDetails }: { onOpenDetails: () => void }) {
         >
           Megveszem
         </a>
+        <p className="text-sm text-gray-500">
+          <a
+            href="https://www.patreon.com/c/vallalhatatlan"
+            target="_blank"
+            rel="noreferrer"
+            className="text-lime-200 underline underline-offset-4"
+          >
+            Patreon
+          </a>{" "}
+          támogatóknak 10.000.-
+        </p>
       </div>
 
     </div>
   );
 }
-
 
 
 /* -------------------------
@@ -220,8 +230,8 @@ function DetailsModal({ onClose }: { onClose: () => void }) {
    ------------------------- */
 function DigitalCard() {
   const title = "Vállalhatatlan Reader App";
-  const subtitle = "Olvasd és hallgasd perceken belül";
-  const body = `Megkapod a teljes könyvet és a digitális ökoszisztémát egy egyedi Vállalhatatlan app formájában. Azonnali hozzáférés minden frissítéshez.`;
+  const subtitle = "Olvasd és hallgasd azonnal";
+  const body = `Megkapod a könyv teljes szövegét és a digitális ökoszisztémát egy egyedi Vállalhatatlan app formájában. Azonnali hozzáférés minden frissítéshez.`;
   const badge = "⚡ AZONNALI HOZZÁFÉRÉS";
 
   return (
@@ -229,7 +239,7 @@ function DigitalCard() {
       <img
         src="/img/lifetime.png"
         alt="Lifetime hozzáférés"
-        className="pointer-events-none select-none absolute -top-4 -right-1 rotate-9 w-28"
+        className="pointer-events-none select-none float-left w-48 md:mr-8"
       />
       <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">
         digitális verzió
@@ -267,9 +277,9 @@ function DigitalCard() {
       </ul>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <span className="text-neutral-100 text-2xl">5000huf</span>
+        <span className="text-neutral-100 text-2xl">5000.-</span>
         <a
-          href="https://vallalhatatlan.online/digital"
+          href="https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j"
           className="inline-flex items-center justify-center rounded-lg border border-lime-500 bg-lime-500 px-4 py-2 text-sm font-semibold text-black transition hover:border-lime-400 hover:bg-lime-400"
           aria-label="Digitális verzió megvásárlása"
         >

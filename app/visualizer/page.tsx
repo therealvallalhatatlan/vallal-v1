@@ -28,11 +28,11 @@ export default function VisualizerPage() {
 
 function VisualizerContent() {
   const search = useSearchParams();
-  const q1 = search.get("img1");
-  const q2 = search.get("img2");
+  const q1 = search?.get("img1");
+  const q2 = search?.get("img2");
 
   const defaultA = "/img/visuals/noise-54.jpg";
-  const defaultB = "/img/visuals/noise-52.jpg";
+  const defaultB = "/img/visuals/noise-60.jpg";
 
   const [imageA, setImageA] = useState(q1 || defaultA);
   const [imageB, setImageB] = useState(q2 || defaultB);
@@ -48,10 +48,11 @@ function VisualizerContent() {
   const [targetGlitch, setTargetGlitch] = useState(0.6); // 0..1 (tamed)
   const [targetGrain, setTargetGrain] = useState(0.08); // 0..0.25
   const [targetSlices, setTargetSlices] = useState(8); // 2..24
-  const [targetRgbShift, setTargetRgbShift] = useState(0.06); // 0..0.12
+  const [targetRgbShift, setTargetRgbShift] = useState(1); // 0..0.12
   const [targetVignette, setTargetVignette] = useState(0.12); // 0..0.3
   const [targetScaleOffset, setTargetScaleOffset] = useState(0.01); // -0.06..0.06
   const [targetRotationDeg, setTargetRotationDeg] = useState(1); // -6..6
+  const [targetSaturation, setTargetSaturation] = useState(1); // 0..2.5 (1 = default)
   const [blendMode, setBlendMode] = useState<BlendMode>("difference");
   const [noiseOverlay, setNoiseOverlay] = useState(true);
   const [tintHue, setTintHue] = useState(0); // degrees
@@ -69,6 +70,7 @@ function VisualizerContent() {
     scaleOffset: targetScaleOffset,
     rotation: targetRotationDeg,
     speed,
+    saturation: targetSaturation,
   });
 
   // preload images (keep order)
@@ -152,6 +154,7 @@ function VisualizerContent() {
       cur.current.scaleOffset = lerp(cur.current.scaleOffset, targetScaleOffset, smooth);
       cur.current.rotation = lerp(cur.current.rotation, targetRotationDeg, smooth);
       cur.current.speed = lerp(cur.current.speed, speed, smooth);
+      cur.current.saturation = lerp(cur.current.saturation, targetSaturation, smooth);
 
       const glitch = Math.max(0, Math.min(1.0, cur.current.glitch));
       const grain = Math.max(0, Math.min(0.3, cur.current.grain));
@@ -161,6 +164,7 @@ function VisualizerContent() {
       const scaleOff = Math.max(-0.2, Math.min(0.2, cur.current.scaleOffset));
       const rot = Math.max(-12, Math.min(12, cur.current.rotation));
       const spd = Math.max(0.2, Math.min(2.0, cur.current.speed));
+      const sat = Math.max(0, Math.min(2.5, cur.current.saturation));
 
       // gentle background tint
       if (tintHue !== 0) {
@@ -193,6 +197,7 @@ function VisualizerContent() {
         const rads = ((rot * Math.PI) / 180) * (idx === 0 ? 1 : -0.8);
         ctx.rotate(rads * (autoshift ? (Math.sin(t * 0.06 + idx) * 0.1 + 0.95) : 1));
         ctx.globalCompositeOperation = idx % 2 ? "lighter" : blendMode;
+        ctx.filter = `saturate(${sat})`;
         try {
           ctx.drawImage(img, -sw / 2, -sh / 2, sw, sh);
         } catch (e) {
@@ -200,6 +205,7 @@ function VisualizerContent() {
         }
         ctx.restore();
       });
+      ctx.filter = "none";
 
       // softened sliced glitch: smaller offsets and less frequent
       const sliceFreq = Math.max(2, Math.floor(slices * (0.7 + glitch * 0.3)));
@@ -301,6 +307,7 @@ function VisualizerContent() {
     targetVignette,
     targetScaleOffset,
     targetRotationDeg,
+    targetSaturation,
     blendMode,
     noiseOverlay,
     tintHue,
@@ -341,6 +348,7 @@ function VisualizerContent() {
     setTargetVignette(0.03 + Math.random() * 0.22);
     setTargetRotationDeg(Math.floor(Math.random() * 8) - 4);
     setTargetScaleOffset((Math.random() - 0.5) * 0.06);
+    setTargetSaturation(0.8 + Math.random() * 0.9);
     setTintHue(Math.floor(Math.random() * 40) - 20);
     setBlendMode((["difference", "overlay", "lighter", "screen", "multiply"] as BlendMode[])[Math.floor(Math.random() * 5)]);
   }, []);
@@ -516,6 +524,19 @@ function VisualizerContent() {
           step={0.05}
           value={speed}
           onChange={(e) => setSpeed(Number(e.target.value))}
+          className="w-full"
+        />
+
+        <label className="text-[11px] text-neutral-400 flex justify-between">
+          Saturation <span className="text-neutral-300">{targetSaturation.toFixed(2)}x</span>
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={2.5}
+          step={0.05}
+          value={targetSaturation}
+          onChange={(e) => setTargetSaturation(Number(e.target.value))}
           className="w-full"
         />
       </div>
