@@ -26,7 +26,6 @@ export const metadata: Metadata = {
     template: "%s | Vállalhatatlan",
   },
   manifest: "/manifest.webmanifest",
-  themeColor: "#000000",
   icons: {
     icon: "/icons/icon-192.png",
     apple: "/icons/icon-192.png",

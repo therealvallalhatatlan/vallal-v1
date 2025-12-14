@@ -1,6 +1,6 @@
 // app/page.tsx
 import Link from "next/link"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import path from "path"
 import fs from "fs/promises"
 
@@ -43,6 +43,9 @@ export const metadata: Metadata = {
   category: "books",
   authors: [{ name: "Vállalhatatlan" }],
   icons: { icon: "/favicon.ico", apple: "/apple-touch-icon.png" },
+}
+
+export const viewport: Viewport = {
   themeColor: "#0ea5a3",
 }
 

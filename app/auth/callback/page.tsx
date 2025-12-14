@@ -1,12 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/browser";
 
 const supabase = createClient();
 
 export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <StatusView message="Magic link feldolgozása..." />
+      }
+    >
+      <AuthCallbackContent />
+    </Suspense>
+  );
+}
+
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [message, setMessage] = useState("Link ellenőrzése...");
@@ -46,7 +58,10 @@ export default function AuthCallbackPage() {
 
     handleExchange();
   }, [router, searchParams]);
+  return <StatusView message={message} />;
+}
 
+function StatusView({ message }: { message: string }) {
   return (
     <main className="min-h-screen bg-black text-neutral-100 px-6 py-10">
       <section className="mx-auto w-full max-w-lg">
