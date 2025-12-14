@@ -37,6 +37,7 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/icons/") ||
     pathname.startsWith("/img/") ||  // vagy pontosan /og.jpg
     pathname.startsWith("/videos/") ||
+    pathname.startsWith("/playlists/") ||
     pathname === "/og.jpg" ||
     pathname.startsWith("/manifest.webmanifest") ||
     pathname.startsWith("/favicon") ||
