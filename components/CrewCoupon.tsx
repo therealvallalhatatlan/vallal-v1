@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 
 const TOTAL_SLOTS = 20;
-const CLAIMED_SLOTS = 17;
+const CLAIMED_SLOTS = 12;
 const REMAINING_SLOTS = TOTAL_SLOTS - CLAIMED_SLOTS;
 const PROGRESS_PERCENT = Math.min(
   100,
