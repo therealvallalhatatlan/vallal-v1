@@ -43,6 +43,17 @@ export default function ReaderPage() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
+
+        if (res.status === 403 && body?.error === "no_access") {
+          router.replace("/reader/no-access?from=/reader");
+          return;
+        }
+
+        if (res.status === 401) {
+          router.replace("/auth?from=/reader");
+          return;
+        }
+
         setError(body?.error || "Hiba a történetek betöltésekor.");
         setFetching(false);
         return;

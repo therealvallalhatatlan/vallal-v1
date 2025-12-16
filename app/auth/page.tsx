@@ -20,6 +20,27 @@ function AuthContent() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
+
+  const next = searchParams?.get("from") || "/reader";
+
+  const handleGoogleSignIn = async () => {
+    setStatus(null);
+    setError(null);
+    setOauthLoading(true);
+    try {
+      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
+      });
+      if (error) {
+        setError(error.message);
+      }
+    } finally {
+      setOauthLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +48,6 @@ function AuthContent() {
     setError(null);
     setLoading(true);
 
-    const next = searchParams?.get("from") || "/reader";
     const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -70,6 +90,23 @@ function AuthContent() {
             className="inline-flex items-center justify-center rounded-lg border border-lime-500 bg-lime-500 px-4 py-2 text-sm font-semibold text-black transition hover:border-lime-400 hover:bg-lime-400 disabled:opacity-60"
           >
             {loading ? "Küldés..." : "Csudalink Küldése"}
+          </button>
+
+          <div className="flex items-center gap-3 pt-2">
+            <div className="h-px flex-1 bg-neutral-800" />
+            <span className="text-[11px] uppercase tracking-[0.22em] text-neutral-500">
+              vagy
+            </span>
+            <div className="h-px flex-1 bg-neutral-800" />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={loading || oauthLoading}
+            className="inline-flex w-full items-center justify-center rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-2 text-sm font-semibold text-neutral-100 transition hover:bg-neutral-800 disabled:opacity-60"
+          >
+            {oauthLoading ? "Google belépés…" : "Belépés Google-lel"}
           </button>
         </form>
       )}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { createClient } from "@/lib/server";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { storiesMeta } from "@/app/reader/storiesMeta";
 
 
@@ -26,6 +27,33 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data?.user) {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  }
+
+  const email = (data.user.email || "").toString().trim().toLowerCase();
+  if (!email) {
+    return NextResponse.json({ error: "no_access" }, { status: 403 });
+  }
+
+  try {
+    const admin = supabaseAdmin();
+    const { data: allowedUser, error: allowedErr } = await admin
+      .from("users")
+      .select("id")
+      .ilike("email", email)
+      .limit(1)
+      .maybeSingle();
+
+    if (allowedErr) {
+      console.error("[reader-stories] users entitlement query failed", allowedErr);
+      return NextResponse.json({ error: "server_error" }, { status: 500 });
+    }
+
+    if (!allowedUser) {
+      return NextResponse.json({ error: "no_access" }, { status: 403 });
+    }
+  } catch (err) {
+    console.error("[reader-stories] entitlement check crashed", err);
+    return NextResponse.json({ error: "server_misconfigured" }, { status: 500 });
   }
 
   // 3) Build stories payload

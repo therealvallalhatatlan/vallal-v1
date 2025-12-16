@@ -35,7 +35,7 @@ function SecretPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const from = searchParams.get("from") || "/reader";
+  const from = searchParams?.get("from") || "/reader";
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
