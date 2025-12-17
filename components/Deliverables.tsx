@@ -83,6 +83,21 @@ export default function Deliverables() {
           </p>
         </div>
 
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+          <a
+            href="https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
+            className="flex-1 bg-lime-400 hover:bg-lime-300 text-black font-semibold py-3 px-6 rounded-xl transition-colors duration-200 text-center"
+          >
+            Megveszem a könyvet
+          </a>
+          <a
+            href="https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j"
+            className="flex-1 bg-transparent hover:bg-lime-400/10 text-lime-400 font-semibold py-3 px-6 rounded-xl border border-lime-400 transition-colors duration-200 text-center"
+          >
+            Megveszem az appot
+          </a>
+        </div>
 
       </div>
     </section>
