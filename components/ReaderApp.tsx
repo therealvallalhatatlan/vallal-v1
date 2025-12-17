@@ -728,7 +728,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
               {currentStory.type === "cover" ? (
                 <div className="mt-6">
                   <img
-                    src="/cover.png"
+                    src="/cover.gif"
                     alt="Vállalhatatlan könyvborító"
                     className="w-full h-auto"
                   />
