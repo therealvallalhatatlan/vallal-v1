@@ -326,8 +326,8 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
   const apiUrl = `/api/audio/${track.file.split('/').map(encodeURIComponent).join('/')}`
 
   return (
-    <div className="min-w-max">
-      <div className="relative p-5 md:p-6 bg-transparent rounded-3xl shadow-[0_0_40px_rgba(0,0,0,.45)] border border-neutral-600/40 overflow-hidden">
+    <div className="w-full max-w-full">
+      <div className="relative p-3 md:p-5 lg:p-6 bg-transparent rounded-3xl shadow-[0_0_40px_rgba(0,0,0,.45)] border border-neutral-600/40 overflow-hidden">
         <div className="absolute inset-0 -z-10 pointer-events-none opacity-60">
           <CanvasResponsive ref={canvasRef} />
           <div className="absolute inset-0 bg-transparent" />

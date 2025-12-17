@@ -712,7 +712,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                 playlist.tracks &&
                 playlist.tracks.length > 0 &&
                 currentStory.type !== "cover" && (
-                  <section className="mb-6 space-y-3 min-w-max">
+                  <section className="mb-6 space-y-3 w-full max-w-full overflow-hidden">
                     <AudioPlayer3
                       tracks={playlist.tracks}
                       images={playlist.visuals ?? []}
