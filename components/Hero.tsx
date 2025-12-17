@@ -236,55 +236,58 @@ function DigitalCard() {
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-neutral-800 bg-black/60 p-6 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
-      <img
-        src="/img/lifetime.png"
-        alt="Lifetime hozzáférés"
-        className="pointer-events-none select-none float-left w-48 md:mr-8"
-      />
-      <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">
-        digitális verzió
-      </p>
-      <div className="flex items-center justify-between relative">
-        <div>
-          <h3 className="text-2xl md:text-3xl font-semibold text-lime-400">
-            {title}
-          </h3>
+      <div className="flex flex-col md:flex-row md:items-start gap-6">
+        <img
+          src="/img/lifetime.png"
+          alt="Lifetime hozzáférés"
+          className="pointer-events-none select-none w-48 mx-auto md:mx-0 md:flex-shrink-0"
+        />
+        <div className="flex-1">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">
+            digitális verzió
+          </p>
+          <div className="flex items-center justify-between relative">
+            <div>
+              <h3 className="text-2xl md:text-3xl font-semibold text-lime-400">
+                {title}
+              </h3>
+            </div>
+          </div>
 
+          <p className="mt-4 text-sm text-neutral-300 leading-relaxed whitespace-pre-wrap">
+            {body}
+          </p>
+
+          <ul className="mt-4 space-y-2 text-sm text-neutral-200">
+            <li className="flex items-start gap-2">
+              <span className="text-lime-400">•</span>
+              Lifetime access
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-lime-400">•</span>
+              Folyamatosan frissülő sztorik
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-lime-400">•</span>
+              Audiobook, felolvassa M. Máté.
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-lime-400">•</span>
+              Letölthető zenék
+            </li>
+          </ul>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <span className="text-neutral-100 text-2xl">5000.-</span>
+            <a
+              href="https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j"
+              className="inline-flex items-center justify-center rounded-lg border border-lime-500 bg-lime-500 px-4 py-2 text-sm font-semibold text-black transition hover:border-lime-400 hover:bg-lime-400"
+              aria-label="Digitális verzió megvásárlása"
+            >
+              Megveszem digitálisan
+            </a>
+          </div>
         </div>
-      </div>
-
-      <p className="mt-4 text-sm text-neutral-300 leading-relaxed whitespace-pre-wrap">
-        {body}
-      </p>
-
-      <ul className="mt-4 space-y-2 text-sm text-neutral-200">
-        <li className="flex items-start gap-2">
-          <span className="text-lime-400">•</span>
-          Lifetime access
-        </li>
-        <li className="flex items-start gap-2">
-          <span className="text-lime-400">•</span>
-          Folyamatosan frissülő sztorik
-        </li>
-        <li className="flex items-start gap-2">
-          <span className="text-lime-400">•</span>
-          Audiobook, felolvassa M. Máté.
-        </li>
-        <li className="flex items-start gap-2">
-          <span className="text-lime-400">•</span>
-          Letölthető zenék
-        </li>
-      </ul>
-
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <span className="text-neutral-100 text-2xl">5000.-</span>
-        <a
-          href="https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j"
-          className="inline-flex items-center justify-center rounded-lg border border-lime-500 bg-lime-500 px-4 py-2 text-sm font-semibold text-black transition hover:border-lime-400 hover:bg-lime-400"
-          aria-label="Digitális verzió megvásárlása"
-        >
-          Megveszem digitálisan
-        </a>
       </div>
     </div>
   );
