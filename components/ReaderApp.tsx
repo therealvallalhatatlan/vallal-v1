@@ -430,12 +430,13 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate">{story.title}</span>
-                  {isFinished && (
-                    <span aria-label="kész" className="text-white text-xs">
-                      ☠️
-                    </span>
-                  )}
+                  <span
+                    className={`truncate ${
+                      !isCover && isFinished ? "line-through opacity-70" : ""
+                    }`}
+                  >
+                    {story.title}
+                  </span>
                 </div>
                 {!isCover && (
                   <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
@@ -641,6 +642,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
             <div className="flex-1 overflow-y-auto py-3">
               {stories.map((story) => {
                 const isActive = story.slug === currentStory?.slug;
+                const isCover = story.type === "cover";
                 const isFinished =
                   readerState.finishedStories?.includes(story.slug) ?? false;
 
@@ -654,13 +656,16 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                         : "text-neutral-400 hover:bg-neutral-900/70"
                     }`}
                   >
-                    <div className="flex items-center justify_between gap-2">
-                      <span className="truncate">{story.title}</span>
-                      {isFinished && (
-                        <span aria-label="kész" className="text-white text-xs">
-                          ☠️
-                        </span>
-                      )}
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`truncate ${
+                          !isCover && isFinished
+                            ? "line-through opacity-70"
+                            : ""
+                        }`}
+                      >
+                        {story.title}
+                      </span>
                     </div>
                     <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-800">
                       <span>
