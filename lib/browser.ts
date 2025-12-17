@@ -30,5 +30,12 @@ export function createClient() {
     } as any;
   }
 
-  return createSupabaseClient(url, key);
+  return createSupabaseClient(url, key, {
+    auth: {
+      flowType: "pkce",
+      detectSessionInUrl: true,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  });
 }

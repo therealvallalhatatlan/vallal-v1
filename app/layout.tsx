@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Crimson_Pro } from "next/font/google";
 import { Special_Elite } from "next/font/google";
 import PWAInstallManager from "@/components/PWAInstallManager";
+import AuthUrlSessionSync from "@/components/AuthUrlSessionSync";
 
 
 const crimson = Crimson_Pro({
@@ -150,6 +151,7 @@ export default function RootLayout({
 
         {/* Page content a legfelül */}
         <div className="content-above relative z-20">
+          <AuthUrlSessionSync />
           <PWAInstallManager />
           {children}
           <Analytics />

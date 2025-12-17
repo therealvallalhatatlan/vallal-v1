@@ -31,7 +31,17 @@ function AuthCallbackContent() {
       }
 
       const code = searchParams.get("code");
-      const next = searchParams.get("next") || "/reader";
+      const nextFromQuery = searchParams.get("next") || "";
+      let next = nextFromQuery || "/reader";
+      if (!nextFromQuery) {
+        try {
+          const stored = window.sessionStorage.getItem("vallal_auth_next");
+          if (stored) next = stored;
+        } catch {
+          // ignore
+        }
+      }
+
       // If we already have a session, skip code handling and just redirect.
       const existing = await supabase.auth.getSession();
       if (existing?.data?.session) {
@@ -40,16 +50,31 @@ function AuthCallbackContent() {
         return;
       }
 
-      if (!code) {
-        setMessage("Hiányzó kód. Kérlek kérj új magic linket.");
-        return;
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          setMessage(`Hiba: ${error.message}`);
+          return;
+        }
+      } else {
+        // Fallback for implicit/hash redirects (e.g. #access_token=...)
+        const hasHashToken = typeof window !== "undefined" && /access_token=|refresh_token=|error=/.test(window.location.hash || "");
+        if (!hasHashToken) {
+          setMessage("Hiányzó kód. Kérlek kérj új belépő linket.");
+          return;
+        }
+
+        const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+        if (error) {
+          setMessage(`Hiba: ${error.message}`);
+          return;
+        }
       }
 
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-      if (error) {
-        setMessage(`Hiba: ${error.message}`);
-        return;
+      try {
+        window.sessionStorage.removeItem("vallal_auth_next");
+      } catch {
+        // ignore
       }
 
       setMessage("Sikeres belépés, irány a /reader...");

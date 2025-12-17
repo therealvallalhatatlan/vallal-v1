@@ -29,6 +29,11 @@ function AuthContent() {
     setError(null);
     setOauthLoading(true);
     try {
+      try {
+        window.sessionStorage.setItem("vallal_auth_next", next);
+      } catch {
+        // ignore
+      }
       const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
