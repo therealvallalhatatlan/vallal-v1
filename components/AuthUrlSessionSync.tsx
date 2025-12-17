@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/browser";
 
 const supabase = createClient();
@@ -12,8 +12,6 @@ const supabase = createClient();
  */
 export default function AuthUrlSessionSync() {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     // Only run when there's something to process.
@@ -21,7 +19,8 @@ export default function AuthUrlSessionSync() {
     if (!/access_token=|refresh_token=|error=/.test(hash)) return;
 
     const run = async () => {
-      const nextFromQuery = searchParams?.get("next") || "";
+      const qs = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const nextFromQuery = qs?.get("next") || "";
       let next = nextFromQuery || "/reader";
 
       if (!nextFromQuery) {
@@ -38,7 +37,8 @@ export default function AuthUrlSessionSync() {
 
       // Clean URL hash (so refresh doesn't re-run the sync)
       try {
-        window.history.replaceState({}, document.title, pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : ""));
+        const clean = window.location.pathname + (window.location.search || "");
+        window.history.replaceState({}, document.title, clean);
       } catch {
         // ignore
       }
@@ -54,7 +54,7 @@ export default function AuthUrlSessionSync() {
 
     run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, pathname]);
+  }, [router]);
 
   return null;
 }
