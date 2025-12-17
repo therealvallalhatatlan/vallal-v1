@@ -27,6 +27,10 @@ export default function AuthUrlSessionSync() {
         try {
           const stored = window.sessionStorage.getItem("vallal_auth_next");
           if (stored) next = stored;
+          if (!stored) {
+            const stored2 = window.localStorage.getItem("vallal_auth_next");
+            if (stored2) next = stored2;
+          }
         } catch {
           // ignore
         }
@@ -45,11 +49,16 @@ export default function AuthUrlSessionSync() {
 
       try {
         window.sessionStorage.removeItem("vallal_auth_next");
+        window.localStorage.removeItem("vallal_auth_next");
       } catch {
         // ignore
       }
 
-      router.replace(next);
+      if (typeof window !== "undefined") {
+        window.location.replace(next);
+      } else {
+        router.replace(next);
+      }
     };
 
     run();

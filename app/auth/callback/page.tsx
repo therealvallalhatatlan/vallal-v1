@@ -37,6 +37,10 @@ function AuthCallbackContent() {
         try {
           const stored = window.sessionStorage.getItem("vallal_auth_next");
           if (stored) next = stored;
+          if (!stored) {
+            const stored2 = window.localStorage.getItem("vallal_auth_next");
+            if (stored2) next = stored2;
+          }
         } catch {
           // ignore
         }
@@ -46,7 +50,17 @@ function AuthCallbackContent() {
       const existing = await supabase.auth.getSession();
       if (existing?.data?.session) {
         setMessage("Már be vagy jelentkezve, irány a /reader...");
-        router.replace(next);
+        try {
+          window.sessionStorage.removeItem("vallal_auth_next");
+          window.localStorage.removeItem("vallal_auth_next");
+        } catch {
+          // ignore
+        }
+        if (typeof window !== "undefined") {
+          window.location.replace(next);
+        } else {
+          router.replace(next);
+        }
         return;
       }
 
@@ -73,12 +87,17 @@ function AuthCallbackContent() {
 
       try {
         window.sessionStorage.removeItem("vallal_auth_next");
+        window.localStorage.removeItem("vallal_auth_next");
       } catch {
         // ignore
       }
 
       setMessage("Sikeres belépés, irány a /reader...");
-      router.replace(next);
+      if (typeof window !== "undefined") {
+        window.location.replace(next);
+      } else {
+        router.replace(next);
+      }
     };
 
     handleExchange();

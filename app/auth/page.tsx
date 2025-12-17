@@ -31,6 +31,7 @@ function AuthContent() {
     try {
       try {
         window.sessionStorage.setItem("vallal_auth_next", next);
+        window.localStorage.setItem("vallal_auth_next", next);
       } catch {
         // ignore
       }
