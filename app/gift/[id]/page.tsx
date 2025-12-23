@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 
 const VIDEOS = ["/videos/video1.mp4", "/videos/video2.mp4"]
-const REVEAL_LETTERS = ["c", "i", "c", "i"]
+const REVEAL_LETTERS = ["24 elött nem érvényes"]
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
