@@ -97,12 +97,10 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [headerHidden, setHeaderHidden] = useState(false);
   const lastYRef = useRef(0);
-  const [showLoader, setShowLoader] = useState(false);
 
   // settings
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
-  const [effectsEnabled, setEffectsEnabled] = useState<boolean>(true);
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark');
 
   // playlist state
@@ -178,9 +176,6 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
       const parsed = JSON.parse(raw);
       if (typeof parsed.fontSize === "number") {
         setFontSize(parsed.fontSize);
-      }
-      if (typeof parsed.effectsEnabled === "boolean") {
-        setEffectsEnabled(parsed.effectsEnabled);
       }
       if (parsed.themeMode === "light" || parsed.themeMode === "dark") {
         setThemeMode(parsed.themeMode);
@@ -264,8 +259,6 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
     setCurrentSlug(slug);
     markAsFinished(slug);
     scrollToTop();
-    setShowLoader(true);
-    setTimeout(() => setShowLoader(false), 700);
   };
 
   const handleSelectStoryFromMobileToc = (slug: string) => {
@@ -313,16 +306,14 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
 
   const persistSettings = (
     nextFontSize: number,
-    nextEffects: boolean,
-    nextTheme: 'dark' | 'light' = themeMode
+    nextTheme: 'dark' | 'light'
   ) => {
      try {
        window.localStorage.setItem(
          SETTINGS_KEY,
          JSON.stringify({
            fontSize: nextFontSize,
-           effectsEnabled: nextEffects,
-             themeMode: nextTheme,
+           themeMode: nextTheme,
          })
        );
      } catch {
@@ -334,21 +325,14 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   const changeFontSize = (delta: number) => {
     setFontSize((prev) => {
       const next = Math.min(36, Math.max(14, prev + delta));
-      persistSettings(next, effectsEnabled, themeMode);
-      return next;
-    });
-  };
-  const toggleEffects = () => {
-    setEffectsEnabled((prev) => {
-      const next = !prev;
-      persistSettings(fontSize, next, themeMode);
+      persistSettings(next, themeMode);
       return next;
     });
   };
   const toggleThemeMode = () => {
     setThemeMode((prev) => {
       const next = prev === 'dark' ? 'light' : 'dark';
-      persistSettings(fontSize, effectsEnabled, next);
+      persistSettings(fontSize, next);
       return next;
     });
   };
@@ -357,12 +341,8 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
 
   return (
     <div
-      className={`flex min-h-[100dvh] ${effectsEnabled ? 'effects-on' : 'effects-off'} ${
-        themeMode === 'light' ? 'reader-theme-light' : 'reader-theme-dark'
-      }`}
+      className={`flex min-h-[100dvh] ${themeMode === 'light' ? 'reader-theme-light' : 'reader-theme-dark'}`}
     >
-      {showLoader && <div className="story-loader" />}
-
       {/* Sidebar - tartalomjegyzék (desktop) */}
       <aside className="hidden md:flex w-72 flex-col  bg-black">
         {/* Brand + user blokk */}
@@ -544,21 +524,6 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                       <p className="text-[11px] text-neutral-500">
                         Kisebb kijelzőn 16–20px, desktopon 18–24px körül
                         kényelmes.
-                      </p>
-                    </div>
-                    {/* Háttéreffektek toggle */}
-                    <div className="space-y-2">
-                      <p className="text-sm gradient-effekt-label">Pszichedelikus Effekt™</p>
-                      <button
-                        type="button"
-                        onClick={toggleEffects}
-                        className="px-3 py-2 text-sm border border-neutral-600 rounded-full hover:bg-neutral-800 text-neutral-300"
-                        aria-pressed={effectsEnabled}
-                      >
-                        {effectsEnabled ? 'Bekapcsolva' : 'Kikapcsolva'}
-                      </button>
-                      <p className="text-[11px] text-neutral-500">
-                        Kikapcsolás: eltűnnek a színes glitch / CRT rétegek.
                       </p>
                     </div>
                     {/* Audio Player toggle */}
@@ -832,63 +797,6 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
           letter-spacing:.5px;
         }
         /* Effects ON */
-        .effects-on .fade-in::before,
-        .effects-on .fade-in::after {
-          content:"";
-          position:absolute;
-          inset:-40px;
-          pointer-events:none;
-        }
-        .effects-on .fade-in::before {
-          background:
-            radial-gradient(circle at 35% 40%,rgba(0,255,170,.28),transparent 65%),
-            radial-gradient(circle at 70% 65%,rgba(255,0,110,.25),transparent 72%);
-          filter:blur(26px);
-          mix-blend-mode:screen;
-          animation: rgbShift 9s linear infinite;
-          opacity:.55;
-        }
-        @keyframes tvNoise {
-          0% { opacity:.06; transform:translate3d(0,0,0); filter:brightness(1) contrast(1); }
-          12% { opacity:.16; transform:translate3d(-2px,1px,0); filter:brightness(1.2) contrast(1.15); }
-          33% { opacity:.09; transform:translate3d(1.5px,-1px,0); filter:brightness(0.95) contrast(0.9); }
-          51% { opacity:.18; transform:translate3d(-3px,2px,0); filter:brightness(1.25) contrast(1.2); }
-          74% { opacity:.1; transform:translate3d(2px,-1.5px,0); filter:brightness(0.9) contrast(0.95); }
-          100% { opacity:.13; transform:translate3d(-1px,0.5px,0); filter:brightness(1.1) contrast(1.05); }
-        }
-        .effects-on .fade-in::after {
-          background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23n)' opacity='0.65'/%3E%3C/svg%3E");
-          background-size:200px 200px;
-          mix-blend-mode:screen;
-          opacity:.15;
-          animation:tvNoise 3.6s steps(6,end) infinite alternate;
-        }
-        .effects-on .story-loader {
-          position:fixed; top:0; left:0; right:0;
-          height:4px;
-          background:linear-gradient(90deg,#00ff95,#ff0055,#00d0ff,#00ff95);
-          background-size:300% 100%;
-          animation:glitchBar 0.9s cubic-bezier(.6,.01,.4,1) infinite;
-          z-index:40;
-          filter:contrast(140%) brightness(1.1);
-        }
-        .effects-on .story-loader::after {
-          content:"";
-          position:absolute; inset:0;
-          background:repeating-linear-gradient(90deg,rgba(255,255,255,.6) 0 4px,rgba(0,0,0,0) 4px 8px);
-          mix-blend-mode:overlay;
-          opacity:.35;
-          animation:scan 1.2s linear infinite;
-        }
-        @keyframes glitchBar {
-          0% { background-position:0% 50%; transform:translateY(0); }
-          50% { background-position:100% 50%; transform:translateY(1px); }
-          100% { background-position:0% 50%; transform:translateY(0); }
-        }
-        @keyframes scan {
-          0% { background-position:0 0; }
-          100% { background-position:160px 0; }
-        }
         .reader-theme-dark {
           background: #000;
           color: #d1d5db;
@@ -897,26 +805,12 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
           background: radial-gradient(circle at 50% 10%, rgba(255,255,255,.85), rgba(243,243,245,.95));
           color: #374151;
         }
-        .reader-theme-light .fade-in {
-          color: inherit;
-        }
         .reader-theme-light article {
           background: transparent;
           border-radius: 0;
           border: none;
           box-shadow: none;
           padding: 0;
-        }
-        .reader-theme-light .fade-in::before {
-          background:
-            radial-gradient(circle at 32% 38%, rgba(122,199,255,.35), transparent 62%),
-            radial-gradient(circle at 68% 58%, rgba(255,170,205,.32), transparent 70%);
-          filter: blur(24px);
-          opacity: .35;
-        }
-        .reader-theme-light .fade-in::after {
-          mix-blend-mode: multiply;
-          opacity: .08;
         }
         .reader-theme-light .text-neutral-400,
         .reader-theme-light .text-neutral-500,

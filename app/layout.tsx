@@ -143,14 +143,6 @@ export default function RootLayout({
           <div className="bg-video__overlay absolute inset-0" />
         </div>
 
-        {/* --- 90s CRT overlays (megmaradnak) --- */}
-        <div aria-hidden="true" className="fixed inset-0 -z-5 pointer-events-none">
-          <div className="fx-bands absolute inset-0 mix-blend-screen opacity-30" />
-          <div className="fx-stripes absolute inset-0 mix-blend-screen opacity-20" />
-          <div className="fx-vignette absolute inset-0 mix-blend-multiply opacity-40" />
-          <div className="fx-vhs absolute inset-0 mix-blend-screen opacity-25" />
-        </div>
-
         {/* Page content a legfelül */}
         <div className="content-above relative z-20">
           <AuthUrlSessionSync />
@@ -231,7 +223,7 @@ export default function RootLayout({
          }
         .bg-video { position:fixed; inset:0; overflow:hidden; }
         .bg-video__media { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:1; pointer-events:none; }
-        .bg-video__overlay { position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 50% 20%,rgba(0,0,0,0.2),transparent 55%),linear-gradient(to bottom,rgba(0,0,0,0.45),rgba(0,0,0,0.75)); }
+        .bg-video__overlay { position:absolute; inset:0; pointer-events:none; background:rgba(0,0,0,0.8); }
         `}</style>
             </ThemeProvider>
       </body>

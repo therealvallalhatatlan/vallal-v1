@@ -133,7 +133,7 @@ function AuthStatus({
     <main className="min-h-screen bg-black text-neutral-100 px-6 py-10">
       <section className="mx-auto w-full max-w-lg">
         <div className="rounded-3xl border border-neutral-800 bg-black/60 p-6 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">Hoppá-hoppá</p>
+          <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">Zárt Közösség</p>
           <h1 className="text-3xl font-semibold text-lime-400">Belépés Csak Klubtagoknak</h1>
           <p className="mt-2 text-sm text-neutral-300">
             Add meg az email címet amivel a könyvet vetted, és küldök egy belépő linket.<br/> Jelszó nem kell, és többet nem kell baszódj vele. <br/>Ha más email címet használnál, írj nekem:{" "}

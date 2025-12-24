@@ -118,7 +118,7 @@ export default function GiftPage() {
       {/* CONTENT */}
       <div className="relative z-10 flex min-h-screen flex-col justify-end items-center px-4 pb-10 text-center gap-6">
         <div className="max-w-xs text-lg text-neutral-300">
-          {name && <p className="mb-2">{name},</p>}
+          {name && <p className="mb-2 glitch-text">Kedves {name},</p>}
           <p>ez az oldal neked készült.</p>
           <p className="opacity-40">kapard le ezt a szürke szart.</p>
         </div>
