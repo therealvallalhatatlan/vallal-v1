@@ -26,7 +26,7 @@ export default function GiftPage() {
     : null
 
   const activatedText = name
-    ? `${name}! Karácsonyi meglepetésed Aktiválva`
+    ? `Karácsonyi meglepetésed Aktiválva`
     : ACCESS_KEY
 
   useEffect(() => {
@@ -160,7 +160,7 @@ export default function GiftPage() {
       {/* CONTENT */}
       <div className="relative z-10 flex min-h-screen flex-col justify-end items-center px-4 pb-10 text-center gap-8">
         <div className="max-w-xs text-lg text-neutral-300 space-y-2">
-          {name && <p className="mb-2 glitch-text">Kedves {name},</p>}
+          {name && <p className="mb-2 glitch-text">Kedves {name}</p>}
           {!revealed && <p>Valaki meglepett a Vállalhatalannal.</p>}
           {!revealed && <p className="opacity-40">kapard le ezt a szürke szart.</p>}
         </div>
@@ -173,18 +173,9 @@ export default function GiftPage() {
             style={{ touchAction: "none" }}
           />
           {revealed && (
-            <div className="absolute -top-80 inset-0 flex flex-col items-center justify-center bg-transparent rounded-md">
+            <div className="absolute top-2 inset-0 flex flex-col items-center justify-center bg-transparent rounded-md">
               <p className="text-xl font-semibold mb-0 mt-0 px-6 py-4 bg-red-600 rounded-md leading-5">{activatedText}</p>
-              <button
-                className="mt-3 text-xs underline text-neutral-300"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(activatedText)
-                  setCopied(true)
-                  setTimeout(() => setCopied(false), 1200)
-                }}
-              >
-                {copied ? "Másolva!" : "Másolás"}
-              </button>
+              
             </div>
           )}
         </div>
