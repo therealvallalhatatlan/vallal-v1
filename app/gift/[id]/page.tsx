@@ -12,6 +12,9 @@ export default function GiftPage() {
   const [revealed, setRevealed] = useState(false)
   const [isDrawing, setIsDrawing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const userGestureRef = useRef(false)
+  const [userGestureReceived, setUserGestureReceived] = useState(false)
 
   const params = useParams<{ id: string }>()
   const name = params?.id
@@ -21,6 +24,10 @@ export default function GiftPage() {
         .map(p => p.charAt(0).toUpperCase() + p.slice(1))
         .join(" ")
     : null
+
+  const activatedText = name
+    ? `${name}! Karácsonyi meglepetésed Aktiválva`
+    : ACCESS_KEY
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -100,6 +107,39 @@ export default function GiftPage() {
     }
   }, [isDrawing, revealed])
 
+  useEffect(() => {
+    const tryUnlockAudio = () => {
+      if (userGestureRef.current) return
+      userGestureRef.current = true
+      setUserGestureReceived(true)
+      const v = videoRef.current
+      if (!v) return
+      try {
+        v.muted = false
+        v.volume = 0.4
+        const p = v.play()
+        if (p && typeof (p as any).then === "function") (p as any).catch(() => {})
+      } catch (_) {}
+
+      const AC = (window as any).AudioContext || (window as any).webkitAudioContext
+      if (AC) {
+        try {
+          const ctx = new AC()
+          if (typeof ctx.resume === "function") ctx.resume().catch(() => {})
+        } catch (_) {}
+      }
+    }
+
+    document.addEventListener("click", tryUnlockAudio, { once: true })
+    document.addEventListener("touchstart", tryUnlockAudio, { once: true })
+
+    return () => {
+      // remove without options
+      document.removeEventListener("click", tryUnlockAudio)
+      document.removeEventListener("touchstart", tryUnlockAudio)
+    }
+  }, [])
+
   return (
     <div className="relative min-h-screen overflow-hidden text-white">
       {/* VIDEO */}
@@ -109,6 +149,8 @@ export default function GiftPage() {
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
+        ref={videoRef}
+        id="bg-video"
         src={VIDEO_SRC}
       />
 
@@ -119,7 +161,7 @@ export default function GiftPage() {
       <div className="relative z-10 flex min-h-screen flex-col justify-end items-center px-4 pb-10 text-center gap-8">
         <div className="max-w-xs text-lg text-neutral-300 space-y-2">
           {name && <p className="mb-2 glitch-text">Kedves {name},</p>}
-          <p>Valaki meglepett a Vállalhatalannal.</p>
+          {!revealed && <p>Valaki meglepett a Vállalhatalannal.</p>}
           {!revealed && <p className="opacity-40">kapard le ezt a szürke szart.</p>}
         </div>
 
@@ -132,16 +174,16 @@ export default function GiftPage() {
           />
           {revealed && (
             <div className="absolute -top-80 inset-0 flex flex-col items-center justify-center bg-transparent rounded-md">
-              <p className="text-xl font-semibold mb-0 mt-0 px-6 py-4 bg-red-600 rounded-md leading-5">{ACCESS_KEY}</p>
+              <p className="text-xl font-semibold mb-0 mt-0 px-6 py-4 bg-red-600 rounded-md leading-5">{activatedText}</p>
               <button
                 className="mt-3 text-xs underline text-neutral-300"
                 onClick={async () => {
-                  await navigator.clipboard.writeText(ACCESS_KEY)
+                  await navigator.clipboard.writeText(activatedText)
                   setCopied(true)
                   setTimeout(() => setCopied(false), 1200)
                 }}
               >
-                {copied ? "" : ""}
+                {copied ? "Másolva!" : "Másolás"}
               </button>
             </div>
           )}
