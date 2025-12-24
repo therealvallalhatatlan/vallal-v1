@@ -12,7 +12,6 @@ export default function ReaderPage() {
   const router = useRouter();
   const { session, loading } = useSessionGuard();
   const [stories, setStories] = useState<Story[] | null>(null);
-  const [fetching, setFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -25,14 +24,12 @@ export default function ReaderPage() {
     }
 
     const fetchStories = async () => {
-      setFetching(true);
       setError(null);
 
       const { data } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
       if (!token) {
         setError("Nincs aktív bejelentkezés.");
-        setFetching(false);
         return;
       }
 
@@ -55,28 +52,18 @@ export default function ReaderPage() {
         }
 
         setError(body?.error || "Hiba a történetek betöltésekor.");
-        setFetching(false);
         return;
       }
 
       const body = (await res.json()) as { stories?: Story[] };
       setStories(body.stories || null);
-      setFetching(false);
     };
 
     fetchStories();
   }, [loading, session, router]);
 
-  if (loading || fetching) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <img
-          src="/cover.png"
-          alt="Vállalhatatlan borító"
-          className="w-48 md:w-64 h-auto rounded-xl shadow-[0_10px_50px_rgba(0,0,0,0.35)]"
-        />
-      </div>
-    );
+  if (loading) {
+    return null;
   }
 
   if (error) {
@@ -99,7 +86,7 @@ export default function ReaderPage() {
   if (!stories) {
     return (
       <div className="min-h-screen flex items-center justify-center text-sm text-neutral-400">
-        Nem találtam történeteket.
+        Keresem...
       </div>
     );
   }

@@ -754,25 +754,6 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
 
       {/* Local styles */}
       <style>{`
-        @keyframes fadeCrt {
-          0% { opacity:0; transform:scaleY(.03) scaleX(1.25); filter:blur(40px) brightness(240%); }
-          6% { opacity:1; transform:scaleY(.25) scaleX(1.08); filter:blur(24px) brightness(175%); }
-          14% { opacity:.85; transform:scaleY(.92) scaleX(1.02); filter:blur(14px) brightness(145%); }
-          28% { opacity:1; transform:scale(1) translate(0); filter:blur(8px) brightness(120%); }
-          46% { filter:blur(5px) brightness(110%); }
-          64% { filter:blur(3px); }
-          78% { transform:scale(1) translateX(0); }
-          84% { transform:scale(1) translateX(1px); }
-          90% { transform:scale(1) translateX(-1px); }
-          100% { opacity:1; filter:blur(0); transform:scale(1) translate(0); }
-        }
-        @keyframes jitter {
-          0%,100% { transform:translate(0,0); }
-          20% { transform:translate(1px,-1px); }
-          40% { transform:translate(-1px,1px); }
-          60% { transform:translate(1px,0); }
-          80% { transform:translate(-1px,-1px); }
-        }
         @keyframes rgbShift {
           0%,100% { filter:contrast(140%) saturate(140%); }
           25% { filter:hue-rotate(18deg) contrast(155%) saturate(160%); }
@@ -784,10 +765,12 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
           100% { background-position:0 4px; }
         }
         .fade-in {
-          position:relative;
-          animation:
-            fadeCrt 3.2s cubic-bezier(.25,.01,.12,1) .2s both,
-            jitter 2.8s steps(2,end) .2s 1;
+          position: relative;
+          animation: simpleOpacityFade 0.5s ease-in-out;
+        }
+        @keyframes simpleOpacityFade {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         .gradient-effekt-label {
           background:linear-gradient(90deg,#00ffa8,#ff2ecf 38%,#6dd3ff 65%,#b5ff5a);

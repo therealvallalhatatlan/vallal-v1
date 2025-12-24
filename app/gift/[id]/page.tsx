@@ -116,26 +116,23 @@ export default function GiftPage() {
       <div className="absolute inset-0 bg-black/60" />
 
       {/* CONTENT */}
-      <div className="relative z-10 flex min-h-screen flex-col justify-end items-center px-4 pb-10 text-center gap-6">
-        <div className="max-w-xs text-lg text-neutral-300">
+      <div className="relative z-10 flex min-h-screen flex-col justify-end items-center px-4 pb-10 text-center gap-8">
+        <div className="max-w-xs text-lg text-neutral-300 space-y-2">
           {name && <p className="mb-2 glitch-text">Kedves {name},</p>}
-          <p>ez az oldal neked készült.</p>
-          <p className="opacity-40">kapard le ezt a szürke szart.</p>
+          <p>Valaki meglepett a Vállalhatalannal.</p>
+          {!revealed && <p className="opacity-40">kapard le ezt a szürke szart.</p>}
         </div>
 
         {/* SCRATCH */}
         <div className="relative">
           <canvas
             ref={canvasRef}
-            className="rounded-md border border-white/20"
+            className={`rounded-md border border-white/20 ${revealed ? 'hidden' : ''}`}
             style={{ touchAction: "none" }}
           />
           {revealed && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-md">
-              <p className="text-xs tracking-widest text-neutral-400 mb-2">
-                ACCESS KEY
-              </p>
-              <p className="text-xl font-semibold">{ACCESS_KEY}</p>
+            <div className="absolute -top-80 inset-0 flex flex-col items-center justify-center bg-transparent rounded-md">
+              <p className="text-xl font-semibold mb-0 mt-0 px-6 py-4 bg-red-600 rounded-md leading-5">{ACCESS_KEY}</p>
               <button
                 className="mt-3 text-xs underline text-neutral-300"
                 onClick={async () => {
