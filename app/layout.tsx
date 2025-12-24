@@ -11,6 +11,7 @@ import { Crimson_Pro } from "next/font/google";
 import { Special_Elite } from "next/font/google";
 import PWAInstallManager from "@/components/PWAInstallManager";
 import AuthUrlSessionSync from "@/components/AuthUrlSessionSync";
+import { ThemeProvider } from "@/components/theme-provider";
 
 
 const crimson = Crimson_Pro({
@@ -118,11 +119,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
-        className={`${crimson.variable} ${specialElite.variable} bg-black antialiased overflow-x-hidden`}
+        className={`${crimson.variable} ${specialElite.variable} antialiased overflow-x-hidden`}
         style={{ touchAction: 'pan-y' }}
       >
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         {/* Háttérvideó – full screen, fixed, a content alatt */}
         <div
           className="bg-video fixed inset-0 z-0 pointer-events-none"
@@ -231,6 +233,7 @@ export default function RootLayout({
         .bg-video__media { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:1; pointer-events:none; }
         .bg-video__overlay { position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 50% 20%,rgba(0,0,0,0.2),transparent 55%),linear-gradient(to bottom,rgba(0,0,0,0.45),rgba(0,0,0,0.75)); }
         `}</style>
+            </ThemeProvider>
       </body>
     </html>
   );

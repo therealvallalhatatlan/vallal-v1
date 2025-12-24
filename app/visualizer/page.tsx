@@ -32,7 +32,7 @@ function VisualizerContent() {
   const q2 = search?.get("img2");
 
   const defaultA = "/img/visuals/noise-54.jpg";
-  const defaultB = "/img/visuals/noise-63.jpg";
+  const defaultB = "/img/visuals/noise-64.jpg";
 
   const [imageA, setImageA] = useState(q1 || defaultA);
   const [imageB, setImageB] = useState(q2 || defaultB);
@@ -379,34 +379,34 @@ function VisualizerContent() {
   }, [handleScreenshot, handleRandomize, handleSwapImages]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black text-white flex flex-col">
+    <div className="fixed inset-0 z-50 flex flex-col bg-background text-foreground dark:bg-black dark:text-white">
       {/* top controls */}
       <div className="absolute top-4 right-4 z-60 flex gap-3 items-center">
-        <div className="rounded-full bg-black/56 border border-white/10 px-3 py-2 text-xs flex items-center gap-2 backdrop-blur-sm">
+        <div className="rounded-full bg-white/85 text-neutral-900 border border-neutral-200 px-3 py-2 text-xs flex items-center gap-2 backdrop-blur-sm shadow-sm dark:bg-black/56 dark:text-white dark:border-white/10">
           <button
             onClick={() => setPlaying((p) => !p)}
-            className="px-2 py-1 rounded-md bg-white/6 hover:bg-white/12 transition"
+            className="px-2 py-1 rounded-md bg-neutral-200 text-neutral-900 hover:bg-neutral-300 transition dark:bg-white/6 dark:text-white dark:hover:bg-white/12"
             title="Play / Pause (Space)"
           >
             {playing ? "⏸" : "⏵"}
           </button>
           <button
             onClick={handleScreenshot}
-            className="px-2 py-1 rounded-md bg-white/6 hover:bg-white/12 transition"
+            className="px-2 py-1 rounded-md bg-neutral-200 text-neutral-900 hover:bg-neutral-300 transition dark:bg-white/6 dark:text-white dark:hover:bg-white/12"
             title="Screenshot (S)"
           >
             📷
           </button>
           <button
             onClick={handleRandomize}
-            className="px-2 py-1 rounded-md bg-white/6 hover:bg-white/12 transition"
+            className="px-2 py-1 rounded-md bg-neutral-200 text-neutral-900 hover:bg-neutral-300 transition dark:bg-white/6 dark:text-white dark:hover:bg-white/12"
             title="Randomize (R)"
           >
             🎲
           </button>
           <button
             onClick={handleSwapImages}
-            className="px-2 py-1 rounded-md bg-white/6 hover:bg-white/12 transition"
+            className="px-2 py-1 rounded-md bg-neutral-200 text-neutral-900 hover:bg-neutral-300 transition dark:bg-white/6 dark:text-white dark:hover:bg-white/12"
             title="Swap images (W)"
           >
             🔁
@@ -415,11 +415,11 @@ function VisualizerContent() {
       </div>
 
       {/* left controls */}
-      <div className="absolute left-4 top-4 z-60 w-64 rounded-lg bg-black/42 border border-white/6 p-3 text-xs space-y-2 backdrop-blur-sm">
-        <div className="mb-1 text-neutral-300 font-medium">Vizualizáció</div>
+      <div className="absolute left-4 top-4 z-60 w-64 rounded-lg bg-white/90 text-neutral-900 border border-neutral-200 p-3 text-xs space-y-2 backdrop-blur-sm shadow-md dark:bg-black/42 dark:text-neutral-200 dark:border-white/6">
+        <div className="mb-1 text-neutral-800 font-medium dark:text-neutral-200">Vizualizáció</div>
 
-        <label className="text-[11px] text-neutral-400 flex justify-between">
-          Glitch <span className="text-neutral-300">{targetGlitch.toFixed(2)}</span>
+        <label className="text-[11px] text-neutral-700 flex justify-between dark:text-neutral-400">
+          Glitch <span className="text-neutral-900 dark:text-neutral-200">{targetGlitch.toFixed(2)}</span>
         </label>
         <input
           type="range"
@@ -431,8 +431,8 @@ function VisualizerContent() {
           className="w-full"
         />
 
-        <label className="text-[11px] text-neutral-400 flex justify-between">
-          Grain <span className="text-neutral-300">{targetGrain.toFixed(2)}</span>
+        <label className="text-[11px] text-neutral-700 flex justify-between dark:text-neutral-400">
+          Grain <span className="text-neutral-900 dark:text-neutral-200">{targetGrain.toFixed(2)}</span>
         </label>
         <input
           type="range"
@@ -444,8 +444,8 @@ function VisualizerContent() {
           className="w-full"
         />
 
-        <label className="text-[11px] text-neutral-400 flex justify-between">
-          Slices <span className="text-neutral-300">{targetSlices}</span>
+        <label className="text-[11px] text-neutral-700 flex justify-between dark:text-neutral-400">
+          Slices <span className="text-neutral-900 dark:text-neutral-200">{targetSlices}</span>
         </label>
         <input
           type="range"
@@ -457,8 +457,8 @@ function VisualizerContent() {
           className="w-full"
         />
 
-        <label className="text-[11px] text-neutral-400 flex justify-between">
-          RGB shift <span className="text-neutral-300">{targetRgbShift.toFixed(2)}</span>
+        <label className="text-[11px] text-neutral-700 flex justify-between dark:text-neutral-400">
+          RGB shift <span className="text-neutral-900 dark:text-neutral-200">{targetRgbShift.toFixed(2)}</span>
         </label>
         <input
           type="range"
@@ -472,11 +472,11 @@ function VisualizerContent() {
       </div>
 
       {/* right controls */}
-      <div className="absolute right-4 top-4 z-60 w-56 rounded-lg bg-black/42 border border-white/6 p-3 text-xs space-y-2 backdrop-blur-sm">
-        <div className="mb-1 text-neutral-300 font-medium">Tweakek</div>
+      <div className="absolute right-4 top-4 z-60 w-56 rounded-lg bg-white/90 text-neutral-900 border border-neutral-200 p-3 text-xs space-y-2 backdrop-blur-sm shadow-md dark:bg-black/42 dark:text-neutral-200 dark:border-white/6">
+        <div className="mb-1 text-neutral-800 font-medium dark:text-neutral-200">Tweakek</div>
 
-        <label className="text-[11px] text-neutral-400 flex justify-between">
-          Vignette <span className="text-neutral-300">{targetVignette.toFixed(2)}</span>
+        <label className="text-[11px] text-neutral-700 flex justify-between dark:text-neutral-400">
+          Vignette <span className="text-neutral-900 dark:text-neutral-200">{targetVignette.toFixed(2)}</span>
         </label>
         <input
           type="range"
@@ -488,8 +488,8 @@ function VisualizerContent() {
           className="w-full"
         />
 
-        <label className="text-[11px] text-neutral-400 flex justify-between">
-          Rotation <span className="text-neutral-300">{targetRotationDeg}°</span>
+        <label className="text-[11px] text-neutral-700 flex justify-between dark:text-neutral-400">
+          Rotation <span className="text-neutral-900 dark:text-neutral-200">{targetRotationDeg}°</span>
         </label>
         <input
           type="range"
@@ -501,8 +501,8 @@ function VisualizerContent() {
           className="w-full"
         />
 
-        <label className="text-[11px] text-neutral-400 flex justify-between">
-          Scale offset <span className="text-neutral-300">{targetScaleOffset.toFixed(3)}</span>
+        <label className="text-[11px] text-neutral-700 flex justify-between dark:text-neutral-400">
+          Scale offset <span className="text-neutral-900 dark:text-neutral-200">{targetScaleOffset.toFixed(3)}</span>
         </label>
         <input
           type="range"
@@ -514,8 +514,8 @@ function VisualizerContent() {
           className="w-full"
         />
 
-        <label className="text-[11px] text-neutral-400 flex justify-between">
-          Speed <span className="text-neutral-300">{speed.toFixed(2)}x</span>
+        <label className="text-[11px] text-neutral-700 flex justify-between dark:text-neutral-400">
+          Speed <span className="text-neutral-900 dark:text-neutral-200">{speed.toFixed(2)}x</span>
         </label>
         <input
           type="range"
@@ -527,8 +527,8 @@ function VisualizerContent() {
           className="w-full"
         />
 
-        <label className="text-[11px] text-neutral-400 flex justify-between">
-          Saturation <span className="text-neutral-300">{targetSaturation.toFixed(2)}x</span>
+        <label className="text-[11px] text-neutral-700 flex justify-between dark:text-neutral-400">
+          Saturation <span className="text-neutral-900 dark:text-neutral-200">{targetSaturation.toFixed(2)}x</span>
         </label>
         <input
           type="range"
@@ -542,14 +542,14 @@ function VisualizerContent() {
       </div>
 
       {/* bottom-left utilities */}
-      <div className="absolute left-4 bottom-4 z-60 w-72 rounded-lg bg-black/42 border border-white/6 p-3 text-xs flex flex-col gap-2 backdrop-blur-sm">
+      <div className="absolute left-4 bottom-4 z-60 w-72 rounded-lg bg-white/90 text-neutral-900 border border-neutral-200 p-3 text-xs flex flex-col gap-2 backdrop-blur-sm shadow-md dark:bg-black/42 dark:text-neutral-200 dark:border-white/6">
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
               const url = prompt("Image A URL", imageA) || imageA;
               setImageA(url);
             }}
-            className="px-2 py-1 rounded bg-white/6 hover:bg-white/10"
+            className="px-2 py-1 rounded bg-neutral-200 text-neutral-900 hover:bg-neutral-300 dark:bg-white/6 dark:text-white dark:hover:bg-white/10"
           >
             Edit A
           </button>
@@ -558,7 +558,7 @@ function VisualizerContent() {
               const url = prompt("Image B URL", imageB) || imageB;
               setImageB(url);
             }}
-            className="px-2 py-1 rounded bg-white/6 hover:bg-white/10"
+            className="px-2 py-1 rounded bg-neutral-200 text-neutral-900 hover:bg-neutral-300 dark:bg-white/6 dark:text-white dark:hover:bg-white/10"
           >
             Edit B
           </button>
@@ -567,14 +567,14 @@ function VisualizerContent() {
             onClick={() => {
               setNoiseOverlay((v) => !v);
             }}
-            className="px-2 py-1 rounded bg-white/6 hover:bg-white/10"
+            className="px-2 py-1 rounded bg-neutral-200 text-neutral-900 hover:bg-neutral-300 dark:bg-white/6 dark:text-white dark:hover:bg-white/10"
           >
             {noiseOverlay ? "Noise ON" : "Noise OFF"}
           </button>
 
           <button
             onClick={() => setAutoshift((v) => !v)}
-            className="px-2 py-1 rounded bg-white/6 hover:bg-white/10"
+            className="px-2 py-1 rounded bg-neutral-200 text-neutral-900 hover:bg-neutral-300 dark:bg-white/6 dark:text-white dark:hover:bg-white/10"
             title="Auto subtle movement"
           >
             {autoshift ? "Auto" : "Manual"}
@@ -582,11 +582,11 @@ function VisualizerContent() {
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-[11px] text-neutral-400">Blend</label>
+          <label className="text-[11px] text-neutral-700 dark:text-neutral-400">Blend</label>
           <select
             value={blendMode}
             onChange={(e) => setBlendMode(e.target.value as BlendMode)}
-            className="bg-black/40 border border-white/6 rounded px-2 py-1 text-xs"
+            className="bg-white border border-neutral-200 text-neutral-900 rounded px-2 py-1 text-xs dark:bg-black/40 dark:border-white/6 dark:text-white"
           >
             <option value="difference">difference</option>
             <option value="overlay">overlay</option>
@@ -596,7 +596,7 @@ function VisualizerContent() {
             <option value="source-over">source-over</option>
           </select>
 
-          <label className="text-[11px] text-neutral-400">Hue</label>
+          <label className="text-[11px] text-neutral-700 dark:text-neutral-400">Hue</label>
           <input
             type="range"
             min={-180}
@@ -621,14 +621,14 @@ function VisualizerContent() {
             onClick={() => {
               setSeed(Math.floor(Math.random() * 99999));
             }}
-            className="px-3 py-2 rounded bg-white/6"
+            className="px-3 py-2 rounded bg-neutral-200 text-neutral-900 hover:bg-neutral-300 dark:bg-white/6 dark:text-white"
             title="Reseed"
           >
             Reseed
           </button>
         </div>
 
-        <div className="text-[10px] text-neutral-500">
+        <div className="text-[10px] text-neutral-600 dark:text-neutral-500">
           Tips: Space=play/pause, S=screenshot, R=randomize, W=swap images. Use gentle values for best screenshots.
         </div>
       </div>
@@ -643,7 +643,7 @@ function VisualizerContent() {
       </div>
 
       {/* footer instruction */}
-      <div className="absolute bottom-4 right-4 z-60 text-xs text-neutral-400 bg-black/30 px-3 py-1 rounded-md border border-white/8">
+      <div className="absolute bottom-4 right-4 z-60 text-xs text-neutral-700 bg-white/90 px-3 py-1 rounded-md border border-neutral-200 shadow-sm dark:text-neutral-400 dark:bg-black/30 dark:border-white/8">
         Use query params ?img1=/path.jpg&amp;img2=/path2.jpg or edit via buttons.
       </div>
     </div>

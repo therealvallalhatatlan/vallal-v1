@@ -4,59 +4,23 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 
-const VIDEOS = ["/videos/video1.mp4", "/videos/video2.mp4"]
-const REVEAL_LETTERS = ["24 elött nem érvényes"]
+const VIDEO_SRC = "/videos/video3.mp4"
+const ACCESS_KEY = "Karácsonyi meglepetés Aktiválva"
 
-export default function Home() {
+export default function GiftPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [isRevealed, setIsRevealed] = useState(false)
+  const [revealed, setRevealed] = useState(false)
   const [isDrawing, setIsDrawing] = useState(false)
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
-  const swapDoneRef = useRef(false)
   const [copied, setCopied] = useState(false)
-  const params = useParams<{ id: string }>()
-  const giftId = params?.id
 
-  const formattedGiftId = giftId
-    ? giftId
+  const params = useParams<{ id: string }>()
+  const name = params?.id
+    ? params.id
         .split(/[-_\s]+/)
         .filter(Boolean)
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .map(p => p.charAt(0).toUpperCase() + p.slice(1))
         .join(" ")
-    : ""
-
-  useEffect(() => {
-    if (isRevealed && !swapDoneRef.current) {
-      swapDoneRef.current = true
-      setCurrentVideoIndex((idx) => (idx + 1) % VIDEOS.length)
-    }
-  }, [isRevealed])
-
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-
-    const source = VIDEOS[currentVideoIndex % VIDEOS.length]
-    if (video.getAttribute("data-src") === source) {
-      if (video.paused) video.play().catch(() => undefined)
-      return
-    }
-
-    const handleCanPlay = () => {
-      video.play().catch(() => undefined)
-      video.removeEventListener("canplay", handleCanPlay)
-    }
-
-    video.setAttribute("data-src", source)
-    video.src = source
-    video.addEventListener("canplay", handleCanPlay)
-    video.load()
-
-    return () => {
-      video.removeEventListener("canplay", handleCanPlay)
-    }
-  }, [currentVideoIndex])
+    : null
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -65,258 +29,137 @@ export default function Home() {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    // Set canvas size
+    const size = 220
     const dpr = window.devicePixelRatio || 1
-    canvas.width = 400 * dpr
-    canvas.height = 400 * dpr
+
+    canvas.width = size * dpr
+    canvas.height = size * dpr
+    canvas.style.width = `${size}px`
+    canvas.style.height = `${size}px`
     ctx.scale(dpr, dpr)
 
-    // Draw scratch overlay
-    ctx.fillStyle = "#1a1a1a"
-    ctx.fillRect(0, 0, 400, 400)
+    ctx.fillStyle = "#111"
+    ctx.fillRect(0, 0, size, size)
 
-    // Add texture
-    for (let i = 0; i < 3000; i++) {
-      ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.05})`
-      ctx.fillRect(Math.random() * 400, Math.random() * 400, 2, 2)
+    for (let i = 0; i < 1200; i++) {
+      ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.04})`
+      ctx.fillRect(Math.random() * size, Math.random() * size, 2, 2)
     }
 
-    // Handle scratch/reveal
-    const revealPixels = () => {
-      const imageData = ctx.getImageData(0, 0, 400, 400)
-      const data = imageData.data
-      let transparentPixels = 0
+    const revealCheck = () => {
+      const imageData = ctx.getImageData(0, 0, size, size).data
+      let cleared = 0
+      for (let i = 3; i < imageData.length; i += 4) {
+        if (imageData[i] < 100) cleared++
+      }
+      const percent = (cleared / (imageData.length / 4)) * 100
+      if (percent > 65 && !revealed) setRevealed(true)
+    }
 
-      for (let i = 3; i < data.length; i += 4) {
-        if (data[i] < 128) {
-          transparentPixels++
+    const erase = (x: number, y: number) => {
+      ctx.clearRect(x - 18, y - 18, 36, 36)
+      revealCheck()
+    }
+
+    const getPos = (e: any) => {
+      const rect = canvas.getBoundingClientRect()
+      if ("touches" in e) {
+        return {
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top,
         }
       }
-
-      const percentage = (transparentPixels / (data.length / 4)) * 100
-      if (percentage > 85 && !isRevealed) {
-        setIsRevealed(true)
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
       }
     }
 
-    const handleMouseDown = (e: MouseEvent) => {
-      setIsDrawing(true)
-    }
-
-    const handleMouseUp = () => {
-      setIsDrawing(false)
-    }
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDrawing && e.buttons !== 1) return
-
-      const rect = canvas.getBoundingClientRect()
-      const x = e.clientX - rect.left
-      const y = e.clientY - rect.top
-
-      // Erase with circular brush
-      ctx.clearRect(x - 25, y - 25, 50, 50)
-      revealPixels()
-    }
-
-    const handleTouchStart = () => {
-      setIsDrawing(true)
-    }
-
-    const handleTouchEnd = () => {
-      setIsDrawing(false)
-    }
-
-    const handleTouchMove = (e: TouchEvent) => {
+    const start = () => setIsDrawing(true)
+    const end = () => setIsDrawing(false)
+    const move = (e: any) => {
       if (!isDrawing) return
-
-      const rect = canvas.getBoundingClientRect()
-      const touch = e.touches[0]
-      const x = touch.clientX - rect.left
-      const y = touch.clientY - rect.top
-
-      // Erase with circular brush
-      ctx.clearRect(x - 25, y - 25, 50, 50)
-      revealPixels()
+      const { x, y } = getPos(e)
+      erase(x, y)
     }
 
-    canvas.addEventListener("mousedown", handleMouseDown)
-    canvas.addEventListener("mouseup", handleMouseUp)
-    canvas.addEventListener("mousemove", handleMouseMove)
-    canvas.addEventListener("touchstart", handleTouchStart)
-    canvas.addEventListener("touchend", handleTouchEnd)
-    canvas.addEventListener("touchmove", handleTouchMove, { passive: false })
+    canvas.addEventListener("mousedown", start)
+    canvas.addEventListener("mouseup", end)
+    canvas.addEventListener("mousemove", move)
+    canvas.addEventListener("touchstart", start)
+    canvas.addEventListener("touchend", end)
+    canvas.addEventListener("touchmove", move, { passive: false })
 
     return () => {
-      canvas.removeEventListener("mousedown", handleMouseDown)
-      canvas.removeEventListener("mouseup", handleMouseUp)
-      canvas.removeEventListener("mousemove", handleMouseMove)
-      canvas.removeEventListener("touchstart", handleTouchStart)
-      canvas.removeEventListener("touchend", handleTouchEnd)
-      canvas.removeEventListener("touchmove", handleTouchMove)
+      canvas.removeEventListener("mousedown", start)
+      canvas.removeEventListener("mouseup", end)
+      canvas.removeEventListener("mousemove", move)
+      canvas.removeEventListener("touchstart", start)
+      canvas.removeEventListener("touchend", end)
+      canvas.removeEventListener("touchmove", move)
     }
-  }, [isDrawing, isRevealed])
+  }, [isDrawing, revealed])
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-
-      
+    <div className="relative min-h-screen overflow-hidden text-white">
+      {/* VIDEO */}
       <video
-        ref={videoRef}
         autoPlay
         loop
         muted
+        playsInline
         className="absolute inset-0 w-full h-full object-cover"
-        src={VIDEOS[currentVideoIndex]}
+        src={VIDEO_SRC}
       />
 
-      {/* Overlay for better text visibility */}
-      <div className="absolute inset-0 bg-black/70" />
+      {/* DARKEN */}
+      <div className="absolute inset-0 bg-black/60" />
 
-      {/* Content */}
-      <div className="relative z-10 min-h-screen flex md:border-8 md:border-black rounded-bl-2xl items-center justify-center p-4">
+      {/* CONTENT */}
+      <div className="relative z-10 flex min-h-screen flex-col justify-end items-center px-4 pb-10 text-center gap-6">
+        <div className="max-w-xs text-sm text-neutral-300">
+          {name && <p className="mb-2">{name},</p>}
+          <p>ez az oldal neked készült.</p>
+          <p className="opacity-40">kapard le ezt a szürke szart.</p>
+        </div>
 
-        <div className="flex flex-col items-center gap-8">
-          {/* Header */}
-          <div className="text-center mt-0 md:mt-16">
-            {giftId && (
-              <h1 className="text-5xl md:text-6xl text-neutral-200/80 tracking-wide">
-                Kedves <span className="font-semibold text-white">{formattedGiftId}!</span>
-              </h1>
-            )}
-
-            <div className="text-center relative text-2xl text-neutral-100 max-w-md mx-auto bg-white/0 md:py-6 rounded-lg border border-lime-400/0">
-              Valaki annyira szeret téged, hogy meglepett a <span className="text-lime-400 font-bold">Vállalhatatlan <br/>Karácsonyi Különkiadásával!<br/></span>
+        {/* SCRATCH */}
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            className="rounded-md border border-white/20"
+            style={{ touchAction: "none" }}
+          />
+          {revealed && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 rounded-md">
+              <p className="text-xs tracking-widest text-neutral-400 mb-2">
+                ACCESS KEY
+              </p>
+              <p className="text-xl font-semibold">{ACCESS_KEY}</p>
+              <button
+                className="mt-3 text-xs underline text-neutral-300"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(ACCESS_KEY)
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 1200)
+                }}
+              >
+                {copied ? "" : ""}
+              </button>
             </div>
-
-            <p className="text-neutral-400 text-sm max-w-md mx-auto">
-              {isRevealed
-                ? "És a jelszó nem más mint:"
-                : "Kapard le ezt a szürke szart a digitális hozzáféréshez szükséges jelszóért."}
-            </p>
-          </div>
-
-          {/* Scratch card + instructions */}
-          <div className="relative w-full max-w-md rounded-3xl bg-black/0 shadow-[0_25px_60px_rgba(15,23,42,0.35)] px-6 py-6 space-y-6">
-
-
-            <div className="relative">
-              <canvas
-                ref={canvasRef}
-                width={400}
-                height={400}
-                className="cursor-pointer rounded-lg shadow-2xl max-w-full border border-neutral-500/40"
-                style={{ touchAction: "none" }}
-              />
-              {isRevealed && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-transparent animate-in fade-in duration-500">
-                  <div className="text-center">
-                    <p className="text-9xl font-bold text-white drop-shadow-lg reveal-text">
-                      {REVEAL_LETTERS.map((char, idx) => (
-                        <span
-                          key={`${char}-${idx}`}
-                          className="reveal-letter"
-                          style={{
-                            animationDelay: `${idx * 0.2}s`,
-                            ["--blur-delay" as const]: `${idx * 0.2 + 0.25}s`,
-                          } as React.CSSProperties}
-                          data-char={char}
-                        >
-                          {char}
-                        </span>
-                      ))}
-                    </p>
-                    < br/>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(REVEAL_LETTERS.join(""))
-                          setCopied(true)
-                          setTimeout(() => setCopied(false), 1500)
-                        } catch {
-                          setCopied(false)
-                        }
-                      }}
-                      className="mt-4 text-sm text-white/80 underline underline-offset-4 hover:text-white transition-colors"
-                    >
-                      {copied ? "Copied!" : "Copy to clipboard"}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {isRevealed && (
-            <Link
-              href="/reader"
-              className="px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-neutral-200 transition-colors animate-in fade-in"
-            >
-              Tovább az alkalmazáshoz
-            </Link>
           )}
         </div>
-      </div>
 
-      <style>{`
-        @keyframes fadeInBlur {
-          0% {
-            opacity: 0;
-            filter: blur(10px);
-          }
-          100% {
-            opacity: 1;
-            filter: blur(0px);
-          }
-        }
-        @keyframes letterReveal {
-          0% {
-            opacity: 0;
-            transform: translateY(24px);
-          }
-          60% {
-            opacity: 1;
-            transform: translateY(-6px);
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes letterBlur {
-          0% {
-            opacity: 0.7;
-            filter: blur(18px);
-            transform: translateY(10px) scale(1.1);
-          }
-          100% {
-            opacity: 0;
-            filter: blur(28px);
-            transform: translateY(0) scale(1.05);
-          }
-        }
-        .reveal-text {
-          display: inline-flex;
-          gap: 0.15em;
-        }
-        .reveal-letter {
-          display: inline-block;
-          opacity: 0;
-          animation: letterReveal 0.45s ease forwards;
-          position: relative;
-        }
-        .reveal-letter::after {
-          content: attr(data-char);
-          position: absolute;
-          inset: 0;
-          opacity: 0;
-          animation: letterBlur 0.6s ease forwards;
-          animation-delay: var(--blur-delay, 0.35s);
-          pointer-events: none;
-          color: inherit;
-        }
-      `}</style>
+        {/* CTA */}
+        {revealed && (
+          <Link
+            href="/reader"
+            className="mt-4 px-6 py-3 bg-white text-black rounded-md font-medium"
+          >
+            Tovább a Vallalhatatlan Appra
+          </Link>
+        )}
+      </div>
     </div>
   )
 }
