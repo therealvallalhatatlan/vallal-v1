@@ -173,8 +173,8 @@ export default function GiftPage() {
             style={{ touchAction: "none" }}
           />
           {revealed && (
-            <div className="absolute top-2 inset-0 flex flex-col items-center justify-center bg-transparent rounded-md">
-              <p className="text-xl font-semibold mb-0 mt-0 px-6 py-4 bg-red-600 rounded-md leading-5">{activatedText}</p>
+            <div className="absolute -top-80 inset-0 flex flex-col items-center justify-center bg-transparent rounded-full">
+              <p className="text-xl font-semibold mb-0 mt-0 px-6 py-4 bg-red-600 rounded-full leading-5">{activatedText}</p>
               
             </div>
           )}

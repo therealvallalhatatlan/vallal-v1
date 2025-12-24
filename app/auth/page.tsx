@@ -1,20 +1,22 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/browser";
 
 const supabase = createClient();
+const VIDEO_SRC = "/videos/video3.mp4";
 
 export default function AuthPage() {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   return (
     <Suspense fallback={<AuthStatus message="Belépés betöltése..." />}> 
-      <AuthContent />
+      <AuthContent videoRef={videoRef} />
     </Suspense>
   );
 }
 
-function AuthContent() {
+function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement | null> }) {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -76,6 +78,7 @@ function AuthContent() {
     <AuthStatus
       message={status ?? ""}
       error={error ?? ""}
+      videoRef={videoRef}
       renderForm={({ setMessage }) => (
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="block text-sm text-neutral-300">
@@ -123,15 +126,33 @@ function AuthContent() {
 function AuthStatus({
   message,
   error,
+  videoRef,
   renderForm,
 }: {
   message?: string;
   error?: string;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
   renderForm?: ({ setMessage }: { setMessage: (val: string) => void }) => React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-black text-neutral-100 px-6 py-10">
-      <section className="mx-auto w-full max-w-lg">
+    <main className="relative min-h-screen text-neutral-100 overflow-hidden">
+      {/* VIDEO */}
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        src={VIDEO_SRC}
+      />
+
+      {/* DARKEN */}
+      <div className="absolute inset-0 bg-black/60" />
+
+      {/* CONTENT */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-10">
+        <section className="mx-auto w-full max-w-lg">
         <div className="rounded-3xl border border-neutral-800 bg-black/60 p-6 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
           <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">Zárt Közösség</p>
           <h1 className="text-3xl font-semibold text-lime-400">Belépés Csak Klubtagoknak</h1>
@@ -148,6 +169,7 @@ function AuthStatus({
           {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
         </div>
       </section>
+      </div>
     </main>
   );
 }

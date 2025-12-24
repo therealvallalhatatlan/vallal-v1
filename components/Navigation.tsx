@@ -11,7 +11,7 @@ export default function Navigation() {
   return (
     <nav className="max-w-3xl mx-auto py-6 md:px-0 px-6">
       <div className="flex w-full items-center justify-end gap-6 text-sm uppercase tracking-[0.18em] text-neutral-300">
-        <Link href="/link-4" className="hover:text-lime-300 transition-colors">
+        <Link href="/readers" className="hover:text-lime-300 transition-colors">
           <span className="text-lime-300">Vállalhatatlan </span>
           Online Reader
         </Link>

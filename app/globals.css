@@ -147,16 +147,10 @@
   height: 100%;
   object-fit: cover;
   opacity: 0.75; /* subtle */
-  -webkit-mask-image: linear-gradient(transparent, black); /* optional soft edge */
+
 }
 
-/* subtle dark overlay to improve contrast */
-.bg-video__overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  pointer-events: none;
-}
+
 
 /* Content wrapper above the video */
 .content-above {
