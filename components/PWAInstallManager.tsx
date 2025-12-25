@@ -107,6 +107,8 @@ export default function PWAInstallManager({
   const [showIosGuide, setShowIosGuide] = useState(false);
   const [showInAppBanner, setShowInAppBanner] = useState(false);
   const promptRef = useRef<any | null>(null);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [applyingUpdate, setApplyingUpdate] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -170,6 +172,41 @@ export default function PWAInstallManager({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Listen for service worker update events from ServiceWorkerRegister
+  useEffect(() => {
+    const onUpdate = () => setUpdateAvailable(true);
+    const onControllerChanged = () => {
+      if (applyingUpdate) {
+        try {
+          // when controller changes, reload to activate new content
+          window.location.reload();
+        } catch {}
+      }
+    };
+
+    window.addEventListener('sw:update-available', onUpdate as EventListener);
+    window.addEventListener('sw:controller-changed', onControllerChanged as EventListener);
+
+    return () => {
+      window.removeEventListener('sw:update-available', onUpdate as EventListener);
+      window.removeEventListener('sw:controller-changed', onControllerChanged as EventListener);
+    };
+  }, [applyingUpdate]);
+
+  const handleApplyUpdate = () => {
+    setApplyingUpdate(true);
+    // ask ServiceWorkerRegister to tell waiting SW to skipWaiting
+    try {
+      window.dispatchEvent(new CustomEvent('sw:skip-waiting'));
+    } catch (err) {
+      // fallback: try posting directly to registration via message (ServiceWorkerRegister handles this)
+    }
+  };
+
+  const handleSkipUpdate = () => {
+    setUpdateAvailable(false);
+  };
 
   /* ---------- actions ---------- */
   const handleAndroidInstall = async () => {
@@ -330,6 +367,34 @@ export default function PWAInstallManager({
 
       {/* iOS guide is rendered as modal */}
       <IosInstallGuide open={showIosGuide} onClose={dismissIosGuide} />
+
+      {/* Update available banner (from service worker) */}
+      {updateAvailable && (
+        <div className="fixed left-4 right-4 bottom-20 z-50 max-w-3xl mx-auto">
+          <div className="rounded-xl border border-neutral-800 bg-neutral-900/95 p-4 shadow-lg backdrop-blur-sm text-sm text-white flex items-center justify-between gap-3">
+            <div className="flex-1">
+              <strong className="text-lime-300">Frissítés elérhető</strong>
+              <p className="text-xs text-gray-300 mt-1">Új verzió elérhető — frissíts a legújabb tartalomhoz.</p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleApplyUpdate}
+                className="rounded-md bg-lime-500 px-3 py-2 text-xs font-semibold text-black"
+              >
+                {applyingUpdate ? 'Alkalmazás...' : 'Frissítés'}
+              </button>
+
+              <button
+                onClick={handleSkipUpdate}
+                className="rounded-md bg-neutral-800 px-3 py-2 text-xs text-gray-200"
+              >
+                Később
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -9,8 +9,9 @@ export default function Navigation() {
   const userEmail = (session as any)?.user?.email || null;
 
   return (
-    <nav className="max-w-3xl mx-auto py-6 md:px-0 px-6">
-      <div className="flex w-full items-center justify-end gap-6 text-sm uppercase tracking-[0.18em] text-neutral-300">
+    <div className="relative">
+      <nav className="max-w-3xl mx-auto py-6 md:px-0 px-6">
+        <div className="flex w-full items-center justify-end gap-6 text-sm uppercase tracking-[0.18em] text-neutral-300">
         <Link href="/readers" className="hover:text-lime-300 transition-colors">
           <span className="text-lime-300">Vállalhatatlan </span>
           Online Reader
@@ -36,7 +37,16 @@ export default function Navigation() {
             Belépés
           </Link>
         )}
+        </div>
+      </nav>
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-0 right-0 -bottom-2 h-8"
+        style={{ backdropFilter: "blur(8px)" }}
+      >
+        <div className="w-full h-full bg-white/5 dark:bg-black/20" />
       </div>
-    </nav>
+    </div>
   );
 }
