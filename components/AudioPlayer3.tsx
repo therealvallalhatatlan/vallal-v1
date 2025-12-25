@@ -347,7 +347,7 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
               aria-label="Cím másolása a vágólapra"
               title={copied ? 'Másolva!' : 'Kattints a másoláshoz'}
             >
-              <span className="truncate text-zinc-100 font-medium text-sm md:text-base leading-snug group-hover:underline">
+              <span className="truncate text-zinc-200 font-medium text-xs md:text-xs leading-snug group-hover:underline">
                 {track.title}
               </span>
             </button>
