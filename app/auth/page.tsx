@@ -79,6 +79,7 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
       message={status ?? ""}
       error={error ?? ""}
       videoRef={videoRef}
+      showPurchaseCTA={next === "/reader"}
       renderForm={({ setMessage }) => (
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="block text-sm text-neutral-300">
@@ -128,11 +129,13 @@ function AuthStatus({
   error,
   videoRef,
   renderForm,
+  showPurchaseCTA,
 }: {
   message?: string;
   error?: string;
   videoRef?: React.RefObject<HTMLVideoElement | null>;
   renderForm?: ({ setMessage }: { setMessage: (val: string) => void }) => React.ReactNode;
+  showPurchaseCTA?: boolean;
 }) {
   return (
     <main className="relative min-h-screen text-neutral-100 overflow-hidden">
@@ -170,6 +173,22 @@ function AuthStatus({
         </div>
       </section>
       </div>
+      {/* Purchase CTA for reader flow */}
+      {showPurchaseCTA && (
+        <div className="fixed left-0 right-0 bottom-6 z-50 flex items-center justify-center px-4">
+          <a
+            href="https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="max-w-3xl w-full mx-auto"
+          >
+            <div className="rounded-xl border border-neutral-800 bg-black/70 p-3 shadow-lg backdrop-blur-sm flex items-center justify-between gap-4">
+              <div className="text-sm text-neutral-100">Alkalmazás megvásárlása</div>
+              <div className="rounded-md bg-lime-500 px-4 py-2 text-sm font-semibold text-black">Megvásárolom</div>
+            </div>
+          </a>
+        </div>
+      )}
     </main>
   );
 }
