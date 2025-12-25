@@ -826,7 +826,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
             <article className="mx-auto max-w-[560px] md:max-w-[600px]">
               {currentStory.type !== "cover" && (
                 <header className="mb-4 md:mb-6">
-                  <h1 className={`text-5xl md:text-6xl font-semibold tracking-tight ${headingTextColor}`}>
+                  <h1 className={`text-4xl md:text-5xl font-semibold tracking-tight ${headingTextColor}`}>
                     {displayedTitle}
                     {!isHeaderAnimationComplete && (
                       <span className="animate-pulse">|</span>
