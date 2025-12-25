@@ -591,3 +591,50 @@
 }
 
 
+/* Custom scrollbar styles for sidebar */
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(82, 82, 82);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(113, 113, 122);
+}
+
+.sidebar-scrollbar {
+  scrollbar-color: rgb(82, 82, 82) transparent;
+  scrollbar-width: thin;
+}
+
+/* Light theme scrollbar */
+.sidebar-scrollbar-light::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scrollbar-light::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scrollbar-light::-webkit-scrollbar-thumb {
+  background: rgb(209, 213, 219);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.sidebar-scrollbar-light::-webkit-scrollbar-thumb:hover {
+  background: rgb(229, 231, 235);
+}
+
+.sidebar-scrollbar-light {
+  scrollbar-color: rgb(209, 213, 219) transparent;
+  scrollbar-width: thin;
+}

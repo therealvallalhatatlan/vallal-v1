@@ -97,11 +97,14 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [headerHidden, setHeaderHidden] = useState(false);
   const lastYRef = useRef(0);
+  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(false);
+  const sidebarTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // settings
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark');
+  const [audioPlayerVisible, setAudioPlayerVisible] = useState<boolean>(true);
 
   // playlist state
   const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
@@ -179,6 +182,9 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
       }
       if (parsed.themeMode === "light" || parsed.themeMode === "dark") {
         setThemeMode(parsed.themeMode);
+      }
+      if (typeof parsed.audioPlayerVisible === "boolean") {
+        setAudioPlayerVisible(parsed.audioPlayerVisible);
       }
     } catch {
       // ignore
@@ -282,6 +288,62 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   const finishedCount = readerState.finishedStories?.length || 0;
   const bookProgress = totalStories > 0 ? finishedCount / totalStories : 0;
 
+  // Desktop sidebar auto-hide on inactivity
+  useEffect(() => {
+    const resetTimer = () => {
+      if (sidebarTimeoutRef.current) {
+        clearTimeout(sidebarTimeoutRef.current);
+      }
+      sidebarTimeoutRef.current = setTimeout(() => {
+        setIsDesktopSidebarVisible(false);
+      }, 5000); // 5 seconds inactivity
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Trigger sidebar if mouse is within 50px of left edge
+      if (e.clientX < 50) {
+        setIsDesktopSidebarVisible(true);
+        resetTimer();
+      }
+    };
+
+    const handleMouseEnterSidebar = () => {
+      setIsDesktopSidebarVisible(true);
+      resetTimer();
+    };
+
+    const handleMouseLeaveSidebar = () => {
+      if (sidebarTimeoutRef.current) {
+        clearTimeout(sidebarTimeoutRef.current);
+      }
+      sidebarTimeoutRef.current = setTimeout(() => {
+        setIsDesktopSidebarVisible(false);
+      }, 1000); // 1 second delay after leaving sidebar
+    };
+
+    // Only add listeners on desktop (md breakpoint = 768px)
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      document.addEventListener("mousemove", handleMouseMove);
+      const sidebarEl = document.querySelector('aside[data-sidebar-desktop]');
+      if (sidebarEl) {
+        sidebarEl.addEventListener("mouseenter", handleMouseEnterSidebar);
+        sidebarEl.addEventListener("mouseleave", handleMouseLeaveSidebar);
+      }
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      const sidebarEl = document.querySelector('aside[data-sidebar-desktop]');
+      if (sidebarEl) {
+        sidebarEl.removeEventListener("mouseenter", handleMouseEnterSidebar);
+        sidebarEl.removeEventListener("mouseleave", handleMouseLeaveSidebar);
+      }
+      if (sidebarTimeoutRef.current) {
+        clearTimeout(sidebarTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Header show/hide on scroll
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -306,7 +368,8 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
 
   const persistSettings = (
     nextFontSize: number,
-    nextTheme: 'dark' | 'light'
+    nextTheme: 'dark' | 'light',
+    nextAudioPlayerVisible?: boolean
   ) => {
      try {
        window.localStorage.setItem(
@@ -314,6 +377,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
          JSON.stringify({
            fontSize: nextFontSize,
            themeMode: nextTheme,
+           audioPlayerVisible: nextAudioPlayerVisible ?? audioPlayerVisible,
          })
        );
      } catch {
@@ -336,6 +400,13 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
       return next;
     });
   };
+  const toggleAudioPlayer = () => {
+    setAudioPlayerVisible((prev) => {
+      const next = !prev;
+      persistSettings(fontSize, themeMode, next);
+      return next;
+    });
+  };
   const contentTextColor = themeMode === 'light' ? 'text-neutral-700' : 'text-neutral-400';
   const headingTextColor = themeMode === 'light' ? 'text-neutral-600' : 'text-neutral-200';
 
@@ -344,7 +415,12 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
       className={`flex min-h-[100dvh] ${themeMode === 'light' ? 'reader-theme-light' : 'reader-theme-dark'}`}
     >
       {/* Sidebar - tartalomjegyzék (desktop) */}
-      <aside className="hidden md:flex w-72 flex-col  bg-black">
+      <aside 
+        data-sidebar-desktop
+        className={`hidden md:flex w-72 flex-col bg-black fixed left-0 top-0 h-[100dvh] z-40 transition-transform duration-300 ${
+          isDesktopSidebarVisible ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         {/* Brand + user blokk */}
         <div className="px-4 py-4 border-b border-neutral-800 space-y-4">
           <div>
@@ -392,7 +468,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-3">
+        <div className={`flex-1 overflow-y-auto py-3 ${themeMode === 'light' ? 'sidebar-scrollbar-light' : 'sidebar-scrollbar'}`}>
           {stories.map((story) => {
             const isCover = story.type === "cover";
             const isActive = story.slug === currentStory?.slug;
@@ -436,12 +512,17 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
         {/* Header + mobil TOC Sheet */}
         <Sheet open={mobileTocOpen} onOpenChange={setMobileTocOpen}>
           <header
-            className={`bg-transparent px-4 py-3 flex items-center justify-between fixed top-0 left-0 right-0 z-30 transition-all duration-300 ease-out md:left-72 md:w-[calc(100%-18rem)] ${
+            className={`bg-transparent px-4 py-3 flex items-center justify-between fixed top-0 right-0 z-30 transition-all duration-300 ease-out ${
+              isDesktopSidebarVisible 
+                ? 'left-72 w-[calc(100%-18rem)]' 
+                : 'left-0 w-full'
+            } ${
               headerHidden
                 ? "opacity-0 -translate-y-3 pointer-events-none"
                 : "opacity-100 translate-y-0"
             }`}
           >
+            
             {/* Felső progress bar minden nézetben */}
             <div className="absolute left-0 top-0 w-full h-0.5 bg-neutral-900">
               <div
@@ -545,6 +626,22 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                       </p>
                     </div>
 
+                    {/* Audio Player toggle */}
+                    <div className="space-y-2">
+                      <p className="text-sm text-neutral-400">Audioplayer</p>
+                      <button
+                        type="button"
+                        onClick={toggleAudioPlayer}
+                        className="px-3 py-2 text-sm border border-neutral-600 rounded-full hover:bg-neutral-800 text-neutral-300"
+                        aria-pressed={audioPlayerVisible}
+                      >
+                        {audioPlayerVisible ? 'Audioplayer látható' : 'Audioplayer rejtett'}
+                      </button>
+                      <p className="text-[11px] text-neutral-500">
+                        Az audio lejátszó megjelenítésének be/kikapcsolása.
+                      </p>
+                    </div>
+
                     {/* Theme placeholder */}
                     <div className="space-y-2 opacity-50">
                       <p className="text-sm text-neutral-500">
@@ -604,7 +701,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto py-3">
+            <div className={`flex-1 overflow-y-auto py-3 ${themeMode === 'light' ? 'sidebar-scrollbar-light' : 'sidebar-scrollbar'}`}>
               {stories.map((story) => {
                 const isActive = story.slug === currentStory?.slug;
                 const isCover = story.type === "cover";
@@ -647,8 +744,14 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
         {/* Tartalom */}
         <div
           key={currentStory?.slug}
-          className="flex-1 px-6 py-6 md:px-8 md:py-8 fade-in"
+          className={`flex-1 px-6 py-6 md:px-8 md:py-8 fade-in transition-all duration-300 relative ${
+            isDesktopSidebarVisible ? 'md:ml-72' : 'md:ml-0'
+          }`}
         >
+          {/* Desktop sidebar edge hint */}
+          {!isDesktopSidebarVisible && (
+            <div className="hidden md:block fixed left-0 top-0 w-1 h-full bg-gradient-to-b from-lime-500/20 via-lime-500/10 to-transparent pointer-events-none" />
+          )}
           {currentStory ? (
             <article className="mx-auto max-w-[560px] md:max-w-[600px]">
               {currentStory.type !== "cover" && (
@@ -672,7 +775,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                   Playlist betöltése…
                 </div>
               )}
-              {!playlistLoading &&
+              {audioPlayerVisible &&
                 playlist &&
                 playlist.tracks &&
                 playlist.tracks.length > 0 &&
@@ -684,7 +787,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                     />
                   </section>
                 )}
-             {!playlistLoading && !playlist && (
+              {!playlistLoading && !playlist && (
                <div className="mb-6 text-[11px] text-neutral-600">
                  Nincs kapcsolódó playlist (.json nem található a /public{PLAYLIST_BASE} alatt ehhez a slughoz:
                  <code className="ml-1">{currentStory.slug}</code>)
