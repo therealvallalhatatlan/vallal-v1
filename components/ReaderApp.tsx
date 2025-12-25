@@ -106,6 +106,13 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark');
   const [audioPlayerVisible, setAudioPlayerVisible] = useState<boolean>(true);
 
+  // typewriter effect state
+  const [displayedTitle, setDisplayedTitle] = useState<string>("");
+  const [isHeaderAnimationComplete, setIsHeaderAnimationComplete] = useState<boolean>(false);
+  const [isContentReady, setIsContentReady] = useState<boolean>(false);
+  const typewriterIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const contentDelayRef = useRef<NodeJS.Timeout | null>(null);
+
   // playlist state
   const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
   const [playlistLoading, setPlaylistLoading] = useState(false);
@@ -234,6 +241,69 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
 
     load();
   }, [currentStory?.slug]);
+
+  // Typewriter animation effect
+  useEffect(() => {
+    if (!currentStory || currentStory.type === "cover") {
+      setDisplayedTitle("");
+      setIsHeaderAnimationComplete(true);
+      return;
+    }
+
+    const title = currentStory.title;
+    setDisplayedTitle("");
+    setIsHeaderAnimationComplete(false);
+    let currentIndex = 0;
+
+    const typewriterSpeed = 50; // milliseconds per character
+
+    if (typewriterIntervalRef.current) {
+      clearInterval(typewriterIntervalRef.current);
+    }
+
+    typewriterIntervalRef.current = setInterval(() => {
+      if (currentIndex < title.length) {
+        setDisplayedTitle(title.slice(0, currentIndex + 1));
+        currentIndex++;
+      } else {
+        if (typewriterIntervalRef.current) {
+          clearInterval(typewriterIntervalRef.current);
+        }
+        setIsHeaderAnimationComplete(true);
+      }
+    }, typewriterSpeed);
+
+    return () => {
+      if (typewriterIntervalRef.current) {
+        clearInterval(typewriterIntervalRef.current);
+      }
+    };
+  }, [currentStory?.slug, currentStory?.title, currentStory?.type]);
+
+  // Content delay effect - show content 1 second after header animation completes
+  useEffect(() => {
+    if (!isHeaderAnimationComplete) {
+      setIsContentReady(false);
+      if (contentDelayRef.current) {
+        clearTimeout(contentDelayRef.current);
+      }
+      return;
+    }
+
+    if (contentDelayRef.current) {
+      clearTimeout(contentDelayRef.current);
+    }
+
+    contentDelayRef.current = setTimeout(() => {
+      setIsContentReady(true);
+    }, 1000); // 1 second delay
+
+    return () => {
+      if (contentDelayRef.current) {
+        clearTimeout(contentDelayRef.current);
+      }
+    };
+  }, [isHeaderAnimationComplete]);
 
   // Mentés localStorage-ba (progress)
   const persistState = (next: ReaderState) => {
@@ -757,15 +827,20 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
               {currentStory.type !== "cover" && (
                 <header className="mb-4 md:mb-6">
                   <h1 className={`text-5xl md:text-6xl font-semibold tracking-tight ${headingTextColor}`}>
-                    {currentStory.title}
+                    {displayedTitle}
+                    {!isHeaderAnimationComplete && (
+                      <span className="animate-pulse">|</span>
+                    )}
                   </h1>
-                  <div className="mt-4 text-sm text-neutral-500 flex items-center gap-2 flex-wrap">
-                    <span>
-                      {currentStory.order}. a(z) {totalStories} novellából
-                    </span>
-                    <span>•</span>
-                    <span>~{currentStory.readingTime} perc olvasás</span>
-                  </div>
+                  {isHeaderAnimationComplete && (
+                    <div className="mt-4 text-sm text-neutral-500 flex items-center gap-2 flex-wrap">
+                      <span>
+                        {currentStory.order}. a(z) {totalStories} novellából
+                      </span>
+                      <span>•</span>
+                      <span>~{currentStory.readingTime} perc olvasás</span>
+                    </div>
+                  )}
                 </header>
               )}
 
@@ -780,7 +855,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                 playlist.tracks &&
                 playlist.tracks.length > 0 &&
                 currentStory.type !== "cover" && (
-                  <section className="mb-6 space-y-3 w-full max-w-full overflow-hidden">
+                  <section className={`mb-6 space-y-3 w-full max-w-full overflow-hidden ${isContentReady ? 'opacity-100 animate-fadeIn' : 'opacity-0 pointer-events-none'}`}>
                     <AudioPlayer3
                       tracks={playlist.tracks}
                       images={playlist.visuals ?? []}
@@ -788,7 +863,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                   </section>
                 )}
               {!playlistLoading && !playlist && (
-               <div className="mb-6 text-[11px] text-neutral-600">
+               <div className={`mb-6 text-[11px] text-neutral-600 ${isContentReady ? 'opacity-100 animate-fadeIn' : 'opacity-0 pointer-events-none'}`}>
                  Nincs kapcsolódó playlist (.json nem található a /public{PLAYLIST_BASE} alatt ehhez a slughoz:
                  <code className="ml-1">{currentStory.slug}</code>)
                </div>
@@ -803,7 +878,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                 </div>
               ) : (
                  <section
-                  className={`mt-6 leading-relaxed md:leading-8 whitespace-pre-wrap ${contentTextColor}`}
+                  className={`mt-6 leading-relaxed md:leading-8 whitespace-pre-wrap ${contentTextColor} ${!isContentReady ? 'opacity-0 pointer-events-none' : 'opacity-100'} animate-fadeIn transition-opacity duration-300`}
                    style={{ fontSize: `${fontSize}px` }}
                  >
                    {currentStory.text}
