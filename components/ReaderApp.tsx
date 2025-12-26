@@ -484,6 +484,12 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
     <div
       className={`flex min-h-[100dvh] ${themeMode === 'light' ? 'reader-theme-light' : 'reader-theme-dark'}`}
     >
+      {(
+        <div
+          className={`reader-bg ${themeMode === 'dark' ? 'reader-bg--dark' : 'reader-bg--light'}`}
+          aria-hidden="true"
+        />
+      )}
       {/* Sidebar - tartalomjegyzék (desktop) */}
       <aside 
         data-sidebar-desktop

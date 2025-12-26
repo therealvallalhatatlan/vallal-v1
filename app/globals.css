@@ -651,3 +651,31 @@
 .animate-fadeIn {
   animation: fadeIn 0.8s ease-in-out forwards;
 }
+
+/* ReaderApp background (scoped) */
+.reader-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.95;
+}
+
+.reader-bg--dark {
+  background-image: url('/img/bg-dark.png');
+}
+
+.reader-bg--light {
+  background-image: url('/img/bg-light.jpg');
+}
+
+/* Ensure ReaderApp content sits above the background */
+.reader-theme-dark,
+.reader-theme-light {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+}
