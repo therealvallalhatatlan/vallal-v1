@@ -107,6 +107,7 @@ export default function GLVisualizer() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const glRef = useRef<WebGL2RenderingContext | null>(null);
   const programRef = useRef<WebGLProgram | null>(null);
+  const rafRef = useRef<number | null>(null);
 
   const [uniforms, setUniforms] = useState<UniformState>(PRESETS.neon);
 
@@ -122,10 +123,88 @@ export default function GLVisualizer() {
     }
     glRef.current = gl;
 
+    let cancelled = false;
+    let running = true;
+    let vao: WebGLVertexArrayObject | null = null;
+    let buf: WebGLBuffer | null = null;
+    let texA: WebGLTexture | null = null;
+    let texB: WebGLTexture | null = null;
+    let texNoise: WebGLTexture | null = null;
+    let start = performance.now();
+
+    const stop = () => {
+      running = false;
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+
+    const onVis = () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        if (!cancelled) {
+          running = true;
+          start = performance.now();
+          rafRef.current = requestAnimationFrame(render);
+        }
+      }
+    };
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const w = Math.floor(window.innerWidth * dpr);
+      const h = Math.floor(window.innerHeight * dpr);
+      canvas.width = w;
+      canvas.height = h;
+      gl.viewport(0, 0, w, h);
+    };
+
+    const render = () => {
+      if (cancelled || !running) return;
+      const t = (performance.now() - start) / 1000;
+
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      const program = programRef.current;
+      if (!program) return;
+      gl.useProgram(program);
+
+      // Bind textures
+      if (texA) {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texA);
+      }
+      if (texB) {
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, texB);
+      }
+      if (texNoise) {
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, texNoise);
+      }
+
+      // Uniforms
+      gl.uniform1f(gl.getUniformLocation(program, "u_time"), t);
+      gl.uniform1f(gl.getUniformLocation(program, "u_mixAmount"), mix);
+
+      Object.entries(uniforms).forEach(([key, v]) => {
+        const loc = gl.getUniformLocation(program, key);
+        if (loc) gl.uniform1f(loc, v as number);
+      });
+
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      rafRef.current = requestAnimationFrame(render);
+    };
+
     (async () => {
       /* Load shaders */
       const vert = await loadText("/shaders/visualizer.vert");
       const frag = await loadText("/shaders/visualizer.frag");
+
+      if (cancelled) return;
 
       const program = createProgram(gl, vert, frag);
       programRef.current = program;
@@ -140,10 +219,10 @@ export default function GLVisualizer() {
          1,  1,
       ]);
 
-      const vao = gl.createVertexArray()!;
+      vao = gl.createVertexArray()!;
       gl.bindVertexArray(vao);
 
-      const buf = gl.createBuffer()!;
+      buf = gl.createBuffer()!;
       gl.bindBuffer(gl.ARRAY_BUFFER, buf);
       gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
 
@@ -152,63 +231,40 @@ export default function GLVisualizer() {
       gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
       /* Load textures */
-      const texA = await loadTexture(gl, "/img/visuals/noise-17.jpg");
-      const texB = await loadTexture(gl, "/img/visuals/noise-18.jpg");
-      const texNoise = await loadTexture(gl, "/img/visuals/noise-map.png");
+      texA = await loadTexture(gl, "/img/visuals/noise-17.jpg");
+      texB = await loadTexture(gl, "/img/visuals/noise-18.jpg");
+      texNoise = await loadTexture(gl, "/img/visuals/noise-map.png");
+
+      if (cancelled) return;
 
       // Bind texture units
       gl.uniform1i(gl.getUniformLocation(program, "u_imgA"), 0);
       gl.uniform1i(gl.getUniformLocation(program, "u_imgB"), 1);
       gl.uniform1i(gl.getUniformLocation(program, "u_noise"), 2);
 
-      /* Resize canvas */
-      const resize = () => {
-        const dpr = window.devicePixelRatio || 1;
-        const w = window.innerWidth * dpr;
-        const h = window.innerHeight * dpr;
-        canvas.width = w;
-        canvas.height = h;
-        gl.viewport(0, 0, w, h);
-      };
       resize();
       window.addEventListener("resize", resize);
-
-      /* Render loop */
-      let start = performance.now();
-
-      const render = () => {
-        const t = (performance.now() - start) / 1000;
-
-        gl.clearColor(0, 0, 0, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
-        gl.useProgram(program);
-
-        // Bind textures
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texA);
-
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, texB);
-
-        gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_2D, texNoise);
-
-        // Uniforms
-        gl.uniform1f(gl.getUniformLocation(program, "u_time"), t);
-        gl.uniform1f(gl.getUniformLocation(program, "u_mixAmount"), mix);
-
-        Object.entries(uniforms).forEach(([key, v]) => {
-          const loc = gl.getUniformLocation(program, key);
-          if (loc) gl.uniform1f(loc, v as number);
-        });
-
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        requestAnimationFrame(render);
-      };
-
-      requestAnimationFrame(render);
+      document.addEventListener("visibilitychange", onVis);
+      rafRef.current = requestAnimationFrame(render);
     })();
+
+    return () => {
+      cancelled = true;
+      stop();
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("resize", resize);
+
+      try {
+        if (texA) gl.deleteTexture(texA);
+        if (texB) gl.deleteTexture(texB);
+        if (texNoise) gl.deleteTexture(texNoise);
+        if (buf) gl.deleteBuffer(buf);
+        if (vao) gl.deleteVertexArray(vao);
+        if (programRef.current) gl.deleteProgram(programRef.current);
+      } catch {
+        // ignore
+      }
+    };
   }, []);
 
   /* UI handler: apply preset */

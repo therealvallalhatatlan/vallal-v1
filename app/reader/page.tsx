@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ReaderApp, { Story } from "@/components/ReaderApp";
 import { createClient } from "@/lib/browser";
 import { useSessionGuard } from "@/hooks/useSessionGuard";
-
-const supabase = createClient();
 
 export default function ReaderPage() {
   const router = useRouter();
@@ -14,9 +12,12 @@ export default function ReaderPage() {
   const [stories, setStories] = useState<Story[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  const supabaseRef = useRef(createClient());
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
     if (loading) return;
+    if (fetchedRef.current) return; // Csak egyszer futtatjuk
 
     if (!session) {
       router.replace("/auth?from=/reader");
@@ -26,7 +27,7 @@ export default function ReaderPage() {
     const fetchStories = async () => {
       setError(null);
 
-      const { data } = await supabase.auth.getSession();
+      const { data } = await supabaseRef.current.auth.getSession();
       const token = data?.session?.access_token;
       if (!token) {
         setError("Nincs aktív bejelentkezés.");
@@ -57,10 +58,11 @@ export default function ReaderPage() {
 
       const body = (await res.json()) as { stories?: Story[] };
       setStories(body.stories || null);
+      fetchedRef.current = true; // Jelöljük, hogy betöltöttük
     };
 
     fetchStories();
-  }, [loading, session, router]);
+  }, [loading, router]); // session NINCS benne!
 
   if (loading) {
     return null;
@@ -99,7 +101,7 @@ export default function ReaderPage() {
         avatarUrl={(session as any)?.user?.user_metadata?.avatar_url ?? null}
         onSignOut={async () => {
           setLoggingOut(true);
-          await supabase.auth.signOut();
+          await supabaseRef.current.auth.signOut();
           router.replace("/auth?from=/reader");
           setLoggingOut(false);
         }}

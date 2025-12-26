@@ -200,6 +200,10 @@ export default function NetworkMap({
           70%  { transform: translate(-50%, -50%) scale(1.15); opacity: 0.0; }
           100% { transform: translate(-50%, -50%) scale(1.15); opacity: 0; }
         }
+        @keyframes nm_markerFade {
+          0%, 85% { opacity: 1; }
+          100% { opacity: 0; }
+        }
         @keyframes nm_dotGlow {
           0%,100% { box-shadow: 0 0 14px rgba(0,255,170,0.95), 0 0 32px rgba(0,255,170,0.5); }
           50%     { box-shadow: 0 0 22px rgba(0,255,170,1), 0 0 44px rgba(0,255,170,0.7); }
@@ -221,21 +225,8 @@ function ActiveMarker({
   const left = `${Math.max(0, Math.min(1, x)) * 100}%`;
   const top = `${Math.max(0, Math.min(1, y)) * 100}%`;
 
-  // folyamatos re-render a finom fade-hez
-  const [, force] = React.useState(0);
-  React.useEffect(() => {
-    let raf = 0;
-    const step = () => {
-      force((n) => n + 1);
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  const age = Date.now() - bornAt;
-  const t = Math.min(1, Math.max(0, age / lifetimeMs));
-  const baseOpacity = t < 0.85 ? 1 : 1 - (t - 0.85) / 0.15;
+  // No JS-driven fade; CSS animation handles opacity
+  void bornAt;
 
   return (
     <div
@@ -244,9 +235,10 @@ function ActiveMarker({
         left,
         top,
         transform: "translate(-50%, -50%)",
-        opacity: baseOpacity,
+        opacity: 1,
         width: 0,
         height: 0,
+        animation: `nm_markerFade ${lifetimeMs}ms linear forwards`,
       }}
     >
       {/* középponti „stack” – minden abszolút középre igazítva */}

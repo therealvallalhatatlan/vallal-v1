@@ -1,19 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/browser';
-
-const supabase = createClient();
 
 export function useSessionGuard() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const supabaseRef = useRef(createClient());
 
   useEffect(() => {
     let isActive = true;
 
     async function fetchSession() {
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await supabaseRef.current.auth.getSession();
       if (!isActive) return;
 
       if (error) {
@@ -26,7 +25,7 @@ export function useSessionGuard() {
 
     fetchSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    const { data: listener } = supabaseRef.current.auth.onAuthStateChange((_event, newSession) => {
       if (!isActive) return;
       setSession(newSession);
     });

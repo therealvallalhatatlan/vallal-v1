@@ -11,6 +11,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import AudioPlayer3 from "@/components/AudioPlayer3";
+import { usePresence } from "@/hooks/usePresence";
 
 // import BookCover from "@/components/BookCover";
 
@@ -116,6 +117,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   // playlist state
   const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
   const [playlistLoading, setPlaylistLoading] = useState(false);
+  const { activeCount } = usePresence();
 
   const currentIndex = useMemo(
     () => stories.findIndex((s) => s.slug === currentSlug),
@@ -129,6 +131,9 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
 
   const userInitial = (userEmail?.[0]?.toUpperCase() ?? "V").slice(0, 1); // Vállalhatatlan Klubtag
   const [signingOut, setSigningOut] = useState(false);
+  
+  // Mindig legalább 2 olvasót mutatunk (aktuális user + 1, hogy ne érezze magát egyedül)
+  const displayedActiveCount = Math.max(2, activeCount);
 
   const handleSignOutClick = async () => {
     if (!onSignOut) return;
@@ -544,6 +549,13 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
           </div>
         </div>
 
+        {/* Active readers count */}
+        <div className="px-4 py-3 border-b border-neutral-800">
+          <div className="text-[11px] font-medium text-neutral-400 flex items-center gap-2">
+            👥 {displayedActiveCount} olvasó online
+          </div>
+        </div>
+
         <div className={`flex-1 overflow-y-auto py-3 ${themeMode === 'light' ? 'sidebar-scrollbar-light' : 'sidebar-scrollbar'}`}>
           {stories.map((story) => {
             const isCover = story.type === "cover";
@@ -733,48 +745,58 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
           {/* Mobil TOC Sheet tartalom */}
           <SheetContent
             side="left"
-            className="w-[80vw] max-w-xs bg-neutral-950 border-r border-neutral-800 p-0 flex flex-col"
+            className={`w-[80vw] max-w-xs border-r p-0 flex flex-col ${
+              themeMode === 'light'
+                ? 'bg-white border-neutral-300'
+                : 'bg-neutral-950 border-neutral-800'
+            }`}
           >
-            <SheetHeader className="px-4 py-3 border-b border-neutral-800">
-              <SheetTitle className="text-sm text-neutral-300">
+            <SheetHeader className={`px-4 py-3 border-b ${themeMode === 'light' ? 'border-neutral-200' : 'border-neutral-800'}`}>
+              <SheetTitle className={`text-sm ${themeMode === 'light' ? 'text-neutral-700' : 'text-neutral-300'}`}>
                 Tartalomjegyzék
               </SheetTitle>
             </SheetHeader>
 
             {/* MOBIL: user blokk a sheet tetején */}
-            <div className="px-4 py-3 border-b border-neutral-800 flex items-center justify-between gap-3 bg-neutral-950/70">
-              <div className="flex items-center gap-3">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="avatar"
-                    className="h-9 w-9 rounded-full object-cover ring-1 ring-lime-500/50"
-                  />
-                ) : (
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-lime-500/80 to-emerald-500/60 flex items-center justify-center text-sm font-semibold text-black ring-1 ring-lime-300/50">
-                    {userInitial}
+            <div className="px-4 py-3 border-b border-neutral-800 bg-neutral-950/70">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="avatar"
+                      className="h-9 w-9 rounded-full object-cover ring-1 ring-lime-500/50"
+                    />
+                  ) : (
+                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-lime-500/80 to-emerald-500/60 flex items-center justify-center text-sm font-semibold text-black ring-1 ring-lime-300/50">
+                      {userInitial}
+                    </div>
+                  )}
+                  <div className="flex flex-col">
+                    <span className="text-xs text-neutral-200 truncate max-w-[140px]">
+                      {userEmail || "Belépett olvasó"}
+                    </span>
+                    <span className="text-[10px] text-neutral-500 uppercase tracking-[0.18em]">
+                      aktív session
+                    </span>
                   </div>
-                )}
-                <div className="flex flex-col">
-                  <span className="text-xs text-neutral-200 truncate max-w-[140px]">
-                    {userEmail || "Belépett olvasó"}
-                  </span>
-                  <span className="text-[10px] text-neutral-500 uppercase tracking-[0.18em]">
-                    aktív session
-                  </span>
                 </div>
+
+                {onSignOut && (
+                  <button
+                    type="button"
+                    onClick={handleSignOutClick}
+                    disabled={signingOut}
+                    className="text-[11px] px-2.5 py-1 rounded-full border border-neutral-700 text-neutral-200 hover:border-lime-400 hover:text-lime-200 transition disabled:opacity-50"
+                  >
+                    {signingOut ? "Kilépés..." : "Kilépés"}
+                  </button>
+                )}
               </div>
 
-              {onSignOut && (
-                <button
-                  type="button"
-                  onClick={handleSignOutClick}
-                  disabled={signingOut}
-                  className="text-[11px] px-2.5 py-1 rounded-full border border-neutral-700 text-neutral-200 hover:border-lime-400 hover:text-lime-200 transition disabled:opacity-50"
-                >
-                  {signingOut ? "Kilépés..." : "Kilépés"}
-                </button>
-              )}
+              <div className={`text-[11px] font-medium ${themeMode === 'light' ? 'text-neutral-700' : 'text-neutral-400'}`}>
+                👥 {displayedActiveCount} olvasó online
+              </div>
             </div>
 
             <div className={`flex-1 overflow-y-auto py-3 ${themeMode === 'light' ? 'sidebar-scrollbar-light' : 'sidebar-scrollbar'}`}>
@@ -863,8 +885,10 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                 currentStory.type !== "cover" && (
                   <section className={`mb-6 space-y-3 w-full max-w-full overflow-hidden ${isContentReady ? 'opacity-100 animate-fadeIn' : 'opacity-0 pointer-events-none'}`}>
                     <AudioPlayer3
+                      key={currentStory.slug}
                       tracks={playlist.tracks}
                       images={playlist.visuals ?? []}
+                      mode={themeMode}
                     />
                   </section>
                 )}

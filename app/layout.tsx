@@ -12,6 +12,7 @@ import { Special_Elite } from "next/font/google";
 import PWAInstallManager from "@/components/PWAInstallManager";
 import AuthUrlSessionSync from "@/components/AuthUrlSessionSync";
 import { ThemeProvider } from "@/components/theme-provider";
+import BgVideoGate from "@/components/BgVideoGate";
 
 
 const crimson = Crimson_Pro({
@@ -125,23 +126,8 @@ export default function RootLayout({
         style={{ touchAction: 'pan-y' }}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        {/* Háttérvideó – full screen, fixed, a content alatt */}
-        <div
-          className="bg-video fixed inset-0 z-0 pointer-events-none"
-          aria-hidden="true"
-        >
-          <video
-            id="bg-video"
-            className="bg-video__media w-full h-full object-cover"
-            src="/videos/video1.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-          />
-          <div className="bg-video__overlay absolute inset-0" />
-        </div>
+        {/* Háttérvideó – a Reader alatt nem rendereljük (perf/memory) */}
+        <BgVideoGate />
 
         {/* Page content a legfelül */}
         <div className="content-above relative z-20">
@@ -153,31 +139,7 @@ export default function RootLayout({
 
           <ServiceWorkerRegister />
         </div>
-        
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var video = document.getElementById('bg-video');
-                if (!video) return;
-                function attemptPlay() {
-                  var playPromise = video.play();
-                  if (playPromise) {
-                    playPromise.catch(function() {
-                      video.muted = true;
-                      video.play().catch(function(){});
-                    });
-                  }
-                }
-                if (document.readyState === 'complete') {
-                  attemptPlay();
-                } else {
-                  window.addEventListener('load', attemptPlay, { once: true });
-                }
-              })();
-            `,
-          }}
-        />
+
         {/* JSON-LD: Organization + WebSite */}
         <script
           type="application/ld+json"

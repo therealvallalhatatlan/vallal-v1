@@ -99,7 +99,7 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
             disabled={loading}
             className="inline-flex items-center justify-center rounded-lg border border-lime-500 bg-lime-500 px-4 py-2 text-sm font-semibold text-black transition hover:border-lime-400 hover:bg-lime-400 disabled:opacity-60"
           >
-            {loading ? "Küldés..." : "Csudalink Küldése"}
+            {loading ? "Küldés..." : "Link Küldése"}
           </button>
 
           <div className="flex items-center gap-3 pt-2">
@@ -160,7 +160,7 @@ function AuthStatus({
           <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">Zárt Közösség</p>
           <h1 className="text-3xl font-semibold text-lime-400">Belépés Csak Klubtagoknak</h1>
           <p className="mt-2 text-sm text-neutral-300">
-            Add meg az email címet amivel a könyvet vetted, és küldök egy belépő linket.<br/> Jelszó nem kell, és többet nem kell baszódj vele. <br/>Ha más email címet használnál, írj nekem:{" "}
+            Add meg az email címet amivel vásároltál, és küldök egy belépő linket.<br/>Ha más email címet használnál, írj nekem:{" "}
             <a href="mailto:therealvallalhatatlan@gmail.com" className="text-lime-400 hover:text-lime-300">
               therealvallalhatatlan@gmail.com
             </a>
@@ -171,24 +171,22 @@ function AuthStatus({
           {message && <p className="mt-4 text-sm text-lime-300">{message}</p>}
           {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
         </div>
+
+        {showPurchaseCTA && (
+          <div className="mt-6 rounded-3xl border border-neutral-800 bg-black/60 p-6 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
+            <a
+              href="https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full items-center justify-center rounded-lg bg-lime-500 px-4 py-2 text-sm font-semibold text-black transition hover:bg-lime-400"
+            >
+              Alkalmazás megvásárlása
+            </a>
+          </div>
+        )}
       </section>
       </div>
-      {/* Purchase CTA for reader flow */}
-      {showPurchaseCTA && (
-        <div className="fixed left-0 right-0 bottom-6 z-50 flex items-center justify-center px-4">
-          <a
-            href="https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="max-w-3xl w-full mx-auto"
-          >
-            <div className="rounded-xl border border-neutral-800 bg-black/70 p-3 shadow-lg backdrop-blur-sm flex items-center justify-between gap-4">
-              <div className="text-sm text-neutral-100">Alkalmazás megvásárlása</div>
-              <div className="rounded-md bg-lime-500 px-4 py-2 text-sm font-semibold text-black">Megvásárolom</div>
-            </div>
-          </a>
-        </div>
-      )}
+
     </main>
   );
 }

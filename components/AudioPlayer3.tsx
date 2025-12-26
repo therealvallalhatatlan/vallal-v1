@@ -4,11 +4,12 @@ import { useEffect, useRef, useState, forwardRef, useCallback } from 'react'
 import { fmtTime, bandAvg } from '@/utils/audio'
 
 export type Track = { title: string; file: string; durationSec?: number }
-export type Props = { tracks: Track[]; images?: string[] }
+export type Props = { tracks: Track[]; images?: string[]; mode?: 'dark' | 'light' }
 
 type Platform = 'youtube' | 'spotify' | 'google'
 
-export default function AudioPlayer3({ tracks, images = [] }: Props) {
+export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Props) {
+  const isLight = mode === 'light'
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -23,11 +24,13 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
   const acRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const srcNodeRef = useRef<MediaElementAudioSourceNode | null>(null)
+  const lastFrameRef = useRef(0)
 
   // ---- Image preload for visualizer ----
   const [loadedImgs, setLoadedImgs] = useState<HTMLImageElement[]>([])
   useEffect(() => {
     let cancelled = false
+    const imgs: HTMLImageElement[] = []
     setLoadedImgs([])
     images.forEach((src) => {
       const img = new Image()
@@ -41,9 +44,17 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
       }
       img.onerror = () => {}
       img.src = src
+      imgs.push(img)
     })
     return () => {
       cancelled = true
+      // Force image cleanup
+      imgs.forEach(img => {
+        img.src = ''
+        img.onload = null
+        img.onerror = null
+      })
+      setLoadedImgs([])
     }
   }, [images])
 
@@ -53,7 +64,7 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
     if (!c) return
     const resize = () => {
       const rect = c.getBoundingClientRect()
-      const dpr = window.devicePixelRatio || 1
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
       const w = Math.max(1, Math.floor(rect.width * dpr))
       const h = Math.max(1, Math.floor(rect.height * dpr))
       if (c.width !== w) c.width = w
@@ -106,7 +117,23 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
     const timer = setTimeout(() => {
       startViz()
     }, 100)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      // Memory cleanup
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+      // Close AudioContext
+      if (acRef.current && acRef.current.state !== 'closed') {
+        acRef.current.close().catch(() => {})
+        acRef.current = null
+      }
+      // Clear canvas
+      if (canvasRef.current && ctxRef.current) {
+        ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -186,6 +213,13 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
     const buffer = new Uint8Array(1024)
 
     const draw = () => {
+      const now = performance.now()
+      if (now - lastFrameRef.current < 33) {
+        rafRef.current = requestAnimationFrame(draw)
+        return
+      }
+      lastFrameRef.current = now
+
       if (analyserRef.current && playing) {
         try {
           analyserRef.current.getByteFrequencyData(buffer)
@@ -224,8 +258,8 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
         const offset = ((Math.random() - 0.5) * j * 4) | 0
         const hgt = Math.min(sliceH, H - y)
         try {
-          const imgData = ctx.getImageData(0, y, W, hgt)
-          ctx.putImageData(imgData, offset, y)
+          // drawImage-based slice shift avoids getImageData/putImageData readback
+          ctx.drawImage(c, 0, y, W, hgt, offset, y, W, hgt)
         } catch {}
       }
 
@@ -327,7 +361,11 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
 
   return (
     <div className="w-full max-w-full">
-      <div className="relative p-3 md:p-5 lg:p-6 bg-black/10 rounded-3xl border border-neutral-600/10 overflow-hidden">
+      <div
+        className={`relative p-3 md:p-5 lg:p-6 rounded-3xl border overflow-hidden ${
+          isLight ? 'bg-white/60 border-neutral-300/40' : 'bg-black/20 border-neutral-600/10'
+        }`}
+      >
         <div className="absolute inset-0 -z-10 pointer-events-none opacity-60">
           <CanvasResponsive ref={canvasRef} />
           <div className="absolute inset-0 bg-transparent" />
@@ -347,11 +385,15 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
               aria-label="Cím másolása a vágólapra"
               title={copied ? 'Másolva!' : 'Kattints a másoláshoz'}
             >
-              <span className="truncate text-zinc-200 font-medium text-xs md:text-xs leading-snug group-hover:underline">
+              <span
+                className={`truncate font-medium text-xs md:text-xs leading-snug group-hover:underline ${
+                  isLight ? 'text-neutral-700' : 'text-zinc-200'
+                }`}
+              >
                 {track.title}
               </span>
             </button>
-            <div className="mt-1 text-[11px] text-zinc-500">
+            <div className={`mt-1 text-[11px] ${isLight ? 'text-neutral-600' : 'text-zinc-500'}`}>
               {index + 1} / {tracks.length}
             </div>
           </div>
@@ -375,10 +417,10 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
             max={1000}
             value={Math.floor(progress * 1000)}
             onChange={(e) => seek(Number(e.target.value) / 1000)}
-            className="w-full accent-neutral-100"
+            className={`w-full ${isLight ? 'accent-neutral-800' : 'accent-neutral-100'}`}
             aria-label="Idővonal"
           />
-          <div className="flex justify-between text-[11px] text-zinc-500">
+          <div className={`flex justify-between text-[11px] ${isLight ? 'text-neutral-600' : 'text-zinc-500'}`}>
             <span>{fmtTime(currentTime)}</span>
             <span>{fmtTime(duration)}</span>
           </div>
@@ -391,9 +433,17 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
             onClick={toggleTools}
             aria-expanded={showTools}
             aria-controls="player3-tools"
-            className="group inline-flex items-center gap-2 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors uppercase tracking-[0.2em]"
+            className={`group inline-flex items-center gap-2 text-[11px] transition-colors uppercase tracking-[0.2em] ${
+              isLight ? 'text-neutral-600 hover:text-neutral-800' : 'text-zinc-500 hover:text-zinc-300'
+            }`}
           >
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900/70 group-hover:bg-zinc-800 text-zinc-200 text-base">
+            <span
+              className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-base border ${
+                isLight
+                  ? 'border-neutral-300 bg-neutral-100 group-hover:bg-neutral-200 text-neutral-700'
+                  : 'border-zinc-700 bg-zinc-900/70 group-hover:bg-zinc-800 text-zinc-200'
+              }`}
+            >
               …
             </span>
             megosztás
@@ -407,7 +457,11 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
             <div className="px-1 space-y-2">
               <a
                 href={`${apiUrl}?download=1`}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 text-zinc-200"
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] border transition-colors ${
+                  isLight
+                    ? 'border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700'
+                    : 'border-zinc-700 bg-zinc-950 hover:bg-zinc-900 text-zinc-200'
+                }`}
               >
                 ⬇ MP3 letöltés
               </a>
@@ -415,26 +469,38 @@ export default function AudioPlayer3({ tracks, images = [] }: Props) {
                 <button
                   type="button"
                   onClick={() => handleOpenPlatform('youtube')}
-                  className="px-3 py-1.5 rounded-full text-[11px] border border-red-500/60 bg-red-500/10 hover:bg-red-500/20 text-red-200 transition-colors"
+                  className={`px-3 py-1.5 rounded-full text-[11px] border transition-colors ${
+                    isLight
+                      ? 'border-red-600/40 bg-red-500/10 hover:bg-red-500/20 text-red-700'
+                      : 'border-red-500/60 bg-red-500/10 hover:bg-red-500/20 text-red-200'
+                  }`}
                 >
                   YouTube keresés
                 </button>
                 <button
                   type="button"
                   onClick={() => handleOpenPlatform('spotify')}
-                  className="px-3 py-1.5 rounded-full text-[11px] border border-emerald-500/60 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 transition-colors"
+                  className={`px-3 py-1.5 rounded-full text-[11px] border transition-colors ${
+                    isLight
+                      ? 'border-emerald-600/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700'
+                      : 'border-emerald-500/60 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200'
+                  }`}
                 >
                   Spotify keresés
                 </button>
                 <button
                   type="button"
                   onClick={() => handleOpenPlatform('google')}
-                  className="px-3 py-1.5 rounded-full text-[11px] border border-zinc-600 bg-zinc-950 hover:bg-zinc-900 text-zinc-100 transition-colors"
+                  className={`px-3 py-1.5 rounded-full text-[11px] border transition-colors ${
+                    isLight
+                      ? 'border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700'
+                      : 'border-zinc-600 bg-zinc-950 hover:bg-zinc-900 text-zinc-100'
+                  }`}
                 >
                   Google keresés
                 </button>
               </div>
-              <p className="text-[10px] text-zinc-500 leading-relaxed">
+              <p className={`text-[10px] leading-relaxed ${isLight ? 'text-neutral-600' : 'text-zinc-500'}`}>
                 Tipp: a címre kattintva a track nevét is kimásolhatod.
               </p>
             </div>

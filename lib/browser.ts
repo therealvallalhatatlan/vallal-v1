@@ -3,6 +3,11 @@
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
+let cachedClient: any | null = null;
+let cachedUrl = "";
+let cachedKey = "";
+let warnedMissingEnv = false;
+
 export function createClient() {
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
@@ -14,9 +19,12 @@ export function createClient() {
     "";
 
   if (!url || !key) {
-    console.warn(
-      "[supabase][browser] Missing NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY (or SUPABASE_* fallbacks). Returning stub client."
-    );
+    if (!warnedMissingEnv) {
+      warnedMissingEnv = true;
+      console.warn(
+        "[supabase][browser] Missing NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_ANON_KEY (or SUPABASE_* fallbacks). Returning stub client."
+      );
+    }
     return {
       auth: {
         getUser: async () => ({ data: { user: null }, error: null }),
@@ -30,7 +38,13 @@ export function createClient() {
     } as any;
   }
 
-  return createSupabaseClient(url, key, {
+  if (cachedClient && cachedUrl === url && cachedKey === key) {
+    return cachedClient;
+  }
+
+  cachedUrl = url;
+  cachedKey = key;
+  cachedClient = createSupabaseClient(url, key, {
     auth: {
       flowType: "pkce",
       detectSessionInUrl: true,
@@ -38,4 +52,6 @@ export function createClient() {
       autoRefreshToken: true,
     },
   });
+
+  return cachedClient;
 }
