@@ -11,32 +11,38 @@ export default function Navigation() {
   return (
     <div className="relative">
       <nav className="max-w-3xl mx-auto py-6 md:px-0 px-6">
-        <div className="flex w-full items-center justify-end gap-6 text-sm uppercase tracking-[0.18em] text-neutral-300">
-        <Link href="/readers" className="hover:text-lime-300 transition-colors">
-          <span className="text-lime-300">Vállalhatatlan </span>
-          Online Reader
-        </Link>
-
-        {userEmail ? (
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-neutral-300 normal-case tracking-normal max-w-[220px] truncate">
-              Üdv, {userEmail}
-            </span>
-            <Link
-              href="/reader"
-              className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
-            >
-              Tovább a readerre
-            </Link>
-          </div>
-        ) : (
-          <Link
-            href="/auth?from=/reader"
-            className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
-          >
-            Belépés
+        <div className="flex w-full items-center justify-between gap-6 text-sm uppercase tracking-[0.18em] text-neutral-300">
+          <Link href="/readers" className="hover:text-lime-300 transition-colors">
+            <img
+              src="/img/logo.png"
+              alt="Vállalhatatlan"
+              className="h-10 md:px-6 w-auto"
+              draggable={false}
+            />
           </Link>
-        )}
+
+          {userEmail ? (
+            <div className="flex items-center gap-4 justify-end">
+              <span className="text-xs text-neutral-300 normal-case tracking-normal max-w-[220px] truncate">
+                Üdv, {userEmail}
+              </span>
+              <Link
+                href="/reader"
+                className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
+              >
+                Tovább a readerre
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center justify-end">
+              <Link
+                href="/auth?from=/reader"
+                className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
+              >
+                Belépés
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
 

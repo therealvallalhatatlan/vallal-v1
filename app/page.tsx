@@ -22,7 +22,6 @@ export default function Page() {
       <Navigation />
       <TweetRotator messages={["37 db könyv maradt már csak!","Veronika aki dec.8.-án vásároltál - rossz emailcímet adtál meg, jelentkezz!","Ha postán szeretnéd megkapni jelezz emailben vagy bárhol","A következő batch érkezik a két ünnep között"]} />
       <Hero />
-      <CrewCoupon />
       <Matricak />
       <Reviews />
       <MiEz />
