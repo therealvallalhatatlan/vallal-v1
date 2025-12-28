@@ -314,6 +314,166 @@
   76% { filter: brightness(1.01) contrast(1.04) }
 }
 
+/* ------------------------------------------------------- */
+/*  Neon logo (inline SVG)                                 */
+/* ------------------------------------------------------- */
+
+.neon-logo {
+  display: block;
+}
+
+.neon-logo__flicker {
+  will-change: opacity, filter;
+  animation: neon-flicker 3.8s steps(1, end) infinite 1.35s;
+}
+
+.neon-logo__hue {
+  will-change: filter;
+  animation: neon-hue 6s ease-in-out 1.2s infinite;
+}
+
+.neon-logo__draw path {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.95;
+  will-change: stroke-dashoffset, filter, opacity;
+  filter: drop-shadow(0 0 6px var(--primary));
+  animation:
+    neon-write 1.1s ease forwards var(--neon-delay, 0ms),
+    neon-pulse 2.6s ease-in-out infinite calc(var(--neon-delay, 0ms) + 1.15s),
+    neon-buzz 7.5s steps(1, end) infinite calc(var(--neon-delay, 0ms) + 1.35s);
+}
+
+.neon-logo__fill {
+  opacity: 0;
+  animation: neon-fill-in 420ms ease forwards;
+  animation-delay: 0.95s;
+}
+
+.neon-logo__fill path {
+  fill: var(--foreground);
+  opacity: 0.9;
+}
+
+@keyframes neon-write {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes neon-fill-in {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes neon-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px var(--primary));
+    opacity: 0.9;
+  }
+  50% {
+    filter: drop-shadow(0 0 12px var(--primary));
+    opacity: 1;
+  }
+}
+
+@keyframes neon-hue {
+  0%,
+  100% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(14deg);
+  }
+}
+
+/* Retro neon: ritka "kikapcs" + visszarúgó fény */
+@keyframes neon-flicker {
+  0% {
+    opacity: 1;
+    filter: none;
+  }
+  6% {
+    opacity: 0.92;
+  }
+  7% {
+    opacity: 0.55;
+  }
+  8% {
+    opacity: 1;
+  }
+  31% {
+    opacity: 0.85;
+  }
+  32% {
+    opacity: 0.25;
+  }
+  33% {
+    opacity: 1;
+  }
+  68% {
+    opacity: 0.9;
+  }
+  69% {
+    opacity: 0.4;
+  }
+  70% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 0.8;
+  }
+  93% {
+    opacity: 0.15;
+  }
+  94% {
+    opacity: 1;
+  }
+}
+
+/* Extra retro "buzz": apró glow-ugrások a path szinten */
+@keyframes neon-buzz {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px var(--primary));
+  }
+  12% {
+    filter: drop-shadow(0 0 10px var(--primary));
+  }
+  13% {
+    filter: drop-shadow(0 0 4px var(--primary));
+  }
+  46% {
+    filter: drop-shadow(0 0 12px var(--primary));
+  }
+  47% {
+    filter: drop-shadow(0 0 5px var(--primary));
+  }
+  78% {
+    filter: drop-shadow(0 0 11px var(--primary));
+  }
+  79% {
+    filter: drop-shadow(0 0 6px var(--primary));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neon-logo__flicker,
+  .neon-logo__hue,
+  .neon-logo__fill,
+  .neon-logo__draw path {
+    animation: none !important;
+  }
+  .neon-logo__fill {
+    opacity: 1;
+  }
+}
+
 /* Motion-respect */
 @media (prefers-reduced-motion: reduce) {
   .fx-stripes,

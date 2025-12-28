@@ -13,6 +13,7 @@ import PWAInstallManager from "@/components/PWAInstallManager";
 import AuthUrlSessionSync from "@/components/AuthUrlSessionSync";
 import { ThemeProvider } from "@/components/theme-provider";
 import BgVideoGate from "@/components/BgVideoGate";
+import TrafficSourceHeuristics from "@/components/TrafficSourceHeuristics";
 
 
 const crimson = Crimson_Pro({
@@ -134,6 +135,7 @@ export default function RootLayout({
           <AuthUrlSessionSync />
           <PWAInstallManager />
           {children}
+          <TrafficSourceHeuristics />
           <Analytics />
           <div id="glitch-root"></div>
 
