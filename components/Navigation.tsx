@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 import { useSessionGuard } from "@/hooks/useSessionGuard";
-import NeonLogo from "@/components/NeonLogo";
 
 export default function Navigation() {
   const { session } = useSessionGuard();
@@ -14,7 +13,11 @@ export default function Navigation() {
       <nav className="max-w-3xl mx-auto py-6 md:px-0 px-6">
         <div className="flex w-full items-center justify-between gap-6 text-sm uppercase tracking-[0.18em] text-neutral-300">
           <Link href="/readers" className="hover:text-lime-300 transition-colors">
-            <NeonLogo className="h-10 md:px-6 w-auto" />
+            <img
+              src="/img/logo.png"
+              alt="Vállalhatatlan"
+              className="h-10 md:px-6 w-auto"
+            />
           </Link>
 
           {userEmail ? (

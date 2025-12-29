@@ -52,7 +52,7 @@ export default function TweetRotator({
   return (
     <div
       className={clsx(
-        "relative px-6 max-w-3xl mx-auto rounded-3xl bg-black/100 py-8 border border-lime-400/30",
+        "relative px-6 max-w-3xl mx-auto rounded-3xl bg-black/0 py-8 border border-lime-400/30",
         "font-mono text-md leading-[1.35] text-lime-200",
         className
       )}
