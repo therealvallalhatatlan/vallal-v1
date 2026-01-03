@@ -90,7 +90,7 @@ export const metadata: Metadata = {
     title: "Vállalhatatlan — Y2K",
     description:
       "Underground Budapest a ’90-es években: rave/techno, drogkultúra és kíméletlenül őszinte novellák.",
-    images: ["/og.jpg"],
+    images: ["/og.png"],
   },
   robots: {
     index: true,
