@@ -53,17 +53,17 @@ function VisualizerContent() {
   const [exporting, setExporting] = useState<null | "gif" | "webm">(null);
 
   // --- USER TARGET CONTROLS (what UI sets) ---
-  const [targetGlitch, setTargetGlitch] = useState(0.6);
-  const [targetGrain, setTargetGrain] = useState(0.08);
-  const [targetSlices, setTargetSlices] = useState(8);
-  const [targetRgbShift, setTargetRgbShift] = useState(1);
-  const [targetVignette, setTargetVignette] = useState(0.12);
-  const [targetScaleOffset, setTargetScaleOffset] = useState(0.01);
-  const [targetRotationDeg, setTargetRotationDeg] = useState(1);
-  const [targetSaturation, setTargetSaturation] = useState(1);
+  const [targetGlitch, setTargetGlitch] = useState(0.6); // 0..1 (tamed)
+  const [targetGrain, setTargetGrain] = useState(0.08); // 0..0.25
+  const [targetSlices, setTargetSlices] = useState(8); // 2..24
+  const [targetRgbShift, setTargetRgbShift] = useState(1); // 0..0.12
+  const [targetVignette, setTargetVignette] = useState(0.12); // 0..0.3
+  const [targetScaleOffset, setTargetScaleOffset] = useState(0.01); // -0.06..0.06
+  const [targetRotationDeg, setTargetRotationDeg] = useState(1); // -6..6
+  const [targetSaturation, setTargetSaturation] = useState(1); // 0..2.5 (1 = default)
   const [blendMode, setBlendMode] = useState<BlendMode>("difference");
   const [noiseOverlay, setNoiseOverlay] = useState(true);
-  const [tintHue, setTintHue] = useState(0);
+  const [tintHue, setTintHue] = useState(0); // degrees
   const [speed, setSpeed] = useState(1.0);
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 99999));
   const [autoshift, setAutoshift] = useState(true);
@@ -724,487 +724,310 @@ function VisualizerContent() {
   }, [handleScreenshot, handleRandomize, handleSwapImages]);
 
   return (
-    <div className="fixed inset-0 z-50 flex bg-black text-white">
-      {/* Canvas - Full Screen Background */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
-        style={{ display: "block" }}
-      />
-
-      {/* Bottom Toolbar - Fixed at Bottom */}
-      <div className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-60 transition-all duration-300 ${
-        showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+    <div className="fixed inset-0 z-50 flex flex-col bg-background text-foreground dark:bg-black dark:text-white">
+      {/* top controls */}
+      <div className={`absolute top-4 right-4 z-60 flex gap-3 items-center transition-opacity duration-300 ${
+        showControls ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}>
-        <div className="rounded-full bg-black/80 border border-white/20 px-6 py-3 text-sm flex items-center gap-3 backdrop-blur-md shadow-2xl">
+        <div className="rounded-full bg-black/70 text-white border border-white/20 px-3 py-2 text-xs flex items-center gap-2 backdrop-blur-sm shadow-lg">
           <button
             onClick={() => setPlaying((p) => !p)}
-            className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition font-medium flex items-center gap-2"
+            className="px-2 py-1 rounded-md bg-white/10 text-white hover:bg-white/20 transition"
             title="Play / Pause (Space)"
           >
-            {playing ? "⏸" : "▶"} {playing ? "Pause" : "Play"}
+            {playing ? "⏸" : "⏵"}
           </button>
-          
-          <div className="h-8 w-px bg-white/20"></div>
-          
-          <button
-            onClick={handleScreenshot}
-            className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium flex items-center gap-2"
-            title="Screenshot (S)"
-          >
-            📷 Screenshot
-          </button>
-          
           <button
             onClick={handleExportGif}
             disabled={!!exporting}
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Export GIF"
+            className="px-2 py-1 rounded-md bg-white/10 text-white hover:bg-white/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            title={exporting ? "Export in progress" : "Export GIF (512px, 8 frames @ 10fps)"}
           >
-            {exporting === "gif" ? "⏳ Exporting..." : "🎨 Export GIF"}
+            GIF
           </button>
-          
           <button
             onClick={handleRecordWebm}
             disabled={!!exporting}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Export Video"
+            className="px-2 py-1 rounded-md bg-white/10 text-white hover:bg-white/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            title={exporting ? "Export in progress" : "Record WebM (720px, ~0.8s @ 12fps)"}
           >
-            {exporting === "webm" ? "⏳ Recording..." : "🎞 Export Video"}
+            🎞
           </button>
-
-          <div className="h-8 w-px bg-white/20"></div>
-
+          <button
+            onClick={handleScreenshot}
+            className="px-2 py-1 rounded-md bg-white/10 text-white hover:bg-white/20 transition"
+            title="Screenshot (S)"
+          >
+            📷
+          </button>
           <button
             onClick={handleRandomize}
-            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition font-medium flex items-center gap-2"
+            className="px-2 py-1 rounded-md bg-white/10 text-white hover:bg-white/20 transition"
             title="Randomize (R)"
           >
-            🎲 Randomize
+            🎲
+          </button>
+          <button
+            onClick={handleSwapImages}
+            className="px-2 py-1 rounded-md bg-white/10 text-white hover:bg-white/20 transition"
+            title="Swap images (W)"
+          >
+            🔁
           </button>
         </div>
       </div>
 
-      {/* Main Sidebar */}
-      <div className={`absolute right-0 top-0 h-full w-80 bg-black/90 border-l border-white/10 backdrop-blur-xl shadow-2xl transition-all duration-300 flex flex-col ${
-        showControls ? "translate-x-0" : "translate-x-full"
+      {/* left controls */}
+      <div className={`absolute left-4 top-4 z-60 w-64 rounded-lg bg-black/70 text-white border border-white/20 p-3 text-xs space-y-2 backdrop-blur-sm shadow-lg transition-opacity duration-300 ${
+        showControls ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}>
-        {/* Tab Navigation */}
-        <div className="flex border-b border-white/10 shrink-0">
+        <div className="mb-1 text-white font-medium">Vizualizáció</div>
+
+        <label className="text-[11px] text-neutral-300 flex justify-between">
+          Glitch <span className="text-white">{targetGlitch.toFixed(2)}</span>
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={targetGlitch}
+          onChange={(e) => setTargetGlitch(Number(e.target.value))}
+          className="w-full"
+        />
+
+        <label className="text-[11px] text-neutral-300 flex justify-between">
+          Grain <span className="text-white">{targetGrain.toFixed(2)}</span>
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={0.25}
+          step={0.005}
+          value={targetGrain}
+          onChange={(e) => setTargetGrain(Number(e.target.value))}
+          className="w-full"
+        />
+
+        <label className="text-[11px] text-neutral-300 flex justify-between">
+          Slices <span className="text-white">{targetSlices}</span>
+        </label>
+        <input
+          type="range"
+          min={2}
+          max={24}
+          step={1}
+          value={targetSlices}
+          onChange={(e) => setTargetSlices(Number(e.target.value))}
+          className="w-full"
+        />
+
+        <label className="text-[11px] text-neutral-300 flex justify-between">
+          RGB shift <span className="text-white">{targetRgbShift.toFixed(2)}</span>
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={0.12}
+          step={0.005}
+          value={targetRgbShift}
+          onChange={(e) => setTargetRgbShift(Number(e.target.value))}
+          className="w-full"
+        />
+      </div>
+
+      {/* right controls */}
+      <div className={`absolute right-4 top-16 z-60 w-56 rounded-lg bg-black/70 text-white border border-white/20 p-3 text-xs space-y-2 backdrop-blur-sm shadow-lg transition-opacity duration-300 ${
+        showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}>
+        <div className="mb-1 text-white font-medium">Tweakek</div>
+
+        <label className="text-[11px] text-neutral-300 flex justify-between">
+          Vignette <span className="text-white">{targetVignette.toFixed(2)}</span>
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={0.3}
+          step={0.005}
+          value={targetVignette}
+          onChange={(e) => setTargetVignette(Number(e.target.value))}
+          className="w-full"
+        />
+
+        <label className="text-[11px] text-neutral-300 flex justify-between">
+          Rotation <span className="text-white">{targetRotationDeg}°</span>
+        </label>
+        <input
+          type="range"
+          min={-6}
+          max={6}
+          step={1}
+          value={targetRotationDeg}
+          onChange={(e) => setTargetRotationDeg(Number(e.target.value))}
+          className="w-full"
+        />
+
+        <label className="text-[11px] text-neutral-300 flex justify-between">
+          Scale offset <span className="text-white">{targetScaleOffset.toFixed(3)}</span>
+        </label>
+        <input
+          type="range"
+          min={-0.08}
+          max={0.08}
+          step={0.002}
+          value={targetScaleOffset}
+          onChange={(e) => setTargetScaleOffset(Number(e.target.value))}
+          className="w-full"
+        />
+
+        <label className="text-[11px] text-neutral-300 flex justify-between">
+          Speed <span className="text-white">{speed.toFixed(2)}x</span>
+        </label>
+        <input
+          type="range"
+          min={0.5}
+          max={1.5}
+          step={0.05}
+          value={speed}
+          onChange={(e) => setSpeed(Number(e.target.value))}
+          className="w-full"
+        />
+
+        <label className="text-[11px] text-neutral-300 flex justify-between">
+          Saturation <span className="text-white">{targetSaturation.toFixed(2)}x</span>
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={2.5}
+          step={0.05}
+          value={targetSaturation}
+          onChange={(e) => setTargetSaturation(Number(e.target.value))}
+          className="w-full"
+        />
+      </div>
+
+      {/* bottom-left utilities */}
+      <div className={`absolute left-4 bottom-4 z-60 w-72 rounded-lg bg-black/70 text-white border border-white/20 p-3 text-xs flex flex-col gap-2 backdrop-blur-sm shadow-lg transition-opacity duration-300 ${
+        showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}>
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setActiveTab("effects")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
-              activeTab === "effects"
-                ? "bg-white/10 text-white border-b-2 border-white"
-                : "text-neutral-400 hover:text-white hover:bg-white/5"
-            }`}
+            onClick={() => {
+              setImageInputValue(imageA);
+              setShowImagePicker("A");
+            }}
+            className="px-2 py-1 rounded bg-white/10 text-white hover:bg-white/20"
           >
-            ✨ Effects
+            Edit A
           </button>
           <button
-            onClick={() => setActiveTab("images")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
-              activeTab === "images"
-                ? "bg-white/10 text-white border-b-2 border-white"
-                : "text-neutral-400 hover:text-white hover:bg-white/5"
-            }`}
+            onClick={() => {
+              setImageInputValue(imageB);
+              setShowImagePicker("B");
+            }}
+            className="px-2 py-1 rounded bg-white/10 text-white hover:bg-white/20"
           >
-            🖼️ Images
+            Edit B
           </button>
+
           <button
-            onClick={() => setActiveTab("export")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
-              activeTab === "export"
-                ? "bg-white/10 text-white border-b-2 border-white"
-                : "text-neutral-400 hover:text-white hover:bg-white/5"
-            }`}
+            onClick={() => {
+              setNoiseOverlay((v) => !v);
+            }}
+            className="px-2 py-1 rounded bg-white/10 text-white hover:bg-white/20"
           >
-            💾 Export
+            {noiseOverlay ? "Noise ON" : "Noise OFF"}
+          </button>
+
+          <button
+            onClick={() => setAutoshift((v) => !v)}
+            className="px-2 py-1 rounded bg-white/10 text-white hover:bg-white/20"
+            title="Auto subtle movement"
+          >
+            {autoshift ? "Auto" : "Manual"}
           </button>
         </div>
 
-        {/* Tab Content - Scrollable */}
-        <div className="overflow-y-auto flex-1 p-4 space-y-4 pb-24">
-          {activeTab === "effects" && (
-            <>
-              {/* Glitch Effects Group */}
-              <div className="space-y-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-xs font-semibold text-neutral-300 uppercase tracking-wide">Glitch Effects</h3>
-                
-                <div>
-                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
-                    Glitch Intensity <span className="text-white font-mono">{targetGlitch.toFixed(2)}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    value={targetGlitch}
-                    onChange={(e) => setTargetGlitch(Number(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
+        <div className="flex items-center gap-2">
+          <label className="text-[11px] text-neutral-300">Blend</label>
+          <select
+            value={blendMode}
+            onChange={(e) => setBlendMode(e.target.value as BlendMode)}
+            className="bg-black/40 border border-white/20 text-white rounded px-2 py-1 text-xs">
+            <option value="difference">difference</option>
+            <option value="overlay">overlay</option>
+            <option value="lighter">lighter</option>
+            <option value="screen">screen</option>
+            <option value="multiply">multiply</option>
+            <option value="source-over">source-over</option>
+          </select>
 
-                <div>
-                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
-                    Slices <span className="text-white font-mono">{targetSlices}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={2}
-                    max={24}
-                    step={1}
-                    value={targetSlices}
-                    onChange={(e) => setTargetSlices(Number(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
-                    RGB Shift <span className="text-white font-mono">{targetRgbShift.toFixed(2)}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={0.12}
-                    step={0.005}
-                    value={targetRgbShift}
-                    onChange={(e) => setTargetRgbShift(Number(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Visual Effects Group */}
-              <div className="space-y-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-xs font-semibold text-neutral-300 uppercase tracking-wide">Visual Effects</h3>
-                
-                <div>
-                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
-                    Grain <span className="text-white font-mono">{targetGrain.toFixed(2)}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={0.25}
-                    step={0.005}
-                    value={targetGrain}
-                    onChange={(e) => setTargetGrain(Number(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
-                    Vignette <span className="text-white font-mono">{targetVignette.toFixed(2)}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={0.3}
-                    step={0.005}
-                    value={targetVignette}
-                    onChange={(e) => setTargetVignette(Number(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
-                    Saturation <span className="text-white font-mono">{targetSaturation.toFixed(2)}x</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={0}
-                    max={2.5}
-                    step={0.05}
-                    value={targetSaturation}
-                    onChange={(e) => setTargetSaturation(Number(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Transform Group */}
-              <div className="space-y-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-xs font-semibold text-neutral-300 uppercase tracking-wide">Transform</h3>
-                
-                <div>
-                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
-                    Rotation <span className="text-white font-mono">{targetRotationDeg}°</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={-6}
-                    max={6}
-                    step={1}
-                    value={targetRotationDeg}
-                    onChange={(e) => setTargetRotationDeg(Number(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
-                    Scale Offset <span className="text-white font-mono">{targetScaleOffset.toFixed(3)}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={-0.08}
-                    max={0.08}
-                    step={0.002}
-                    value={targetScaleOffset}
-                    onChange={(e) => setTargetScaleOffset(Number(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
-                    Speed <span className="text-white font-mono">{speed.toFixed(2)}x</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={0.5}
-                    max={1.5}
-                    step={0.05}
-                    value={speed}
-                    onChange={(e) => setSpeed(Number(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              {/* Blend & Color Group */}
-              <div className="space-y-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-xs font-semibold text-neutral-300 uppercase tracking-wide">Blend & Color</h3>
-                
-                <div>
-                  <label className="text-[11px] text-neutral-400 mb-1 block">Blend Mode</label>
-                  <select
-                    value={blendMode}
-                    onChange={(e) => setBlendMode(e.target.value as BlendMode)}
-                    className="w-full bg-black/40 border border-white/20 text-white rounded px-3 py-2 text-sm"
-                  >
-                    <option value="difference">Difference</option>
-                    <option value="overlay">Overlay</option>
-                    <option value="lighter">Lighter</option>
-                    <option value="screen">Screen</option>
-                    <option value="multiply">Multiply</option>
-                    <option value="source-over">Source Over</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
-                    Hue Shift <span className="text-white font-mono">{tintHue}°</span>
-                  </label>
-                  <input
-                    type="range"
-                    min={-180}
-                    max={180}
-                    step={1}
-                    value={tintHue}
-                    onChange={(e) => setTintHue(Number(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    onClick={() => setNoiseOverlay((v) => !v)}
-                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${
-                      noiseOverlay ? "bg-white/20 text-white" : "bg-white/5 text-neutral-400 hover:bg-white/10"
-                    }`}
-                  >
-                    Noise {noiseOverlay ? "ON" : "OFF"}
-                  </button>
-                  <button
-                    onClick={() => setAutoshift((v) => !v)}
-                    className={`flex-1 px-3 py-2 rounded text-xs font-medium transition ${
-                      autoshift ? "bg-white/20 text-white" : "bg-white/5 text-neutral-400 hover:bg-white/10"
-                    }`}
-                  >
-                    Auto {autoshift ? "ON" : "OFF"}
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {activeTab === "images" && (
-            <>
-              {/* Image A */}
-              <div 
-                className={`space-y-3 bg-white/5 rounded-lg p-4 border-2 transition-all ${
-                  dragOver === "A" ? "border-blue-500 bg-blue-500/10" : "border-white/10"
-                }`}
-                onDragOver={(e) => handleDragOver(e, "A")}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, "A")}
-              >
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  🖼️ Image A
-                  {dragOver === "A" && <span className="text-xs text-blue-400">(Drop here)</span>}
-                </h3>
-                
-                {loadedImgs[0] && (
-                  <div className="aspect-video bg-black rounded overflow-hidden border border-white/20">
-                    <img 
-                      src={imageA} 
-                      alt="Image A Preview" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                
-                <button
-                  onClick={() => {
-                    setImageInputValue(imageA);
-                    setShowImagePicker("A");
-                  }}
-                  className="w-full px-4 py-2.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition font-medium text-sm"
-                >
-                  Change Image A
-                </button>
-
-                <p className="text-xs text-neutral-500">
-                  Drag & drop an image here or click to browse
-                </p>
-              </div>
-
-              {/* Image B */}
-              <div 
-                className={`space-y-3 bg-white/5 rounded-lg p-4 border-2 transition-all ${
-                  dragOver === "B" ? "border-blue-500 bg-blue-500/10" : "border-white/10"
-                }`}
-                onDragOver={(e) => handleDragOver(e, "B")}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, "B")}
-              >
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  🖼️ Image B
-                  {dragOver === "B" && <span className="text-xs text-blue-400">(Drop here)</span>}
-                </h3>
-                
-                {loadedImgs[1] && (
-                  <div className="aspect-video bg-black rounded overflow-hidden border border-white/20">
-                    <img 
-                      src={imageB} 
-                      alt="Image B Preview" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                
-                <button
-                  onClick={() => {
-                    setImageInputValue(imageB);
-                    setShowImagePicker("B");
-                  }}
-                  className="w-full px-4 py-2.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition font-medium text-sm"
-                >
-                  Change Image B
-                </button>
-
-                <p className="text-xs text-neutral-500">
-                  Drag & drop an image here or click to browse
-                </p>
-              </div>
-
-              <button
-                onClick={handleSwapImages}
-                className="w-full px-4 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-medium text-sm"
-              >
-                🔁 Swap Images A ⇄ B
-              </button>
-            </>
-          )}
-
-          {activeTab === "export" && (
-            <>
-              <div className="space-y-4">
-                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h3 className="text-sm font-semibold text-white mb-3">Screenshot</h3>
-                  <p className="text-xs text-neutral-400 mb-3">
-                    Capture the current frame as a high-quality PNG image
-                  </p>
-                  <button
-                    onClick={handleScreenshot}
-                    className="w-full px-4 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium flex items-center justify-center gap-2"
-                  >
-                    📷 Take Screenshot
-                  </button>
-                  <p className="text-xs text-neutral-500 mt-2">Keyboard: Press <kbd className="px-1 py-0.5 bg-white/10 rounded">S</kbd></p>
-                </div>
-
-                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h3 className="text-sm font-semibold text-white mb-3">Export GIF</h3>
-                  <p className="text-xs text-neutral-400 mb-3">
-                    Record 8 frames at 10fps (512px, optimized for web)
-                  </p>
-                  <button
-                    onClick={handleExportGif}
-                    disabled={!!exporting}
-                    className="w-full px-4 py-3 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {exporting === "gif" ? "⏳ Exporting..." : "🎨 Export as GIF"}
-                  </button>
-                </div>
-
-                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h3 className="text-sm font-semibold text-white mb-3">Export Video</h3>
-                  <p className="text-xs text-neutral-400 mb-3">
-                    Record ~0.8s WebM video at 12fps (720px, high quality)
-                  </p>
-                  <button
-                    onClick={handleRecordWebm}
-                    disabled={!!exporting}
-                    className="w-full px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {exporting === "webm" ? "⏳ Recording..." : "🎞 Export as Video"}
-                  </button>
-                </div>
-
-                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h3 className="text-sm font-semibold text-white mb-3">Randomize</h3>
-                  <p className="text-xs text-neutral-400 mb-3">
-                    Generate random effect parameters for inspiration
-                  </p>
-                  <button
-                    onClick={handleRandomize}
-                    className="w-full px-4 py-3 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition font-medium flex items-center justify-center gap-2"
-                  >
-                    🎲 Randomize All
-                  </button>
-                  <p className="text-xs text-neutral-500 mt-2">Keyboard: Press <kbd className="px-1 py-0.5 bg-white/10 rounded">R</kbd></p>
-                </div>
-              </div>
-            </>
-          )}
+          <label className="text-[11px] text-neutral-300">Hue</label>
+          <input
+            type="range"
+            min={-180}
+            max={180}
+            step={1}
+            value={tintHue}
+            onChange={(e) => setTintHue(Number(e.target.value))}
+            className="w-full"
+          />
         </div>
 
-        {/* Sidebar Footer */}
-        <div className="p-3 border-t border-white/10 bg-black/50 shrink-0">
-          <p className="text-[10px] text-neutral-500 text-center">
-            Space: Play/Pause • S: Screenshot • R: Random • W: Swap
-          </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              handleScreenshot();
+            }}
+            className="flex-1 px-3 py-2 rounded bg-lime-600 text-black font-semibold"
+          >
+            Screenshot
+          </button>
+          <button
+            onClick={() => {
+              setSeed(Math.floor(Math.random() * 99999));
+            }}
+            className="px-3 py-2 rounded bg-neutral-200 text-neutral-900 hover:bg-neutral-300 dark:bg-white/6 dark:text-white"
+            title="Reseed"
+          >
+            Reseed
+          </button>
         </div>
+
+        <div className="text-[10px] text-neutral-600 dark:text-neutral-500">
+          Tips: Space=play/pause, S=screenshot, R=randomize, W=swap images. Use gentle values for best screenshots.
+        </div>
+      </div>
+
+      {/* canvas container */}
+      <div className="flex-1 w-full h-full">
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full block"
+          style={{ display: "block" }}
+        />
+      </div>
+
+      {/* footer instruction */}
+      <div className={`absolute bottom-4 right-4 z-60 text-xs text-neutral-300 bg-black/70 px-3 py-1 rounded-md border border-white/20 shadow-lg backdrop-blur-sm transition-opacity duration-300 ${
+        showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}>
+        Use query params ?img1=/path.jpg&amp;img2=/path2.jpg or edit via buttons.
       </div>
 
       {/* Image Picker Modal */}
       {showImagePicker && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-neutral-900 rounded-xl shadow-2xl p-6 w-full max-w-md border border-white/20">
-            <h3 className="text-lg font-semibold mb-4 text-white">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-neutral-900 rounded-lg shadow-xl p-6 w-full max-w-md border border-neutral-200 dark:border-neutral-700">
+            <h3 className="text-lg font-semibold mb-4 text-neutral-900 dark:text-white">
               Select Image {showImagePicker}
             </h3>
             
             {/* File Upload */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 text-neutral-300">
+              <label className="block text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300">
                 Upload Local File
               </label>
               <input
@@ -1214,13 +1037,13 @@ function VisualizerContent() {
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, showImagePicker);
                 }}
-                className="w-full text-sm text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20 file:cursor-pointer"
+                className="w-full text-sm text-neutral-900 dark:text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-neutral-200 file:text-neutral-900 hover:file:bg-neutral-300 dark:file:bg-neutral-700 dark:file:text-white dark:hover:file:bg-neutral-600"
               />
             </div>
 
             {/* URL Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2 text-neutral-300">
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300">
                 Or Enter Image URL
               </label>
               <input
@@ -1233,27 +1056,27 @@ function VisualizerContent() {
                   }
                 }}
                 placeholder="https://example.com/image.jpg or /img/local.png"
-                className="w-full px-3 py-2 border border-white/20 rounded text-sm bg-black/40 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded text-sm bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <p className="text-xs text-neutral-500 mt-1">
-                Supports: http://, https://, relative paths, or data URLs
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                Supports: http://, https://, relative paths (/img/...), or data URLs
               </p>
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3">
+            <div className="flex gap-2 justify-end">
               <button
                 onClick={() => {
                   setShowImagePicker(null);
                   setImageInputValue("");
                 }}
-                className="flex-1 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
+                className="px-4 py-2 rounded bg-neutral-200 text-neutral-900 hover:bg-neutral-300 dark:bg-neutral-700 dark:text-white dark:hover:bg-neutral-600"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleUrlInput(imageInputValue, showImagePicker)}
-                className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-medium"
+                className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600"
               >
                 Apply URL
               </button>

@@ -1,5 +1,10 @@
 {
   "compilerOptions": {
+    "typeRoots": [
+      "./node_modules/@types",
+      "./types",
+      "./app/types"
+    ],
     "lib": [
       "dom",
       "dom.iterable",
@@ -33,7 +38,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "types/**/*.d.ts",
+    "app/types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules"

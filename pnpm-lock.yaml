@@ -134,6 +134,9 @@ importers:
       geist:
         specifier: latest
         version: 1.4.2(next@16.1.0-canary.12(react-dom@19.0.0(react@19.0.0))(react@19.0.0))
+      gifenc:
+        specifier: ^1.0.3
+        version: 1.0.3
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -2018,6 +2021,9 @@ packages:
   get-proto@1.0.1:
     resolution: {integrity: sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==}
     engines: {node: '>= 0.4'}
+
+  gifenc@1.0.3:
+    resolution: {integrity: sha512-xdr6AdrfGBcfzncONUOlXMBuc5wJDtOueE3c5rdG0oNgtINLD+f2iFZltrBRZYzACRbKr+mSVU/x98zv2u3jmw==}
 
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
@@ -4268,6 +4274,8 @@ snapshots:
     dependencies:
       dunder-proto: 1.0.1
       es-object-atoms: 1.1.1
+
+  gifenc@1.0.3: {}
 
   gopd@1.2.0: {}
 
