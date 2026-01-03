@@ -76,7 +76,7 @@ export const metadata: Metadata = {
       "Nyers, sötét humorú novellák a ’90-es évek/ezredforduló Budapestjéről: techno, acid, rave, drogkultúra és töréspontok.",
     images: [
       {
-        url: "/og.jpg",
+        url: "/og.png",
         width: 1200,
         height: 630,
         alt: "Vállalhatatlan — Y2K könyv: Budapest underground, techno és ’90-es évek",

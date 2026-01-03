@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     title: "Vállalhatatlan — Y2K | Underground Budapest a ’90-es évekből",
     description:
       "Nyers, sötét humorú novellák a ’90-es évek/ezredforduló Budapestjéről: techno, acid, rave, drogkultúra és töréspontok.",
-    images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "Vállalhatatlan — Y2K" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Vállalhatatlan — Y2K" }],
     locale: "hu_HU",
     alternateLocale: ["en_US"],
   },
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Vállalhatatlan — Y2K",
     description:
-      "Underground Budapest a ’90-es években: rave/techno, drogkultúra és kíméletlenül őszinte novellák.",
-    images: ["/og.jpg"],
+      "Underground Budapest a '90-es években: rave/techno, drogkultúra és kíméletlenül őszinte novellák.",
+    images: ["/og.png"],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   category: "books",

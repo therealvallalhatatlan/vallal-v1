@@ -35,10 +35,10 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/") ||
     pathname.startsWith("/static/") ||
     pathname.startsWith("/icons/") ||
-    pathname.startsWith("/img/") ||  // vagy pontosan /og.jpg
+    pathname.startsWith("/img/") ||  // vagy pontosan /og.png
     pathname.startsWith("/videos/") ||
     pathname.startsWith("/playlists/") ||
-    pathname === "/og.jpg" ||
+    pathname === "/og.png" ||
     pathname.startsWith("/manifest.webmanifest") ||
     pathname.startsWith("/favicon") ||
     pathname.startsWith("/public/") ||

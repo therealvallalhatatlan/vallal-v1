@@ -21,8 +21,8 @@ export async function generateMetadata(
   return {
     title,
     alternates: { canonical: url },
-    openGraph: { title, url, images: [{ url: '/og.jpg' }] },
-    twitter: { card: 'summary_large_image', title, images: ['/og.jpg'] },
+    openGraph: { title, url, images: [{ url: '/og.png' }] },
+    twitter: { card: 'summary_large_image', title, images: ['/og.png'] },
   }
 }
 
