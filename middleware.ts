@@ -16,6 +16,8 @@ const PUBLIC_PATHS = new Set<string>([
   "/gift",
   "/auth",      // Supabase magic link auth UI
   "/dashboard", // Supabase protected in-app; allow page load
+  "/admin/inbox",     // admin felület
+  "/messages",
 ]);
 
 export function middleware(req: NextRequest) {

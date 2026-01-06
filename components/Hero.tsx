@@ -79,7 +79,7 @@ export default function Hero() {
    Preorder card component
    ------------------------- */
 function PreorderCard({ onOpenDetails }: { onOpenDetails: () => void }) {
-  const title = "Karácsonyi különkiadás";
+  const title = "A következő 50 darab limitált példány";
   const subtitle = "Limitált, egyszeri újranyomás (50 példány).";
   const body = `Még idén elindítom az 50 példányos, sorszámozott és dedikált utánnyomást. Ez a batch egy karácsonyi különkiadás. Minden példányhoz jár egy kézzel írt rövid dedikáció, egy kis exkluzív kártya és matricák.`;
   const badge = "🎅 LIMITÁLT • 50 dedikált példány";
@@ -118,6 +118,10 @@ function PreorderCard({ onOpenDetails }: { onOpenDetails: () => void }) {
         <li className="flex items-start gap-2">
           <span className="text-lime-400">•</span>
           Dead drop városi kaland
+        </li>
+        <li className="flex items-start gap-2">
+          <span className="text-lime-400">•</span>
+          Terjesztés január közepétől
         </li>
       </ul>
 
