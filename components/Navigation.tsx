@@ -1,12 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { useSessionGuard } from "@/hooks/useSessionGuard";
+import { createClient } from "@/lib/browser";
 
 export default function Navigation() {
   const { session } = useSessionGuard();
   const userEmail = (session as any)?.user?.email || null;
+  const router = useRouter();
+  const supabase = createClient();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await supabase.auth.signOut();
+    router.replace("/auth");
+    setIsLoggingOut(false);
+  };
 
   return (
     <div className="relative">
@@ -31,6 +44,13 @@ export default function Navigation() {
               >
                 Tovább a readerre
               </Link>
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="text-xs text-neutral-400 hover:text-lime-300 transition-colors underline disabled:opacity-50 disabled:cursor-not-allowed normal-case tracking-normal"
+              >
+                {isLoggingOut ? "Kilépés..." : "Kijelentkezés"}
+              </button>
             </div>
           ) : (
             <div className="flex items-center justify-end">

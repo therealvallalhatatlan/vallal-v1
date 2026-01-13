@@ -33,7 +33,7 @@ function VisualizerContent() {
   const q2 = search?.get("img2");
 
   const defaultA = "/img/visuals/noise-54.jpg";
-  const defaultB = "/img/visuals/noise-2027.png";
+  const defaultB = "/img/visuals/noise-67.jpg";
 
   const [imageA, setImageA] = useState(q1 || defaultA);
   const [imageB, setImageB] = useState(q2 || defaultB);
@@ -47,6 +47,7 @@ function VisualizerContent() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const rafRef = useRef<number | null>(null);
+  const hiddenImageHostRef = useRef<HTMLDivElement | null>(null);
 
   const [loadedImgs, setLoadedImgs] = useState<HTMLImageElement[]>([]);
   const [playing, setPlaying] = useState(true);
@@ -221,6 +222,24 @@ function VisualizerContent() {
     let cancelled = false;
     setLoadedImgs([]);
     const imgs: HTMLImageElement[] = [];
+    const appended: HTMLImageElement[] = [];
+
+    // Ensure we have an offscreen host so GIFs keep animating while drawn to canvas
+    if (!hiddenImageHostRef.current && typeof document !== "undefined") {
+      const host = document.createElement("div");
+      host.style.position = "fixed";
+      host.style.top = "-9999px";
+      host.style.left = "-9999px";
+      host.style.width = "1px";
+      host.style.height = "1px";
+      host.style.opacity = "0";
+      host.style.overflow = "hidden";
+      host.style.pointerEvents = "none";
+      host.setAttribute("aria-hidden", "true");
+      document.body.appendChild(host);
+      hiddenImageHostRef.current = host;
+    }
+    const host = hiddenImageHostRef.current;
     [imageA, imageB].forEach((src, idx) => {
       const img = new Image();
       // Only set crossOrigin for external URLs, not for data URLs
@@ -229,6 +248,17 @@ function VisualizerContent() {
       }
       (img as any).decoding = "async";
       img.referrerPolicy = "no-referrer";
+      if (host) {
+        img.style.position = "absolute";
+        img.style.top = "0";
+        img.style.left = "0";
+        img.style.maxWidth = "none";
+        img.style.maxHeight = "none";
+        img.style.width = "auto";
+        img.style.height = "auto";
+        host.appendChild(img);
+        appended.push(img);
+      }
       img.onload = () => {
         if (cancelled) return;
         imgs[idx] = img;
@@ -260,6 +290,7 @@ function VisualizerContent() {
 
     return () => {
       cancelled = true;
+      appended.forEach((img) => img.remove());
     };
   }, [imageA, imageB, seed]);
 
@@ -1071,7 +1102,7 @@ function VisualizerContent() {
                 </button>
 
                 <p className="text-xs text-neutral-500">
-                  Drag & drop an image here or click to browse
+                  Drag & drop JPG/PNG/GIF (animated) or click to browse
                 </p>
               </div>
 
@@ -1110,7 +1141,7 @@ function VisualizerContent() {
                 </button>
 
                 <p className="text-xs text-neutral-500">
-                  Drag & drop an image here or click to browse
+                  Drag & drop JPG/PNG/GIF (animated) or click to browse
                 </p>
               </div>
 
@@ -1232,11 +1263,11 @@ function VisualizerContent() {
                     handleUrlInput(imageInputValue, showImagePicker);
                   }
                 }}
-                placeholder="https://example.com/image.jpg or /img/local.png"
+                placeholder="https://example.com/image.gif or /img/local.png"
                 className="w-full px-3 py-2 border border-white/20 rounded text-sm bg-black/40 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-xs text-neutral-500 mt-1">
-                Supports: http://, https://, relative paths, or data URLs
+                Supports: JPG / PNG / GIF (animated), via http(s), relative paths, or data URLs
               </p>
             </div>
 

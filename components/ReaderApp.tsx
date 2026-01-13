@@ -931,12 +931,16 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
         </div>
 
         {/* Alsó navigáció */}
-        <footer className="border-t border-neutral-800 bg-neutral-950/80 px-4 py-3">
+        <footer className={`border-t px-4 py-4 nav-footer ${themeMode === 'light' ? 'nav-footer-light' : 'nav-footer-dark'}`}>
           <div className="mx-auto flex max-w-[720px] items-center justify-between gap-3">
             <button
               onClick={goPrev}
               disabled={currentIndex <= 0}
-              className="text-xs md:text-sm px-3 py-2 rounded-full border border-neutral-700 text-neutral-300 disabled:opacity-40 disabled:cursor-default hover:bg-neutral-900 transition-colors"
+              className={`text-base md:text-lg font-medium px-6 py-3 rounded-full disabled:opacity-30 disabled:cursor-default transition-all duration-200 hover:scale-105 ${
+                themeMode === 'light'
+                  ? 'border-2 border-neutral-800 text-neutral-900 hover:bg-neutral-900/10 hover:border-neutral-900'
+                  : 'border-2 border-lime-500/60 text-lime-50 hover:bg-lime-500/15 hover:border-lime-500'
+              }`}
             >
               ← Előző
             </button>
@@ -952,7 +956,11 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
               disabled={
                 currentIndex === -1 || currentIndex >= stories.length - 1
               }
-              className="text-xs md:text-sm px-3 py-2 rounded-full border border-neutral-700 text-neutral-300 disabled:opacity-40 disabled:cursor-default hover:bg-neutral-900 transition-colors"
+              className={`text-base md:text-lg font-medium px-6 py-3 rounded-full disabled:opacity-30 disabled:cursor-default transition-all duration-200 hover:scale-105 ${
+                themeMode === 'light'
+                  ? 'border-2 border-neutral-800 text-neutral-900 hover:bg-neutral-900/10 hover:border-neutral-900'
+                  : 'border-2 border-lime-500/60 text-lime-50 hover:bg-lime-500/15 hover:border-lime-500'
+              }`}
             >
               Következő →
             </button>
@@ -1016,6 +1024,21 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
         }
         .reader-theme-light .bg-neutral-900 {
           background: rgba(226,232,240,0.45);
+        }
+        /* Navigation footer styles */
+        .nav-footer-dark {
+          border-color: rgba(132,204,22,0.2);
+          background: rgba(0,0,0,0.92);
+          backdrop-filter: blur(8px);
+        }
+        .nav-footer-light {
+          border-color: rgba(23,23,23,0.15);
+          background: rgba(248,250,252,0.95);
+          backdrop-filter: blur(8px);
+        }
+        /* Smooth button hover transitions */
+        button:disabled:hover {
+          transform: none !important;
         }
        `}</style>
      </div>
