@@ -7,8 +7,13 @@ export default function BgVideoGate() {
   const pathname = usePathname() || "/";
 
   const shouldRender = useMemo(() => {
-    // Reader should be as light as possible
-    return !(pathname === "/reader" || pathname.startsWith("/reader/"));
+    // Reader and AR should be as light as possible
+    return !(
+      pathname === "/reader" || 
+      pathname.startsWith("/reader/") || 
+      pathname === "/ar" || 
+      pathname.startsWith("/ar/")
+    );
   }, [pathname]);
 
   useEffect(() => {
