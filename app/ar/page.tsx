@@ -99,12 +99,32 @@ export default function ARPage() {
   }
 
   return (
-    <div className="fixed inset-0 w-full h-full">
+    <>
+      <style jsx global>{`
+        html, body {
+          margin: 0;
+          padding: 0;
+          overflow: hidden;
+          position: fixed;
+          width: 100%;
+          height: 100%;
+        }
+        a-scene {
+          display: block;
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+      `}</style>
+      
       <a-scene
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;"
+        arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
         vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true; precision: medium;"
+        renderer="logarithmicDepthBuffer: true; precision: medium; alpha: true;"
+        style={{ display: 'block', width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0 }}
       >
         <a-marker preset="hiro" emitevents={true}>
           <a-entity position="0 0.5 0">
@@ -132,17 +152,20 @@ export default function ARPage() {
       </a-scene>
 
       {/* Instructions overlay */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-lg text-center backdrop-blur-sm z-10">
-        <p className="text-sm font-medium">Point your camera at the Hiro marker</p>
+      <div 
+        className="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-lg text-center backdrop-blur-sm max-w-[90vw]"
+        style={{ zIndex: 9999, pointerEvents: 'auto' }}
+      >
+        <p className="text-xs font-medium m-0">Point camera at Hiro marker</p>
         <a
           href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-cyan-400 hover:text-cyan-300 underline mt-1 inline-block"
+          className="text-[10px] text-cyan-400 hover:text-cyan-300 underline inline-block"
         >
-          Download marker here
+          Download marker
         </a>
       </div>
-    </div>
+    </>
   )
 }
