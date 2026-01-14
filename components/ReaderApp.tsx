@@ -852,25 +852,6 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
           )}
           {currentStory ? (
             <article className="mx-auto max-w-[560px] md:max-w-[600px]">
-              {currentStory.type !== "cover" && (
-                <header className="mb-4 md:mb-6">
-                  <h1 className={`text-4xl md:text-5xl font-semibold tracking-tight ${headingTextColor}`}>
-                    {displayedTitle}
-                    {!isHeaderAnimationComplete && (
-                      <span className="animate-pulse">|</span>
-                    )}
-                  </h1>
-                  {isHeaderAnimationComplete && (
-                    <div className="mt-4 text-sm text-neutral-500 flex items-center gap-2 flex-wrap">
-                      <span>
-                        {currentStory.order}. a(z) {totalStories} novellából
-                      </span>
-                      <span>•</span>
-                      <span>~{currentStory.readingTime} perc olvasás</span>
-                    </div>
-                  )}
-                </header>
-              )}
 
               {/* Playlist blokk a címsor alatt – AudioPlayer-rel */}
               {playlistLoading && (
@@ -898,6 +879,27 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                  <code className="ml-1">{currentStory.slug}</code>)
                </div>
              )}
+
+              {currentStory.type !== "cover" && (
+                <header className="mb-4 md:mb-6">
+                  <h1 className={`text-4xl md:text-5xl font-semibold tracking-tight ${headingTextColor}`}>
+                    {displayedTitle}
+                    {!isHeaderAnimationComplete && (
+                      <span className="animate-pulse">|</span>
+                    )}
+                  </h1>
+                  {isHeaderAnimationComplete && (
+                    <div className="mt-4 text-sm text-neutral-500 flex items-center gap-2 flex-wrap">
+                      <span>
+                        {currentStory.order}. a(z) {totalStories} novellából
+                      </span>
+                      <span>•</span>
+                      <span>~{currentStory.readingTime} perc olvasás</span>
+                    </div>
+                  )}
+                </header>
+              )}
+
               {currentStory.type === "cover" ? (
                 <div className="mt-6">
                   <img

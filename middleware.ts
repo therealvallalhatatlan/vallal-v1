@@ -18,6 +18,7 @@ const PUBLIC_PATHS = new Set<string>([
   "/dashboard", // Supabase protected in-app; allow page load
   "/admin/inbox",     // admin felület
   "/messages",
+  "/ar",       // AR oldal
 ]);
 
 export function middleware(req: NextRequest) {
