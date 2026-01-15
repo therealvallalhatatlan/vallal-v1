@@ -158,7 +158,7 @@ export default function ARPage() {
       >
         <p className="text-xs font-medium m-0">Point camera at Hiro marker</p>
         <a
-          href="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.png"
+          href="/img/hiro.png"
           target="_blank"
           rel="noopener noreferrer"
           className="text-[10px] text-cyan-400 hover:text-cyan-300 underline inline-block"
