@@ -19,7 +19,7 @@ import OlvassBele from "@/components/OlvassBele";
 export default function Page() {
   return (
     <main className="text-zinc-200">
-      <TweetRotator messages={["A következő batch 3 nap múlva érkezik!!","Siess 7 db könyv maradt már csak!","Veronika aki dec.8.-án vásároltál - rossz emailcímet adtál meg, jelentkezz!","Nem csak dead drop - postán is kérhető, automatába","A következő batch január közepén érkezik"]} />
+      <TweetRotator messages={["Megérkezett az új batch, terjesztés indul!","Nyugodtan baszogass, írj rám!","therealvallalhatatlan@gmail.com", "Veronika aki dec.8.-án vásároltál - rossz emailcímet adtál meg, jelentkezz!","Nem csak dead drop - postán is kérhető, automatába"]} />
       <Navigation />
       <Hero />
       <Matricak />
