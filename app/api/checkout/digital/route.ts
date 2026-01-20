@@ -16,8 +16,8 @@ export async function POST() {
           quantity: 1,
         },
       ],
-      success_url: "https://vallalhatatlan.online/secret?from=/reader",
-      cancel_url: "https://vallalhatatlan.online/secret",
+      success_url: "https://vallalhatatlan.online/reader",
+      cancel_url: "https://vallalhatatlan.online/",
       allow_promotion_codes: true,
       billing_address_collection: "auto",
     });

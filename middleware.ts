@@ -2,13 +2,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const COOKIE_NAME = "vallalhatatlan_pass";
-const COOKIE_VALUE_OK = "ok";
-
 // Ezeket az útvonalakat NEM védjük jelszóval.
 const PUBLIC_PATHS = new Set<string>([
   "/",
-  "/secret",    // jelszó bekérő oldal
   "/novellak",  // ha ezt szabadon akarod hagyni
   "/checkout",  // ha ezt szabadon akarod hagyni
   "/visualizer",
@@ -61,18 +57,8 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Ha van érvényes süti → mehet minden: /reader, /holnaptol-leallok, stb.
-  const cookie = req.cookies.get(COOKIE_NAME);
-  if (cookie?.value === COOKIE_VALUE_OK) {
-    return NextResponse.next();
-  }
-
-  // Nincs jogosultság → irány a /secret, vigyük magunkkal, honnan jött.
-  const url = req.nextUrl.clone();
-  url.pathname = "/secret";
-  url.searchParams.set("from", pathname);
-
-  return NextResponse.redirect(url);
+  // All other routes are now public - cookie protection removed
+  return NextResponse.next();
 }
 
 // Minden route-ra lefut, kivéve a Next statikus dolgokat.
