@@ -33,7 +33,7 @@ function VisualizerContent() {
   const q2 = search?.get("img2");
 
   const defaultA = "/img/visuals/noise-54.jpg";
-  const defaultB = "/img/visuals/remeny.png";
+  const defaultB = "/img/visuals/noise-55.webp";
 
   const [imageA, setImageA] = useState(q1 || defaultA);
   const [imageB, setImageB] = useState(q2 || defaultB);
