@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 
 import { useSessionGuard } from "@/hooks/useSessionGuard";
 import { createClient } from "@/lib/browser";
@@ -47,9 +48,10 @@ export default function Navigation() {
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="text-xs text-neutral-400 hover:text-lime-300 transition-colors underline disabled:opacity-50 disabled:cursor-not-allowed normal-case tracking-normal"
+                aria-label="Kijelentkezés"
+                className="text-neutral-400 hover:text-lime-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed p-1"
               >
-                {isLoggingOut ? "Kilépés..." : "Kijelentkezés"}
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           ) : (

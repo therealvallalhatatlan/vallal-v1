@@ -33,14 +33,13 @@ function VisualizerContent() {
   const q2 = search?.get("img2");
 
   const defaultA = "/img/visuals/noise-54.jpg";
-  const defaultB = "/img/visuals/noise-55.webp";
+  const defaultB = "/img/visuals/noise-2026.png";
 
   const [imageA, setImageA] = useState(q1 || defaultA);
   const [imageB, setImageB] = useState(q2 || defaultB);
   const [showImagePicker, setShowImagePicker] = useState<"A" | "B" | null>(null);
   const [imageInputValue, setImageInputValue] = useState("");
-  const [showControls, setShowControls] = useState(true);
-  const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [toolbarOpen, setToolbarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"effects" | "images" | "export">("effects");
   const [dragOver, setDragOver] = useState<"A" | "B" | null>(null);
 
@@ -69,6 +68,24 @@ function VisualizerContent() {
   const [seed, setSeed] = useState(() => Math.floor(Math.random() * 99999));
   const [autoshift, setAutoshift] = useState(true);
 
+  // NEW EFFECTS
+  const [targetBloom, setTargetBloom] = useState(0);
+  const [targetMotionBlur, setTargetMotionBlur] = useState(0);
+  const [targetRipple, setTargetRipple] = useState(0);
+  const [targetEcho, setTargetEcho] = useState(0);
+  const [targetPixelation, setTargetPixelation] = useState(0);
+  const [targetKaleidoscope, setTargetKaleidoscope] = useState(0);
+  const [audioReactive, setAudioReactive] = useState(false);
+  const [audioSensitivity, setAudioSensitivity] = useState(1.0);
+  
+  // Audio-reactive state
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const micStreamRef = useRef<MediaStream | null>(null);
+  
+  // Echo/trail frame buffer
+  const prevFramesRef = useRef<ImageData[]>([]);
+
   // Preset configurations
   const presets = {
     glitchHeavy: {
@@ -82,6 +99,12 @@ function VisualizerContent() {
       rotation: 3,
       saturation: 1.2,
       blendMode: "difference" as BlendMode,
+      bloom: 0.3,
+      motionBlur: 0.15,
+      ripple: 0,
+      echo: 0.2,
+      pixelation: 0,
+      kaleidoscope: 0,
     },
     subtle: {
       name: "Subtle",
@@ -94,6 +117,12 @@ function VisualizerContent() {
       rotation: 0,
       saturation: 1.0,
       blendMode: "overlay" as BlendMode,
+      bloom: 0.1,
+      motionBlur: 0,
+      ripple: 0,
+      echo: 0,
+      pixelation: 0,
+      kaleidoscope: 0,
     },
     cyberpunk: {
       name: "Cyberpunk",
@@ -106,6 +135,12 @@ function VisualizerContent() {
       rotation: 2,
       saturation: 1.8,
       blendMode: "screen" as BlendMode,
+      bloom: 0.5,
+      motionBlur: 0.2,
+      ripple: 0.1,
+      echo: 0.25,
+      pixelation: 0,
+      kaleidoscope: 0,
     },
     retro: {
       name: "Retro VHS",
@@ -118,6 +153,12 @@ function VisualizerContent() {
       rotation: 1,
       saturation: 0.8,
       blendMode: "multiply" as BlendMode,
+      bloom: 0,
+      motionBlur: 0.1,
+      ripple: 0,
+      echo: 0.3,
+      pixelation: 0.05,
+      kaleidoscope: 0,
     },
   };
 
@@ -132,6 +173,12 @@ function VisualizerContent() {
     setTargetRotationDeg(preset.rotation);
     setTargetSaturation(preset.saturation);
     setBlendMode(preset.blendMode);
+    setTargetBloom(preset.bloom);
+    setTargetMotionBlur(preset.motionBlur);
+    setTargetRipple(preset.ripple);
+    setTargetEcho(preset.echo);
+    setTargetPixelation(preset.pixelation);
+    setTargetKaleidoscope(preset.kaleidoscope);
   }, []);
 
   // --- SMOOTHED RUNTIME VALUES (interpolated each frame) ---
@@ -145,6 +192,12 @@ function VisualizerContent() {
     rotation: targetRotationDeg,
     speed,
     saturation: targetSaturation,
+    bloom: targetBloom,
+    motionBlur: targetMotionBlur,
+    ripple: targetRipple,
+    echo: targetEcho,
+    pixelation: targetPixelation,
+    kaleidoscope: targetKaleidoscope,
   });
 
   // Handle file upload
@@ -294,6 +347,57 @@ function VisualizerContent() {
     };
   }, [imageA, imageB, seed]);
 
+  // Audio-reactive setup
+  useEffect(() => {
+    if (!audioReactive) {
+      // Clean up audio context if disabled
+      if (micStreamRef.current) {
+        micStreamRef.current.getTracks().forEach(track => track.stop());
+        micStreamRef.current = null;
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      analyserRef.current = null;
+      return;
+    }
+
+    // Setup audio context and microphone
+    const setupAudio = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        micStreamRef.current = stream;
+        
+        const audioContext = new AudioContext();
+        audioContextRef.current = audioContext;
+        
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.85;
+        analyserRef.current = analyser;
+        
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+      } catch (err) {
+        console.error('Failed to access microphone:', err);
+        setAudioReactive(false);
+        alert('Could not access microphone. Please grant permission.');
+      }
+    };
+
+    setupAudio();
+
+    return () => {
+      if (micStreamRef.current) {
+        micStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, [audioReactive]);
+
   // canvas sizing
   useEffect(() => {
     const c = canvasRef.current;
@@ -343,6 +447,42 @@ function VisualizerContent() {
       cur.current.vignette = lerp(cur.current.vignette, targetVignette, smooth);
       cur.current.scaleOffset = lerp(cur.current.scaleOffset, targetScaleOffset, smooth);
       cur.current.rotation = lerp(cur.current.rotation, targetRotationDeg, smooth);
+      cur.current.bloom = lerp(cur.current.bloom, targetBloom, smooth);
+      cur.current.motionBlur = lerp(cur.current.motionBlur, targetMotionBlur, smooth);
+      cur.current.ripple = lerp(cur.current.ripple, targetRipple, smooth);
+      cur.current.echo = lerp(cur.current.echo, targetEcho, smooth);
+      cur.current.pixelation = lerp(cur.current.pixelation, targetPixelation, smooth);
+      cur.current.kaleidoscope = lerp(cur.current.kaleidoscope, targetKaleidoscope, smooth);
+      
+      // Get audio data if audio-reactive is enabled
+      let audioEnergy = 0;
+      let bassEnergy = 0;
+      let midEnergy = 0;
+      let highEnergy = 0;
+      if (audioReactive && analyserRef.current) {
+        const bufferLength = analyserRef.current.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyserRef.current.getByteFrequencyData(dataArray);
+        const data = dataArray;
+        
+        // Calculate frequency band energies
+        const bassRange = [2, 30];
+        const midRange = [31, 90];
+        const highRange = [91, 256];
+        
+        const getAvg = (start: number, end: number) => {
+          let sum = 0;
+          for (let i = start; i <= Math.min(end, data.length - 1); i++) {
+            sum += data[i];
+          }
+          return sum / (end - start + 1) / 255;
+        };
+        
+        bassEnergy = getAvg(bassRange[0], bassRange[1]);
+        midEnergy = getAvg(midRange[0], midRange[1]);
+        highEnergy = getAvg(highRange[0], highRange[1]);
+        audioEnergy = (bassEnergy * 0.5 + midEnergy * 0.3 + highEnergy * 0.2) * audioSensitivity;
+      }
       cur.current.speed = lerp(cur.current.speed, speed, smooth);
       cur.current.saturation = lerp(cur.current.saturation, targetSaturation, smooth);
 
@@ -472,6 +612,149 @@ function VisualizerContent() {
       }
       ctx.globalAlpha = 1;
 
+      // === NEW EFFECTS ===
+      
+      // Pixelation effect
+      const pixelation = cur.current.pixelation + (audioReactive ? audioEnergy * 0.3 : 0);
+      if (pixelation > 0.01) {
+        try {
+          const pixelSize = Math.max(1, Math.floor(2 + pixelation * 48));
+          const smallW = Math.max(1, Math.floor(W / pixelSize));
+          const smallH = Math.max(1, Math.floor(H / pixelSize));
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = smallW;
+          tempCanvas.height = smallH;
+          const tempCtx = tempCanvas.getContext('2d');
+          if (tempCtx) {
+            tempCtx.drawImage(c, 0, 0, smallW, smallH);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(tempCanvas, 0, 0, W, H);
+            ctx.imageSmoothingEnabled = true;
+          }
+        } catch {}
+      }
+
+      // Ripple distortion effect
+      const ripple = cur.current.ripple + (audioReactive ? bassEnergy * 0.4 : 0);
+      if (ripple > 0.01) {
+        try {
+          const imgData = ctx.getImageData(0, 0, W, H);
+          const data = imgData.data;
+          const copy = new Uint8ClampedArray(data);
+          const amplitude = ripple * 20;
+          const frequency = 0.02 + ripple * 0.03;
+          const centerX = W / 2;
+          const centerY = H / 2;
+          
+          for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+              const dx = x - centerX;
+              const dy = y - centerY;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              const wave = Math.sin(distance * frequency - t * 2) * amplitude;
+              
+              const sourceX = Math.floor(x + (dx / distance) * wave);
+              const sourceY = Math.floor(y + (dy / distance) * wave);
+              
+              if (sourceX >= 0 && sourceX < W && sourceY >= 0 && sourceY < H) {
+                const targetIdx = (y * W + x) * 4;
+                const sourceIdx = (sourceY * W + sourceX) * 4;
+                data[targetIdx] = copy[sourceIdx];
+                data[targetIdx + 1] = copy[sourceIdx + 1];
+                data[targetIdx + 2] = copy[sourceIdx + 2];
+              }
+            }
+          }
+          ctx.putImageData(imgData, 0, 0);
+        } catch {}
+      }
+
+      // Kaleidoscope effect
+      const kaleidoscope = cur.current.kaleidoscope + (audioReactive ? midEnergy * 0.5 : 0);
+      if (kaleidoscope > 0.01) {
+        try {
+          const segments = Math.max(2, Math.floor(3 + kaleidoscope * 9));
+          const angleStep = (Math.PI * 2) / segments;
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = W;
+          tempCanvas.height = H;
+          const tempCtx = tempCanvas.getContext('2d');
+          if (tempCtx) {
+            tempCtx.drawImage(c, 0, 0);
+            ctx.clearRect(0, 0, W, H);
+            
+            for (let i = 0; i < segments; i++) {
+              ctx.save();
+              ctx.translate(W / 2, H / 2);
+              ctx.rotate(angleStep * i);
+              ctx.scale(i % 2 ? 1 : -1, 1);
+              ctx.globalAlpha = 0.7 + kaleidoscope * 0.3;
+              ctx.drawImage(tempCanvas, -W / 2, -H / 2);
+              ctx.restore();
+            }
+            ctx.globalAlpha = 1;
+          }
+        } catch {}
+      }
+
+      // Bloom/glow effect
+      const bloom = cur.current.bloom + (audioReactive ? highEnergy * 0.6 : 0);
+      if (bloom > 0.01) {
+        try {
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = W;
+          tempCanvas.height = H;
+          const tempCtx = tempCanvas.getContext('2d');
+          if (tempCtx) {
+            tempCtx.drawImage(c, 0, 0);
+            const blurAmount = Math.floor(2 + bloom * 28);
+            ctx.filter = `blur(${blurAmount}px) brightness(1.3)`;
+            ctx.globalAlpha = 0.4 + bloom * 0.4;
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.drawImage(tempCanvas, 0, 0);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+            ctx.filter = 'none';
+          }
+        } catch {}
+      }
+
+      // Motion blur effect (using echo frames)
+      const motionBlur = cur.current.motionBlur + (audioReactive ? audioEnergy * 0.25 : 0);
+      if (motionBlur > 0.01) {
+        try {
+          const currentFrame = ctx.getImageData(0, 0, W, H);
+          const blurFrames = Math.min(3, Math.floor(1 + motionBlur * 4));
+          
+          if (prevFramesRef.current.length >= blurFrames) {
+            ctx.globalAlpha = 0.3 + motionBlur * 0.5;
+            for (let i = 0; i < blurFrames && i < prevFramesRef.current.length; i++) {
+              ctx.putImageData(prevFramesRef.current[i], 0, 0);
+            }
+            ctx.globalAlpha = 1;
+          }
+          
+          prevFramesRef.current.unshift(currentFrame);
+          if (prevFramesRef.current.length > blurFrames) {
+            prevFramesRef.current = prevFramesRef.current.slice(0, blurFrames);
+          }
+        } catch {}
+      }
+
+      // Echo/trail effect
+      const echo = cur.current.echo + (audioReactive ? audioEnergy * 0.3 : 0);
+      if (echo > 0.01 && prevFramesRef.current.length > 0) {
+        try {
+          ctx.globalAlpha = 0.15 + echo * 0.35;
+          ctx.globalCompositeOperation = 'lighten';
+          for (let i = 0; i < Math.min(3, prevFramesRef.current.length); i++) {
+            ctx.putImageData(prevFramesRef.current[i], 0, 0);
+          }
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.globalAlpha = 1;
+        } catch {}
+      }
+
       // vignette
       ctx.fillStyle = `rgba(0,0,0,${vign})`;
       ctx.beginPath();
@@ -498,6 +781,14 @@ function VisualizerContent() {
     targetScaleOffset,
     targetRotationDeg,
     targetSaturation,
+    targetBloom,
+    targetMotionBlur,
+    targetRipple,
+    targetEcho,
+    targetPixelation,
+    targetKaleidoscope,
+    audioReactive,
+    audioSensitivity,
     blendMode,
     noiseOverlay,
     tintHue,
@@ -698,6 +989,14 @@ function VisualizerContent() {
     setTargetSaturation(0.8 + Math.random() * 0.9);
     setTintHue(Math.floor(Math.random() * 40) - 20);
     setBlendMode((["difference", "overlay", "lighter", "screen", "multiply"] as BlendMode[])[Math.floor(Math.random() * 5)]);
+    
+    // Randomize new effects
+    setTargetBloom(Math.random() * 0.6);
+    setTargetMotionBlur(Math.random() * 0.5);
+    setTargetRipple(Math.random() * 0.4);
+    setTargetEcho(Math.random() * 0.5);
+    setTargetPixelation(Math.random() * 0.3);
+    setTargetKaleidoscope(Math.random() * 0.4);
   }, []);
 
   const handleSwapImages = useCallback(() => {
@@ -706,35 +1005,6 @@ function VisualizerContent() {
       return imageB;
     });
   }, [imageB]);
-
-  // Mouse activity tracking - hide controls after 2 seconds of inactivity
-  useEffect(() => {
-    const handleMouseMove = () => {
-      setShowControls(true);
-      
-      if (hideControlsTimeoutRef.current) {
-        clearTimeout(hideControlsTimeoutRef.current);
-      }
-      
-      hideControlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 2000);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseenter", handleMouseMove);
-    
-    // Initial timeout
-    handleMouseMove();
-    
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseenter", handleMouseMove);
-      if (hideControlsTimeoutRef.current) {
-        clearTimeout(hideControlsTimeoutRef.current);
-      }
-    };
-  }, []);
 
   // keyboard shortcuts: space to pause/play, s for screenshot, r for randomize, w swap
   useEffect(() => {
@@ -763,24 +1033,33 @@ function VisualizerContent() {
         style={{ display: "block" }}
       />
 
+      {/* Toggle Button - Always Visible */}
+      <button
+        onClick={() => setToolbarOpen(!toolbarOpen)}
+        className="fixed bottom-6 left-6 z-70 w-14 h-14 rounded-full bg-black/95 border-2 border-lime-400 hover:bg-lime-400/10 transition-all flex items-center justify-center text-lime-400 hover:scale-110 backdrop-blur-xl shadow-lg shadow-lime-400/20"
+        title={toolbarOpen ? "Close Toolbar" : "Open Toolbar"}
+      >
+        <span className="text-2xl">{toolbarOpen ? "✕" : "⚙"}</span>
+      </button>
+
       {/* Bottom Toolbar - Fixed at Bottom */}
       <div className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-60 transition-all duration-300 ${
-        showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+        toolbarOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"
       }`}>
-        <div className="rounded-full bg-black/80 border border-white/20 px-6 py-3 text-sm flex items-center gap-3 backdrop-blur-md shadow-2xl">
+        <div className="rounded-full bg-black/95 border border-lime-400/30 px-6 py-3 text-sm flex items-center gap-3 backdrop-blur-xl">
           <button
             onClick={() => setPlaying((p) => !p)}
-            className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition font-medium flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center gap-2 border border-lime-400/30 hover:border-lime-400 text-xs"
             title="Play / Pause (Space)"
           >
             {playing ? "⏸" : "▶"} {playing ? "Pause" : "Play"}
           </button>
           
-          <div className="h-8 w-px bg-white/20"></div>
+          <div className="h-8 w-px bg-lime-400/20"></div>
           
           <button
             onClick={handleScreenshot}
-            className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center gap-2 border border-lime-400/30 hover:border-lime-400 text-xs"
             title="Screenshot (S)"
           >
             📷 Screenshot
@@ -789,65 +1068,65 @@ function VisualizerContent() {
           <button
             onClick={handleExportGif}
             disabled={!!exporting}
-            className="px-4 py-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center gap-2 border border-lime-400/30 hover:border-lime-400 disabled:opacity-30 disabled:cursor-not-allowed text-xs"
             title="Export GIF"
           >
-            {exporting === "gif" ? "⏳ Exporting..." : "🎨 Export GIF"}
+            {exporting === "gif" ? "⏳ Exporting..." : "🎨 GIF"}
           </button>
           
           <button
             onClick={handleRecordWebm}
             disabled={!!exporting}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center gap-2 border border-lime-400/30 hover:border-lime-400 disabled:opacity-30 disabled:cursor-not-allowed text-xs"
             title="Export Video"
           >
-            {exporting === "webm" ? "⏳ Recording..." : "🎞 Export Video"}
+            {exporting === "webm" ? "⏳ Recording..." : "🎞 Video"}
           </button>
 
-          <div className="h-8 w-px bg-white/20"></div>
+          <div className="h-8 w-px bg-lime-400/20"></div>
 
           <button
             onClick={handleRandomize}
-            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition font-medium flex items-center gap-2"
+            className="px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center gap-2 border border-lime-400/30 hover:border-lime-400 text-xs"
             title="Randomize (R)"
           >
-            🎲 Randomize
+            🎲 Random
           </button>
         </div>
       </div>
 
       {/* Main Sidebar */}
-      <div className={`absolute right-0 top-0 h-full w-80 bg-black/90 border-l border-white/10 backdrop-blur-xl shadow-2xl transition-all duration-300 flex flex-col ${
-        showControls ? "translate-x-0" : "translate-x-full"
+      <div className={`absolute right-0 top-0 h-full w-80 bg-black/95 border-l border-lime-400/30 backdrop-blur-xl transition-all duration-300 flex flex-col ${
+        toolbarOpen ? "translate-x-0" : "translate-x-full"
       }`}>
         {/* Tab Navigation */}
-        <div className="flex border-b border-white/10 shrink-0">
+        <div className="flex border-b border-lime-400/30 shrink-0">
           <button
             onClick={() => setActiveTab("effects")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
+            className={`flex-1 px-4 py-3 text-xs font-medium transition ${
               activeTab === "effects"
-                ? "bg-white/10 text-white border-b-2 border-white"
-                : "text-neutral-400 hover:text-white hover:bg-white/5"
+                ? "bg-lime-400/10 text-lime-400 border-b-2 border-lime-400"
+                : "text-neutral-500 hover:text-lime-400 hover:bg-lime-400/5"
             }`}
           >
             ✨ Effects
           </button>
           <button
             onClick={() => setActiveTab("images")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
+            className={`flex-1 px-4 py-3 text-xs font-medium transition ${
               activeTab === "images"
-                ? "bg-white/10 text-white border-b-2 border-white"
-                : "text-neutral-400 hover:text-white hover:bg-white/5"
+                ? "bg-lime-400/10 text-lime-400 border-b-2 border-lime-400"
+                : "text-neutral-500 hover:text-lime-400 hover:bg-lime-400/5"
             }`}
           >
             🖼️ Images
           </button>
           <button
             onClick={() => setActiveTab("export")}
-            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
+            className={`flex-1 px-4 py-3 text-xs font-medium transition ${
               activeTab === "export"
-                ? "bg-white/10 text-white border-b-2 border-white"
-                : "text-neutral-400 hover:text-white hover:bg-white/5"
+                ? "bg-lime-400/10 text-lime-400 border-b-2 border-lime-400"
+                : "text-neutral-500 hover:text-lime-400 hover:bg-lime-400/5"
             }`}
           >
             💾 Export
@@ -859,8 +1138,8 @@ function VisualizerContent() {
           {activeTab === "effects" && (
             <>
               {/* Glitch Effects Group */}
-              <div className="space-y-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-xs font-semibold text-neutral-300 uppercase tracking-wide">Glitch Effects</h3>
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
+                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">⚡ Glitch Effects</h3>
                 
                 <div>
                   <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
@@ -909,8 +1188,8 @@ function VisualizerContent() {
               </div>
 
               {/* Visual Effects Group */}
-              <div className="space-y-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-xs font-semibold text-neutral-300 uppercase tracking-wide">Visual Effects</h3>
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
+                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">🎨 Visual Effects</h3>
                 
                 <div>
                   <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
@@ -959,8 +1238,8 @@ function VisualizerContent() {
               </div>
 
               {/* Transform Group */}
-              <div className="space-y-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-xs font-semibold text-neutral-300 uppercase tracking-wide">Transform</h3>
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
+                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">🔄 Transform</h3>
                 
                 <div>
                   <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
@@ -1009,8 +1288,8 @@ function VisualizerContent() {
               </div>
 
               {/* Blend & Color Group */}
-              <div className="space-y-3 bg-white/5 rounded-lg p-3 border border-white/10">
-                <h3 className="text-xs font-semibold text-neutral-300 uppercase tracking-wide">Blend & Color</h3>
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
+                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">🌈 Blend & Color</h3>
                 
                 <div>
                   <label className="text-[11px] text-neutral-400 mb-1 block">Blend Mode</label>
@@ -1062,6 +1341,176 @@ function VisualizerContent() {
                   </button>
                 </div>
               </div>
+
+              {/* NEW EFFECTS Group */}
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
+                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">
+                  ✨ Advanced Effects
+                </h3>
+                
+                <div>
+                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
+                    Bloom/Glow <span className="text-white font-mono">{targetBloom.toFixed(2)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={targetBloom}
+                    onChange={(e) => setTargetBloom(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
+                    Motion Blur <span className="text-white font-mono">{targetMotionBlur.toFixed(2)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={targetMotionBlur}
+                    onChange={(e) => setTargetMotionBlur(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
+                    Ripple Distortion <span className="text-white font-mono">{targetRipple.toFixed(2)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={targetRipple}
+                    onChange={(e) => setTargetRipple(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
+                    Echo/Trail <span className="text-white font-mono">{targetEcho.toFixed(2)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={targetEcho}
+                    onChange={(e) => setTargetEcho(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
+                    Pixelation <span className="text-white font-mono">{targetPixelation.toFixed(2)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={targetPixelation}
+                    onChange={(e) => setTargetPixelation(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
+                    Kaleidoscope <span className="text-white font-mono">{targetKaleidoscope.toFixed(2)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={targetKaleidoscope}
+                    onChange={(e) => setTargetKaleidoscope(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Audio-Reactive Group */}
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
+                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">
+                  🎵 Audio Reactive
+                </h3>
+                
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] text-neutral-400">Enable Microphone</label>
+                  <button
+                    onClick={() => setAudioReactive((v) => !v)}
+                    className={`px-3 py-1.5 rounded border text-xs font-medium transition ${
+                      audioReactive ? "bg-lime-400/20 text-lime-400 border-lime-400" : "bg-black/50 text-neutral-500 border-neutral-700 hover:border-lime-400/50"
+                    }`}
+                  >
+                    {audioReactive ? "ON" : "OFF"}
+                  </button>
+                </div>
+
+                {audioReactive && (
+                  <div>
+                    <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
+                      Sensitivity <span className="text-white font-mono">{audioSensitivity.toFixed(2)}x</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={0.1}
+                      max={3}
+                      step={0.1}
+                      value={audioSensitivity}
+                      onChange={(e) => setAudioSensitivity(Number(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+                )}
+
+                <p className="text-[10px] text-neutral-500 leading-relaxed">
+                  {audioReactive 
+                    ? "🎤 Effects respond to audio input. Higher sensitivity = stronger reactions."
+                    : "Enable to modulate effects based on microphone input (bass, mid, high frequencies)."}
+                </p>
+              </div>
+
+              {/* Presets */}
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
+                <h3 className="text-xs font-semibold text-lime-400">⚙️ Presets</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => applyPreset("glitchHeavy")}
+                    className="px-3 py-2 rounded bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition text-xs font-medium border border-lime-400/30 hover:border-lime-400"
+                  >
+                    Glitch Heavy
+                  </button>
+                  <button
+                    onClick={() => applyPreset("subtle")}
+                    className="px-3 py-2 rounded bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition text-xs font-medium border border-lime-400/30 hover:border-lime-400"
+                  >
+                    Subtle
+                  </button>
+                  <button
+                    onClick={() => applyPreset("cyberpunk")}
+                    className="px-3 py-2 rounded bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition text-xs font-medium border border-lime-400/30 hover:border-lime-400"
+                  >
+                    Cyberpunk
+                  </button>
+                  <button
+                    onClick={() => applyPreset("retro")}
+                    className="px-3 py-2 rounded bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition text-xs font-medium border border-lime-400/30 hover:border-lime-400"
+                  >
+                    Retro VHS
+                  </button>
+                </div>
+              </div>
             </>
           )}
 
@@ -1069,16 +1518,16 @@ function VisualizerContent() {
             <>
               {/* Image A */}
               <div 
-                className={`space-y-3 bg-white/5 rounded-lg p-4 border-2 transition-all ${
-                  dragOver === "A" ? "border-blue-500 bg-blue-500/10" : "border-white/10"
+                className={`space-y-3 bg-black/40 rounded-lg p-4 border transition-all ${
+                  dragOver === "A" ? "border-lime-400 bg-lime-400/10" : "border-lime-400/20"
                 }`}
                 onDragOver={(e) => handleDragOver(e, "A")}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, "A")}
               >
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-lime-400 flex items-center gap-2">
                   🖼️ Image A
-                  {dragOver === "A" && <span className="text-xs text-blue-400">(Drop here)</span>}
+                  {dragOver === "A" && <span className="text-xs text-lime-300">(Drop here)</span>}
                 </h3>
                 
                 {loadedImgs[0] && (
@@ -1096,7 +1545,7 @@ function VisualizerContent() {
                     setImageInputValue(imageA);
                     setShowImagePicker("A");
                   }}
-                  className="w-full px-4 py-2.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition font-medium text-sm"
+                  className="w-full px-4 py-2.5 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium text-sm border border-lime-400/30 hover:border-lime-400"
                 >
                   Change Image A
                 </button>
@@ -1108,16 +1557,16 @@ function VisualizerContent() {
 
               {/* Image B */}
               <div 
-                className={`space-y-3 bg-white/5 rounded-lg p-4 border-2 transition-all ${
-                  dragOver === "B" ? "border-blue-500 bg-blue-500/10" : "border-white/10"
+                className={`space-y-3 bg-black/40 rounded-lg p-4 border transition-all ${
+                  dragOver === "B" ? "border-lime-400 bg-lime-400/10" : "border-lime-400/20"
                 }`}
                 onDragOver={(e) => handleDragOver(e, "B")}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, "B")}
               >
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-lime-400 flex items-center gap-2">
                   🖼️ Image B
-                  {dragOver === "B" && <span className="text-xs text-blue-400">(Drop here)</span>}
+                  {dragOver === "B" && <span className="text-xs text-lime-300">(Drop here)</span>}
                 </h3>
                 
                 {loadedImgs[1] && (
@@ -1135,7 +1584,7 @@ function VisualizerContent() {
                     setImageInputValue(imageB);
                     setShowImagePicker("B");
                   }}
-                  className="w-full px-4 py-2.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition font-medium text-sm"
+                  className="w-full px-4 py-2.5 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium text-sm border border-lime-400/30 hover:border-lime-400"
                 >
                   Change Image B
                 </button>
@@ -1147,7 +1596,7 @@ function VisualizerContent() {
 
               <button
                 onClick={handleSwapImages}
-                className="w-full px-4 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-medium text-sm"
+                className="w-full px-4 py-2.5 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium text-sm border border-lime-400/30 hover:border-lime-400"
               >
                 🔁 Swap Images A ⇄ B
               </button>
@@ -1157,60 +1606,60 @@ function VisualizerContent() {
           {activeTab === "export" && (
             <>
               <div className="space-y-4">
-                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h3 className="text-sm font-semibold text-white mb-3">Screenshot</h3>
+                <div className="bg-black/40 rounded-lg p-4 border border-lime-400/20">
+                  <h3 className="text-sm font-semibold text-lime-400 mb-3">📷 Screenshot</h3>
                   <p className="text-xs text-neutral-400 mb-3">
                     Capture the current frame as a high-quality PNG image
                   </p>
                   <button
                     onClick={handleScreenshot}
-                    className="w-full px-4 py-3 rounded-lg bg-green-600 text-white hover:bg-green-700 transition font-medium flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center justify-center gap-2 border border-lime-400/30 hover:border-lime-400"
                   >
                     📷 Take Screenshot
                   </button>
-                  <p className="text-xs text-neutral-500 mt-2">Keyboard: Press <kbd className="px-1 py-0.5 bg-white/10 rounded">S</kbd></p>
+                  <p className="text-xs text-neutral-500 mt-2">Keyboard: Press <kbd className="px-1 py-0.5 bg-lime-400/10 border border-lime-400/20 rounded text-lime-400">S</kbd></p>
                 </div>
 
-                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h3 className="text-sm font-semibold text-white mb-3">Export GIF</h3>
+                <div className="bg-black/40 rounded-lg p-4 border border-lime-400/20">
+                  <h3 className="text-sm font-semibold text-lime-400 mb-3">🎨 Export GIF</h3>
                   <p className="text-xs text-neutral-400 mb-3">
                     Record 8 frames at 10fps (512px, optimized for web)
                   </p>
                   <button
                     onClick={handleExportGif}
                     disabled={!!exporting}
-                    className="w-full px-4 py-3 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center justify-center gap-2 border border-lime-400/30 hover:border-lime-400 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     {exporting === "gif" ? "⏳ Exporting..." : "🎨 Export as GIF"}
                   </button>
                 </div>
 
-                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h3 className="text-sm font-semibold text-white mb-3">Export Video</h3>
+                <div className="bg-black/40 rounded-lg p-4 border border-lime-400/20">
+                  <h3 className="text-sm font-semibold text-lime-400 mb-3">🎞 Export Video</h3>
                   <p className="text-xs text-neutral-400 mb-3">
                     Record ~0.8s WebM video at 12fps (720px, high quality)
                   </p>
                   <button
                     onClick={handleRecordWebm}
                     disabled={!!exporting}
-                    className="w-full px-4 py-3 rounded-lg bg-red-600 text-white hover:bg-red-700 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center justify-center gap-2 border border-lime-400/30 hover:border-lime-400 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     {exporting === "webm" ? "⏳ Recording..." : "🎞 Export as Video"}
                   </button>
                 </div>
 
-                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h3 className="text-sm font-semibold text-white mb-3">Randomize</h3>
+                <div className="bg-black/40 rounded-lg p-4 border border-lime-400/20">
+                  <h3 className="text-sm font-semibold text-lime-400 mb-3">🎲 Randomize</h3>
                   <p className="text-xs text-neutral-400 mb-3">
                     Generate random effect parameters for inspiration
                   </p>
                   <button
                     onClick={handleRandomize}
-                    className="w-full px-4 py-3 rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition font-medium flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center justify-center gap-2 border border-lime-400/30 hover:border-lime-400"
                   >
                     🎲 Randomize All
                   </button>
-                  <p className="text-xs text-neutral-500 mt-2">Keyboard: Press <kbd className="px-1 py-0.5 bg-white/10 rounded">R</kbd></p>
+                  <p className="text-xs text-neutral-500 mt-2">Keyboard: Press <kbd className="px-1 py-0.5 bg-lime-400/10 border border-lime-400/20 rounded text-lime-400">R</kbd></p>
                 </div>
               </div>
             </>
@@ -1218,8 +1667,8 @@ function VisualizerContent() {
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-white/10 bg-black/50 shrink-0">
-          <p className="text-[10px] text-neutral-500 text-center">
+        <div className="p-3 border-t border-lime-400/20 bg-black/80 shrink-0">
+          <p className="text-[10px] text-lime-400 text-center">
             Space: Play/Pause • S: Screenshot • R: Random • W: Swap
           </p>
         </div>
@@ -1227,15 +1676,15 @@ function VisualizerContent() {
 
       {/* Image Picker Modal */}
       {showImagePicker && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-neutral-900 rounded-xl shadow-2xl p-6 w-full max-w-md border border-white/20">
-            <h3 className="text-lg font-semibold mb-4 text-white">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md">
+          <div className="bg-black/95 rounded-xl p-6 w-full max-w-md border border-lime-400/30">
+            <h3 className="text-lg font-semibold mb-4 text-lime-400">
               Select Image {showImagePicker}
             </h3>
             
             {/* File Upload */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2 text-neutral-300">
+              <label className="block text-xs font-medium mb-2 text-lime-400">
                 Upload Local File
               </label>
               <input
@@ -1245,13 +1694,13 @@ function VisualizerContent() {
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, showImagePicker);
                 }}
-                className="w-full text-sm text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20 file:cursor-pointer"
+                className="w-full text-sm text-lime-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-lime-400/30 file:text-sm file:font-medium file:bg-lime-400/10 file:text-lime-400 hover:file:bg-lime-400/20 file:cursor-pointer"
               />
             </div>
 
             {/* URL Input */}
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2 text-neutral-300">
+              <label className="block text-xs font-medium mb-2 text-lime-400">
                 Or Enter Image URL
               </label>
               <input
@@ -1264,7 +1713,7 @@ function VisualizerContent() {
                   }
                 }}
                 placeholder="https://example.com/image.gif or /img/local.png"
-                className="w-full px-3 py-2 border border-white/20 rounded text-sm bg-black/40 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-lime-400/30 rounded text-sm bg-black/60 text-lime-400 placeholder:text-neutral-600 focus:outline-none focus:border-lime-400"
               />
               <p className="text-xs text-neutral-500 mt-1">
                 Supports: JPG / PNG / GIF (animated), via http(s), relative paths, or data URLs
@@ -1278,13 +1727,13 @@ function VisualizerContent() {
                   setShowImagePicker(null);
                   setImageInputValue("");
                 }}
-                className="flex-1 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition"
+                className="flex-1 px-4 py-2 rounded-lg bg-black/50 text-neutral-400 hover:bg-lime-400/10 hover:text-lime-400 transition border border-neutral-700 hover:border-lime-400/50 font-medium text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleUrlInput(imageInputValue, showImagePicker)}
-                className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-medium"
+                className="flex-1 px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition border border-lime-400/30 hover:border-lime-400 font-medium text-sm"
               >
                 Apply URL
               </button>

@@ -869,3 +869,61 @@
   z-index: 1;
   min-height: 100dvh;
 }
+
+/* ===== MINIMALIST VISUALIZER STYLES ===== */
+
+/* Minimalist Slider Styling - Lime 400 Accent */
+input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  height: 3px;
+  border-radius: 1.5px;
+  background: rgba(163, 230, 53, 0.15);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 3px;
+  border-radius: 1.5px;
+  background: rgba(163, 230, 53, 0.15);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #a3e635;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #a3e635;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  background: #bef264;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  background: #bef264;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}

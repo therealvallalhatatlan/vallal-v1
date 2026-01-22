@@ -15,6 +15,7 @@ import Navigation from "@/components/Navigation";
 import CrewCoupon from "@/components/CrewCoupon";
 import Matricak from "@/components/matricak";
 import OlvassBele from "@/components/OlvassBele";
+import BookCounter from "@/components/BookCounter";
 
 export default function Page() {
   return (
@@ -22,6 +23,7 @@ export default function Page() {
       <TweetRotator messages={["Megérkezett az új batch, terjesztés indul!","Nyugodtan baszogass, írj rám!","therealvallalhatatlan@gmail.com", "Veronika aki dec.8.-án vásároltál - rossz emailcímet adtál meg, jelentkezz!","Nem csak dead drop - postán is kérhető, automatába"]} />
       <Navigation />
       <Hero />
+      <BookCounter />
       <Matricak />
       <Reviews />
       <OlvassBele />
