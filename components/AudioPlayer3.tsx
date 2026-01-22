@@ -541,30 +541,30 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
             <a
               href={`${apiUrl}?download=1`}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
+              className="group inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
-              ⬇ <span className="text-white font-medium">MP3</span> <span className="text-zinc-400">letöltés</span>
+              ⬇ <span className="text-zinc-400 group-hover:text-white font-medium">MP3</span> <span className="text-zinc-400">letöltés</span>
             </a>
             <button
               type="button"
               onClick={() => handleOpenPlatform('youtube')}
-              className="px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
+              className="group px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
-              <span className="text-red-500 font-medium">YouTube</span> <span className="text-zinc-400">keresés</span>
+              <span className="text-zinc-400 group-hover:text-red-500 font-medium">YouTube</span> <span className="text-zinc-400">keresés</span>
             </button>
             <button
               type="button"
               onClick={() => handleOpenPlatform('spotify')}
-              className="px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
+              className="group px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
-              <span className="text-emerald-500 font-medium">Spotify</span> <span className="text-zinc-400">keresés</span>
+              <span className="text-zinc-400 group-hover:text-emerald-500 font-medium">Spotify</span> <span className="text-zinc-400">keresés</span>
             </button>
             <button
               type="button"
               onClick={() => handleOpenPlatform('google')}
-              className="px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
+              className="group px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
-              <span className="text-blue-500 font-medium">Google</span> <span className="text-zinc-400">keresés</span>
+              <span className="text-zinc-400 group-hover:text-blue-500 font-medium">Google</span> <span className="text-zinc-400">keresés</span>
             </button>
                 </div>
               </div>
