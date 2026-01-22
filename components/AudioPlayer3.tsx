@@ -387,7 +387,7 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
     <div className="w-full max-w-full mb-12 overflow-hidden">
       <div
         ref={containerRef}
-        className={`w-full max-w-[380px] md:max-w-full mx-auto ${
+        className={`w-full max-w-[360px] md:max-w-full mx-auto ${
           isFullscreen ? 'fixed inset-0 z-50 bg-black p-0 m-0 max-w-none' : ''
         }`}
       >
