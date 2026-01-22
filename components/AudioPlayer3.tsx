@@ -387,44 +387,35 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
     <div className="w-full max-w-full mb-12">
       <div
         ref={containerRef}
-        className={`relative p-3 md:p-5 lg:p-6 rounded-3xl border overflow-hidden bg-transparent transition-all ${
-          isLight ? 'border-neutral-400' : 'border-neutral-700'
-        } ${
-          isFullscreen ? 'fixed inset-0 z-50 rounded-none bg-black p-0 m-0 max-w-none' : ''
+        className={`${
+          isFullscreen ? 'fixed inset-0 z-50 bg-black p-0 m-0 max-w-none' : ''
         }`}
       >
-        <div className={`absolute inset-0 -z-10 pointer-events-none ${
-          isFullscreen ? 'opacity-100' : 'opacity-60'
-        }`}>
-          <CanvasResponsive ref={canvasRef} />
-          <div className="absolute inset-0 bg-transparent" />
-        </div>
-
-        {/* Fullscreen overlay vezérlők */}
+        {/* Fullscreen mód */}
         {isFullscreen && (
-          <div className="absolute inset-0 flex flex-col justify-between p-8 z-10">
-            {/* Felső sor: Cím + Kilépés gomb */}
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-2xl md:text-4xl font-bold text-white drop-shadow-lg">
-                  {track.title}
-                </h2>
-                <p className="text-sm text-white/70 mt-2">
-                  {index + 1} / {tracks.length}
-                </p>
-              </div>
-              <button
-                onClick={toggleFullscreen}
-                className="h-12 w-12 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm transition-all flex items-center justify-center text-2xl"
-                aria-label="Kilépés a teljes képernyőből"
-              >
-                ✕
-              </button>
+          <div className="h-full flex flex-col">
+            <div className="flex-1 relative">
+              <CanvasResponsive ref={canvasRef} />
             </div>
+            <div className="p-8 space-y-4 bg-black/80 backdrop-blur-sm">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl md:text-4xl font-bold text-white drop-shadow-lg">
+                    {track.title}
+                  </h2>
+                  <p className="text-sm text-white/70 mt-2">
+                    {index + 1} / {tracks.length}
+                  </p>
+                </div>
+                <button
+                  onClick={toggleFullscreen}
+                  className="h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all flex items-center justify-center text-2xl"
+                  aria-label="Kilépés a teljes képernyőből"
+                >
+                  ✕
+                </button>
+              </div>
 
-            {/* Alsó sor: Vezérlők */}
-            <div className="space-y-4">
-              {/* Idővonal */}
               <div className="space-y-2">
                 <input
                   type="range"
@@ -441,11 +432,10 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
                 </div>
               </div>
 
-              {/* Play/Pause + Track Navigation */}
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={prev}
-                  className="h-12 w-12 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm transition-all flex items-center justify-center text-xl"
+                  className="h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all flex items-center justify-center text-xl"
                   aria-label="Előző"
                 >
                   ⏮
@@ -459,7 +449,7 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
                 </button>
                 <button
                   onClick={next}
-                  className="h-12 w-12 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm transition-all flex items-center justify-center text-xl"
+                  className="h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-sm transition-all flex items-center justify-center text-xl"
                   aria-label="Következő"
                 >
                   ⏭
@@ -469,37 +459,48 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
           </div>
         )}
 
-        {/* Normál vezérlők (csak ha nem fullscreen) */}
+        {/* Normál mód: Képernyő fent, vezérlők lent */}
         {!isFullscreen && (
-          <>
-        {/* fejléc: cím + vezérlők, mobilon egymás alatt */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
-          <div className="min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={handleCopyTitle}
-              onKeyDown={(e) =>
-                (e.key === 'Enter' || e.key === ' ') &&
-                (e.preventDefault(), handleCopyTitle())
-              }
-              className="group inline-flex max-w-full items-center gap-2 text-left"
-              aria-label="Cím másolása a vágólapra"
-              title={copied ? 'Másolva!' : 'Kattints a másoláshoz'}
-            >
-              <span
-                className={`truncate font-medium text-xs md:text-lg leading-snug group-hover:underline ${
-                  isLight ? 'text-neutral-700' : 'text-zinc-200'
-                }`}
-              >
-                {track.title}
-              </span>
-            </button>
-            <div className={`mt-1 text-[11px] ${isLight ? 'text-neutral-600' : 'text-zinc-500'}`}>
-              {index + 1} / {tracks.length}
+          <div className="space-y-4">
+            {/* Vizualizációs "képernyő" */}
+            <div className={`relative rounded-2xl overflow-hidden border-2 bg-black ${
+              isLight ? 'border-neutral-300' : 'border-neutral-700'
+            }`} style={{ aspectRatio: '16/9' }}>
+              <CanvasResponsive ref={canvasRef} />
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 self-start md:self-auto">
+            {/* Vezérlőpanel */}
+            <div className={`p-4 md:p-6 rounded-2xl border ${
+              isLight ? 'bg-white/80 border-neutral-300' : 'bg-neutral-900/80 border-neutral-700'
+            } backdrop-blur-sm space-y-4`}>
+              
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={handleCopyTitle}
+                    onKeyDown={(e) =>
+                      (e.key === 'Enter' || e.key === ' ') &&
+                      (e.preventDefault(), handleCopyTitle())
+                    }
+                    className="group inline-flex max-w-full items-center gap-2 text-left"
+                    aria-label="Cím másolása a vágólapra"
+                    title={copied ? 'Másolva!' : 'Kattints a másoláshoz'}
+                  >
+                    <span
+                      className={`truncate font-medium text-sm md:text-lg leading-snug group-hover:underline ${
+                        isLight ? 'text-neutral-700' : 'text-zinc-200'
+                      }`}
+                    >
+                      {track.title}
+                    </span>
+                  </button>
+                  <div className={`mt-1 text-[11px] ${isLight ? 'text-neutral-600' : 'text-zinc-500'}`}>
+                    {index + 1} / {tracks.length}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 self-start md:self-auto">
             <button
               onClick={toggle}
               className="h-10 w-10 rounded-full bg-gradient-to-b from-neutral-50 to-neutral-200 hover:from-white hover:to-neutral-100 text-neutral-900 text-sm font-semibold flex items-center justify-center transition-all shadow-lg hover:shadow-xl active:shadow-md active:translate-y-0.5"
@@ -518,26 +519,25 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
           </div>
         </div>
 
-        {/* idővonal */}
-        <div className="space-y-1 mb-4">
-          <input
-            type="range"
-            min={0}
-            max={1000}
-            value={Math.floor(progress * 1000)}
-            onChange={(e) => seek(Number(e.target.value) / 1000)}
-            className="w-full  accent-white "
-            aria-label="Idővonal"
-          />
-          <div className={`flex justify-between text-[11px] ${isLight ? 'text-neutral-600' : 'text-zinc-500'}`}>
-            <span>{fmtTime(currentTime)}</span>
-            <span>{fmtTime(duration)}</span>
-          </div>
-        </div>
+              {/* idővonal */}
+              <div className="space-y-1">
+                <input
+                  type="range"
+                  min={0}
+                  max={1000}
+                  value={Math.floor(progress * 1000)}
+                  onChange={(e) => seek(Number(e.target.value) / 1000)}
+                  className="w-full accent-white"
+                  aria-label="Idővonal"
+                />
+                <div className={`flex justify-between text-[11px] ${isLight ? 'text-neutral-600' : 'text-zinc-500'}`}>
+                  <span>{fmtTime(currentTime)}</span>
+                  <span>{fmtTime(duration)}</span>
+                </div>
+              </div>
 
-        {/* letöltés + platform gombok horizontálisan scrollozhatóan */}
-        <div className="mt-3">
-          <div className="flex gap-2 overflow-x-auto pb-0 scrollbar-thin">
+              {/* letöltés + platform gombok horizontálisan scrollozhatóan */}
+              <div className="flex gap-2 overflow-x-auto pb-0 scrollbar-thin">
             <a
               href={`${apiUrl}?download=1`}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap"
@@ -565,9 +565,9 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
             >
               <span className="text-blue-500 font-medium">Google</span> <span className="text-zinc-400">keresés</span>
             </button>
+              </div>
+            </div>
           </div>
-        </div>
-          </>
         )}
 
         <audio ref={audioRef} preload="none" className="hidden" />
