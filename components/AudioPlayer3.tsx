@@ -196,10 +196,6 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
       if (!document.fullscreenElement) {
         await containerRef.current.requestFullscreen()
         setIsFullscreen(true)
-        // Automatikusan indítjuk a lejátszást és vizualizációt
-        if (!playing) {
-          play()
-        }
       } else {
         await document.exitFullscreen()
         setIsFullscreen(false)
@@ -463,9 +459,16 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
           </div>
         )}
 
-        {/* Normál mód: Csak vezérlők */}
+        {/* Normál mód: Képernyő fent, vezérlők lent */}
         {!isFullscreen && (
-          <div className="w-full max-w-full">
+          <div className="space-y-4 w-full max-w-full">
+            {/* Vizualizációs "képernyő" */}
+            {/* <div className={`relative rounded-2xl overflow-hidden border-2 bg-black w-full max-w-full ${
+              isLight ? 'border-neutral-300' : 'border-neutral-700'
+            }`} style={{ aspectRatio: '16/9' }}>
+              <CanvasResponsive ref={canvasRef} />
+            </div> */}
+
             {/* Vezérlőpanel */}
             <div className={`p-3 md:p-6 rounded-2xl border w-full max-w-full ${
               isLight ? 'bg-white/80 border-neutral-300' : 'bg-neutral-900/80 border-neutral-700'
@@ -505,14 +508,14 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
             >
               {playing ? '⏸' : '▶'}
             </button>
-            <button
+            {/* <button
               onClick={toggleFullscreen}
               className="h-10 w-10 rounded-full bg-neutral-100 hover:bg-white text-neutral-900 text-xs flex items-center justify-center transition-all shadow-lg hover:shadow-xl"
               aria-label="Teljes képernyő"
               title="Teljes képernyő"
             >
               ⛶
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -534,34 +537,36 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
               </div>
 
               {/* letöltés + platform gombok horizontálisan scrollozhatóan */}
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin -mx-3 md:mx-0 px-3 md:px-0">
+              <div className="w-full overflow-hidden">
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
             <a
               href={`${apiUrl}?download=1`}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
               ⬇ <span className="text-white font-medium">MP3</span> <span className="text-zinc-400">letöltés</span>
             </a>
             <button
               type="button"
               onClick={() => handleOpenPlatform('youtube')}
-              className="px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <span className="text-red-500 font-medium">YouTube</span> <span className="text-zinc-400">keresés</span>
             </button>
             <button
               type="button"
               onClick={() => handleOpenPlatform('spotify')}
-              className="px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <span className="text-emerald-500 font-medium">Spotify</span> <span className="text-zinc-400">keresés</span>
             </button>
             <button
               type="button"
               onClick={() => handleOpenPlatform('google')}
-              className="px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap flex-shrink-0"
             >
               <span className="text-blue-500 font-medium">Google</span> <span className="text-zinc-400">keresés</span>
             </button>
+                </div>
               </div>
             </div>
           </div>
