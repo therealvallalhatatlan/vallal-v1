@@ -61,18 +61,24 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   // query: /api/comments?slug=xxx&limit=50
+  // if no slug provided, returns all comments
   const url = new URL(req.url);
   const slug = url.searchParams.get("slug");
   const limit = Number(url.searchParams.get("limit") || "100");
-  if (!slug) return NextResponse.json({ ok: false, error: "missing_slug" }, { status: 400 });
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("comments")
     .select("id,story_slug,author,body,created_at")
-    .eq("story_slug", slug)
     .eq("published", true)
     .order("created_at", { ascending: false })
     .limit(Math.min(200, limit));
+
+  // If slug is provided, filter by it
+  if (slug) {
+    query = query.eq("story_slug", slug);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Supabase select error", error);

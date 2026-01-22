@@ -100,6 +100,20 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   const lastYRef = useRef(0);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(false);
   const sidebarTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Tab state for sidebar
+  const [activeTab, setActiveTab] = useState<'novellak' | 'kommentek'>('novellak');
+  
+  // Comments state
+  type Comment = {
+    id: string;
+    author: string;
+    body: string;
+    created_at: string;
+    story_slug: string;
+  };
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
 
   // settings
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -183,6 +197,36 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
     }
   }, [stories, firstStory]);
 
+  // Fetch comments when Kommentek tab is active (all comments, not just current story)
+  useEffect(() => {
+    if (activeTab !== 'kommentek') {
+      return;
+    }
+
+    const fetchComments = async () => {
+      setCommentsLoading(true);
+      try {
+        // Fetch all comments without slug parameter
+        const res = await fetch('/api/comments');
+        if (res.ok) {
+          const data = await res.json();
+          const allComments = data.comments || [];
+          // Sort by created_at descending (newest first)
+          const sorted = allComments.sort((a: Comment, b: Comment) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          );
+          setComments(sorted);
+        }
+      } catch (error) {
+        console.error('Failed to fetch comments:', error);
+      } finally {
+        setCommentsLoading(false);
+      }
+    };
+
+    fetchComments();
+  }, [activeTab]);
+  
   // Betűméret betöltése localStorage-ból
   useEffect(() => {
     try {
@@ -556,42 +600,130 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
           </div>
         </div>
 
-        <div className={`flex-1 overflow-y-auto py-3 ${themeMode === 'light' ? 'sidebar-scrollbar-light' : 'sidebar-scrollbar'}`}>
-          {stories.map((story) => {
-            const isCover = story.type === "cover";
-            const isActive = story.slug === currentStory?.slug;
-            const isFinished =
-              readerState.finishedStories?.includes(story.slug) ?? false;
+        {/* Tab Navigation */}
+        <div className="flex border-b border-neutral-800" role="tablist">
+          <button
+            role="tab"
+            aria-selected={activeTab === 'novellak'}
+            onClick={() => setActiveTab('novellak')}
+            className={`flex-1 px-4 py-3 text-xs font-medium transition-colors border-b-2 ${
+              activeTab === 'novellak'
+                ? 'border-lime-400 text-lime-400'
+                : 'border-transparent text-neutral-500 hover:text-neutral-300'
+            }`}
+          >
+            Novellák
+          </button>
+          <button
+            role="tab"
+            aria-selected={activeTab === 'kommentek'}
+            onClick={() => setActiveTab('kommentek')}
+            className={`flex-1 px-4 py-3 text-xs font-medium transition-colors border-b-2 ${
+              activeTab === 'kommentek'
+                ? 'border-lime-400 text-lime-400'
+                : 'border-transparent text-neutral-500 hover:text-neutral-300'
+            }`}
+          >
+            Kommentek
+          </button>
+        </div>
 
-            return (
-              <button
-                key={story.slug}
-                onClick={() => handleSelectStory(story.slug)}
-                className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                  isActive
-                    ? "bg-neutral-900 text-neutral-200"
-                    : "text-neutral-400 hover:bg-neutral-900/70"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={`truncate ${
-                      !isCover && isFinished ? "line-through opacity-70" : ""
-                    }`}
-                  >
-                    {story.title}
-                  </span>
-                </div>
-                {!isCover && (
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
-                    <span>
-                      {story.order}. novella • ~{story.readingTime} perc
+        {/* Tab Panels */}
+        <div className="flex-1 overflow-hidden">
+          {/* Novellák tab panel */}
+          <div
+            role="tabpanel"
+            hidden={activeTab !== 'novellak'}
+            className={`h-full overflow-y-auto py-3 ${themeMode === 'light' ? 'sidebar-scrollbar-light' : 'sidebar-scrollbar'}`}
+          >
+            {stories.map((story) => {
+              const isCover = story.type === "cover";
+              const isActive = story.slug === currentStory?.slug;
+              const isFinished =
+                readerState.finishedStories?.includes(story.slug) ?? false;
+
+              return (
+                <button
+                  key={story.slug}
+                  onClick={() => handleSelectStory(story.slug)}
+                  className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                    isActive
+                      ? "bg-neutral-900 text-neutral-200"
+                      : "text-neutral-400 hover:bg-neutral-900/70"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`truncate ${
+                        !isCover && isFinished ? "line-through opacity-70" : ""
+                      }`}
+                    >
+                      {story.title}
                     </span>
                   </div>
-                )}
-              </button>
-            );
-          })}
+                  {!isCover && (
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-500">
+                      <span>
+                        {story.order}. novella • ~{story.readingTime} perc
+                      </span>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Kommentek tab panel */}
+          <div
+            role="tabpanel"
+            hidden={activeTab !== 'kommentek'}
+            className={`h-full overflow-y-auto py-3 px-4 space-y-4 ${themeMode === 'light' ? 'sidebar-scrollbar-light' : 'sidebar-scrollbar'}`}
+          >
+            {commentsLoading ? (
+              <div className="text-xs text-neutral-500 text-center py-8">
+                Kommentek betöltése...
+              </div>
+            ) : comments.length === 0 ? (
+              <div className="text-xs text-neutral-500 text-center py-8">
+                Még nincs hozzászólás.
+              </div>
+            ) : (
+              comments.map((comment) => {
+                const story = stories.find(s => s.slug === comment.story_slug);
+                return (
+                  <button
+                    key={comment.id}
+                    onClick={() => handleSelectStory(comment.story_slug)}
+                    className="w-full text-left border-b border-neutral-800 pb-3 last:border-0 hover:bg-neutral-900/50 transition-colors rounded px-2 py-2 -mx-2"
+                  >
+                    {story && (
+                      <div className="text-[10px] text-lime-400/70 mb-1.5 truncate flex items-center gap-1">
+                        📖 {story.title}
+                        <span className="text-neutral-600 ml-auto">→</span>
+                      </div>
+                    )}
+                    <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                      <span className="text-xs font-semibold text-neutral-300">
+                        {comment.author || 'Anonim'}
+                      </span>
+                      <span className="text-[10px] text-neutral-600">
+                        {new Date(comment.created_at).toLocaleString('hu-HU', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-400 whitespace-pre-wrap leading-relaxed">
+                      {comment.body}
+                    </p>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       </aside>
 
@@ -799,42 +931,130 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
               </div>
             </div>
 
-            <div className={`flex-1 overflow-y-auto py-3 ${themeMode === 'light' ? 'sidebar-scrollbar-light' : 'sidebar-scrollbar'}`}>
-              {stories.map((story) => {
-                const isActive = story.slug === currentStory?.slug;
-                const isCover = story.type === "cover";
-                const isFinished =
-                  readerState.finishedStories?.includes(story.slug) ?? false;
+            {/* Mobile Tab Navigation */}
+            <div className="flex border-b border-neutral-800" role="tablist">
+              <button
+                role="tab"
+                aria-selected={activeTab === 'novellak'}
+                onClick={() => setActiveTab('novellak')}
+                className={`flex-1 px-4 py-3 text-xs font-medium transition-colors border-b-2 ${
+                  activeTab === 'novellak'
+                    ? 'border-lime-400 text-lime-400'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-300'
+                }`}
+              >
+                Novellák
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeTab === 'kommentek'}
+                onClick={() => setActiveTab('kommentek')}
+                className={`flex-1 px-4 py-3 text-xs font-medium transition-colors border-b-2 ${
+                  activeTab === 'kommentek'
+                    ? 'border-lime-400 text-lime-400'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-300'
+                }`}
+              >
+                Kommentek
+              </button>
+            </div>
 
-                return (
-                  <button
-                    key={story.slug}
-                    onClick={() => handleSelectStoryFromMobileToc(story.slug)}
-                    className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                      isActive
-                        ? "bg-neutral-900 text-neutral-200"
-                        : "text-neutral-400 hover:bg-neutral-900/70"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span
-                        className={`truncate ${
-                          !isCover && isFinished
-                            ? "line-through opacity-70"
-                            : ""
-                        }`}
+            {/* Mobile Tab Panels */}
+            <div className="flex-1 overflow-hidden">
+              {/* Novellák tab panel */}
+              <div
+                role="tabpanel"
+                hidden={activeTab !== 'novellak'}
+                className={`h-full overflow-y-auto py-3 ${themeMode === 'light' ? 'sidebar-scrollbar-light' : 'sidebar-scrollbar'}`}
+              >
+                {stories.map((story) => {
+                  const isActive = story.slug === currentStory?.slug;
+                  const isCover = story.type === "cover";
+                  const isFinished =
+                    readerState.finishedStories?.includes(story.slug) ?? false;
+
+                  return (
+                    <button
+                      key={story.slug}
+                      onClick={() => handleSelectStoryFromMobileToc(story.slug)}
+                      className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                        isActive
+                          ? "bg-neutral-900 text-neutral-200"
+                          : "text-neutral-400 hover:bg-neutral-900/70"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className={`truncate ${
+                            !isCover && isFinished
+                              ? "line-through opacity-70"
+                              : ""
+                          }`}
+                        >
+                          {story.title}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-800">
+                        <span>
+                          {story.order}. novella • ~{story.readingTime} perc
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Kommentek tab panel */}
+              <div
+                role="tabpanel"
+                hidden={activeTab !== 'kommentek'}
+                className={`h-full overflow-y-auto py-3 px-4 space-y-4 ${themeMode === 'light' ? 'sidebar-scrollbar-light' : 'sidebar-scrollbar'}`}
+              >
+                {commentsLoading ? (
+                  <div className="text-xs text-neutral-500 text-center py-8">
+                    Kommentek betöltése...
+                  </div>
+                ) : comments.length === 0 ? (
+                  <div className="text-xs text-neutral-500 text-center py-8">
+                    Még nincs hozzászólás.
+                  </div>
+                ) : (
+                  comments.map((comment) => {
+                    const story = stories.find(s => s.slug === comment.story_slug);
+                    return (
+                      <button
+                        key={comment.id}
+                        onClick={() => handleSelectStoryFromMobileToc(comment.story_slug)}
+                        className="w-full text-left border-b border-neutral-800 pb-3 last:border-0 hover:bg-neutral-900/50 transition-colors rounded px-2 py-2 -mx-2"
                       >
-                        {story.title}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-[11px] text-neutral-800">
-                      <span>
-                        {story.order}. novella • ~{story.readingTime} perc
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
+                        {story && (
+                          <div className="text-[10px] text-lime-400/70 mb-1.5 truncate flex items-center gap-1">
+                            📖 {story.title}
+                            <span className="text-neutral-600 ml-auto">→</span>
+                          </div>
+                        )}
+                        <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                          <span className="text-xs font-semibold text-neutral-300">
+                            {comment.author || 'Anonim'}
+                          </span>
+                          <span className="text-[10px] text-neutral-600">
+                            {new Date(comment.created_at).toLocaleString('hu-HU', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-neutral-400 whitespace-pre-wrap leading-relaxed">
+                          {comment.body}
+                        </p>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </SheetContent>
         </Sheet>
