@@ -196,6 +196,10 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
       if (!document.fullscreenElement) {
         await containerRef.current.requestFullscreen()
         setIsFullscreen(true)
+        // Automatikusan indítjuk a lejátszást és vizualizációt
+        if (!playing) {
+          play()
+        }
       } else {
         await document.exitFullscreen()
         setIsFullscreen(false)
@@ -459,18 +463,11 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
           </div>
         )}
 
-        {/* Normál mód: Képernyő fent, vezérlők lent */}
+        {/* Normál mód: Csak vezérlők */}
         {!isFullscreen && (
-          <div className="space-y-4 w-full overflow-hidden">
-            {/* Vizualizációs "képernyő" */}
-            <div className={`relative rounded-2xl overflow-hidden border-2 bg-black w-full ${
-              isLight ? 'border-neutral-300' : 'border-neutral-700'
-            }`} style={{ aspectRatio: '16/9' }}>
-              <CanvasResponsive ref={canvasRef} />
-            </div>
-
+          <div className="w-full max-w-full">
             {/* Vezérlőpanel */}
-            <div className={`p-3 md:p-6 rounded-2xl border w-full ${
+            <div className={`p-3 md:p-6 rounded-2xl border w-full max-w-full ${
               isLight ? 'bg-white/80 border-neutral-300' : 'bg-neutral-900/80 border-neutral-700'
             } backdrop-blur-sm space-y-4`}>
               
