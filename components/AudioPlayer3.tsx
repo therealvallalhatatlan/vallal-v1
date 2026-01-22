@@ -362,8 +362,8 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
   return (
     <div className="w-full max-w-full">
       <div
-        className={`relative p-3 md:p-5 lg:p-6 rounded-3xl border overflow-hidden ${
-          isLight ? 'bg-white/60 border-neutral-300/40' : 'bg-black/0 border-neutral-600/10'
+        className={`relative p-3 md:p-5 lg:p-6 rounded-3xl border overflow-hidden bg-neutral-900 ${
+          isLight ? 'border-neutral-400' : 'border-neutral-700'
         }`}
       >
         <div className="absolute inset-0 -z-10 pointer-events-none opacity-60">

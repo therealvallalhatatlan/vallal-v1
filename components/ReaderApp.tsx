@@ -120,6 +120,12 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   const [fontSize, setFontSize] = useState<number>(19); // alap betűméret px-ben
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>('dark');
   const [audioPlayerVisible, setAudioPlayerVisible] = useState<boolean>(true);
+  
+  // New typography settings
+  const [lineHeight, setLineHeight] = useState<number>(1.7); // 1.4 - 2.2
+  const [fontFamily, setFontFamily] = useState<'serif' | 'sans'>('serif');
+  const [textWidth, setTextWidth] = useState<'narrow' | 'normal' | 'wide'>('normal');
+  const [paragraphSpacing, setParagraphSpacing] = useState<number>(1.5); // 1.0 - 2.5
 
   // typewriter effect state
   const [displayedTitle, setDisplayedTitle] = useState<string>("");
@@ -241,6 +247,18 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
       }
       if (typeof parsed.audioPlayerVisible === "boolean") {
         setAudioPlayerVisible(parsed.audioPlayerVisible);
+      }
+      if (typeof parsed.lineHeight === "number") {
+        setLineHeight(parsed.lineHeight);
+      }
+      if (parsed.fontFamily === "serif" || parsed.fontFamily === "sans") {
+        setFontFamily(parsed.fontFamily);
+      }
+      if (parsed.textWidth === "narrow" || parsed.textWidth === "normal" || parsed.textWidth === "wide") {
+        setTextWidth(parsed.textWidth);
+      }
+      if (typeof parsed.paragraphSpacing === "number") {
+        setParagraphSpacing(parsed.paragraphSpacing);
       }
     } catch {
       // ignore
@@ -488,7 +506,11 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   const persistSettings = (
     nextFontSize: number,
     nextTheme: 'dark' | 'light',
-    nextAudioPlayerVisible?: boolean
+    nextAudioPlayerVisible?: boolean,
+    nextLineHeight?: number,
+    nextFontFamily?: 'serif' | 'sans',
+    nextTextWidth?: 'narrow' | 'normal' | 'wide',
+    nextParagraphSpacing?: number
   ) => {
      try {
        window.localStorage.setItem(
@@ -497,6 +519,10 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
            fontSize: nextFontSize,
            themeMode: nextTheme,
            audioPlayerVisible: nextAudioPlayerVisible ?? audioPlayerVisible,
+           lineHeight: nextLineHeight ?? lineHeight,
+           fontFamily: nextFontFamily ?? fontFamily,
+           textWidth: nextTextWidth ?? textWidth,
+           paragraphSpacing: nextParagraphSpacing ?? paragraphSpacing,
          })
        );
      } catch {
@@ -526,6 +552,32 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
       return next;
     });
   };
+  
+  const changeLineHeight = (value: number) => {
+    const newHeight = Math.max(1.4, Math.min(2.2, value));
+    setLineHeight(newHeight);
+    persistSettings(fontSize, themeMode, audioPlayerVisible, newHeight);
+  };
+  
+  const toggleFontFamily = () => {
+    setFontFamily((prev) => {
+      const next = prev === 'serif' ? 'sans' : 'serif';
+      persistSettings(fontSize, themeMode, audioPlayerVisible, lineHeight, next);
+      return next;
+    });
+  };
+  
+  const changeTextWidth = (width: 'narrow' | 'normal' | 'wide') => {
+    setTextWidth(width);
+    persistSettings(fontSize, themeMode, audioPlayerVisible, lineHeight, fontFamily, width);
+  };
+  
+  const changeParagraphSpacing = (value: number) => {
+    const newSpacing = Math.max(1.0, Math.min(2.5, value));
+    setParagraphSpacing(newSpacing);
+    persistSettings(fontSize, themeMode, audioPlayerVisible, lineHeight, fontFamily, textWidth, newSpacing);
+  };
+  
   const contentTextColor = themeMode === 'light' ? 'text-neutral-700' : 'text-neutral-400';
   const headingTextColor = themeMode === 'light' ? 'text-neutral-600' : 'text-neutral-200';
 
@@ -800,73 +852,166 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                     </SheetTitle>
                   </SheetHeader>
                   <div className="p-4 space-y-6">
-                    {/* Betűméret */}
-                    <div className="space-y-2">
-                      <p className="text-sm text-neutral-400">Betűméret</p>
-                      <div className="flex items-center gap-3">
+                    {/* Typography Section */}
+                    <div className="space-y-4 pb-4 border-b border-neutral-800">
+                      <h3 className="text-xs uppercase tracking-wider text-lime-400/70 font-semibold">Tipográfia</h3>
+                      
+                      {/* Betűméret */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-neutral-400">Betűméret</p>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => changeFontSize(-2)}
+                            className="px-3 py-1 text-lg border border-neutral-600 rounded hover:bg-neutral-800 transition"
+                          >
+                            –
+                          </button>
+                          <span className="text-base font-medium w-12 text-center">
+                            {fontSize}px
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => changeFontSize(2)}
+                            className="px-3 py-1 text-lg border border-neutral-600 rounded hover:bg-neutral-800 transition"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Line Height */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-neutral-400">Sorköz</p>
+                          <span className="text-xs text-neutral-500">{lineHeight.toFixed(1)}x</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1.4"
+                          max="2.2"
+                          step="0.1"
+                          value={lineHeight}
+                          onChange={(e) => changeLineHeight(Number(e.target.value))}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-[10px] text-neutral-600">
+                          <span>Szűk</span>
+                          <span>Légies</span>
+                        </div>
+                      </div>
+
+                      {/* Font Family */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-neutral-400">Betűtípus</p>
                         <button
                           type="button"
-                          onClick={() => changeFontSize(-2)}
-                          className="px-3 py-1 text-lg border border-neutral-600 rounded hover:bg-neutral-800"
+                          onClick={toggleFontFamily}
+                          className="w-full px-3 py-2 text-sm border border-neutral-600 rounded hover:bg-neutral-800 text-neutral-300 transition"
                         >
-                          –
-                        </button>
-                        <span className="text-base font-medium w-12 text-center">
-                          {fontSize}px
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => changeFontSize(2)}
-                          className="px-3 py-1 text-lg border border-neutral-600 rounded hover:bg-neutral-800"
-                        >
-                          +
+                          {fontFamily === 'serif' ? '📖 Serif (Klasszikus)' : '🔤 Sans-serif (Modern)'}
                         </button>
                       </div>
-                      <p className="text-[11px] text-neutral-500">
-                        Kisebb kijelzőn 16–20px, desktopon 18–24px körül
-                        kényelmes.
-                      </p>
+
+                      {/* Text Width */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-neutral-400">Szöveg szélesség</p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => changeTextWidth('narrow')}
+                            className={`flex-1 px-3 py-2 text-xs border rounded transition ${
+                              textWidth === 'narrow'
+                                ? 'border-lime-400 bg-lime-400/10 text-lime-400'
+                                : 'border-neutral-600 text-neutral-400 hover:bg-neutral-800'
+                            }`}
+                          >
+                            Keskeny
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => changeTextWidth('normal')}
+                            className={`flex-1 px-3 py-2 text-xs border rounded transition ${
+                              textWidth === 'normal'
+                                ? 'border-lime-400 bg-lime-400/10 text-lime-400'
+                                : 'border-neutral-600 text-neutral-400 hover:bg-neutral-800'
+                            }`}
+                          >
+                            Normál
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => changeTextWidth('wide')}
+                            className={`flex-1 px-3 py-2 text-xs border rounded transition ${
+                              textWidth === 'wide'
+                                ? 'border-lime-400 bg-lime-400/10 text-lime-400'
+                                : 'border-neutral-600 text-neutral-400 hover:bg-neutral-800'
+                            }`}
+                          >
+                            Széles
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Paragraph Spacing */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-neutral-400">Bekezdés távolság</p>
+                          <span className="text-xs text-neutral-500">{paragraphSpacing.toFixed(1)}em</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1.0"
+                          max="2.5"
+                          step="0.1"
+                          value={paragraphSpacing}
+                          onChange={(e) => changeParagraphSpacing(Number(e.target.value))}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-[10px] text-neutral-600">
+                          <span>Kompakt</span>
+                          <span>Tágos</span>
+                        </div>
+                      </div>
                     </div>
-                    {/* Audio Player toggle */}
 
-
-                    {/* Theme switcher */}
-                    <div className="space-y-2">
-                      <p className="text-sm text-neutral-400">Megjelenés</p>
-                      <button
-                        type="button"
-                        onClick={toggleThemeMode}
-                        className="px-3 py-2 text-sm border border-neutral-600 rounded-full hover:bg-neutral-800 text-neutral-300"
-                        aria-pressed={themeMode === 'light'}
-                      >
-                        {themeMode === 'light' ? 'Világos mód aktív' : 'Váltás világos módra'}
-                      </button>
-                      <p className="text-[11px] text-neutral-500">
-                        Csak a tartalmi felület világosodik ki, a vezérlők maradnak sötétek.
-                      </p>
+                    {/* Appearance Section */}
+                    <div className="space-y-4 pb-4 border-b border-neutral-800">
+                      <h3 className="text-xs uppercase tracking-wider text-lime-400/70 font-semibold">Megjelenés</h3>
+                      
+                      {/* Theme switcher */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-neutral-400">Téma</p>
+                        <button
+                          type="button"
+                          onClick={toggleThemeMode}
+                          className="w-full px-3 py-2 text-sm border border-neutral-600 rounded hover:bg-neutral-800 text-neutral-300 transition"
+                          aria-pressed={themeMode === 'light'}
+                        >
+                          {themeMode === 'light' ? '☀️ Világos mód' : '🌙 Sötét mód'}
+                        </button>
+                        <p className="text-[11px] text-neutral-500">
+                          A tartalom háttere változik, az interfész sötét marad.
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Audio Player toggle */}
-                    <div className="space-y-2">
-                      <p className="text-sm text-neutral-400">Audioplayer</p>
-                      <button
-                        type="button"
-                        onClick={toggleAudioPlayer}
-                        className="px-3 py-2 text-sm border border-neutral-600 rounded-full hover:bg-neutral-800 text-neutral-300"
-                        aria-pressed={audioPlayerVisible}
-                      >
-                        {audioPlayerVisible ? 'Audioplayer látható' : 'Audioplayer rejtett'}
-                      </button>
-                      <p className="text-[11px] text-neutral-500">
-                        Az audio lejátszó megjelenítésének be/kikapcsolása.
-                      </p>
-                    </div>
-
-                    {/* Theme placeholder */}
-                    <div className="space-y-2 opacity-50">
-                      <p className="text-sm text-neutral-500">
-                        Theme váltás (hamarosan)
-                      </p>
+                    {/* Features Section */}
+                    <div className="space-y-4">
+                      <h3 className="text-xs uppercase tracking-wider text-lime-400/70 font-semibold">Funkciók</h3>
+                      
+                      {/* Audio Player toggle */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-neutral-400">Audioplayer</p>
+                        <button
+                          type="button"
+                          onClick={toggleAudioPlayer}
+                          className="w-full px-3 py-2 text-sm border border-neutral-600 rounded hover:bg-neutral-800 text-neutral-300 transition"
+                          aria-pressed={audioPlayerVisible}
+                        >
+                          {audioPlayerVisible ? '🎵 Látható' : '🔇 Rejtett'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </SheetContent>
@@ -1071,7 +1216,13 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
             <div className="hidden md:block fixed left-0 top-0 w-1 h-full bg-gradient-to-b from-lime-500/20 via-lime-500/10 to-transparent pointer-events-none" />
           )}
           {currentStory ? (
-            <article className="mx-auto max-w-[560px] md:max-w-[600px]">
+            <article 
+              className={`mx-auto transition-all duration-300 ${
+                textWidth === 'narrow' ? 'max-w-[480px]' :
+                textWidth === 'wide' ? 'max-w-[720px]' :
+                'max-w-[560px] md:max-w-[600px]'
+              }`}
+            >
 
               {/* Playlist blokk a címsor alatt – AudioPlayer-rel */}
               {playlistLoading && (
@@ -1130,10 +1281,20 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                 </div>
               ) : (
                  <section
-                  className={`mt-6 leading-relaxed md:leading-8 whitespace-pre-wrap ${contentTextColor} ${!isContentReady ? 'opacity-0 pointer-events-none' : 'opacity-100'} animate-fadeIn transition-opacity duration-300`}
-                   style={{ fontSize: `${fontSize}px` }}
+                  className={`mt-6 whitespace-pre-wrap ${contentTextColor} ${!isContentReady ? 'opacity-0 pointer-events-none' : 'opacity-100'} animate-fadeIn transition-opacity duration-300 ${
+                    fontFamily === 'sans' ? 'font-sans' : 'font-serif'
+                  }`}
+                   style={{ 
+                     fontSize: `${fontSize}px`,
+                     lineHeight: lineHeight,
+                     wordSpacing: `${paragraphSpacing * 0.1}em`,
+                   }}
                  >
-                   {currentStory.text}
+                   {currentStory.text.split('\n\n').map((paragraph, idx) => (
+                     <p key={idx} style={{ marginBottom: `${paragraphSpacing}em` }}>
+                       {paragraph}
+                     </p>
+                   ))}
                  </section>
                )}
 
@@ -1158,11 +1319,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
             <button
               onClick={goPrev}
               disabled={currentIndex <= 0}
-              className={`text-base md:text-lg font-medium px-6 py-3 rounded-full disabled:opacity-30 disabled:cursor-default transition-all duration-200 hover:scale-105 ${
-                themeMode === 'light'
-                  ? 'border-2 border-neutral-800 text-neutral-900 hover:bg-neutral-900/10 hover:border-neutral-900'
-                  : 'border-2 border-lime-500/60 text-lime-50 hover:bg-lime-500/15 hover:border-lime-500'
-              }`}
+              className="text-xs md:text-sm px-4 py-2 rounded border border-neutral-700 text-neutral-400 hover:border-lime-400 hover:text-lime-400 disabled:opacity-30 disabled:cursor-default transition-colors duration-200"
             >
               ← Előző
             </button>
@@ -1178,11 +1335,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
               disabled={
                 currentIndex === -1 || currentIndex >= stories.length - 1
               }
-              className={`text-base md:text-lg font-medium px-6 py-3 rounded-full disabled:opacity-30 disabled:cursor-default transition-all duration-200 hover:scale-105 ${
-                themeMode === 'light'
-                  ? 'border-2 border-neutral-800 text-neutral-900 hover:bg-neutral-900/10 hover:border-neutral-900'
-                  : 'border-2 border-lime-500/60 text-lime-50 hover:bg-lime-500/15 hover:border-lime-500'
-              }`}
+              className="text-xs md:text-sm px-4 py-2 rounded border border-neutral-700 text-neutral-400 hover:border-lime-400 hover:text-lime-400 disabled:opacity-30 disabled:cursor-default transition-colors duration-200"
             >
               Következő →
             </button>
