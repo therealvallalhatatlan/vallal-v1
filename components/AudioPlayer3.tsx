@@ -384,10 +384,10 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
   const apiUrl = `/api/audio/${track.file.split('/').map(encodeURIComponent).join('/')}`
 
   return (
-    <div className="w-full max-w-full mb-12">
+    <div className="w-full max-w-full mb-12 overflow-hidden">
       <div
         ref={containerRef}
-        className={`${
+        className={`w-full ${
           isFullscreen ? 'fixed inset-0 z-50 bg-black p-0 m-0 max-w-none' : ''
         }`}
       >
@@ -397,7 +397,7 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
             <div className="flex-1 relative">
               <CanvasResponsive ref={canvasRef} />
             </div>
-            <div className="p-8 space-y-4 bg-black/80 backdrop-blur-sm">
+            <div className="p-4 md:p-8 space-y-4 bg-black/80 backdrop-blur-sm">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl md:text-4xl font-bold text-white drop-shadow-lg">
@@ -461,16 +461,16 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
 
         {/* Normál mód: Képernyő fent, vezérlők lent */}
         {!isFullscreen && (
-          <div className="space-y-4">
+          <div className="space-y-4 w-full overflow-hidden">
             {/* Vizualizációs "képernyő" */}
-            <div className={`relative rounded-2xl overflow-hidden border-2 bg-black ${
+            <div className={`relative rounded-2xl overflow-hidden border-2 bg-black w-full ${
               isLight ? 'border-neutral-300' : 'border-neutral-700'
             }`} style={{ aspectRatio: '16/9' }}>
               <CanvasResponsive ref={canvasRef} />
             </div>
 
             {/* Vezérlőpanel */}
-            <div className={`p-4 md:p-6 rounded-2xl border ${
+            <div className={`p-3 md:p-6 rounded-2xl border w-full ${
               isLight ? 'bg-white/80 border-neutral-300' : 'bg-neutral-900/80 border-neutral-700'
             } backdrop-blur-sm space-y-4`}>
               
@@ -537,7 +537,7 @@ export default function AudioPlayer3({ tracks, images = [], mode = 'dark' }: Pro
               </div>
 
               {/* letöltés + platform gombok horizontálisan scrollozhatóan */}
-              <div className="flex gap-2 overflow-x-auto pb-0 scrollbar-thin">
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin -mx-3 md:mx-0 px-3 md:px-0">
             <a
               href={`${apiUrl}?download=1`}
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] border border-zinc-700 bg-zinc-950 hover:bg-zinc-900 transition-colors whitespace-nowrap"
