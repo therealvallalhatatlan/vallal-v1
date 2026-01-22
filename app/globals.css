@@ -39,6 +39,7 @@
   --sidebar-border: oklch(0.88 0.01 95);
   --sidebar-ring: oklch(0.7 0.15 142);
   --font-serif: "Crimson Pro", serif;
+  --font-sans-reader: "Inter", sans-serif;
 }
 
 .dark {

@@ -7,7 +7,7 @@ import "./globals.css"
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 // import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
-import { Crimson_Pro } from "next/font/google";
+import { Crimson_Pro, Inter } from "next/font/google";
 import { Special_Elite } from "next/font/google";
 import PWAInstallManager from "@/components/PWAInstallManager";
 import AuthUrlSessionSync from "@/components/AuthUrlSessionSync";
@@ -18,9 +18,16 @@ import TrafficSourceHeuristics from "@/components/TrafficSourceHeuristics";
 
 const crimson = Crimson_Pro({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"], // regular → bold
+  weight: ["400", "500", "600", "700"],
   variable: "--font-serif",
 });
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans-reader",
+});
+
 const specialElite = Special_Elite({ subsets: ["latin"], weight: "400", variable: "--font-heading" });
 
 export const metadata: Metadata = {
@@ -123,7 +130,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${crimson.variable} ${specialElite.variable} antialiased overflow-x-hidden`}
+        className={`${crimson.variable} ${inter.variable} ${specialElite.variable} antialiased overflow-x-hidden`}
         style={{ touchAction: 'pan-y' }}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

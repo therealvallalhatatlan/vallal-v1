@@ -1281,13 +1281,12 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                 </div>
               ) : (
                  <section
-                  className={`mt-6 whitespace-pre-wrap ${contentTextColor} ${!isContentReady ? 'opacity-0 pointer-events-none' : 'opacity-100'} animate-fadeIn transition-opacity duration-300 ${
-                    fontFamily === 'sans' ? 'font-sans' : 'font-serif'
-                  }`}
+                  className={`mt-6 whitespace-pre-wrap ${contentTextColor} ${!isContentReady ? 'opacity-0 pointer-events-none' : 'opacity-100'} animate-fadeIn transition-opacity duration-300`}
                    style={{ 
                      fontSize: `${fontSize}px`,
                      lineHeight: lineHeight,
                      wordSpacing: `${paragraphSpacing * 0.1}em`,
+                     fontFamily: fontFamily === 'sans' ? 'var(--font-sans-reader)' : 'var(--font-serif)',
                    }}
                  >
                    {currentStory.text.split('\n\n').map((paragraph, idx) => (
