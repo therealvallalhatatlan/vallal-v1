@@ -86,6 +86,14 @@ function VisualizerContent() {
   // Echo/trail frame buffer
   const prevFramesRef = useRef<ImageData[]>([]);
 
+  // Image positioning state
+  const [imageFitA, setImageFitA] = useState<'cover' | 'contain'>('cover');
+  const [imageFitB, setImageFitB] = useState<'cover' | 'contain'>('cover');
+  const [imagePositionXA, setImagePositionXA] = useState<'left' | 'center' | 'right'>('center');
+  const [imagePositionXB, setImagePositionXB] = useState<'left' | 'center' | 'right'>('center');
+  const [imagePositionYA, setImagePositionYA] = useState<'top' | 'center' | 'bottom'>('center');
+  const [imagePositionYB, setImagePositionYB] = useState<'top' | 'center' | 'bottom'>('center');
+
   // Preset configurations
   const presets = {
     glitchHeavy: {
@@ -509,22 +517,44 @@ function VisualizerContent() {
       // draw two layers with subtle transforms
       loadedImgs.forEach((img, idx) => {
         if (!img || !img.complete) return;
-        // cover scale but keep small differential between layers
-        const coverScale =
-          Math.max(W / img.naturalWidth, H / img.naturalHeight) *
-          (1 + (idx === 0 ? scaleOff : -scaleOff) * 0.6);
-        const sw = img.naturalWidth * coverScale;
-        const sh = img.naturalHeight * coverScale;
+
+        const isImageA = idx === 0;
+        const fit = isImageA ? imageFitA : imageFitB;
+        const posX = isImageA ? imagePositionXA : imagePositionXB;
+        const posY = isImageA ? imagePositionYA : imagePositionYB;
+
+        // Calculate scale based on fit mode
+        let scale: number;
+        if (fit === 'cover') {
+          scale = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+        } else {
+          scale = Math.min(W / img.naturalWidth, H / img.naturalHeight);
+        }
+        
+        // Apply scale offset for layering effect
+        scale *= (1 + (isImageA ? scaleOff : -scaleOff) * 0.6);
+
+        const sw = img.naturalWidth * scale;
+        const sh = img.naturalHeight * scale;
+
+        // Calculate position offsets based on alignment
+        let alignX = 0;
+        if (posX === 'left') alignX = -(W - sw) / 2;
+        if (posX === 'right') alignX = (W - sw) / 2;
+
+        let alignY = 0;
+        if (posY === 'top') alignY = -(H - sh) / 2;
+        if (posY === 'bottom') alignY = (H - sh) / 2;
 
         // controlled movement
         const phase = t * (0.12 + idx * 0.04) * spd;
-        const ox = Math.sin(phase * (0.6 + idx * 0.2)) * 8 * glitch * (idx === 0 ? 1 : -1);
-        const oy = Math.cos(phase * (0.8 + idx * 0.3)) * 8 * glitch * (idx === 0 ? -1 : 1);
+        const ox = Math.sin(phase * (0.6 + idx * 0.2)) * 8 * glitch * (isImageA ? 1 : -1);
+        const oy = Math.cos(phase * (0.8 + idx * 0.3)) * 8 * glitch * (isImageA ? -1 : 1);
 
         ctx.save();
-        ctx.translate(W / 2 + ox, H / 2 + oy);
+        ctx.translate(W / 2 + ox + alignX, H / 2 + oy + alignY);
         // small rotation that is smoothed and gentle
-        const rads = ((rot * Math.PI) / 180) * (idx === 0 ? 1 : -0.8);
+        const rads = ((rot * Math.PI) / 180) * (isImageA ? 1 : -0.8);
         ctx.rotate(rads * (autoshift ? (Math.sin(t * 0.06 + idx) * 0.1 + 0.95) : 1));
         ctx.globalCompositeOperation = idx % 2 ? "lighter" : blendMode;
         ctx.filter = `saturate(${sat})`;
@@ -795,6 +825,12 @@ function VisualizerContent() {
     speed,
     seed,
     autoshift,
+    imageFitA,
+    imageFitB,
+    imagePositionXA,
+    imagePositionXB,
+    imagePositionYA,
+    imagePositionYB,
   ]);
 
   function cancelAnim() {
@@ -1535,7 +1571,11 @@ function VisualizerContent() {
                     <img 
                       src={imageA} 
                       alt="Image A Preview" 
-                      className="w-full h-full object-cover"
+                      style={{
+                        objectFit: imageFitA,
+                        objectPosition: `${imagePositionXA} ${imagePositionYA}`,
+                      }}
+                      className="w-full h-full"
                     />
                   </div>
                 )}
@@ -1549,6 +1589,73 @@ function VisualizerContent() {
                 >
                   Change Image A
                 </button>
+
+                {/* Position Controls for Image A */}
+                <div className="space-y-3 pt-2 border-t border-white/10">
+                  <div className="space-y-2">
+                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Object Fit</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setImageFitA('cover')}
+                        className={`flex-1 px-3 py-1.5 rounded text-xs transition-all ${
+                          imageFitA === 'cover'
+                            ? 'bg-lime-400 text-black font-semibold'
+                            : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                        }`}
+                      >
+                        Cover
+                      </button>
+                      <button
+                        onClick={() => setImageFitA('contain')}
+                        className={`flex-1 px-3 py-1.5 rounded text-xs transition-all ${
+                          imageFitA === 'contain'
+                            ? 'bg-lime-400 text-black font-semibold'
+                            : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                        }`}
+                      >
+                        Contain
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Horizontal</label>
+                    <div className="flex gap-2">
+                      {(['left', 'center', 'right'] as const).map((pos) => (
+                        <button
+                          key={pos}
+                          onClick={() => setImagePositionXA(pos)}
+                          className={`flex-1 px-3 py-1.5 rounded text-xs capitalize transition-all ${
+                            imagePositionXA === pos
+                              ? 'bg-lime-400 text-black font-semibold'
+                              : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                          }`}
+                        >
+                          {pos}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Vertical</label>
+                    <div className="flex gap-2">
+                      {(['top', 'center', 'bottom'] as const).map((pos) => (
+                        <button
+                          key={pos}
+                          onClick={() => setImagePositionYA(pos)}
+                          className={`flex-1 px-3 py-1.5 rounded text-xs capitalize transition-all ${
+                            imagePositionYA === pos
+                              ? 'bg-lime-400 text-black font-semibold'
+                              : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                          }`}
+                        >
+                          {pos}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
                 <p className="text-xs text-neutral-500">
                   Drag & drop JPG/PNG/GIF (animated) or click to browse
@@ -1574,7 +1681,11 @@ function VisualizerContent() {
                     <img 
                       src={imageB} 
                       alt="Image B Preview" 
-                      className="w-full h-full object-cover"
+                      style={{
+                        objectFit: imageFitB,
+                        objectPosition: `${imagePositionXB} ${imagePositionYB}`,
+                      }}
+                      className="w-full h-full"
                     />
                   </div>
                 )}
@@ -1588,6 +1699,73 @@ function VisualizerContent() {
                 >
                   Change Image B
                 </button>
+
+                {/* Position Controls for Image B */}
+                <div className="space-y-3 pt-2 border-t border-white/10">
+                  <div className="space-y-2">
+                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Object Fit</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setImageFitB('cover')}
+                        className={`flex-1 px-3 py-1.5 rounded text-xs transition-all ${
+                          imageFitB === 'cover'
+                            ? 'bg-lime-400 text-black font-semibold'
+                            : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                        }`}
+                      >
+                        Cover
+                      </button>
+                      <button
+                        onClick={() => setImageFitB('contain')}
+                        className={`flex-1 px-3 py-1.5 rounded text-xs transition-all ${
+                          imageFitB === 'contain'
+                            ? 'bg-lime-400 text-black font-semibold'
+                            : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                        }`}
+                      >
+                        Contain
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Horizontal</label>
+                    <div className="flex gap-2">
+                      {(['left', 'center', 'right'] as const).map((pos) => (
+                        <button
+                          key={pos}
+                          onClick={() => setImagePositionXB(pos)}
+                          className={`flex-1 px-3 py-1.5 rounded text-xs capitalize transition-all ${
+                            imagePositionXB === pos
+                              ? 'bg-lime-400 text-black font-semibold'
+                              : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                          }`}
+                        >
+                          {pos}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Vertical</label>
+                    <div className="flex gap-2">
+                      {(['top', 'center', 'bottom'] as const).map((pos) => (
+                        <button
+                          key={pos}
+                          onClick={() => setImagePositionYB(pos)}
+                          className={`flex-1 px-3 py-1.5 rounded text-xs capitalize transition-all ${
+                            imagePositionYB === pos
+                              ? 'bg-lime-400 text-black font-semibold'
+                              : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                          }`}
+                        >
+                          {pos}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
 
                 <p className="text-xs text-neutral-500">
                   Drag & drop JPG/PNG/GIF (animated) or click to browse
