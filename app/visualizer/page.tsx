@@ -1072,7 +1072,9 @@ function VisualizerContent() {
       {/* Toggle Button - Always Visible */}
       <button
         onClick={() => setToolbarOpen(!toolbarOpen)}
-        className="fixed bottom-6 left-6 z-70 w-14 h-14 rounded-full bg-black/95 border-2 border-lime-400 hover:bg-lime-400/10 transition-all flex items-center justify-center text-lime-400 hover:scale-110 backdrop-blur-xl shadow-lg shadow-lime-400/20"
+        className={`fixed top-6 z-70 w-14 h-14 rounded-full bg-black/95 border-2 border-lime-400 hover:bg-lime-400/10 transition-all duration-300 flex items-center justify-center text-lime-400 hover:scale-110 backdrop-blur-xl shadow-lg shadow-lime-400/20 ${
+          toolbarOpen ? "right-[21.5rem]" : "right-6"
+        }`}
         title={toolbarOpen ? "Close Toolbar" : "Open Toolbar"}
       >
         <span className="text-2xl">{toolbarOpen ? "✕" : "⚙"}</span>

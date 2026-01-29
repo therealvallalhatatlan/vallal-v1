@@ -25,11 +25,7 @@ export default function Hero() {
             </span>
           </h1>
 
-          <h1 className="text-xl md:text-2xl font-light mb-6 text-neutral-300">
-            Van egy tudatállapot, amiben meg tudjuk hajlítani a valóságot. Nem tudjuk irányítani, de valami érezhetően megváltozik. A dolgok valószínűtlensége növekszik. Furcsa és szürreális dolgok történnek velünk. Nincs más magyarázatom ezekre a történetekre.
-          </h1>
 
-          {/* Bullet list
           <ul className="space-y-2 text-md md:text-base text-gray-200 mb-6">
             <li>
               <span className="text-lime-400 font-semibold mr-2">✓</span>
@@ -52,7 +48,7 @@ export default function Hero() {
                 <div className="text-xs text-neutral-400">GPS-koordináta, fotó és 48 órás időablak, hogy megtaláld. Nem szivatás - kaland.</div>
               </div>
             </li>
-          </ul> */}
+          </ul> 
 
           <p className="text-sm text-gray-500 italic">
             *Ha nem akarsz bokorba mászni: kérheted posta automatába is.
