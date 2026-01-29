@@ -1072,7 +1072,7 @@ function VisualizerContent() {
       {/* Toggle Button - Always Visible */}
       <button
         onClick={() => setToolbarOpen(!toolbarOpen)}
-        className={`fixed top-6 z-70 w-14 h-14 rounded-full bg-black/95 border-2 border-lime-400 hover:bg-lime-400/10 transition-all duration-300 flex items-center justify-center text-lime-400 hover:scale-110 backdrop-blur-xl shadow-lg shadow-lime-400/20 ${
+        className={`fixed top-6 z-70 w-14 h-14 rounded-full bg-black/95 border-2 border-neutral-300 hover:bg-neutral-300/10 transition-all duration-300 flex items-center justify-center text-neutral-300 hover:scale-110 backdrop-blur-xl shadow-lg shadow-neutral-300/20 ${
           toolbarOpen ? "right-[21.5rem]" : "right-6"
         }`}
         title={toolbarOpen ? "Close Toolbar" : "Open Toolbar"}
@@ -1084,20 +1084,20 @@ function VisualizerContent() {
       <div className={`fixed bottom-4 left-1/2 -translate-x-1/2 z-60 transition-all duration-300 ${
         toolbarOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"
       }`}>
-        <div className="rounded-full bg-black/95 border border-lime-400/30 px-6 py-3 text-sm flex items-center gap-3 backdrop-blur-xl">
+        <div className="rounded-full bg-black/95 border border-neutral-300/30 px-6 py-3 text-sm flex items-center gap-3 backdrop-blur-xl">
           <button
             onClick={() => setPlaying((p) => !p)}
-            className="px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center gap-2 border border-lime-400/30 hover:border-lime-400 text-xs"
+            className="px-4 py-2 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium flex items-center gap-2 border border-neutral-300/30 hover:border-neutral-300 text-xs"
             title="Play / Pause (Space)"
           >
             {playing ? "⏸" : "▶"} {playing ? "Pause" : "Play"}
           </button>
           
-          <div className="h-8 w-px bg-lime-400/20"></div>
+          <div className="h-8 w-px bg-neutral-300/20"></div>
           
           <button
             onClick={handleScreenshot}
-            className="px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center gap-2 border border-lime-400/30 hover:border-lime-400 text-xs"
+            className="px-4 py-2 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium flex items-center gap-2 border border-neutral-300/30 hover:border-neutral-300 text-xs"
             title="Screenshot (S)"
           >
             📷 Screenshot
@@ -1106,7 +1106,7 @@ function VisualizerContent() {
           <button
             onClick={handleExportGif}
             disabled={!!exporting}
-            className="px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center gap-2 border border-lime-400/30 hover:border-lime-400 disabled:opacity-30 disabled:cursor-not-allowed text-xs"
+            className="px-4 py-2 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium flex items-center gap-2 border border-neutral-300/30 hover:border-neutral-300 disabled:opacity-30 disabled:cursor-not-allowed text-xs"
             title="Export GIF"
           >
             {exporting === "gif" ? "⏳ Exporting..." : "🎨 GIF"}
@@ -1115,17 +1115,17 @@ function VisualizerContent() {
           <button
             onClick={handleRecordWebm}
             disabled={!!exporting}
-            className="px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center gap-2 border border-lime-400/30 hover:border-lime-400 disabled:opacity-30 disabled:cursor-not-allowed text-xs"
+            className="px-4 py-2 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium flex items-center gap-2 border border-neutral-300/30 hover:border-neutral-300 disabled:opacity-30 disabled:cursor-not-allowed text-xs"
             title="Export Video"
           >
             {exporting === "webm" ? "⏳ Recording..." : "🎞 Video"}
           </button>
 
-          <div className="h-8 w-px bg-lime-400/20"></div>
+          <div className="h-8 w-px bg-neutral-300/20"></div>
 
           <button
             onClick={handleRandomize}
-            className="px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center gap-2 border border-lime-400/30 hover:border-lime-400 text-xs"
+            className="px-4 py-2 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium flex items-center gap-2 border border-neutral-300/30 hover:border-neutral-300 text-xs"
             title="Randomize (R)"
           >
             🎲 Random
@@ -1134,17 +1134,17 @@ function VisualizerContent() {
       </div>
 
       {/* Main Sidebar */}
-      <div className={`absolute right-0 top-0 h-full w-80 bg-black/95 border-l border-lime-400/30 backdrop-blur-xl transition-all duration-300 flex flex-col ${
+      <div className={`absolute right-0 top-0 h-full w-80 bg-black/95 border-l border-neutral-300/30 backdrop-blur-xl transition-all duration-300 flex flex-col ${
         toolbarOpen ? "translate-x-0" : "translate-x-full"
       }`}>
         {/* Tab Navigation */}
-        <div className="flex border-b border-lime-400/30 shrink-0">
+        <div className="flex border-b border-neutral-300/30 shrink-0">
           <button
             onClick={() => setActiveTab("effects")}
             className={`flex-1 px-4 py-3 text-xs font-medium transition ${
               activeTab === "effects"
-                ? "bg-lime-400/10 text-lime-400 border-b-2 border-lime-400"
-                : "text-neutral-500 hover:text-lime-400 hover:bg-lime-400/5"
+                ? "bg-neutral-300/10 text-neutral-300 border-b-2 border-neutral-300"
+                : "text-neutral-500 hover:text-neutral-300 hover:bg-neutral-300/5"
             }`}
           >
             ✨ Effects
@@ -1153,8 +1153,8 @@ function VisualizerContent() {
             onClick={() => setActiveTab("images")}
             className={`flex-1 px-4 py-3 text-xs font-medium transition ${
               activeTab === "images"
-                ? "bg-lime-400/10 text-lime-400 border-b-2 border-lime-400"
-                : "text-neutral-500 hover:text-lime-400 hover:bg-lime-400/5"
+                ? "bg-neutral-300/10 text-neutral-300 border-b-2 border-neutral-300"
+                : "text-neutral-500 hover:text-neutral-300 hover:bg-neutral-300/5"
             }`}
           >
             🖼️ Images
@@ -1163,8 +1163,8 @@ function VisualizerContent() {
             onClick={() => setActiveTab("export")}
             className={`flex-1 px-4 py-3 text-xs font-medium transition ${
               activeTab === "export"
-                ? "bg-lime-400/10 text-lime-400 border-b-2 border-lime-400"
-                : "text-neutral-500 hover:text-lime-400 hover:bg-lime-400/5"
+                ? "bg-neutral-300/10 text-neutral-300 border-b-2 border-neutral-300"
+                : "text-neutral-500 hover:text-neutral-300 hover:bg-neutral-300/5"
             }`}
           >
             💾 Export
@@ -1176,8 +1176,8 @@ function VisualizerContent() {
           {activeTab === "effects" && (
             <>
               {/* Glitch Effects Group */}
-              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
-                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">⚡ Glitch Effects</h3>
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-neutral-300/20">
+                <h3 className="text-xs font-semibold text-neutral-300 flex items-center gap-2">⚡ Glitch Effects</h3>
                 
                 <div>
                   <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
@@ -1226,8 +1226,8 @@ function VisualizerContent() {
               </div>
 
               {/* Visual Effects Group */}
-              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
-                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">🎨 Visual Effects</h3>
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-neutral-300/20">
+                <h3 className="text-xs font-semibold text-neutral-300 flex items-center gap-2">🎨 Visual Effects</h3>
                 
                 <div>
                   <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
@@ -1276,8 +1276,8 @@ function VisualizerContent() {
               </div>
 
               {/* Transform Group */}
-              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
-                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">🔄 Transform</h3>
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-neutral-300/20">
+                <h3 className="text-xs font-semibold text-neutral-300 flex items-center gap-2">🔄 Transform</h3>
                 
                 <div>
                   <label className="text-[11px] text-neutral-400 flex justify-between mb-1">
@@ -1326,8 +1326,8 @@ function VisualizerContent() {
               </div>
 
               {/* Blend & Color Group */}
-              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
-                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">🌈 Blend & Color</h3>
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-neutral-300/20">
+                <h3 className="text-xs font-semibold text-neutral-300 flex items-center gap-2">🌈 Blend & Color</h3>
                 
                 <div>
                   <label className="text-[11px] text-neutral-400 mb-1 block">Blend Mode</label>
@@ -1381,8 +1381,8 @@ function VisualizerContent() {
               </div>
 
               {/* NEW EFFECTS Group */}
-              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
-                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-neutral-300/20">
+                <h3 className="text-xs font-semibold text-neutral-300 flex items-center gap-2">
                   ✨ Advanced Effects
                 </h3>
                 
@@ -1478,8 +1478,8 @@ function VisualizerContent() {
               </div>
 
               {/* Audio-Reactive Group */}
-              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
-                <h3 className="text-xs font-semibold text-lime-400 flex items-center gap-2">
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-neutral-300/20">
+                <h3 className="text-xs font-semibold text-neutral-300 flex items-center gap-2">
                   🎵 Audio Reactive
                 </h3>
                 
@@ -1488,7 +1488,7 @@ function VisualizerContent() {
                   <button
                     onClick={() => setAudioReactive((v) => !v)}
                     className={`px-3 py-1.5 rounded border text-xs font-medium transition ${
-                      audioReactive ? "bg-lime-400/20 text-lime-400 border-lime-400" : "bg-black/50 text-neutral-500 border-neutral-700 hover:border-lime-400/50"
+                      audioReactive ? "bg-neutral-300/20 text-neutral-300 border-neutral-300" : "bg-black/50 text-neutral-500 border-neutral-700 hover:border-neutral-300/50"
                     }`}
                   >
                     {audioReactive ? "ON" : "OFF"}
@@ -1520,30 +1520,30 @@ function VisualizerContent() {
               </div>
 
               {/* Presets */}
-              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-lime-400/20">
-                <h3 className="text-xs font-semibold text-lime-400">⚙️ Presets</h3>
+              <div className="space-y-3 bg-black/40 rounded-lg p-3 border border-neutral-300/20">
+                <h3 className="text-xs font-semibold text-neutral-300">⚙️ Presets</h3>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => applyPreset("glitchHeavy")}
-                    className="px-3 py-2 rounded bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition text-xs font-medium border border-lime-400/30 hover:border-lime-400"
+                    className="px-3 py-2 rounded bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition text-xs font-medium border border-neutral-300/30 hover:border-neutral-300"
                   >
                     Glitch Heavy
                   </button>
                   <button
                     onClick={() => applyPreset("subtle")}
-                    className="px-3 py-2 rounded bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition text-xs font-medium border border-lime-400/30 hover:border-lime-400"
+                    className="px-3 py-2 rounded bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition text-xs font-medium border border-neutral-300/30 hover:border-neutral-300"
                   >
                     Subtle
                   </button>
                   <button
                     onClick={() => applyPreset("cyberpunk")}
-                    className="px-3 py-2 rounded bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition text-xs font-medium border border-lime-400/30 hover:border-lime-400"
+                    className="px-3 py-2 rounded bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition text-xs font-medium border border-neutral-300/30 hover:border-neutral-300"
                   >
                     Cyberpunk
                   </button>
                   <button
                     onClick={() => applyPreset("retro")}
-                    className="px-3 py-2 rounded bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition text-xs font-medium border border-lime-400/30 hover:border-lime-400"
+                    className="px-3 py-2 rounded bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition text-xs font-medium border border-neutral-300/30 hover:border-neutral-300"
                   >
                     Retro VHS
                   </button>
@@ -1557,13 +1557,13 @@ function VisualizerContent() {
               {/* Image A */}
               <div 
                 className={`space-y-3 bg-black/40 rounded-lg p-4 border transition-all ${
-                  dragOver === "A" ? "border-lime-400 bg-lime-400/10" : "border-lime-400/20"
+                  dragOver === "A" ? "border-neutral-300 bg-neutral-300/10" : "border-neutral-300/20"
                 }`}
                 onDragOver={(e) => handleDragOver(e, "A")}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, "A")}
               >
-                <h3 className="text-sm font-semibold text-lime-400 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
                   🖼️ Image A
                   {dragOver === "A" && <span className="text-xs text-lime-300">(Drop here)</span>}
                 </h3>
@@ -1587,7 +1587,7 @@ function VisualizerContent() {
                     setImageInputValue(imageA);
                     setShowImagePicker("A");
                   }}
-                  className="w-full px-4 py-2.5 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium text-sm border border-lime-400/30 hover:border-lime-400"
+                  className="w-full px-4 py-2.5 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium text-sm border border-neutral-300/30 hover:border-neutral-300"
                 >
                   Change Image A
                 </button>
@@ -1595,14 +1595,14 @@ function VisualizerContent() {
                 {/* Position Controls for Image A */}
                 <div className="space-y-3 pt-2 border-t border-white/10">
                   <div className="space-y-2">
-                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Object Fit</label>
+                    <label className="text-xs text-neutral-300/80 uppercase tracking-wider block">Object Fit</label>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setImageFitA('cover')}
                         className={`flex-1 px-3 py-1.5 rounded text-xs transition-all ${
                           imageFitA === 'cover'
-                            ? 'bg-lime-400 text-black font-semibold'
-                            : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                            ? 'bg-neutral-300 text-black font-semibold'
+                            : 'bg-neutral-300/10 text-neutral-300/70 hover:bg-neutral-300/20'
                         }`}
                       >
                         Cover
@@ -1611,8 +1611,8 @@ function VisualizerContent() {
                         onClick={() => setImageFitA('contain')}
                         className={`flex-1 px-3 py-1.5 rounded text-xs transition-all ${
                           imageFitA === 'contain'
-                            ? 'bg-lime-400 text-black font-semibold'
-                            : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                            ? 'bg-neutral-300 text-black font-semibold'
+                            : 'bg-neutral-300/10 text-neutral-300/70 hover:bg-neutral-300/20'
                         }`}
                       >
                         Contain
@@ -1621,7 +1621,7 @@ function VisualizerContent() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Horizontal</label>
+                    <label className="text-xs text-neutral-300/80 uppercase tracking-wider block">Horizontal</label>
                     <div className="flex gap-2">
                       {(['left', 'center', 'right'] as const).map((pos) => (
                         <button
@@ -1629,8 +1629,8 @@ function VisualizerContent() {
                           onClick={() => setImagePositionXA(pos)}
                           className={`flex-1 px-3 py-1.5 rounded text-xs capitalize transition-all ${
                             imagePositionXA === pos
-                              ? 'bg-lime-400 text-black font-semibold'
-                              : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                              ? 'bg-neutral-300 text-black font-semibold'
+                              : 'bg-neutral-300/10 text-neutral-300/70 hover:bg-neutral-300/20'
                           }`}
                         >
                           {pos}
@@ -1640,7 +1640,7 @@ function VisualizerContent() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Vertical</label>
+                    <label className="text-xs text-neutral-300/80 uppercase tracking-wider block">Vertical</label>
                     <div className="flex gap-2">
                       {(['top', 'center', 'bottom'] as const).map((pos) => (
                         <button
@@ -1648,8 +1648,8 @@ function VisualizerContent() {
                           onClick={() => setImagePositionYA(pos)}
                           className={`flex-1 px-3 py-1.5 rounded text-xs capitalize transition-all ${
                             imagePositionYA === pos
-                              ? 'bg-lime-400 text-black font-semibold'
-                              : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                              ? 'bg-neutral-300 text-black font-semibold'
+                              : 'bg-neutral-300/10 text-neutral-300/70 hover:bg-neutral-300/20'
                           }`}
                         >
                           {pos}
@@ -1667,13 +1667,13 @@ function VisualizerContent() {
               {/* Image B */}
               <div 
                 className={`space-y-3 bg-black/40 rounded-lg p-4 border transition-all ${
-                  dragOver === "B" ? "border-lime-400 bg-lime-400/10" : "border-lime-400/20"
+                  dragOver === "B" ? "border-neutral-300 bg-neutral-300/10" : "border-neutral-300/20"
                 }`}
                 onDragOver={(e) => handleDragOver(e, "B")}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, "B")}
               >
-                <h3 className="text-sm font-semibold text-lime-400 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
                   🖼️ Image B
                   {dragOver === "B" && <span className="text-xs text-lime-300">(Drop here)</span>}
                 </h3>
@@ -1697,7 +1697,7 @@ function VisualizerContent() {
                     setImageInputValue(imageB);
                     setShowImagePicker("B");
                   }}
-                  className="w-full px-4 py-2.5 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium text-sm border border-lime-400/30 hover:border-lime-400"
+                  className="w-full px-4 py-2.5 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium text-sm border border-neutral-300/30 hover:border-neutral-300"
                 >
                   Change Image B
                 </button>
@@ -1705,14 +1705,14 @@ function VisualizerContent() {
                 {/* Position Controls for Image B */}
                 <div className="space-y-3 pt-2 border-t border-white/10">
                   <div className="space-y-2">
-                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Object Fit</label>
+                    <label className="text-xs text-neutral-300/80 uppercase tracking-wider block">Object Fit</label>
                     <div className="flex gap-2">
                       <button
                         onClick={() => setImageFitB('cover')}
                         className={`flex-1 px-3 py-1.5 rounded text-xs transition-all ${
                           imageFitB === 'cover'
-                            ? 'bg-lime-400 text-black font-semibold'
-                            : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                            ? 'bg-neutral-300 text-black font-semibold'
+                            : 'bg-neutral-300/10 text-neutral-300/70 hover:bg-neutral-300/20'
                         }`}
                       >
                         Cover
@@ -1721,8 +1721,8 @@ function VisualizerContent() {
                         onClick={() => setImageFitB('contain')}
                         className={`flex-1 px-3 py-1.5 rounded text-xs transition-all ${
                           imageFitB === 'contain'
-                            ? 'bg-lime-400 text-black font-semibold'
-                            : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                            ? 'bg-neutral-300 text-black font-semibold'
+                            : 'bg-neutral-300/10 text-neutral-300/70 hover:bg-neutral-300/20'
                         }`}
                       >
                         Contain
@@ -1731,7 +1731,7 @@ function VisualizerContent() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Horizontal</label>
+                    <label className="text-xs text-neutral-300/80 uppercase tracking-wider block">Horizontal</label>
                     <div className="flex gap-2">
                       {(['left', 'center', 'right'] as const).map((pos) => (
                         <button
@@ -1739,8 +1739,8 @@ function VisualizerContent() {
                           onClick={() => setImagePositionXB(pos)}
                           className={`flex-1 px-3 py-1.5 rounded text-xs capitalize transition-all ${
                             imagePositionXB === pos
-                              ? 'bg-lime-400 text-black font-semibold'
-                              : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                              ? 'bg-neutral-300 text-black font-semibold'
+                              : 'bg-neutral-300/10 text-neutral-300/70 hover:bg-neutral-300/20'
                           }`}
                         >
                           {pos}
@@ -1750,7 +1750,7 @@ function VisualizerContent() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs text-lime-400/80 uppercase tracking-wider block">Vertical</label>
+                    <label className="text-xs text-neutral-300/80 uppercase tracking-wider block">Vertical</label>
                     <div className="flex gap-2">
                       {(['top', 'center', 'bottom'] as const).map((pos) => (
                         <button
@@ -1758,8 +1758,8 @@ function VisualizerContent() {
                           onClick={() => setImagePositionYB(pos)}
                           className={`flex-1 px-3 py-1.5 rounded text-xs capitalize transition-all ${
                             imagePositionYB === pos
-                              ? 'bg-lime-400 text-black font-semibold'
-                              : 'bg-lime-400/10 text-lime-400/70 hover:bg-lime-400/20'
+                              ? 'bg-neutral-300 text-black font-semibold'
+                              : 'bg-neutral-300/10 text-neutral-300/70 hover:bg-neutral-300/20'
                           }`}
                         >
                           {pos}
@@ -1776,7 +1776,7 @@ function VisualizerContent() {
 
               <button
                 onClick={handleSwapImages}
-                className="w-full px-4 py-2.5 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium text-sm border border-lime-400/30 hover:border-lime-400"
+                className="w-full px-4 py-2.5 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium text-sm border border-neutral-300/30 hover:border-neutral-300"
               >
                 🔁 Swap Images A ⇄ B
               </button>
@@ -1786,60 +1786,60 @@ function VisualizerContent() {
           {activeTab === "export" && (
             <>
               <div className="space-y-4">
-                <div className="bg-black/40 rounded-lg p-4 border border-lime-400/20">
-                  <h3 className="text-sm font-semibold text-lime-400 mb-3">📷 Screenshot</h3>
+                <div className="bg-black/40 rounded-lg p-4 border border-neutral-300/20">
+                  <h3 className="text-sm font-semibold text-neutral-300 mb-3">📷 Screenshot</h3>
                   <p className="text-xs text-neutral-400 mb-3">
                     Capture the current frame as a high-quality PNG image
                   </p>
                   <button
                     onClick={handleScreenshot}
-                    className="w-full px-4 py-3 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center justify-center gap-2 border border-lime-400/30 hover:border-lime-400"
+                    className="w-full px-4 py-3 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium flex items-center justify-center gap-2 border border-neutral-300/30 hover:border-neutral-300"
                   >
                     📷 Take Screenshot
                   </button>
-                  <p className="text-xs text-neutral-500 mt-2">Keyboard: Press <kbd className="px-1 py-0.5 bg-lime-400/10 border border-lime-400/20 rounded text-lime-400">S</kbd></p>
+                  <p className="text-xs text-neutral-500 mt-2">Keyboard: Press <kbd className="px-1 py-0.5 bg-neutral-300/10 border border-neutral-300/20 rounded text-neutral-300">S</kbd></p>
                 </div>
 
-                <div className="bg-black/40 rounded-lg p-4 border border-lime-400/20">
-                  <h3 className="text-sm font-semibold text-lime-400 mb-3">🎨 Export GIF</h3>
+                <div className="bg-black/40 rounded-lg p-4 border border-neutral-300/20">
+                  <h3 className="text-sm font-semibold text-neutral-300 mb-3">🎨 Export GIF</h3>
                   <p className="text-xs text-neutral-400 mb-3">
                     Record 8 frames at 10fps (512px, optimized for web)
                   </p>
                   <button
                     onClick={handleExportGif}
                     disabled={!!exporting}
-                    className="w-full px-4 py-3 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center justify-center gap-2 border border-lime-400/30 hover:border-lime-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium flex items-center justify-center gap-2 border border-neutral-300/30 hover:border-neutral-300 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     {exporting === "gif" ? "⏳ Exporting..." : "🎨 Export as GIF"}
                   </button>
                 </div>
 
-                <div className="bg-black/40 rounded-lg p-4 border border-lime-400/20">
-                  <h3 className="text-sm font-semibold text-lime-400 mb-3">🎞 Export Video</h3>
+                <div className="bg-black/40 rounded-lg p-4 border border-neutral-300/20">
+                  <h3 className="text-sm font-semibold text-neutral-300 mb-3">🎞 Export Video</h3>
                   <p className="text-xs text-neutral-400 mb-3">
                     Record ~0.8s WebM video at 12fps (720px, high quality)
                   </p>
                   <button
                     onClick={handleRecordWebm}
                     disabled={!!exporting}
-                    className="w-full px-4 py-3 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center justify-center gap-2 border border-lime-400/30 hover:border-lime-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium flex items-center justify-center gap-2 border border-neutral-300/30 hover:border-neutral-300 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     {exporting === "webm" ? "⏳ Recording..." : "🎞 Export as Video"}
                   </button>
                 </div>
 
-                <div className="bg-black/40 rounded-lg p-4 border border-lime-400/20">
-                  <h3 className="text-sm font-semibold text-lime-400 mb-3">🎲 Randomize</h3>
+                <div className="bg-black/40 rounded-lg p-4 border border-neutral-300/20">
+                  <h3 className="text-sm font-semibold text-neutral-300 mb-3">🎲 Randomize</h3>
                   <p className="text-xs text-neutral-400 mb-3">
                     Generate random effect parameters for inspiration
                   </p>
                   <button
                     onClick={handleRandomize}
-                    className="w-full px-4 py-3 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition font-medium flex items-center justify-center gap-2 border border-lime-400/30 hover:border-lime-400"
+                    className="w-full px-4 py-3 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition font-medium flex items-center justify-center gap-2 border border-neutral-300/30 hover:border-neutral-300"
                   >
                     🎲 Randomize All
                   </button>
-                  <p className="text-xs text-neutral-500 mt-2">Keyboard: Press <kbd className="px-1 py-0.5 bg-lime-400/10 border border-lime-400/20 rounded text-lime-400">R</kbd></p>
+                  <p className="text-xs text-neutral-500 mt-2">Keyboard: Press <kbd className="px-1 py-0.5 bg-neutral-300/10 border border-neutral-300/20 rounded text-neutral-300">R</kbd></p>
                 </div>
               </div>
             </>
@@ -1847,8 +1847,8 @@ function VisualizerContent() {
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-lime-400/20 bg-black/80 shrink-0">
-          <p className="text-[10px] text-lime-400 text-center">
+        <div className="p-3 border-t border-neutral-300/20 bg-black/80 shrink-0">
+          <p className="text-[10px] text-neutral-300 text-center">
             Space: Play/Pause • S: Screenshot • R: Random • W: Swap
           </p>
         </div>
@@ -1857,14 +1857,14 @@ function VisualizerContent() {
       {/* Image Picker Modal */}
       {showImagePicker && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md">
-          <div className="bg-black/95 rounded-xl p-6 w-full max-w-md border border-lime-400/30">
-            <h3 className="text-lg font-semibold mb-4 text-lime-400">
+          <div className="bg-black/95 rounded-xl p-6 w-full max-w-md border border-neutral-300/30">
+            <h3 className="text-lg font-semibold mb-4 text-neutral-300">
               Select Image {showImagePicker}
             </h3>
             
             {/* File Upload */}
             <div className="mb-4">
-              <label className="block text-xs font-medium mb-2 text-lime-400">
+              <label className="block text-xs font-medium mb-2 text-neutral-300">
                 Upload Local File
               </label>
               <input
@@ -1874,13 +1874,13 @@ function VisualizerContent() {
                   const file = e.target.files?.[0];
                   if (file) handleFileUpload(file, showImagePicker);
                 }}
-                className="w-full text-sm text-lime-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-lime-400/30 file:text-sm file:font-medium file:bg-lime-400/10 file:text-lime-400 hover:file:bg-lime-400/20 file:cursor-pointer"
+                className="w-full text-sm text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border file:border-neutral-300/30 file:text-sm file:font-medium file:bg-neutral-300/10 file:text-neutral-300 hover:file:bg-neutral-300/20 file:cursor-pointer"
               />
             </div>
 
             {/* URL Input */}
             <div className="mb-6">
-              <label className="block text-xs font-medium mb-2 text-lime-400">
+              <label className="block text-xs font-medium mb-2 text-neutral-300">
                 Or Enter Image URL
               </label>
               <input
@@ -1893,7 +1893,7 @@ function VisualizerContent() {
                   }
                 }}
                 placeholder="https://example.com/image.gif or /img/local.png"
-                className="w-full px-3 py-2 border border-lime-400/30 rounded text-sm bg-black/60 text-lime-400 placeholder:text-neutral-600 focus:outline-none focus:border-lime-400"
+                className="w-full px-3 py-2 border border-neutral-300/30 rounded text-sm bg-black/60 text-neutral-300 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-300"
               />
               <p className="text-xs text-neutral-500 mt-1">
                 Supports: JPG / PNG / GIF (animated), via http(s), relative paths, or data URLs
@@ -1907,13 +1907,13 @@ function VisualizerContent() {
                   setShowImagePicker(null);
                   setImageInputValue("");
                 }}
-                className="flex-1 px-4 py-2 rounded-lg bg-black/50 text-neutral-400 hover:bg-lime-400/10 hover:text-lime-400 transition border border-neutral-700 hover:border-lime-400/50 font-medium text-sm"
+                className="flex-1 px-4 py-2 rounded-lg bg-black/50 text-neutral-400 hover:bg-neutral-300/10 hover:text-neutral-300 transition border border-neutral-700 hover:border-neutral-300/50 font-medium text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleUrlInput(imageInputValue, showImagePicker)}
-                className="flex-1 px-4 py-2 rounded-lg bg-lime-400/10 text-lime-400 hover:bg-lime-400/20 transition border border-lime-400/30 hover:border-lime-400 font-medium text-sm"
+                className="flex-1 px-4 py-2 rounded-lg bg-neutral-300/10 text-neutral-300 hover:bg-neutral-300/20 transition border border-neutral-300/30 hover:border-neutral-300 font-medium text-sm"
               >
                 Apply URL
               </button>
@@ -1924,3 +1924,4 @@ function VisualizerContent() {
     </div>
   );
 }
+
