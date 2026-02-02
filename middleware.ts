@@ -52,7 +52,8 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/gift/") ||
     pathname.startsWith("/auth/") ||
     pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/reader")
+    pathname.startsWith("/reader") ||
+    pathname.startsWith("/public-story")
   ) {
     return NextResponse.next();
   }

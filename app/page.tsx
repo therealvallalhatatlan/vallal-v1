@@ -23,7 +23,6 @@ export default function Page() {
       <TweetRotator messages={["Megérkezett az új batch, terjesztés indul!","Nyugodtan baszogass, írj rám!","therealvallalhatatlan@gmail.com", "Veronika aki dec.8.-án vásároltál - rossz emailcímet adtál meg, jelentkezz!","Nem csak dead drop - postán is kérhető, automatába"]} />
       <Navigation />
       <Hero />
-      <BookCounter />
       <Matricak />
       <Reviews />
       <OlvassBele />

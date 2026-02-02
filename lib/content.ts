@@ -13,12 +13,12 @@ const STORIES_DIR = path.join(process.cwd(), 'content', 'stories')
 export async function getAllStories(): Promise<Story[]> {
   // ensure directory exists
   const dirEntries = await fs.promises.readdir(STORIES_DIR).catch(() => [])
-  const mdFiles = dirEntries.filter((f) => path.extname(f).toLowerCase() === '.md')
+  const txtFiles = dirEntries.filter((f) => path.extname(f).toLowerCase() === '.txt')
 
   const stories: Story[] = []
 
-  for (const filename of mdFiles) {
-    const id = filename.replace(/\.md$/i, '')
+  for (const filename of txtFiles) {
+    const id = filename.replace(/\.txt$/i, '')
     const filePath = path.join(STORIES_DIR, filename)
     const raw = await fs.promises.readFile(filePath, 'utf8')
     const parsed = matter(raw)

@@ -56,7 +56,7 @@ export default function Hero() {
         </div>
       </div>
 
-      <BookCounter />
+
 
       <section className="mt-16 w-full">
         <div className="mx-auto">
