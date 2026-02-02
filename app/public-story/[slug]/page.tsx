@@ -161,7 +161,7 @@ export default function PublicStoryPage() {
           {/* Timer Header */}
           <div className="sticky top-0 z-10 bg-white/0 dark:bg-black/0 backdrop-blur-sm border-b border-lime-500/20 mb-8 py-4 rounded-lg">
             <div className="flex items-center justify-between">
-              <div className="text-xs text-gray-600 dark:text-gray-400">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 Az oldal megsemmisül: ⏱  {remainingSeconds} sec múlva <br/>
               </div>
               <div className="dark:text-lime-700 light:text-lime-100 font-mono">
