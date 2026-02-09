@@ -1,6 +1,7 @@
 // app/api/gift/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { guardWriteOperation } from '@/lib/systemGuard';
 
 const SUPABASE_URL = process.env.SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -10,6 +11,10 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check system mode
+  const guardResponse = await guardWriteOperation(req);
+  if (guardResponse) return guardResponse;
+  
   const { id } = await params;
   // basic rate-limit / abuse protection could be added
   // fetch gift

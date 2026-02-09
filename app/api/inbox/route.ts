@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import { getUserFromToken, parseBearerToken, isAdminEmail } from "@/lib/auth"
+import { guardWriteOperation } from "@/lib/systemGuard"
 
 export const dynamic = "force-dynamic"
 
@@ -28,6 +29,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // Check system mode
+  const guardResponse = await guardWriteOperation(req);
+  if (guardResponse) return guardResponse;
+  
   const token = parseBearerToken(req.headers)
   if (!token) return NextResponse.json({ error: "missing_token" }, { status: 401 })
   const user = await getUserFromToken(token)

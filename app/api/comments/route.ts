@@ -1,6 +1,7 @@
 // app/api/comments/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { guardWriteOperation } from "@/lib/systemGuard";
 
 // környezeti változók (SERVICE ROLE itt kötelező, csak szerver oldalon)
 const supabase = createClient(
@@ -14,6 +15,10 @@ const RATE_LIMIT_MAX = 6; // max 6 komment / perc per IP
 const rateMap = new Map<string, number[]>();
 
 export async function POST(req: Request) {
+  // Check system mode
+  const guardResponse = await guardWriteOperation(req as any);
+  if (guardResponse) return guardResponse;
+  
   try {
     const json = await req.json();
     const story_slug = (json.story_slug || "").toString().trim();

@@ -7,12 +7,13 @@ export default function BgVideoGate() {
   const pathname = usePathname() || "/";
 
   const shouldRender = useMemo(() => {
-    // Reader and AR should be as light as possible
+    // Reader, AR, and Admin should be as light as possible / no video background
     return !(
       pathname === "/reader" || 
       pathname.startsWith("/reader/") || 
       pathname === "/ar" || 
       pathname.startsWith("/ar/") ||
+      pathname.startsWith("/admin") ||
       pathname.startsWith("/public-story/")
     );
   }, [pathname]);
@@ -64,7 +65,7 @@ export default function BgVideoGate() {
         playsInline
         preload="metadata"
       />
-      <div className="bg-video__overlay absolute inset-0" />
+      <div className="bg-video__overlay absolute inset-0 pointer-events-none" />
     </div>
   );
 }

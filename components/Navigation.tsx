@@ -46,12 +46,6 @@ export default function Navigation() {
               </Link>
               <div className="flex items-center gap-3 flex-wrap justify-center">
                 <Link
-                  href="/feed"
-                  className="text-xs hover:text-lime-300 transition-colors normal-case tracking-normal"
-                >
-                  Feed
-                </Link>
-                <Link
                   href="/reader"
                   className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
                 >
@@ -98,12 +92,6 @@ export default function Navigation() {
                 Üdv, {userEmail}
               </Link>
               <Link
-                href="/feed"
-                className="text-xs hover:text-lime-300 transition-colors normal-case tracking-normal"
-              >
-                Feed
-              </Link>
-              <Link
                 href="/reader"
                 className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
               >
@@ -124,7 +112,7 @@ export default function Navigation() {
                 href="/auth?from=/reader"
                 className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
               >
-                Belépés
+                Reader Belépés
               </Link>
             </div>
           )}

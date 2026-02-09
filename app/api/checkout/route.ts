@@ -1,11 +1,16 @@
 // /checkout/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { guardWriteOperation } from "@/lib/systemGuard";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY!;
 const stripe = new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" });
 
-export async function POST() {
+export async function POST(req: Request) {
+  // Check system mode
+  const guardResponse = await guardWriteOperation(req as any);
+  if (guardResponse) return guardResponse;
+  
   try {
     if (!stripeKey) {
       return NextResponse.json(

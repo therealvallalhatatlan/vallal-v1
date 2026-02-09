@@ -14,6 +14,7 @@ import AuthUrlSessionSync from "@/components/AuthUrlSessionSync";
 import { ThemeProvider } from "@/components/theme-provider";
 import BgVideoGate from "@/components/BgVideoGate";
 import TrafficSourceHeuristics from "@/components/TrafficSourceHeuristics";
+import StatusBanner from "@/components/StatusBanner";
 
 
 const crimson = Crimson_Pro({
@@ -139,6 +140,7 @@ export default function RootLayout({
 
         {/* Page content a legfelül */}
         <div className="content-above relative z-20">
+          {/*<StatusBanner />*/}
           <AuthUrlSessionSync />
           <PWAInstallManager />
           {children}
@@ -194,7 +196,7 @@ export default function RootLayout({
          }
         .bg-video { position:fixed; inset:0; overflow:hidden; }
         .bg-video__media { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:1; pointer-events:none; }
-        .bg-video__overlay { position:absolute; inset:0; pointer-events:none; background:rgba(0,0,0,0.8); }
+        .bg-video__overlay { position:absolute; inset:0; pointer-events:none; background:rgba(0,0,0,0.5); }
         `}</style>
             </ThemeProvider>
       </body>

@@ -1,6 +1,7 @@
 // app/api/feed/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { guardWriteOperation } from "@/lib/systemGuard";
 
 // Service role client for admin operations
 const supabase = createClient(
@@ -47,6 +48,10 @@ export async function GET(req: Request) {
 
 // POST /api/feed - Create new feed post
 export async function POST(req: Request) {
+  // Check system mode
+  const guardResponse = await guardWriteOperation(req as any);
+  if (guardResponse) return guardResponse;
+  
   try {
     // Check authentication
     const authHeader = req.headers.get("Authorization");
@@ -123,6 +128,10 @@ export async function POST(req: Request) {
 
 // PATCH /api/feed - Update existing post (within 5 minutes)
 export async function PATCH(req: Request) {
+  // Check system mode
+  const guardResponse = await guardWriteOperation(req as any);
+  if (guardResponse) return guardResponse;
+  
   try {
     // Check authentication
     const authHeader = req.headers.get("Authorization");
@@ -190,6 +199,10 @@ export async function PATCH(req: Request) {
 
 // DELETE /api/feed - Delete a post
 export async function DELETE(req: Request) {
+  // Check system mode
+  const guardResponse = await guardWriteOperation(req as any);
+  if (guardResponse) return guardResponse;
+  
   try {
     // Check authentication
     const authHeader = req.headers.get("Authorization");
