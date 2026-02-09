@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import AudioPlayer3 from "@/components/AudioPlayer3";
 import { usePresence } from "@/hooks/usePresence";
+import ReaderPWAPrompt from "@/components/ReaderPWAPrompt";
 
 // import BookCover from "@/components/BookCover";
 
@@ -1415,6 +1416,9 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
           transform: none !important;
         }
        `}</style>
+       
+       {/* PWA Install Prompt for Mobile */}
+       <ReaderPWAPrompt />
      </div>
    );
  }
