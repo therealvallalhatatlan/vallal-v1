@@ -14,6 +14,42 @@ interface StoryData {
   remainingSeconds: number;
 }
 
+const FONT_SIZE_KEY = "publicStoryFontSize";
+const FONT_SIZE_MIN = 16;
+const FONT_SIZE_MAX = 28;
+
+const clampFontSize = (value: number) =>
+  Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, value));
+
+function FontSizeControls({
+  fontSize,
+  onChange,
+}: {
+  fontSize: number;
+  onChange: (delta: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => onChange(-1)}
+        className="w-6 h-6 rounded-full border border-neutral-800/30 dark:border-yellow-400/30 text-neutral-800 dark:text-yellow-400 hover:bg-neutral-800/10 dark:hover:bg-yellow-400/10 transition-colors text-xs font-semibold"
+        aria-label="Betűméret csökkentése"
+      >
+        a
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(1)}
+        className="w-7 h-7 rounded-full border border-neutral-800/30 dark:border-yellow-400/30 text-neutral-800 dark:text-yellow-400 hover:bg-neutral-800/10 dark:hover:bg-yellow-400/10 transition-colors text-sm font-semibold"
+        aria-label="Betűméret növelése"
+      >
+        A
+      </button>
+    </div>
+  );
+}
+
 export default function PublicStoryPage() {
   const params = useParams();
   const router = useRouter();
@@ -26,6 +62,8 @@ export default function PublicStoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
   const [expired, setExpired] = useState(false);
+  const [fontSize, setFontSize] = useState<number>(20);
+  const [headerImageSrc, setHeaderImageSrc] = useState<string>("/og.png");
 
   // Hide video after 3 seconds with fade out
   useEffect(() => {
@@ -42,6 +80,36 @@ export default function PublicStoryPage() {
       clearTimeout(hideTimer);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const stored = window.localStorage.getItem(FONT_SIZE_KEY);
+    if (stored) {
+      const parsed = Number(stored);
+      if (!Number.isNaN(parsed)) {
+        setFontSize(clampFontSize(parsed));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (slug) {
+      setHeaderImageSrc(`/public-story/${encodeURIComponent(slug)}.jpg`);
+    }
+  }, [slug]);
+
+  const changeFontSize = (delta: number) => {
+    setFontSize((prev) => {
+      const next = clampFontSize(prev + delta);
+      if (next !== prev) {
+        window.localStorage.setItem(FONT_SIZE_KEY, String(next));
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     async function checkAccessAndLoad() {
@@ -88,7 +156,7 @@ export default function PublicStoryPage() {
             }
             return prev - 1;
           });
-        }, 1000); // Update every second
+        }, 4000); // Update every second
 
         return () => clearInterval(interval);
       } catch (err) {
@@ -104,7 +172,10 @@ export default function PublicStoryPage() {
   if (loading || showVideo) {
     return (
       <>
-        <ThemeToggle />
+        <div className="fixed right-4 top-4 z-50 flex items-center gap-3">
+          <FontSizeControls fontSize={fontSize} onChange={changeFontSize} />
+          <ThemeToggle />
+        </div>
         <div className={`fixed inset-0 z-50 bg-black flex items-center justify-center transition-opacity duration-500 ${
           videoFading ? 'opacity-0' : 'opacity-100'
         }`}>
@@ -123,7 +194,10 @@ export default function PublicStoryPage() {
   if (error || expired) {
     return (
       <>
-        <ThemeToggle />
+        <div className="fixed right-4 top-4 z-50 flex items-center gap-3">
+          <FontSizeControls fontSize={fontSize} onChange={changeFontSize} />
+          <ThemeToggle />
+        </div>
         <Container className="py-20">
           <div className="max-w-3xl mx-auto">
             <div className="bg-white/40 dark:bg-black/40 border border-red-500/40 rounded-lg p-8 mb-8">
@@ -144,9 +218,11 @@ export default function PublicStoryPage() {
   if (!story) {
     return (
       <>
-        
         <Container className="py-20">
-          <ThemeToggle />
+          <div className="flex items-center justify-end gap-3">
+            <FontSizeControls fontSize={fontSize} onChange={changeFontSize} />
+            <ThemeToggle />
+          </div>
           <div className="text-center text-gray-600 dark:text-gray-400">Nincs tartalom</div>
         </Container>
       </>
@@ -159,15 +235,18 @@ export default function PublicStoryPage() {
         
         <div className="max-w-3xl mx-auto">
           {/* Timer Header */}
-          <div className="sticky top-0 z-10 bg-white/0 dark:bg-black/0 backdrop-blur-sm border-b border-lime-500/20 mb-8 py-4 rounded-lg">
+          <div className="sticky top-0 z-10 bg-white/0 dark:bg-black/0 backdrop-blur-sm border-b border-neutral-500/20 mb-8 py-4">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                Az oldal megsemmisül: ⏱  {remainingSeconds} sec múlva <br/>
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                A sztori megsemmisül: ⏱  {remainingSeconds} sec múlva <br/>
               </div>
               <div className="dark:text-lime-700 light:text-lime-100 font-mono">
                
               </div>
-              <ThemeToggle />
+              <div className="flex items-center gap-3">
+                <FontSizeControls fontSize={fontSize} onChange={changeFontSize} />
+                <ThemeToggle />
+              </div>
             </div>
             {remainingSeconds <= 30 && (
               <div className="mt-2 text-xs text-yellow-500 animate-pulse">
@@ -178,15 +257,26 @@ export default function PublicStoryPage() {
 
           {/* Story Header */}
           <header className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-neutral-800 dark:text-neutral-300 mb-4">
+            <div className="mb-6 overflow-hidden rounded-xl border border-neutral-300/40 dark:border-neutral-700/60">
+              <img
+                src={headerImageSrc}
+                alt="Public story cover"
+                className="w-full max-h-[420px] object-cover"
+                loading="eager"
+                onError={() => setHeaderImageSrc("/og.png")}
+              />
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold text-neutral-800 dark:text-neutral-300 mb-4">
               {story.title}
             </h1>
-            <div className="h-px bg-gradient-to-r from-lime-500/0 via-lime-500/50 to-lime-500/0 mb-8" />
           </header>
 
           {/* Story Content */}
           <article className="prose prose-invert prose-lime max-w-none">
-            <div className="text-gray-800 dark:text-gray-400 leading-relaxed whitespace-pre-wrap text-xl">
+            <div
+              className="text-gray-800 dark:text-gray-400 leading-relaxed whitespace-pre-wrap"
+              style={{ fontSize: `${fontSize}px` }}
+            >
               {story.text}
             </div>
           </article>
