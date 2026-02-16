@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Container } from "@/components/Container";
 import CtaBuyBox from "@/components/CtaBuyBox";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import FacebookSocial from "@/components/FacebookSocial";
+import { DiscussionEmbed } from 'disqus-react';
 
 interface StoryData {
   slug: string;
@@ -64,6 +66,13 @@ export default function PublicStoryPage() {
   const [expired, setExpired] = useState(false);
   const [fontSize, setFontSize] = useState<number>(20);
   const [headerImageSrc, setHeaderImageSrc] = useState<string>("/og.png");
+  const [pageUrl, setPageUrl] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setPageUrl(window.location.href);
+    }
+  }, []);
 
   // Hide video after 3 seconds with fade out
   useEffect(() => {
@@ -280,6 +289,22 @@ export default function PublicStoryPage() {
               {story.text}
             </div>
           </article>
+
+          <FacebookSocial />
+
+          {pageUrl && story && (
+            <div className="mt-10">
+              <DiscussionEmbed
+                shortname="vallalhatatlan"
+                config={{
+                  url: pageUrl,
+                  identifier: pageUrl,
+                  title: story.title,
+                  language: "hu",
+                }}
+              />
+            </div>
+          )}
 
           {/* CTA Section */}
           <div className="mt-16 pt-8 border-t border-lime-500/20">

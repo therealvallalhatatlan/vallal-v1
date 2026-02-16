@@ -8,13 +8,23 @@ export const size = {
   height: 630,
 };
 
-export default async function Image({ params }: { params: { slug: string } }) {
-  const { slug } = params;
-  
-  // Humanize the slug to get the title (same logic as in the API)
-  const title = decodeURIComponent(slug)
+// Humanize function (same as lib/utils.ts but Edge compatible)
+function humanize(slug: string): string {
+  return decodeURIComponent(slug)
     .replace(/^\d+-/, "")
     .replace(/-/g, " ");
+}
+
+export default async function Image({ 
+  params 
+}: { 
+  params: { slug: string } 
+}) {
+  const resolvedParams = await Promise.resolve(params);
+  const slug = resolvedParams?.slug || "story";
+  
+  // Humanize the slug to get the title
+  const title = humanize(slug);
 
   return new ImageResponse(
     (

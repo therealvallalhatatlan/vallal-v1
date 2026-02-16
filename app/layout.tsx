@@ -15,6 +15,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import BgVideoGate from "@/components/BgVideoGate";
 import TrafficSourceHeuristics from "@/components/TrafficSourceHeuristics";
 import StatusBanner from "@/components/StatusBanner";
+import FacebookSDK from "@/components/FacebookSDK";
 
 
 const crimson = Crimson_Pro({
@@ -135,6 +136,7 @@ export default function RootLayout({
         style={{ touchAction: 'pan-y' }}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <FacebookSDK />
         {/* Háttérvideó – a Reader alatt nem rendereljük (perf/memory) */}
         <BgVideoGate />
 
