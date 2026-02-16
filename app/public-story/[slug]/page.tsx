@@ -293,14 +293,15 @@ export default function PublicStoryPage() {
           <FacebookSocial />
 
           {pageUrl && story && (
-            <div className="mt-10">
+            <div className="mt-10 rounded-2xl border border-neutral-300/40 dark:border-neutral-700/60 bg-white/40 dark:bg-black/40 p-6">
               <DiscussionEmbed
+                key={pageUrl}
                 shortname="vallalhatatlan"
                 config={{
                   url: pageUrl,
-                  identifier: pageUrl,
+                  identifier: `public-story-${slug}`,
                   title: story.title,
-                  language: "hu",
+                  language: "hu_HU",
                 }}
               />
             </div>
