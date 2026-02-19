@@ -150,6 +150,11 @@ SUPABASE_SERVICE_ROLE_KEY="eyJxxx..."
 
 # Required for admin panel access
 DEMO_ADMIN_KEY="your-secret-key"
+
+# Optional: operator social quick links shown on /killswitch
+NEXT_PUBLIC_SOCIAL_FACEBOOK_URL="https://facebook.com/your-page"
+NEXT_PUBLIC_SOCIAL_YOUTUBE_URL="https://youtube.com/@your-channel"
+NEXT_PUBLIC_SOCIAL_SUBSTACK_URL="https://your-publication.substack.com"
 ```
 
 ### Performance Tuning
