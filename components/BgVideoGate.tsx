@@ -58,7 +58,7 @@ export default function BgVideoGate() {
       <video
         id="bg-video"
         className="bg-video__media w-full h-full object-cover"
-        src="/videos/video1.mp4"
+        src="/videos/bg2.mp4"
         autoPlay
         muted
         loop

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { KeyRound, LogOut } from "lucide-react";
 
 import { useSessionGuard } from "@/hooks/useSessionGuard";
 import { createClient } from "@/lib/browser";
@@ -26,17 +26,17 @@ export default function Navigation() {
   return (
     <div className="relative">
       <nav className="max-w-3xl mx-auto py-6 md:px-0 px-6">
-        {/* Mobile Layout: Logo centered, nav below */}
-        <div className="flex md:hidden flex-col items-center gap-4 w-full text-sm">
-          <Link href="/" className="hover:text-lime-300 transition-colors">
-            <img
-              src="/img/logo.png"
-              alt="Vállalhatatlan"
-              className="h-16 md:h-10 w-auto"
-            />
-          </Link>
+        {/* Mobile Layout */}
+        {userEmail ? (
+          <div className="flex md:hidden flex-col items-center gap-4 w-full text-sm">
+            <Link href="/" className="hover:text-lime-300 transition-colors">
+              <img
+                src="/img/logo.png"
+                alt="Vállalhatatlan"
+                className="h-16 md:h-10 w-auto"
+              />
+            </Link>
 
-          {userEmail ? (
             <div className="flex flex-col items-center gap-3 w-full">
               <Link
                 href={`/user/${userId}`}
@@ -61,17 +61,28 @@ export default function Navigation() {
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="flex items-center justify-center">
+          </div>
+        ) : (
+          <div className="flex md:hidden w-full items-center justify-between gap-4 text-sm">
+            <Link href="/" className="hover:text-lime-300 transition-colors">
+              <img
+                src="/img/logo.png"
+                alt="Vállalhatatlan"
+                className="h-10 w-auto"
+              />
+            </Link>
+
+            <div className="flex items-center justify-end">
               <Link
                 href="/auth?from=/reader"
-                className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/50 bg-black/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-white hover:text-black transition-colors hover:bg-lime-400"
               >
-                Belépés
+                Klubtagoknak
+                <KeyRound className="h-3.5 w-3.5" />
               </Link>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Desktop Layout: Horizontal */}
         <div className="hidden md:flex w-full items-center justify-between gap-6 text-sm uppercase tracking-[0.18em] text-neutral-300">
@@ -110,22 +121,17 @@ export default function Navigation() {
             <div className="flex items-center justify-end">
               <Link
                 href="/auth?from=/reader"
-                className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/50 bg-black/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-white hover:text-black transition-colors hover:bg-lime-400"
               >
-                Reader Belépés
+                Klubtagoknak
+                <KeyRound className="h-3.5 w-3.5" />
               </Link>
             </div>
           )}
         </div>
       </nav>
 
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-0 right-0 -bottom-2 h-8"
-        style={{ backdropFilter: "blur(8px)" }}
-      >
-        <div className="w-full h-full bg-white/5 dark:bg-black/20" />
-      </div>
+
     </div>
   );
 }

@@ -52,15 +52,15 @@ export default function TweetRotator({
   return (
     <div
       className={clsx(
-        "relative px-6 w-full mx-auto bg-black py-8 border-b border-zinc-800",
-        "font-mono text-md leading-[1.35] text-lime-200",
+        "relative px-6 max-w-3xl mx-auto bg-black/0 py-8 border-b border-zinc-800/20",
+        "font-mono text-md leading-[1.35] text-lime-100",
         className
       )}
       style={{ height: heightPx }}
       aria-live="polite"
     >
-      <span className="opacity-60">Válalhatatlan Latest › </span>
-      <span className="align-top whitespace-pre-wrap break-words italic">{txt}</span>
+      <span className="bg-black p-2">Válalhatatlan Latest › </span>
+      <span className="align-top whitespace-pre-wrap break-words italic bg-black p-2">{txt}</span>
       <span className="ml-1 inline-block animate-[blink_1s_steps(1,end)_infinite]">▌</span>
 
       <style jsx>{`
