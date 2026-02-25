@@ -39,7 +39,7 @@ export default function Hero() {
             <span className="text-neutral-200">, meg sem történt történetek</span>
           </h1>
 
-          <p className="max-w-xl text-xl md:text-2xl leading-8 text-neutral-300 ">
+          <p className="max-w-xl text-xl md:text-2xl leading-7 text-neutral-300 ">
             <img
               src="/img/dd.png"
               alt="PP"
