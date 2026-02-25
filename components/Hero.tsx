@@ -69,7 +69,7 @@ export default function Hero() {
                     Megvásárolom
                   </a>
                   <a
-                    href="/deaddrop"
+                    href="#gyik"
                     className="text-xs font-semibold text-lime-100/50 transition hover:text-lime-200"
                   >
                     Tudj meg többet
@@ -107,7 +107,7 @@ export default function Hero() {
                 <div className="py-4 flex items-center gap-3 border border-white/0 rounded-lg">
                   <span className="text-lg font-semibold text-neutral-900">5 eur / hónap</span>
                   <a
-                    href="/feed"
+                    href="https://vallalhatatlan.substack.com/"
                     className="inline-flex items-center justify-center rounded-xl bg-black/80 px-4 py-2 text-sm font-bold text-lime-300 ring-1 ring-lime-500/40 transition hover:bg-black hover:ring-lime-400/60"
                   >
                     Csatlakozz!
