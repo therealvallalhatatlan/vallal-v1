@@ -27,12 +27,12 @@ const heroCards = [
 
 export default function Hero() {
   return (
-    <section className="relative mx-auto max-w-3xl px-6 py-10 md:py-32">
+    <section className="relative mx-auto max-w-3xl px-6 py-32 md:py-32">
 
 
       <div className="">
         {/* Left: headline + CTAs */}
-        <div className="space-y-9">
+        <div className="space-y-6">
 
           <h1 className="text-4xl font-bold leading-tight md:text-6xl">
             <span className="text-lime-400">Vállalhatatlan</span>
