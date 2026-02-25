@@ -27,7 +27,7 @@ export default function MiEz() {
               Fizikai példány
             </p>
             <h3 className="text-lime-400 font-semibold text-xl mb-2">
-              100db könyv
+              Fizikai Könyv
             </h3>
             <img
               src="/features/1.png"
@@ -36,8 +36,7 @@ export default function MiEz() {
               loading="lazy"
             />
             <p className="text-gray-300 text-sm md:text-base leading-relaxed">
-              100 példány készült. Mind sorszámozott, dedikált, és nyers, mint a
-              betontörmelék. Ha elfogy, nincs utánnyomás.
+              Minden példány egyedi, dedikált, és a történet része lesz.
             </p>
           </div>
         </article>
@@ -60,7 +59,7 @@ export default function MiEz() {
             />
             <p className="text-gray-300 text-sm md:text-base leading-relaxed">
               Minden novella saját QR-kódokkal él tovább: képek, zenék, hangok,
-              helyszínek, kaland + adrenalin.
+              helyszínek.
             </p>
           </div>
         </article>
@@ -82,9 +81,7 @@ export default function MiEz() {
               loading="lazy"
             />
             <p className="text-gray-300 text-sm md:text-base leading-relaxed">
-              A példányod egy dead drop része lesz. A saját könyvedet GPS
-              koordináták és fotó alapján vadászod le. A történet ott kezdődik,
-              ahol megtalálod.
+              Vállalhatatlan személyesen rejti el a könyvedet - GPS koordináták és fotó alapján vadászod le.
             </p>
           </div>
         </article>

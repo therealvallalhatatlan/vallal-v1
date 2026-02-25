@@ -11,9 +11,9 @@ export default function OlvassBele() {
       description: "Posztok és frissítések",
     },
     {
-      label: "Patreon",
-      href: "https://www.patreon.com/c/vallalhatatlan",
-      description: "Extra cuccok és támogatás",
+      label: "Substack",
+      href: "https://vallalhatatlan.substack.com/",
+      description: "Websorozat - heti 2-3 epizód, chat, közösség",
     },
   ];
 

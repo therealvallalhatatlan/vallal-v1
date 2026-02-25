@@ -26,17 +26,17 @@ export default function Deliverables() {
           </div>
           <div className="relative">
             <p className="text-[11px] uppercase tracking-[0.2em] text-lime-300/80 mb-2">
-              Fizikai csomag
+              Fizikai Könyv
             </p>
             <h3 className="text-lime-400 font-semibold text-xl mb-4">
               A kézzel fogható Vállalhatatlan
             </h3>
             <ul className="space-y-2 text-gray-300 text-sm md:text-base">
               <li>• Limitált Vállalhatatlan könyv</li>
-              <li>• Egyedi sorszámozás (1–100)</li>
-              <li>• Dedikált példány</li>
-              <li>• Glitchelt vizuális elemek</li>
-              <li>• Dead drop esetén időjárásálló csomagolás</li>
+              <li>• Egyedi, dedikált példány</li>
+              <li>• Időjárásálló csomagolás</li>
+              <li>• Ajándék matricák</li>
+              <li>• Digitális hozzáférés</li>
             </ul>
           </div>
         </article>
@@ -46,7 +46,7 @@ export default function Deliverables() {
           <div className="absolute inset-0 opacity-20 pointer-events-none" />
           <div className="relative">
             <p className="text-[11px] uppercase tracking-[0.2em] text-lime-300/80 mb-2">
-              Digitális csomag
+              Digitális Csomag
             </p>
             <h3 className="text-lime-400 font-semibold text-xl mb-4">
               QR-kódos underground ökoszisztéma
@@ -68,18 +68,8 @@ export default function Deliverables() {
           <p className="text-xs uppercase tracking-[0.2em] text-lime-300/80 mb-1">
             A Fullos Élmény Ára
           </p>
-          <p className="text-2xl font-semibold">
-            15 000 Ft
-          </p>
-          <p className="text-gray-400 text-sm mt-1">
-            <a href="https://www.patreon.com/vallalhatatlan" className="text-lime-300 hover:text-lime-200 underline">
-              Patreon Klubtagoknak
-            </a>, és/vagy a {" "}
-            <a href="/reader" className="text-lime-300 hover:text-lime-200 underline">
-              Digitális Reader
-            </a> megvásárlóinak 
-            <br/>
-            <span className="text-lime-300 font-medium">10 000 Ft</span>
+          <p className="text-4xl font-semibold">
+            10 000 Ft
           </p>
         </div>
 
@@ -89,13 +79,13 @@ export default function Deliverables() {
             href="https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
             className="flex-1 bg-lime-400 hover:bg-lime-300 text-black font-semibold py-3 px-6 rounded-xl transition-colors duration-200 text-center"
           >
-            Megveszem a könyvet
+            Megveszem <br/>a könyvet
           </a>
           <a
-            href="https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j"
-            className="flex-1 bg-transparent hover:bg-lime-400/10 text-lime-400 font-semibold py-3 px-6 rounded-xl border border-lime-400 transition-colors duration-200 text-center"
+            href="https://vallalhatatlan.substack.com/"
+            className="flex-1 hover:bg-black/60 text-lime-100 font-semibold py-3 px-6 rounded-xl bg-black transition-colors duration-200 text-center"
           >
-            Megveszem az appot
+            Előfizetek a Websorozatra
           </a>
         </div>
 

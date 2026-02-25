@@ -9,6 +9,7 @@ export default function Footer() {
           <a href="mailto:therealvallalhatatlan@gmail.com">Email</a>
           <a href="https://www.youtube.com/@V%C3%A1llalhatatlan01">Youtube</a>
           <a href="https://www.facebook.com/vallalhatatlan2000">Facebook</a>
+          <a href="https://vallalhatatlan.substack.com/">Substack</a>
         </div>
 
         <p className="text-gray-500 text-sm mb-2">
