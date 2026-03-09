@@ -22,8 +22,7 @@ export default function Page() {
     <main className="text-zinc-200">
       <Navigation />
       <Hero />
-      <TweetRotator messages={["Készlet feltöltve - akár pár órán belül megkaphatod!","Nyugodtan baszogass, írj rám!","therealvallalhatatlan@gmail.com", "Veronika aki dec.8.-án vásároltál - még mindig nem jelentkeztél!","Nem csak dead drop - postán is kérhető, automatába"]} />
-      <Reviews />
+      
       <OlvassBele />
       <MiEz />
       <FAQ />

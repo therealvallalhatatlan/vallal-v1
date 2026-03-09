@@ -27,12 +27,12 @@ const heroCards = [
 
 export default function Hero() {
   return (
-    <section className="relative mx-auto max-w-3xl px-6 py-32 md:py-32">
+    <section className="relative mx-auto max-w-3xl px-6 py-32 md:py-48">
 
 
       <div className="">
         {/* Left: headline + CTAs */}
-        <div className="space-y-6">
+        <div className="space-y-12">
 
           <h1 className="text-4xl font-bold leading-tight md:text-6xl">
             <span className="text-lime-400">Vállalhatatlan</span>
@@ -40,11 +40,7 @@ export default function Hero() {
           </h1>
 
           <p className="max-w-xl text-xl md:text-2xl leading-7 text-neutral-300 ">
-            <img
-              src="/img/dd.png"
-              alt="PP"
-              className="mr-4 mt-1 float-left h-32 w-auto -rotate-5"
-            />
+
             Ezt a könyvet ne keresd a könyvesboltokban. 
             Ez egy városi kaland, egy titkos küldetés, ahol a könyv megszerzése is része a történetnek.
           </p>
@@ -63,7 +59,7 @@ export default function Hero() {
                 <div className="py-4 flex items-center gap-3 border border-white/0 rounded-lg">
                   <span className="text-lg font-semibold text-lime-100">10.000 huf</span>
                   <a
-                    href="/konyv"
+                    href="https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
                     className="inline-flex items-center justify-center rounded-xl bg-lime-500 px-4 py-2 text-sm font-semibold text-black ring-1 ring-lime-500/40 transition hover:bg-lime-400 hover:ring-lime-400/60"
                   >
                     Megvásárolom
