@@ -1,4 +1,7 @@
+"use client";
+
 import { Card } from "@/components/Card";
+import { useState, useEffect } from "react";
 
 const heroCards = [
   {
@@ -26,26 +29,62 @@ const heroCards = [
 ] as const;
 
 export default function Hero() {
+  const [displayText, setDisplayText] = useState('');
+  const [descriptionText, setDescriptionText] = useState('');
+  const [startDescription, setStartDescription] = useState(false);
+  const [showSection, setShowSection] = useState(false);
+  const fullText = ', meg sem történt történetek';
+
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i <= fullText.length) {
+        setDisplayText(fullText.slice(0, i));
+        i++;
+        if (i > fullText.length) {
+          clearInterval(interval);
+          setStartDescription(true);
+        }
+      }
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!startDescription) return;
+    let i = 0;
+    const descText = 'Ezt a könyvet ne keresd a könyvesboltokban. Ez egy városi kaland. Egy titkos küldetés. A könyv megszerzése része a történetnek.';
+    const interval = setInterval(() => {
+      if (i <= descText.length) {
+        setDescriptionText(descText.slice(0, i));
+        i++;
+        if (i > descText.length) {
+          clearInterval(interval);          setShowSection(true);        }
+      }
+    }, 10);
+    return () => clearInterval(interval);
+  }, [startDescription]);
+
   return (
     <section className="relative mx-auto max-w-3xl px-6 py-32 md:py-48">
 
 
       <div className="">
         {/* Left: headline + CTAs */}
-        <div className="space-y-12">
+        <div className="">
 
           <h1 className="text-4xl font-bold leading-tight md:text-6xl">
             <span className="text-lime-400">Vállalhatatlan</span>
-            <span className="text-neutral-200">, meg sem történt történetek</span>
+            <span className="text-white">{displayText}</span>
+            <span className="cursor">|</span>
           </h1>
 
           <p className="max-w-xl text-xl md:text-2xl leading-7 text-neutral-300 ">
 
-            Ezt a könyvet ne keresd a könyvesboltokban. 
-            Ez egy városi kaland, egy titkos küldetés, ahol a könyv megszerzése is része a történetnek.
+            {descriptionText}
           </p>
 
-          <div className="mt-16 rounded-2xl border border-lime-400/20 bg-black/60 p-6 md:p-9">
+          <div className={`mt-16 rounded-2xl border border-lime-400/20 bg-black/60 p-6 md:p-9 ${showSection ? 'fade-in' : 'opacity-0'}`}>
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="flex-1 space-y-3">
                 <h2 className="text-2xl font-semibold text-white md:text-3xl">
