@@ -191,6 +191,8 @@ export async function createCheckoutForCopy(copyNumber: number, sessionId: strin
       console.error('Failed to store Stripe session ID:', updateError);
       // Don't fail the checkout - the session is created, just not persisted
       // User can still complete payment, webhook will mark as sold
+    } else {
+      console.log(`💳 Stored Stripe session ID ${session.sessionId} for copy ${copyNumber}`);
     }
 
     return { success: true, url: session.url };
