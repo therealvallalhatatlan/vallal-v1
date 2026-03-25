@@ -205,17 +205,18 @@ export function CopyReservationApp() {
             <div className="space-y-4 text-slate-300">
               <p>
                 De ne valami békés, nyugis helyre gondolj, ahol e-mailt írnak a nagymamának.
-Ez a 2000-es évek eleje. Az internet még nem unalmas. Még nem munka, ügyintézés meg algoritmikus agyrohasztás. Vadnyugat volt.
+Ez a 2000-es évek eleje. Az internet még nem unalmas. Még nem munka, ügyintézés meg algoritmikus agybaszás.
               </p>
               <p>
-                Tíz után eltűnnek a normális emberek, és megérkeznek azok, akik tényleg használni akarják a hálózatot. 
+                Vadnyugat volt. Tíz után eltűntek a normális emberek, és megérkeztek azok, akik tényleg használni akarták a hálózatot. 
                 Autótolvajok, stricik, kurvák, hackerek, drogdílerek, speedes futárok, félőrült zsenik és elveszett figurák. 
-                A pult mögött pedig ott állunk mi: Pixi, Wes, Isu és én, próbálunk túlélni reggelig.
+                A pult mögött pedig ott állunk mi: Pixi, Wes, Isu és én, Vállalhatatlan. 
+                Próbálunk túlélni reggelig, miközben a világ fenekestől felfordul körülöttünk.
               </p>
               <p>
                 Várható megjelenés: Május közepe. <br/> <br/>
                 A könyv 100 számozott példányban jelenik meg, és csak itt lehet megvásárolni.
-                Dead drop kalanddal, zenével, vizuállal, ahogy az első résznél megszokhattátok.
+                Dead drop kalanddal, zenével, vizuállal, ahogy az első résznél. Tarts velem!
               </p>
             </div>
           </div>
