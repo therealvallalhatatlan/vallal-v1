@@ -1,10 +1,21 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
 export default function BgVideoGate() {
   const pathname = usePathname() || "/";
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const shouldRender = useMemo(() => {
     // Reader, AR, and Admin should be as light as possible / no video background
@@ -17,6 +28,13 @@ export default function BgVideoGate() {
       pathname.startsWith("/public-story/")
     );
   }, [pathname]);
+
+  const videoSrc = useMemo(() => {
+    if (pathname === "/konyv-valasztas") {
+      return isMobile ? "/videos/video3_vertical.mp4" : "/videos/video3.mp4";
+    }
+    return "/videos/bg.mp4";
+  }, [pathname, isMobile]);
 
   useEffect(() => {
     if (!shouldRender) return;
@@ -58,7 +76,7 @@ export default function BgVideoGate() {
       <video
         id="bg-video"
         className="bg-video__media w-full h-full object-cover"
-        src="/videos/bg.mp4"
+        src={videoSrc}
         autoPlay
         muted
         loop

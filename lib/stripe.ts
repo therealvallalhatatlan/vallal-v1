@@ -6,11 +6,17 @@ import Stripe from "stripe"
  */
 
 export interface CheckoutSessionParams {
-  amount: number // Amount in smallest currency unit (e.g., 1500000 for 15000 HUF)
-  currency: string // Currency code (e.g., 'huf')
-  successUrl: string // URL to redirect after successful payment
-  cancelUrl: string // URL to redirect after cancelled payment
-  metadata?: Record<string, string> // Additional metadata
+  amount: number;
+  currency: string;
+  successUrl: string;
+  cancelUrl: string;
+  productName?: string;
+  metadata?: Record<string, string>;
+}
+
+export interface CheckoutSessionResult {
+  url: string;
+  sessionId: string;
 }
 
 function createStripeClient(): Stripe | null {
@@ -22,9 +28,7 @@ function createStripeClient(): Stripe | null {
     return null
   }
 
-  return new Stripe(secretKey, {
-    apiVersion: "2025-07-30.basil",
-  })
+  return new Stripe(secretKey)
 }
 
 export const stripe = createStripeClient()
@@ -39,26 +43,27 @@ export function getSiteUrl(): string {
  *
  * Example usage:
  * const session = await createCheckoutSession({
- *   amount: 1500000, // 15000 HUF in fillér (smallest unit)
+ *   amount: 10000000, // 1000000 HUF in fillér (smallest unit) - 10,000 Ft
  *   currency: 'huf',
  *   successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
  *   cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/cancelled`,
  *   metadata: { orderId: 'demo_001' }
  * })
  */
-export async function createCheckoutSession(params: CheckoutSessionParams): Promise<{ url: string }> {
+export async function createCheckoutSession(params: CheckoutSessionParams): Promise<CheckoutSessionResult> {
   if (!stripe) {
     throw new Error("Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.")
   }
 
-  const session = await stripe.checkout.sessions.create({
+  try {
+    const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: [
       {
         price_data: {
           currency: params.currency,
           product_data: {
-            name: "Book Preorder",
+            name: params.productName || "Book Preorder",
             description: "Pre-order your copy of the upcoming book",
           },
           unit_amount: params.amount,
@@ -72,5 +77,9 @@ export async function createCheckoutSession(params: CheckoutSessionParams): Prom
     metadata: params.metadata || {},
   })
 
-  return { url: session.url! }
+    return { url: session.url!, sessionId: session.id }
+  } catch (error) {
+    console.error('Stripe checkout session creation failed:', error)
+    throw error
+  }
 }

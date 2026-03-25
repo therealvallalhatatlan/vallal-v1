@@ -22,7 +22,6 @@ export default function Page() {
     <main className="text-zinc-200">
       <Navigation />
       <Hero />
-      
       <OlvassBele />
       <MiEz />
       <FAQ />
