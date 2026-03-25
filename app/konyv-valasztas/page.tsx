@@ -9,8 +9,9 @@ export const metadata = {
 
 export default function CopySelectionPage() {
   return (
-    <main className="py-12 md:py-16">
-      <Container>
+    <main className="relative py-12 md:py-16">
+      <div className="pointer-events-none absolute inset-0 bg-black/70" />
+      <Container className="relative z-10">
         <Navigation />
         <CopyReservationApp />
       </Container>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCopyReservation } from '@/hooks/useCopyReservation';
 import { formatCountdown, formatCopyNumber } from '@/lib/copyFormatting';
 import { CopyGrid } from './CopyGrid';
@@ -34,6 +34,25 @@ export function CopyReservationApp() {
   const isReservationExpired = Boolean(reservedCopy && remainingSeconds === 0);
   const isReserved = !!reservedCopy && !isReservationExpired;
   const reservationProgress = Math.max(0, Math.min(1, remainingSeconds / 600));
+
+  // Promotion start - this can be sourced from env or backend in production
+  const promotionStart = new Date(Date.now() - 8 * 60 * 60 * 1000); // 8 óra ezelőtt
+  const [promotionElapsedSeconds, setPromotionElapsedSeconds] = useState(
+    Math.floor((Date.now() - promotionStart.getTime()) / 1000),
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPromotionElapsedSeconds(Math.floor((Date.now() - promotionStart.getTime()) / 1000));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [promotionStart]);
+
+  const elapsedHours = Math.floor(promotionElapsedSeconds / 3600);
+  const elapsedMinutes = Math.floor((promotionElapsedSeconds % 3600) / 60);
+  const elapsedSeconds = promotionElapsedSeconds % 60;
+  const promotionElapsed = `${elapsedHours} óra ${elapsedMinutes} perc ${elapsedSeconds} másodperc`;
 
   const handleSelectCopy = async (copyNumber: number) => {
     if (reservedCopy && reservedCopy.copy_number === copyNumber) {
@@ -91,9 +110,14 @@ export function CopyReservationApp() {
             <h1 className="text-3xl font-black uppercase tracking-tight text-white md:text-6xl">
               Második Könyv
             </h1>
+            <p className="text-sm text-lime-300">
+              Az előrendelés Elindult: {elapsedHours} órával ezelőtt
+            </p>
             <p className="mx-auto max-w-2xl text-sm text-slate-300 md:text-base">
-              100 számozott példány készül belőle. Válassz egy számot - a rendszer 5 percre lefoglalja neked.
-              Sikeres fizetés után a példány a tiéd. Várható érkezés: Május közepe.
+              100 számozott példány. Válassz egy számot - a rendszer 5 percre lefoglalja neked.
+              Sikeres fizetés után a példány a tiéd. <br/><br/>
+              Várható érkezés: Május közepe.<br/>
+              Terjesztés: dead drop.
             </p>
             <button
               onClick={() => setShowOverlay(true)}
