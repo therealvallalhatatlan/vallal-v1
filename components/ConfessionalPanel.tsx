@@ -72,7 +72,7 @@ export default function ConfessionalPanel() {
         <button
           type="submit"
           disabled={loading || !confession.trim()}
-          className="w-full py-3 rounded bg-fuchsia-900/80 text-fuchsia-100 font-bold tracking-widest text-lg shadow-md hover:bg-fuchsia-800/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full py-3 rounded bg-lime-400 text-black font-bold tracking-widest text-lg shadow-md hover:bg-lime-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading ? 'Küldés...' : 'Mehet a nyúlnak'}
         </button>
