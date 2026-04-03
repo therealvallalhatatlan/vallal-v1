@@ -39,46 +39,51 @@ export async function handleGyontatas(req: GyontatasRequest & { session_id?: str
     // Build prompt and stream AI response
     const messages = buildPrompt(req.confession);
     const textStream = await getAIResponse(messages);
-    // Collect the response for persistence while streaming
     const encoder = new TextEncoder();
     let responseChunks: string[] = [];
+    // Tee pattern: stream to client, but also collect for DB
     responseStream = new ReadableStream<Uint8Array>({
       async pull(controller) {
         for await (const chunk of textStream) {
           responseChunks.push(chunk);
           controller.enqueue(encoder.encode(chunk));
         }
-        aiResponse = responseChunks.join('');
         controller.close();
+        // Save to DB after streaming is done
+        const aiResponseFinal = responseChunks.join('');
+        const record: GyontatasInsert = {
+          session_id: req.session_id || null,
+          confession: req.confession,
+          response: aiResponseFinal,
+          model,
+          safety_flag: false,
+          metadata: {
+            timestamp: new Date().toISOString(),
+          },
+        };
+        saveConfessionRecord(record).catch((err) => {
+          console.error('Failed to persist confession:', err);
+        });
       },
     });
   }
 
-  // Persist to Supabase (do not block response if fails)
-  (async () => {
-    try {
-      // Wait for aiResponse to be filled if not safety fallback
-      if (!safetyFlag && !aiResponse) {
-        // Wait for the stream to finish (responseStream is already being read by the client)
-        // So we can't await here, but we can only persist after streaming is done
-        // Instead, persist the confession with empty response, or consider a more advanced approach if needed
-      }
-      const record: GyontatasInsert = {
-        session_id: req.session_id || null,
-        confession: req.confession,
-        response: aiResponse,
-        model,
-        safety_flag: safetyFlag,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          // Add more metadata as needed
-        },
-      };
-      await saveConfessionRecord(record);
-    } catch (err) {
+  // Persist fallback response immediately (non-streaming)
+  if (safetyFlag) {
+    const record: GyontatasInsert = {
+      session_id: req.session_id || null,
+      confession: req.confession,
+      response: aiResponse,
+      model,
+      safety_flag: safetyFlag,
+      metadata: {
+        timestamp: new Date().toISOString(),
+      },
+    };
+    saveConfessionRecord(record).catch((err) => {
       console.error('Failed to persist confession:', err);
-    }
-  })();
+    });
+  }
 
   return new Response(responseStream, {
     headers: { 'Content-Type': 'text/plain; charset=utf-8' },
