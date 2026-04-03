@@ -55,7 +55,7 @@ export default function ConfessionalPanel() {
       className="w-full max-w-lg bg-black/0 border border-neutral-800/0 rounded-xl p-8 flex flex-col items-center gap-6"
     >
       <h1 className="text-2xl md:text-3xl font-bold text-neutral-100 tracking-widest mb-2 glitch-text">
-        Gyónd meg a nyuszinak
+        Gyónd meg a nyúlnak.
       </h1>
       <p className="text-neutral-400 text-center text-base mb-4">
         Írd le, mit cipelsz.<br/>Itt névtelenül beszélhetsz. A nyúl nem lepődik meg semmin.
@@ -74,7 +74,7 @@ export default function ConfessionalPanel() {
           disabled={loading || !confession.trim()}
           className="w-full py-3 rounded bg-fuchsia-900/80 text-fuchsia-100 font-bold tracking-widest text-lg shadow-md hover:bg-fuchsia-800/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {loading ? 'Küldés...' : 'Vallomás elküldése'}
+          {loading ? 'Küldés...' : 'Mehet a nyúlnak'}
         </button>
       </form>
       <div className="w-full min-h-[60px] mt-2 text-fuchsia-300 font-mono text-base whitespace-pre-line animate-pulse">
