@@ -1,0 +1,19 @@
+/* Glitch/flicker/chromatic aberration effect for .glitch-text */
+.glitch-text {
+  position: relative;
+  color: #fff;
+  text-shadow:
+    0 0 2px #f0f,
+    0 0 4px #0ff,
+    2px 0 8px #f0f,
+    -2px 0 8px #0ff;
+  animation: glitch-flicker 2.5s infinite linear alternate;
+}
+@keyframes glitch-flicker {
+  0% { text-shadow: 2px 0 #f0f, -2px 0 #0ff; }
+  20% { text-shadow: -2px 0 #0ff, 2px 0 #f0f; }
+  40% { text-shadow: 2px 2px #f0f, -2px -2px #0ff; }
+  60% { text-shadow: 0 0 8px #f0f, 0 0 8px #0ff; }
+  80% { text-shadow: 2px -2px #f0f, -2px 2px #0ff; }
+  100% { text-shadow: -2px 2px #0ff, 2px -2px #f0f; }
+}

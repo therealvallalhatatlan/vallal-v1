@@ -111,7 +111,7 @@ export function CopyReservationApp() {
               Második Könyv
             </h1>
             <p className="text-sm text-lime-300">
-              Az előrendelés Elindult: {elapsedHours} órával ezelőtt
+              Az előrendelés Elindult: 23 órával ezelőtt
             </p>
             <p className="mx-auto max-w-2xl text-sm text-slate-300 md:text-base">
               100 számozott példány. Válassz egy számot - a rendszer 5 percre lefoglalja neked.
