@@ -77,7 +77,7 @@ export default function ConfessionalPanel() {
           {loading ? 'Küldés...' : 'Mehet a nyúlnak'}
         </button>
       </form>
-      <div className="w-full min-h-[60px] mt-2 text-fuchsia-300 font-mono text-base whitespace-pre-line animate-pulse">
+      <div className="w-full min-h-[60px] mt-2 text-gray-200 font-mono text-[1.5rem] md:text-[2.25rem] whitespace-pre-line animate-pulse">
         {error ? <span className="text-red-400">{error}</span> : response}
       </div>
     </motion.div>
