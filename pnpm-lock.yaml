@@ -161,6 +161,9 @@ importers:
       jose:
         specifier: ^4.15.9
         version: 4.15.9
+      livekit-client:
+        specifier: ^1.15.13
+        version: 1.15.13
       livekit-server-sdk:
         specifier: 2.15.1
         version: 2.15.1
