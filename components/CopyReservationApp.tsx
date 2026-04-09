@@ -148,10 +148,8 @@ export function CopyReservationApp() {
             </div>
 
             {/* Hook */}
-            <p className="max-w-md text-md leading-relaxed italic text-zinc-300">
-"-Isu tudsz zöldet?<br/>
-- Tudok.<br/>
-- Akkor hozzál már - kinyitom pénztárgépet és leszámolok ötvenezret - egy huszast." 
+            <p className="max-w-md text-lg leading-relaxed italic text-zinc-300">
+Különleges, 100 darabos, limitált kiadás <br/> <span className="text-lime-400">Kőteleky Aywee</span> borítótervével.
 
             </p>
 
