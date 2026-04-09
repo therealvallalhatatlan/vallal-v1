@@ -62,12 +62,14 @@ export async function reserveCopy(copyNumber: number, sessionId: string): Promis
     return { success: false, error: 'Invalid copy number. Must be between 1 and 100.' };
   }
 
-  // Check if session already has a reservation
+  // Check if session already has an active (non-expired) reservation
+  const now = new Date().toISOString();
   const { count: existingReservations, error: countError } = await supabaseAdmin()
     .from('book_copies')
     .select('*', { count: 'exact', head: true })
     .eq('reserved_by_session', sessionId)
-    .eq('status', 'reserved');
+    .eq('status', 'reserved')
+    .gt('reserved_until', now);
 
   if (countError) {
     return { success: false, error: `Failed to check existing reservations: ${countError.message}` };
@@ -79,7 +81,6 @@ export async function reserveCopy(copyNumber: number, sessionId: string): Promis
 
   // Attempt atomic reservation: first check availability, then update with status check
   // Race condition protection: check current availability, then update only if status unchanged
-  const now = new Date().toISOString();
   const { data: copy, error: selectError } = await supabaseAdmin()
     .from('book_copies')
     .select('*')
