@@ -79,10 +79,59 @@ export default function Hero() {
             <span className="cursor">|</span>
           </h1>
 
-          <p className="max-w-xl text-xl md:text-2xl leading-7 text-neutral-300 ">
-
+          <p className="max-w-xl text-xl md:text-2xl leading-7 text-neutral-300 mb-12">
             {descriptionText}
           </p>
+
+
+                    {/* Első + Második Könyv dobozok */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+            {/* Első Könyv */}
+            <div className="flex flex-col justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+              <div className="space-y-3">
+                <p className="font-mono text-xs uppercase tracking-widest text-zinc-600">Első könyv</p>
+                <h2 className="text-xl font-black uppercase tracking-tight text-white">
+                  Vállalhatatlan I.
+                </h2>
+                <p className="text-sm leading-relaxed text-zinc-500">
+                  100 sorszámozott, fizikai példány. Egy koordináta, egy rejtekhelyre vezető fotó, 24 óra. Nem szállítás — kaland.
+                </p>
+              </div>
+              <div className="mt-6 flex items-center gap-4">
+                <span className="font-mono text-sm font-semibold text-zinc-400">10 000 Ft</span>
+                <a
+                  href="https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
+                  className="rounded-lg bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-zinc-200"
+                >
+                  Megrendelem
+                </a>
+              </div>
+            </div>
+
+            {/* Második Könyv */}
+            <div className="flex flex-col justify-between rounded-2xl border border-lime-400/20 bg-zinc-950 p-6">
+              <div className="space-y-3">
+                <p className="font-mono text-xs uppercase tracking-widest text-lime-400/60">Második könyv — előrendelés</p>
+                <h2 className="text-xl font-black uppercase tracking-tight text-white">
+                  Vállalhatatlan II.
+                </h2>
+                <p className="text-sm leading-relaxed text-zinc-500">
+                  Internetkávézó, 2002. 100 sorszámozott, limitált példány — válassz egyet, mielőtt más megelőz. Dead drop terjesztéssel.
+                </p>
+              </div>
+              <div className="mt-6 flex items-center gap-4">
+                <span className="font-mono text-sm font-semibold text-lime-400/70">15 000 Ft</span>
+                <a
+                  href="/konyv-2"
+                  className="rounded-lg bg-lime-400 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-lime-300"
+                >
+                  Előrendelés
+                </a>
+              </div>
+            </div>
+
+          </div>
 
           <div className={`mt-16 rounded-2xl border border-lime-400/20 bg-black/60 p-6 md:p-9 ${showSection ? 'fade-in' : 'opacity-0'}`}>
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
