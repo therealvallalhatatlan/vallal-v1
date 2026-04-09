@@ -30,7 +30,7 @@ export default function BgVideoGate() {
   }, [pathname]);
 
   const videoSrc = useMemo(() => {
-    if (pathname === "/konyv-valasztas") {
+    if (pathname === "/konyv-2") {
       return isMobile ? "/videos/video3_vertical.mp4" : "/videos/video3.mp4";
     }
     return "/videos/bg.mp4";

@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import { useCopyReservation } from '@/hooks/useCopyReservation';
 import { formatCountdown, formatCopyNumber } from '@/lib/copyFormatting';
 import { CopyGrid } from './CopyGrid';
 import { Button } from './ui/button';
-import { Badge } from './Badge';
-import { cn } from '@/lib/utils';
 
 export function CopyReservationApp() {
   const {
@@ -26,6 +25,7 @@ export function CopyReservationApp() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [releaseLoading, setReleaseLoading] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const totalCopies = copies.length || 100;
   const soldCount = copies.filter((c) => c.status === 'sold').length;
@@ -35,8 +35,7 @@ export function CopyReservationApp() {
   const isReserved = !!reservedCopy && !isReservationExpired;
   const reservationProgress = Math.max(0, Math.min(1, remainingSeconds / 600));
 
-  // Promotion start - this can be sourced from env or backend in production
-  const promotionStart = new Date(Date.now() - 8 * 60 * 60 * 1000); // 8 óra ezelőtt
+  const promotionStart = useMemo(() => new Date(Date.now() - 8 * 60 * 60 * 1000), []);
   const [promotionElapsedSeconds, setPromotionElapsedSeconds] = useState(
     Math.floor((Date.now() - promotionStart.getTime()) / 1000),
   );
@@ -45,14 +44,17 @@ export function CopyReservationApp() {
     const interval = setInterval(() => {
       setPromotionElapsedSeconds(Math.floor((Date.now() - promotionStart.getTime()) / 1000));
     }, 1000);
-
     return () => clearInterval(interval);
   }, [promotionStart]);
 
   const elapsedHours = Math.floor(promotionElapsedSeconds / 3600);
   const elapsedMinutes = Math.floor((promotionElapsedSeconds % 3600) / 60);
-  const elapsedSeconds = promotionElapsedSeconds % 60;
-  const promotionElapsed = `${elapsedHours} óra ${elapsedMinutes} perc ${elapsedSeconds} másodperc`;
+  const promotionElapsed =
+    elapsedHours > 0 ? `${elapsedHours} órája` : `${elapsedMinutes} perce`;
+
+  const scrollToGrid = () => {
+    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const handleSelectCopy = async (copyNumber: number) => {
     if (reservedCopy && reservedCopy.copy_number === copyNumber) {
@@ -102,150 +104,353 @@ export function CopyReservationApp() {
   };
 
   return (
-    <section className="relative mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-0 bg-black/0" />
-      <div className="relative z-10 rounded-3xl bg-slate-950/0 p-6 ">
-        <div className="space-y-5">
-          <div className="space-y-3 text-center">
-            <h1 className="text-3xl font-black uppercase tracking-tight text-white md:text-6xl">
-              Második Könyv
-            </h1>
-            <p className="text-sm text-lime-300">
-              Az előrendelés Elindult: 23 órával ezelőtt
-            </p>
-            <p className="mx-auto max-w-2xl text-sm text-slate-300 md:text-base">
-              100 számozott példány. Válassz egy számot - a rendszer 5 percre lefoglalja neked.
-              Sikeres fizetés után a példány a tiéd. <br/><br/>
-              Várható érkezés: Május közepe.<br/>
-              Terjesztés: dead drop.
-            </p>
-            <button
-              onClick={() => setShowOverlay(true)}
-              className="text-lime-400 hover:text-lime-300 underline text-sm md:text-base"
-            >
-              Miről szól a második könyv?
-            </button>
-            <div className="border-t border-neutral-400 mt-2 pt-2 flex flex-wrap justify-center gap-3 text-sm text-slate-200">
-              <span className="font-semibold text-lime-300">Még {availableCount} példány elérhető</span>
-              <span className="text-slate-400">{totalCopies}-ból {soldCount} már elkelt</span>
-              <span className="text-slate-400">{reservedCount} foglalás alatt</span>
-            </div>
-          </div>
+    <div>
 
+      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-4 pt-6 pb-16 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
 
-          <div className="rounded-2xl bg-black/0 p-0 md:p-0">
-            <CopyGrid
-              copies={copies}
-              reservedCopy={reservedCopy}
-              loading={loading}
-              onSelectCopy={handleSelectCopy}
+          {/* Book cover */}
+          <div className="relative mx-auto w-full max-w-xs md:max-w-none">
+            <div className="pointer-events-none absolute -inset-10 rounded-full bg-lime-400/8 blur-3xl" />
+            <Image
+              src="/vallalhatatlan2.png"
+              alt="Vállalhatatlan – Második könyv borítója"
+              width={480}
+              height={680}
+              className="relative z-10 w-full rounded-lg shadow-[0_32px_80px_rgba(0,0,0,0.85)]"
+              priority
             />
           </div>
 
-          {isReserved && reservedCopy && (
-            <div className="rounded-2xl border border-lime-400/40 bg-black/80 p-4 shadow-[0_0_24px_rgba(16,185,129,0.15)]">
-              <h2 className="text-lg font-bold text-lime-300">Kiválasztott példány</h2>
-              <p className="mt-1 text-2xl font-black text-white tracking-widest">#{formatCopyNumber(reservedCopy.copy_number)}</p>
-              <p className="mt-1 text-sm text-slate-300">Foglalás lejár: {formatCountdown(remainingSeconds)}</p>
-              <p className="mt-2 text-sm text-slate-300">Ezt a számot 5 percig tartjuk neked. Utána újra elérhetővé válik.</p>
-
-              <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                <div className="h-full rounded-full bg-lime-400 transition-all duration-500" style={{ width: `${reservationProgress * 100}%` }} />
-              </div>
+          {/* Hero text */}
+          <div className="flex flex-col gap-6">
+            {/* Badges */}
+            <div className="flex flex-wrap gap-2">
+              {['Limitált kiadás', '100 sorszámozott példány', 'Csak itt'].map((label) => (
+                <span
+                  key={label}
+                  className="inline-block rounded border border-lime-400/30 px-2 py-0.5 font-mono text-xs uppercase tracking-widest text-lime-400/80"
+                >
+                  {label}
+                </span>
+              ))}
             </div>
-          )}
 
-          {error && (
-            <div className="rounded-lg border border-destructive/30 bg-black/80 p-3 text-sm text-destructive">
-              {error}
+            {/* Title */}
+            <div>
+              <p className="mb-4 font-mono text-xs uppercase tracking-widest text-zinc-600">
+                Második évad
+              </p>
+              <h1 className="text-5xl font-black uppercase leading-none tracking-tighter text-white sm:text-6xl lg:text-7xl">
+                Vállal&shy;hatatlan 2
+              </h1>
             </div>
-          )}
 
-          {reserveError && (
-            <div className="rounded-lg border border-destructive/30 bg-black/80 p-3 text-sm text-destructive">
-              {reserveError}
-            </div>
-          )}
+            {/* Hook */}
+            <p className="max-w-md text-md leading-relaxed italic text-zinc-300">
+"-Isu tudsz zöldet?<br/>
+- Tudok.<br/>
+- Akkor hozzál már - kinyitom pénztárgépet és leszámolok ötvenezret - egy huszast." 
 
-          {checkoutError && (
-            <div className="rounded-lg border border-destructive/30 bg-black/80 p-3 text-sm text-destructive">
-              {checkoutError}
-            </div>
-          )}
+            </p>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              onClick={handleCheckout}
-              disabled={checkoutLoading || !reservedCopy || isReservationExpired}
-              size="lg"
-              className="flex-1 bg-lime-400 text-black hover:from-cyan-400 hover:to-blue-400"
-            >
-              {checkoutLoading
-                ? 'Fizetés készítése...'
-                : reservedCopy
-                  ? `Tovább a fizetéshez - #${formatCopyNumber(reservedCopy.copy_number)}`
-                  : 'Válassz egy példányt először'}
-            </Button>
-            <Button
-              onClick={handleRelease}
-              disabled={releaseLoading || !reservedCopy}
-              variant="outline"
-              size="lg"
-              className="flex-1 border-emerald-300/70 text-emerald-200 hover:bg-emerald-500/10"
-            >
-              {releaseLoading ? 'Felszabadítás...' : 'Másik számot választok'}
-            </Button>
-          </div>
+            <div className="h-px bg-gradient-to-r from-zinc-700 to-transparent" />
 
-          <div className="mt-3 grid grid-cols-3 gap-3 text-sm text-slate-300">
-            <div className="flex items-center gap-2 rounded-xl border border-slate-700/0 bg-slate-900/0 px-3 py-2">
-              <span className="h-2 w-2 rounded-full bg-lime-400" />
-              <span>Szabad</span>
+            {/* Meta */}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+              <MetaItem label="Megjelenés" value="Május közepe" />
+              <MetaItem label="Terjesztés" value="Dead drop" />
+              <MetaItem label="Előrendelés indult" value={promotionElapsed} accent />
+              <MetaItem label="Elérhető" value={`${availableCount} / ${totalCopies} példány`} />
             </div>
-            <div className="flex items-center gap-2 rounded-xl border border-yellow-600/0 bg-yellow-950/0 px-3 py-2">
-              <span className="h-2 w-2 rounded-full bg-yellow-300" />
-              <span>Foglalás alatt</span>
-            </div>
-            <div className="flex items-center gap-2 rounded-xl border border-destructive/0 bg-destructive/0 px-3 py-2">
-              <span className="h-2 w-2 rounded-full bg-red-500" />
-              <span>Elkelt</span>
+
+            {/* Hero CTAs */}
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={scrollToGrid}
+                className="flex-1 rounded-lg bg-lime-400 px-5 py-3.5 text-sm font-bold uppercase tracking-wider text-black transition-colors hover:bg-lime-300 active:bg-lime-500"
+              >
+                Válassz példányt
+              </button>
+              <button
+                onClick={() => setShowOverlay(true)}
+                className="flex-1 rounded-lg border border-zinc-700 px-5 py-3.5 text-sm font-medium uppercase tracking-wider text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-200"
+              >
+                Miről szól?
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Overlay for book description */}
+      {/* ── COPY SELECTION ───────────────────────────────────────────── */}
+      <section ref={gridRef} className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-zinc-800 pb-5">
+          <div>
+            <p className="mb-1 font-mono text-xs uppercase tracking-widest text-zinc-600">
+              Válassz sorszámot
+            </p>
+            <h2 className="text-2xl font-black tracking-tight text-white">
+              {soldCount > 0
+                ? <>{totalCopies - soldCount} példány maradt</>
+                : <>Mind a {totalCopies} példány elérhető</>}
+            </h2>
+            {reservedCount > 0 && (
+              <p className="mt-1 text-xs text-zinc-600">
+                {reservedCount} most valaki más kezében van
+              </p>
+            )}
+          </div>
+          {/* Legend */}
+          <div className="flex items-center gap-5 text-xs text-zinc-600">
+            <span className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-lime-400" />
+              Szabad
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              Foglalt
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
+              Elkelt
+            </span>
+          </div>
+        </div>
+
+        <CopyGrid
+          copies={copies}
+          reservedCopy={reservedCopy}
+          loading={loading}
+          onSelectCopy={handleSelectCopy}
+        />
+      </section>
+
+      {/* ── EXPIRED BANNER ───────────────────────────────────────────── */}
+      {isReservationExpired && reservedCopy && (
+        <section className="mx-auto max-w-6xl px-4 pb-4 sm:px-6 lg:px-8">
+          <div className="rounded-xl border border-red-900/40 bg-red-950/20 px-5 py-4 text-sm text-red-400">
+            A foglalás lejárt. Válassz új sorszámot.
+          </div>
+        </section>
+      )}
+
+      {/* ── RESERVATION PANEL ────────────────────────────────────────── */}
+      {isReserved && reservedCopy && (
+        <section className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
+          <div className="rounded-2xl border border-lime-400/20 bg-zinc-950 p-6 shadow-[0_0_48px_rgba(163,230,53,0.05)]">
+            <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="mb-1 font-mono text-xs uppercase tracking-widest text-lime-400/60">
+                  Lefoglalva neked
+                </p>
+                <p className="font-mono text-6xl font-black leading-none tracking-tighter text-lime-300">
+                  #{formatCopyNumber(reservedCopy.copy_number)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="mb-0.5 font-mono text-xs uppercase tracking-widest text-zinc-600">
+                  Fennmaradó idő
+                </p>
+                <p className="font-mono text-2xl font-bold text-white">
+                  {formatCountdown(remainingSeconds)}
+                </p>
+              </div>
+            </div>
+
+            <div className="h-0.5 w-full overflow-hidden rounded-full bg-zinc-800">
+              <div
+                className="h-full rounded-full bg-lime-400 transition-all duration-1000 ease-linear"
+                style={{ width: `${reservationProgress * 100}%` }}
+              />
+            </div>
+
+            <p className="mt-3 text-xs text-zinc-600">
+              Ezt a sorszámot tartjuk neked. Ha az idő lejár fizetés nélkül, más foglalhatja le.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* ── ERRORS ───────────────────────────────────────────────────── */}
+      {(error || reserveError || checkoutError) && (
+        <section className="mx-auto max-w-6xl space-y-2 px-4 pb-4 sm:px-6 lg:px-8">
+          {[error, reserveError, checkoutError].filter(Boolean).map((msg, i) => (
+            <div
+              key={i}
+              className="rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-400"
+            >
+              {msg}
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* ── CHECKOUT ACTIONS ─────────────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button
+            onClick={handleCheckout}
+            disabled={checkoutLoading || !reservedCopy || isReservationExpired}
+            size="lg"
+            className="h-14 flex-1 rounded-xl bg-lime-400 text-sm font-bold uppercase tracking-widest text-black transition-all duration-200 hover:bg-lime-300 active:bg-lime-500 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {checkoutLoading
+              ? 'Készítjük a fizetési oldalt...'
+              : reservedCopy && !isReservationExpired
+                ? `Tovább a fizetéshez — #${formatCopyNumber(reservedCopy.copy_number)}`
+                : 'Válassz egy sorszámot'}
+          </Button>
+          <Button
+            onClick={handleRelease}
+            disabled={releaseLoading || !reservedCopy}
+            variant="outline"
+            size="lg"
+            className="h-14 flex-1 rounded-xl border-zinc-800 text-sm font-medium uppercase tracking-widest text-zinc-500 transition-all duration-200 hover:border-zinc-600 hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            {releaseLoading ? 'Felszabadítás...' : 'Más számot választok'}
+          </Button>
+        </div>
+      </section>
+
+      {/* ── INFO SECTIONS ────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mb-10 h-px bg-zinc-800" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <InfoCard
+            index="01"
+            title="Miről szól?"
+            text="Internetkávézó, 2002. Autótolvajok, stricik, hackerek és elveszett figurák — mind a pult előtt, mind a hátunk mögött. Pixi, Wes, Isu és Vállalhatatlan. Reggelig próbálunk túlélni."
+          />
+          <InfoCard
+            index="02"
+            title="Mit kapsz?"
+            text="100 sorszámozott, egyedi példányt. Dead drop kalanddal, zenével, vizuális kiegészítőkkel — ahogy az első évadnál. A sorsod dönti el, hová kerül a könyved."
+          />
+          <InfoCard
+            index="03"
+            title="Hogy működik?"
+            text="Fizetsz. Kapsz egy GPS-koordinátát. Egy titkos ponton megtalálod a könyved. Nincs futár, nincs csomagpont — csak te és a városnak az a sarka."
+          />
+        </div>
+      </section>
+
+      {/* ── MODAL ────────────────────────────────────────────────────── */}
       {showOverlay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="relative mx-4 max-w-lg  border-lime-400/0 bg-slate-900/0 p-6 shadow-2xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+          onClick={() => setShowOverlay(false)}
+        >
+          <div
+            className="relative w-full max-w-xl rounded-2xl border border-zinc-800 bg-zinc-950 p-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setShowOverlay(false)}
-              className="absolute right-4 -top-4 text-slate-400 hover:text-white"
+              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 transition-colors hover:bg-zinc-800 hover:text-zinc-300"
               aria-label="Bezárás"
             >
-              ✕
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
             </button>
-            <h2 className="mb-4 text-2xl font-bold text-lime-400">A második évad egy internetkávézóban játszódik.</h2>
-            <div className="space-y-4 text-slate-300">
+
+            <p className="mb-4 font-mono text-xs uppercase tracking-widest text-lime-400">
+              A második évad
+            </p>
+            <h2 className="mb-2 text-2xl font-black leading-tight text-white">
+              Egy internetkávézóban játszódik.
+            </h2>
+
+            <div className="space-y-4 text-md leading-relaxed text-zinc-400">
               <p>
-                De ne valami békés, nyugis helyre gondolj, ahol e-mailt írnak a nagymamának.
-Ez a 2000-es évek eleje. Az internet még nem unalmas. Még nem munka, ügyintézés meg algoritmikus agybaszás.
+                Ne valami unalmas, normális helyre gondolj.
+                Ez a 2000-es évek eleje. Az internet még nem unalmas. Még nem
+                munka, ügyintézés, algoritmikus agybaszás. Vadnyugat volt.
               </p>
               <p>
-                Vadnyugat volt. Tíz után eltűntek a normális emberek, és megérkeztek azok, akik tényleg használni akarták a hálózatot. 
-                Autótolvajok, stricik, kurvák, hackerek, drogdílerek, speedes futárok, félőrült zsenik és elveszett figurák. 
-                A pult mögött pedig ott állunk mi: Pixi, Wes, Isu és én, Vállalhatatlan. 
-                Próbálunk túlélni reggelig, miközben a világ fenekestől felfordul körülöttünk.
+                Tíz után eltűntek a normális emberek, és megérkeztek azok, akik
+                tényleg használni akarták a hálózatot. Autótolvajok, stricik,
+                kurvák, hackerek, drogdílerek, speedes futárok, félőrült zsenik
+                és elveszett figurák.
               </p>
               <p>
-                Várható megjelenés: Május közepe. <br/> <br/>
-                A könyv 100 számozott példányban jelenik meg, és csak itt lehet megvásárolni.
-                Dead drop kalanddal, zenével, vizuállal, ahogy az első résznél. Tarts velem!
+                A pult mögött ott állunk mi: Pixi, Wes, Isu és én,
+                Vállalhatatlan. Próbálunk túlélni reggelig, miközben a világ
+                fenekestől felfordul körülöttünk.
               </p>
             </div>
+
+            <div className="my-6 h-px bg-zinc-800" />
+
+            <div className="mb-6 grid grid-cols-2 gap-4 text-xs">
+              {(
+                [
+                  ['Megjelenés', 'Május közepe'],
+                  ['Terjesztés', 'Dead drop'],
+                  ['Példányok', '100 sorszámozott'],
+                  ['Ár', '15 000 Ft'],
+                ] as const
+              ).map(([label, value]) => (
+                <div key={label}>
+                  <p className="mb-0.5 font-mono uppercase tracking-widest text-zinc-600">
+                    {label}
+                  </p>
+                  <p className="font-medium text-zinc-300">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                setShowOverlay(false);
+                scrollToGrid();
+              }}
+              className="w-full rounded-lg bg-lime-400 px-5 py-3.5 text-sm font-bold uppercase tracking-wider text-black transition-colors hover:bg-lime-300"
+            >
+              Válassz példányt
+            </button>
           </div>
         </div>
       )}
-    </section>
+    </div>
+  );
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function MetaItem({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div>
+      <p className="mb-0.5 font-mono text-xs uppercase tracking-widest text-zinc-600">{label}</p>
+      <p className={accent ? 'font-medium text-lime-400' : 'font-medium text-zinc-300'}>{value}</p>
+    </div>
+  );
+}
+
+function InfoCard({
+  index,
+  title,
+  text,
+}: {
+  index: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="rounded-xl border border-zinc-800/60 bg-zinc-950/60 p-5">
+      <p className="mb-3 font-mono text-xs text-zinc-700">{index}</p>
+      <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-zinc-300">{title}</h3>
+      <p className="text-sm leading-relaxed text-zinc-600">{text}</p>
+    </div>
   );
 }

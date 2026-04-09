@@ -8,6 +8,7 @@ import {
   VideoTrack,
   useTracks,
   useConnectionState,
+  useMediaDeviceSelect,
 } from '@livekit/components-react';
 import { Track, ConnectionState } from 'livekit-client';
 
@@ -22,6 +23,15 @@ function BroadcasterInner({ displayName }: { displayName: string }) {
   const connectionState = useConnectionState();
   const cameraTracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
   const cameraTrack = cameraTracks.find(t => t.participant.identity === localParticipant?.identity);
+
+  const { devices, activeDeviceId, setActiveMediaDevice } = useMediaDeviceSelect({ kind: 'videoinput' });
+
+  function switchCamera() {
+    if (devices.length < 2) return;
+    const currentIndex = devices.findIndex(d => d.deviceId === activeDeviceId);
+    const nextIndex = (currentIndex + 1) % devices.length;
+    setActiveMediaDevice(devices[nextIndex].deviceId);
+  }
 
   const isLive = connectionState === ConnectionState.Connected;
 
@@ -38,7 +48,7 @@ function BroadcasterInner({ displayName }: { displayName: string }) {
         </span>
       </div>
 
-      <div className="w-full aspect-video bg-gray-900 rounded-lg overflow-hidden">
+      <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden">
         {cameraTrack ? (
           <VideoTrack trackRef={cameraTrack} className="w-full h-full object-cover" />
         ) : (
@@ -46,10 +56,19 @@ function BroadcasterInner({ displayName }: { displayName: string }) {
             Kamera indítása…
           </div>
         )}
+        {devices.length > 1 && (
+          <button
+            onClick={switchCamera}
+            className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white text-sm font-semibold px-3 py-1.5 rounded-full transition"
+            title="Kamera váltás"
+          >
+            ↺ Kamera
+          </button>
+        )}
       </div>
 
       <p className="text-gray-400 text-sm text-center">
-        A közvetítésed éló. A nézők látják a videódat.
+        A közvetítésed élő. A nézők látják a videódat.
       </p>
     </div>
   );

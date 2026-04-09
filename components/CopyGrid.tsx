@@ -12,11 +12,15 @@ interface CopyGridProps {
 
 export function CopyGrid({ copies, reservedCopy, loading, onSelectCopy }: CopyGridProps) {
   if (copies.length === 0) {
-    return <div className="py-8 text-center text-foreground/60">Nincsenek elérhető példányok</div>;
+    return (
+      <div className="py-12 text-center font-mono text-sm text-zinc-700">
+        Töltés...
+      </div>
+    );
   }
 
   return (
-    <div className="grid grid-cols-5 gap-2 md:grid-cols-5 md:gap-2">
+    <div className="grid grid-cols-5 gap-2 sm:grid-cols-10">
       {copies.map((copy) => (
         <CopyCard
           key={copy.id}
