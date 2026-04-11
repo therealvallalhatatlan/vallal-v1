@@ -116,37 +116,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   console.log(`📋 Copy ${copyNumber} current status: ${copy.status}`);
 
-  // IDEMPOTENCY CHECKS: Ensure webhook retries don't corrupt state
-  // Check 1: If already sold, this is a retry - skip
+  // Idempotency: if already sold, skip (webhook retry)
   if (copy.status === 'sold') {
     console.log(`✅ Copy ${copyNumber} already sold (idempotent webhook retry)`);
     return;
   }
 
-  // Check 2: Must be in reserved state
-  if (copy.status !== 'reserved') {
-    console.log(`❌ Copy ${copyNumber} not in reserved state: ${copy.status}`);
-    return;
-  }
-
-  // Check 3: Must match the session that reserved it
-  if (copy.reserved_by_session !== guestSessionId) {
-    console.error(`❌ Copy ${copyNumber} reserved by different session`);
-    return;
-  }
-
-  // Check 4: Must match the Stripe session ID
-  if (copy.stripe_checkout_session_id !== stripeSessionId) {
-    console.error(`❌ Copy ${copyNumber} has different Stripe session ID`);
-    return;
-  }
-
-  console.log(`🔄 All checks passed, marking copy ${copyNumber} as sold`);
-
-  // Defensive: Warn if reservation expired (shouldn't happen, but payment succeeded)
-  if (copy.reserved_until && new Date(copy.reserved_until) < new Date()) {
-    console.warn(`⚠️ Copy ${copyNumber} reservation expired but payment succeeded - marking as sold anyway`);
-  }
+  console.log(`🔄 Marking copy ${copyNumber} as sold`);
 
   // Update to sold with seller email from Stripe
   const orderEmail = session.customer_details?.email || null;

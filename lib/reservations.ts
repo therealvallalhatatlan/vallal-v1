@@ -130,33 +130,9 @@ export async function createCheckoutForCopy(copyNumber: number, sessionId: strin
     return { success: false, error: 'Copy not found. This copy may no longer exist.' };
   }
 
-  // Defensive: Reject if already sold (client manipulation attempt)
+  // Only block already-sold copies
   if (copy.status === 'sold') {
     return { success: false, error: 'This copy has already been sold. Please select another copy.' };
-  }
-
-  // Defensive: Verify this copy is reserved by THIS session
-  if (copy.status !== 'reserved') {
-    // Copy is available again or in an unexpected state
-    return { success: false, error: 'This copy is no longer reserved. Please reserve it again before checkout.' };
-  }
-
-  if (copy.reserved_by_session !== sessionId) {
-    // Session mismatch - client tampering
-    return { success: false, error: 'This copy is reserved by another user. Please select a different copy.' };
-  }
-
-  // Defensive: Check expiration time (expired copies should have been cleaned up, but verify)
-  const now = new Date();
-  if (copy.reserved_until && new Date(copy.reserved_until) < now) {
-    return { success: false, error: 'Your reservation has expired. Please select and reserve a copy again.' };
-  }
-
-  // Defensive: Don't allow multiple checkout sessions for the same copy
-  if (copy.stripe_checkout_session_id) {
-    // Checkout already attempted - could be from previous payment attempt
-    // Return error but don't fail loudly
-    return { success: false, error: 'A checkout session for this copy already exists. Please go to that checkout or try again.' };
   }
 
   // Get price (use override if set, otherwise default)

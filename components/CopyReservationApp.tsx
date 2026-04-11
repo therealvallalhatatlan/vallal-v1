@@ -1,29 +1,23 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useCopyReservation } from '@/hooks/useCopyReservation';
-import { formatCountdown, formatCopyNumber } from '@/lib/copyFormatting';
+import { formatCopyNumber } from '@/lib/copyFormatting';
 import { CopyGrid } from './CopyGrid';
 import { Button } from './ui/button';
 
 export function CopyReservationApp() {
   const {
     copies,
-    reservedCopy,
-    remainingSeconds,
     loading,
     error,
-    reserveError,
-    reserveCopy,
-    proceedToCheckout,
-    releaseReservation,
-    setReserveError,
+    createCheckout,
   } = useCopyReservation();
 
+  const [selectedCopy, setSelectedCopy] = useState<number | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [releaseLoading, setReleaseLoading] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -31,9 +25,6 @@ export function CopyReservationApp() {
   const soldCount = copies.filter((c) => c.status === 'sold').length;
   const reservedCount = copies.filter((c) => c.status === 'reserved').length;
   const availableCount = copies.filter((c) => c.status === 'available').length;
-  const isReservationExpired = Boolean(reservedCopy && remainingSeconds === 0);
-  const isReserved = !!reservedCopy && !isReservationExpired;
-  const reservationProgress = Math.max(0, Math.min(1, remainingSeconds / 600));
 
   const promotionStart = useMemo(() => new Date(Date.now() - 8 * 60 * 60 * 1000), []);
   const [promotionElapsedSeconds, setPromotionElapsedSeconds] = useState(
@@ -56,50 +47,28 @@ export function CopyReservationApp() {
     gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const handleSelectCopy = async (copyNumber: number) => {
-    if (reservedCopy && reservedCopy.copy_number === copyNumber) {
-      await handleRelease();
-      return;
-    }
-
-    if (reservedCopy) {
-      setReserveError('Már van aktív foglalásod, előbb válaszd le vagy fejezd be.');
-      return;
-    }
-
-    await reserveCopy(copyNumber);
+  // When a copy in the grid is clicked: toggle selection (or deselect if same)
+  // Sold copies are ignored by CopyGrid already
+  const handleSelectCopy = (copyNumber: number) => {
+    setCheckoutError(null);
+    setSelectedCopy((prev) => (prev === copyNumber ? null : copyNumber));
   };
 
   const handleCheckout = async () => {
-    if (!reservedCopy) {
-      setCheckoutError('Először válassz és foglalj le egy példányt.');
+    if (!selectedCopy) {
+      setCheckoutError('Először válassz egy sorszámot.');
       return;
     }
 
     try {
       setCheckoutLoading(true);
       setCheckoutError(null);
-      const checkoutUrl = await proceedToCheckout();
+      const checkoutUrl = await createCheckout(selectedCopy);
       window.location.href = checkoutUrl;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Nem sikerült továbblépni a fizetéshez';
       setCheckoutError(message);
       setCheckoutLoading(false);
-    }
-  };
-
-  const handleRelease = async () => {
-    if (!reservedCopy) {
-      setReserveError('Nincs lemondandó foglalás.');
-      return;
-    }
-
-    try {
-      setReleaseLoading(true);
-      await releaseReservation();
-      setReleaseLoading(false);
-    } catch {
-      setReleaseLoading(false);
     }
   };
 
@@ -207,10 +176,6 @@ Különleges, 100 darabos, limitált kiadás <br/> <span className="text-lime-40
               Szabad
             </span>
             <span className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-              Foglalt
-            </span>
-            <span className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-zinc-600" />
               Elkelt
             </span>
@@ -219,62 +184,33 @@ Különleges, 100 darabos, limitált kiadás <br/> <span className="text-lime-40
 
         <CopyGrid
           copies={copies}
-          reservedCopy={reservedCopy}
+          reservedCopy={null}
           loading={loading}
           onSelectCopy={handleSelectCopy}
         />
       </section>
 
-      {/* ── EXPIRED BANNER ───────────────────────────────────────────── */}
-      {isReservationExpired && reservedCopy && (
-        <section className="mx-auto max-w-6xl px-4 pb-4 sm:px-6 lg:px-8">
-          <div className="rounded-xl border border-red-900/40 bg-red-950/20 px-5 py-4 text-sm text-red-400">
-            A foglalás lejárt. Válassz új sorszámot.
-          </div>
-        </section>
-      )}
-
-      {/* ── RESERVATION PANEL ────────────────────────────────────────── */}
-      {isReserved && reservedCopy && (
+      {/* ── SELECTED COPY PANEL ──────────────────────────────────────── */}
+      {selectedCopy !== null && (
         <section className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
           <div className="rounded-2xl border border-lime-400/20 bg-zinc-950 p-6 shadow-[0_0_48px_rgba(163,230,53,0.05)]">
-            <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="mb-1 font-mono text-xs uppercase tracking-widest text-lime-400/60">
-                  Lefoglalva neked
-                </p>
-                <p className="font-mono text-6xl font-black leading-none tracking-tighter text-lime-300">
-                  #{formatCopyNumber(reservedCopy.copy_number)}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="mb-0.5 font-mono text-xs uppercase tracking-widest text-zinc-600">
-                  Fennmaradó idő
-                </p>
-                <p className="font-mono text-2xl font-bold text-white">
-                  {formatCountdown(remainingSeconds)}
-                </p>
-              </div>
-            </div>
-
-            <div className="h-0.5 w-full overflow-hidden rounded-full bg-zinc-800">
-              <div
-                className="h-full rounded-full bg-lime-400 transition-all duration-1000 ease-linear"
-                style={{ width: `${reservationProgress * 100}%` }}
-              />
-            </div>
-
+            <p className="mb-1 font-mono text-xs uppercase tracking-widest text-lime-400/60">
+              Kiválasztott példány
+            </p>
+            <p className="font-mono text-6xl font-black leading-none tracking-tighter text-lime-300">
+              #{formatCopyNumber(selectedCopy)}
+            </p>
             <p className="mt-3 text-xs text-zinc-600">
-              Ezt a sorszámot tartjuk neked. Ha az idő lejár fizetés nélkül, más foglalhatja le.
+              Kattints a „Tovább a fizetéshez" gombra a megvásárláshoz.
             </p>
           </div>
         </section>
       )}
 
       {/* ── ERRORS ───────────────────────────────────────────────────── */}
-      {(error || reserveError || checkoutError) && (
+      {(error || checkoutError) && (
         <section className="mx-auto max-w-6xl space-y-2 px-4 pb-4 sm:px-6 lg:px-8">
-          {[error, reserveError, checkoutError].filter(Boolean).map((msg, i) => (
+          {[error, checkoutError].filter(Boolean).map((msg, i) => (
             <div
               key={i}
               className="rounded-lg border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-400"
@@ -285,31 +221,20 @@ Különleges, 100 darabos, limitált kiadás <br/> <span className="text-lime-40
         </section>
       )}
 
-      {/* ── CHECKOUT ACTIONS ─────────────────────────────────────────── */}
+      {/* ── CHECKOUT ACTION ──────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button
-            onClick={handleCheckout}
-            disabled={checkoutLoading || !reservedCopy || isReservationExpired}
-            size="lg"
-            className="h-14 flex-1 rounded-xl bg-lime-400 text-sm font-bold uppercase tracking-widest text-black transition-all duration-200 hover:bg-lime-300 active:bg-lime-500 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {checkoutLoading
-              ? 'Készítjük a fizetési oldalt...'
-              : reservedCopy && !isReservationExpired
-                ? `Tovább a fizetéshez — #${formatCopyNumber(reservedCopy.copy_number)}`
-                : 'Válassz egy sorszámot'}
-          </Button>
-          <Button
-            onClick={handleRelease}
-            disabled={releaseLoading || !reservedCopy}
-            variant="outline"
-            size="lg"
-            className="h-14 flex-1 rounded-xl border-zinc-800 text-sm font-medium uppercase tracking-widest text-zinc-500 transition-all duration-200 hover:border-zinc-600 hover:text-zinc-300 disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            {releaseLoading ? 'Felszabadítás...' : 'Más számot választok'}
-          </Button>
-        </div>
+        <Button
+          onClick={handleCheckout}
+          disabled={checkoutLoading || selectedCopy === null}
+          size="lg"
+          className="h-14 w-full rounded-xl bg-lime-400 text-sm font-bold uppercase tracking-widest text-black transition-all duration-200 hover:bg-lime-300 active:bg-lime-500 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {checkoutLoading
+            ? 'Készítjük a fizetési oldalt...'
+            : selectedCopy !== null
+              ? `Tovább a fizetéshez — #${formatCopyNumber(selectedCopy)}`
+              : 'Válassz egy sorszámot'}
+        </Button>
       </section>
 
       {/* ── INFO SECTIONS ────────────────────────────────────────────── */}
