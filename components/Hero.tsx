@@ -121,7 +121,7 @@ export default function Hero() {
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-4">
-                <span className="font-mono text-sm font-semibold text-lime-400/70">15 000 Ft</span>
+                <span className="font-mono text-sm font-semibold text-lime-400/70">10 000 Ft</span>
                 <a
                   href="/konyv-2"
                   className="rounded-lg bg-lime-400 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-lime-300"
