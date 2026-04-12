@@ -7,6 +7,7 @@ import {
   useLocalParticipant,
   useRemoteParticipants,
   VideoTrack,
+  AudioTrack,
   useTracks,
   useConnectionState,
 } from '@livekit/components-react';
@@ -26,8 +27,12 @@ function BroadcasterInner({ displayName }: { displayName: string }) {
   const { localParticipant } = useLocalParticipant();
   const remoteParticipants = useRemoteParticipants();
   const connectionState = useConnectionState();
-  const cameraTracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
-  const cameraTrack = cameraTracks.find(t => t.participant.identity === localParticipant?.identity);
+  const mediaTracks = useTracks([Track.Source.Camera, Track.Source.Microphone], { onlySubscribed: false });
+  const cameraTrack = mediaTracks.find(
+    (track) =>
+      track.participant.identity === localParticipant?.identity &&
+      track.source === Track.Source.Camera
+  );
   const otherBroadcasters = remoteParticipants.filter(
     participant => participant.identity.startsWith('broadcaster-')
   );
@@ -91,10 +96,15 @@ function BroadcasterInner({ displayName }: { displayName: string }) {
 
           <div className={`grid gap-4 ${otherBroadcasters.length === 1 ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
             {otherBroadcasters.map((participant) => {
-              const remoteCameraTrack = cameraTracks.find(
+              const remoteCameraTrack = mediaTracks.find(
                 (track) =>
                   track.participant.identity === participant.identity &&
                   track.source === Track.Source.Camera
+              );
+              const remoteAudioTrack = mediaTracks.find(
+                (track) =>
+                  track.participant.identity === participant.identity &&
+                  track.source === Track.Source.Microphone
               );
 
               return (
@@ -112,6 +122,9 @@ function BroadcasterInner({ displayName }: { displayName: string }) {
                   <div className="absolute bottom-2 left-2 rounded bg-black/65 px-2 py-1 text-xs text-white">
                     {participant.name || participant.identity}
                   </div>
+
+                  {/* Play all remote broadcaster microphones to mimic Zoom-like mixed audio. */}
+                  {remoteAudioTrack && <AudioTrack trackRef={remoteAudioTrack} />}
                 </div>
               );
             })}
