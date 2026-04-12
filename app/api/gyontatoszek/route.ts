@@ -1,6 +1,11 @@
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { handleGyontatas } from '@/lib/gyontatoszek/service';
+import {
+  GYONTATAS_HISTORY_PAGE_SIZE,
+  MAX_GYONTATAS_MESSAGE_LENGTH,
+} from '@/lib/gyontatoszek/types';
+import { listMessagesBySessionId } from '@/lib/gyontatoszek/repository';
 
 // Edge-compatible UUID v4 generator
 function uuidv4() {
@@ -13,18 +18,35 @@ function uuidv4() {
 
 export const runtime = 'edge'; // for streaming
 
+export async function GET(req: NextRequest) {
+  const session_id = req.nextUrl.searchParams.get('session_id') || req.headers.get('x-session-id');
+
+  if (!session_id) {
+    return NextResponse.json({ session_id: '', messages: [] });
+  }
+
+  const messages = await listMessagesBySessionId(session_id, GYONTATAS_HISTORY_PAGE_SIZE);
+  return NextResponse.json({ session_id, messages });
+}
+
 export async function POST(req: NextRequest) {
   const data = await req.json();
   if (!data || typeof data.confession !== 'string' || !data.confession.trim()) {
     return new Response('Missing or invalid confession', { status: 400 });
   }
-  // Try to get session_id from cookie, header, or generate new
-  let session_id = req.headers.get('x-session-id') || undefined;
+  const confession = data.confession.trim();
+  if (confession.length > MAX_GYONTATAS_MESSAGE_LENGTH) {
+    return new Response('Confession too long', { status: 400 });
+  }
+
+  let session_id =
+    (typeof data.session_id === 'string' && data.session_id.trim()) ||
+    req.headers.get('x-session-id') ||
+    undefined;
+
   if (!session_id) {
-    // Optionally, try to get from cookies (if using cookies for session)
-    // const cookie = req.cookies.get('gyontato_session_id');
-    // session_id = cookie?.value;
     session_id = uuidv4();
   }
-  return handleGyontatas({ confession: data.confession, session_id });
+
+  return handleGyontatas({ confession, session_id });
 }

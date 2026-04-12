@@ -11,7 +11,6 @@ type Props = {
 export default function NyitottRoleGate({ onJoin }: Props) {
   const [role, setRole] = useState<Role>('viewer');
   const [displayName, setDisplayName] = useState('');
-  const [broadcasterKey, setBroadcasterKey] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +25,6 @@ export default function NyitottRoleGate({ onJoin }: Props) {
         body: JSON.stringify({
           role,
           displayName: displayName.trim() || 'Vendég',
-          ...(role === 'broadcaster' ? { broadcasterKey } : {}),
         }),
       });
       const data = await res.json();
@@ -71,19 +69,6 @@ export default function NyitottRoleGate({ onJoin }: Props) {
           />
         </label>
 
-        {role === 'broadcaster' && (
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-semibold text-gray-300">Közvetítői kulcs</span>
-            <input
-              type="password"
-              className="px-3 py-2 rounded bg-gray-900 text-white border border-gray-700 focus:outline-none"
-              value={broadcasterKey}
-              onChange={e => setBroadcasterKey(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
-          </label>
-        )}
 
         {error && <div className="text-red-400 text-sm">{error}</div>}
 

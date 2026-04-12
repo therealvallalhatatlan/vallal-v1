@@ -9,6 +9,7 @@ import {
   useRemoteParticipants,
   useTracks,
 } from '@livekit/components-react';
+import ParticipantCounts from './ParticipantCounts';
 import { Track } from 'livekit-client';
 import { useEffect, useState } from 'react';
 
@@ -54,6 +55,9 @@ function ViewerInner() {
 
   return (
     <div className="w-full max-w-4xl mx-auto mt-8 px-4">
+      <div className="flex justify-end mb-4">
+        <ParticipantCounts />
+      </div>
       <div
         className={`grid gap-4 ${
           broadcasters.length === 1 ? 'grid-cols-1' : 'grid-cols-2'

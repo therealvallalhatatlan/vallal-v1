@@ -8,9 +8,10 @@ import {
   VideoTrack,
   useTracks,
   useConnectionState,
-  useMediaDeviceSelect,
 } from '@livekit/components-react';
 import { Track, ConnectionState } from 'livekit-client';
+import { useState } from 'react';
+import ParticipantCounts from './ParticipantCounts';
 
 type Props = {
   token: string;
@@ -18,34 +19,37 @@ type Props = {
   displayName: string;
 };
 
+type FacingMode = 'environment' | 'user';
+
 function BroadcasterInner({ displayName }: { displayName: string }) {
   const { localParticipant } = useLocalParticipant();
   const connectionState = useConnectionState();
   const cameraTracks = useTracks([Track.Source.Camera], { onlySubscribed: false });
   const cameraTrack = cameraTracks.find(t => t.participant.identity === localParticipant?.identity);
+  const [facingMode, setFacingMode] = useState<FacingMode>('environment');
 
-  const { devices, activeDeviceId, setActiveMediaDevice } = useMediaDeviceSelect({ kind: 'videoinput' });
-
-  function switchCamera() {
-    if (devices.length < 2) return;
-    const currentIndex = devices.findIndex(d => d.deviceId === activeDeviceId);
-    const nextIndex = (currentIndex + 1) % devices.length;
-    setActiveMediaDevice(devices[nextIndex].deviceId);
+  async function toggleCamera() {
+    const next: FacingMode = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(next);
+    await localParticipant?.setCameraEnabled(true, { facingMode: next });
   }
 
   const isLive = connectionState === ConnectionState.Connected;
 
   return (
     <div className="w-full max-w-lg mx-auto mt-10 px-4 flex flex-col items-center gap-6">
-      <div className="flex items-center gap-3">
-        <h2 className="text-2xl font-bold">{displayName}</h2>
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-bold tracking-wider ${
-            isLive ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300'
-          }`}
-        >
-          {isLive ? 'ÉLŐ' : 'Csatlakozás…'}
-        </span>
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold">{displayName}</h2>
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-bold tracking-wider ${
+              isLive ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300'
+            }`}
+          >
+            {isLive ? 'ÉLŐ' : 'Csatlakozás…'}
+          </span>
+        </div>
+        {isLive && <ParticipantCounts />}
       </div>
 
       <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden">
@@ -56,15 +60,13 @@ function BroadcasterInner({ displayName }: { displayName: string }) {
             Kamera indítása…
           </div>
         )}
-        {devices.length > 1 && (
-          <button
-            onClick={switchCamera}
-            className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white text-sm font-semibold px-3 py-1.5 rounded-full transition"
-            title="Kamera váltás"
-          >
-            ↺ Kamera
-          </button>
-        )}
+        <button
+          onClick={toggleCamera}
+          className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 text-white text-sm font-semibold px-3 py-1.5 rounded-full transition"
+          title={facingMode === 'environment' ? 'Váltás előlap kamerára' : 'Váltás hátsó kamerára'}
+        >
+          ↺ {facingMode === 'environment' ? 'Előlap' : 'Hátsó'}
+        </button>
       </div>
 
       <p className="text-gray-400 text-sm text-center">
@@ -80,7 +82,7 @@ export default function BroadcasterView({ token, wsUrl, displayName }: Props) {
       token={token}
       serverUrl={wsUrl}
       connect={true}
-      video={true}
+      video={{ facingMode: 'environment' }}
       audio={true}
       connectOptions={{ autoSubscribe: false }}
     >

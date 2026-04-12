@@ -11,13 +11,6 @@ export function generateIdentity(role: Role): string {
   return `${role}-${nanoid(8)}`;
 }
 
-export function validateBroadcasterKey(key: string | undefined): boolean {
-  const expected = process.env.LIVEKIT_BROADCASTER_KEY;
-  return !!expected && !!key && key === expected;
-}
-
-export function validateRoleAccess(role: Role, key: string | undefined): boolean {
-  if (role === 'viewer') return true;
-  if (role === 'broadcaster') return validateBroadcasterKey(key);
-  return false;
+export function validateRoleAccess(role: Role): boolean {
+  return role === 'viewer' || role === 'broadcaster';
 }

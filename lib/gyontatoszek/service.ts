@@ -1,91 +1,160 @@
-
 import { buildPrompt } from './prompt';
-import { checkSafety } from './safety';
 import { getAIResponse } from './provider';
-import { saveConfessionRecord } from './repository';
-import type { GyontatasRequest, GyontatasInsert } from './types';
+import {
+  createConversationMessage,
+  ensureConversation,
+  getGyontatasStorageMode,
+  listConversationMessages,
+  saveLegacyConfessionExchange,
+} from './repository';
+import { checkSafety } from './safety';
+import type { GyontatasMessage, GyontatasRequest } from './types';
 
-// Helper: Convert AsyncIterable<string> to ReadableStream<Uint8Array>
-function asyncIterableToByteStream(iterable: AsyncIterable<string>): ReadableStream<Uint8Array> {
+const MODEL_NAME = 'gpt-4o';
+
+function createTextStreamResponse(body: string, sessionId: string) {
   const encoder = new TextEncoder();
-  return new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      for await (const chunk of iterable) {
-        controller.enqueue(encoder.encode(chunk));
-      }
-      controller.close();
-    },
-  });
-}
 
-export async function handleGyontatas(req: GyontatasRequest & { session_id?: string }) {
-  const safety = checkSafety(req.confession);
-  let aiResponse = '';
-  let model = 'gpt-4o';
-  let safetyFlag = !safety.safe;
-  let responseStream: ReadableStream<Uint8Array>;
-
-  if (!safety.safe) {
-    // Return fallback as a single streamed chunk
-    aiResponse = safety.fallback;
-    const encoder = new TextEncoder();
-    responseStream = new ReadableStream({
+  return new Response(
+    new ReadableStream<Uint8Array>({
       start(controller) {
-        controller.enqueue(encoder.encode(safety.fallback));
+        controller.enqueue(encoder.encode(body));
         controller.close();
       },
+    }),
+    {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'x-session-id': sessionId,
+      },
+    }
+  );
+}
+
+export async function handleGyontatas(req: GyontatasRequest) {
+  const storageMode = await getGyontatasStorageMode();
+  const conversation = await ensureConversation(req.session_id);
+  let history: GyontatasMessage[] = [];
+
+  if (storageMode === 'conversation') {
+    await createConversationMessage({
+      conversation_id: conversation.id,
+      sender_role: 'user',
+      body: req.confession,
+      metadata: {
+        source: 'gyontatoszek',
+        timestamp: new Date().toISOString(),
+      },
     });
+    history = await listConversationMessages(conversation.id);
   } else {
-    // Build prompt and stream AI response
-    const messages = buildPrompt(req.confession);
-    const textStream = await getAIResponse(messages);
-    const encoder = new TextEncoder();
-    let responseChunks: string[] = [];
-    // Tee pattern: stream to client, but also collect for DB
-    responseStream = new ReadableStream<Uint8Array>({
-      async pull(controller) {
+    const existingHistory = await listConversationMessages(conversation.id);
+    history = [
+      ...existingHistory,
+      {
+        id: `pending-user:${Date.now()}`,
+        conversation_id: conversation.id,
+        sender_role: 'user',
+        body: req.confession,
+        model: null,
+        safety_flag: false,
+        metadata: {
+          source: 'gyontatoszek',
+          timestamp: new Date().toISOString(),
+          pending: true,
+        },
+        created_at: new Date().toISOString(),
+      },
+    ];
+  }
+
+  const safety = checkSafety(req.confession);
+  if (!safety.safe) {
+    if (storageMode === 'conversation') {
+      await createConversationMessage({
+        conversation_id: conversation.id,
+        sender_role: 'assistant',
+        body: safety.fallback,
+        model: MODEL_NAME,
+        safety_flag: true,
+        metadata: {
+          source: 'gyontatoszek',
+          timestamp: new Date().toISOString(),
+          safety_reason: safety.reason,
+        },
+      });
+    } else {
+      await saveLegacyConfessionExchange({
+        session_id: req.session_id,
+        confession: req.confession,
+        response: safety.fallback,
+        model: MODEL_NAME,
+        safety_flag: true,
+        metadata: {
+          source: 'gyontatoszek',
+          timestamp: new Date().toISOString(),
+          safety_reason: safety.reason,
+        },
+      });
+    }
+
+    return createTextStreamResponse(safety.fallback, req.session_id);
+  }
+
+  const modelMessages = buildPrompt(history);
+  const textStream = await getAIResponse(modelMessages);
+  const encoder = new TextEncoder();
+
+  const responseStream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const responseChunks: string[] = [];
+
+      try {
         for await (const chunk of textStream) {
           responseChunks.push(chunk);
           controller.enqueue(encoder.encode(chunk));
         }
-        controller.close();
-        // Save to DB after streaming is done
-        const aiResponseFinal = responseChunks.join('');
-        const record: GyontatasInsert = {
-          session_id: req.session_id || null,
-          confession: req.confession,
-          response: aiResponseFinal,
-          model,
-          safety_flag: false,
-          metadata: {
-            timestamp: new Date().toISOString(),
-          },
-        };
-        saveConfessionRecord(record).catch((err) => {
-          console.error('Failed to persist confession:', err);
-        });
-      },
-    });
-  }
 
-  // Persist fallback response immediately (non-streaming)
-  if (safetyFlag) {
-    const record: GyontatasInsert = {
-      session_id: req.session_id || null,
-      confession: req.confession,
-      response: aiResponse,
-      model,
-      safety_flag: safetyFlag,
-      metadata: {
-        timestamp: new Date().toISOString(),
-      },
-    };
-    saveConfessionRecord(record).catch((err) => {
-      console.error('Failed to persist confession:', err);
-    });
-  }
+        const assistantReply = responseChunks.join('');
+        if (storageMode === 'conversation') {
+          await createConversationMessage({
+            conversation_id: conversation.id,
+            sender_role: 'assistant',
+            body: assistantReply,
+            model: MODEL_NAME,
+            safety_flag: false,
+            metadata: {
+              source: 'gyontatoszek',
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } else {
+          await saveLegacyConfessionExchange({
+            session_id: req.session_id,
+            confession: req.confession,
+            response: assistantReply,
+            model: MODEL_NAME,
+            safety_flag: false,
+            metadata: {
+              source: 'gyontatoszek',
+              timestamp: new Date().toISOString(),
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Failed during gyontatas streaming:', error);
+        controller.error(error);
+        return;
+      }
+
+      controller.close();
+    },
+  });
 
   return new Response(responseStream, {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'x-session-id': req.session_id,
+    },
   });
 }

@@ -249,9 +249,18 @@ Sometimes the answer should end with an opening, not a conclusion.
 If the user's confession has real depth, do not rush - let the response earn its ending.
 `;
 
-export function buildPrompt(confession: string) {
+import { MAX_GYONTATAS_HISTORY_MESSAGES, type GyontatasMessage } from './types';
+
+export function buildPrompt(history: GyontatasMessage[]) {
+  const recentMessages = history
+    .filter((message) => message.body.trim().length > 0)
+    .slice(-MAX_GYONTATAS_HISTORY_MESSAGES);
+
   return [
     { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user', content: confession },
+    ...recentMessages.map((message) => ({
+      role: message.sender_role === 'user' ? 'user' : 'assistant',
+      content: message.body,
+    })),
   ];
 }

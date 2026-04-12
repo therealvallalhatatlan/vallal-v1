@@ -16,10 +16,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { role, displayName, broadcasterKey } = body as {
+  const { role, displayName } = body as {
     role: unknown;
     displayName: unknown;
-    broadcasterKey?: unknown;
   };
 
   if (role !== 'viewer' && role !== 'broadcaster') {
@@ -34,9 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Display name required' }, { status: 400 });
   }
 
-  const key = typeof broadcasterKey === 'string' ? broadcasterKey : undefined;
-
-  if (!validateRoleAccess(typedRole, key)) {
+  if (!validateRoleAccess(typedRole)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
