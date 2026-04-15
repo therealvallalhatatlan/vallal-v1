@@ -2,6 +2,7 @@ import type { GyontatasMessage } from '../types';
 import { detectAction } from './action';
 import { analyzeInput, finalizeRuntimeState } from './analyzeInput';
 import { selectDistortionHook, updateDistortionState } from './distortion';
+import { selectExemplars } from './exemplars';
 import { buildMemoryContext } from './memory';
 import { updateProfile } from './profile';
 import { interpretTurn } from './interpretation';
@@ -59,6 +60,12 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     modulation: input.modulation ?? null,
   });
 
+  const exemplars = selectExemplars(
+    strategyResult.strategy.mode,
+    interpretation.primaryIntent,
+    interpretation.emotionalTone,
+  );
+
   const ragContext = await searchRelevantChunks({
     query: input.input,
     themes: interpretation.extractedTopics,
@@ -89,6 +96,7 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     action,
     distortion: distortion.activeHook,
     distortionState: distortion.nextState,
+    exemplars,
     behavior: strategyResult.behavior,
   };
 }

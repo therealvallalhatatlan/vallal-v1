@@ -35,7 +35,7 @@ function MessageItemComponent({ message, isStreaming = false }: MessageItemProps
         </div>
 
         <div
-          className={isUser ? 'whitespace-pre-wrap text-[15px] leading-7 text-neutral-200/90' : 'whitespace-pre-wrap text-[15px] leading-7 text-neutral-100 md:text-[16px] md:leading-8'}
+          className={isUser ? 'whitespace-pre-wrap text-[17px] leading-8 text-neutral-200/90 md:text-[19px] md:leading-9' : 'whitespace-pre-wrap text-[17px] leading-8 text-neutral-100 md:text-[19px] md:leading-9'}
         >
           {message.body || (isStreaming && !isUser ? <span className="inline-flex gap-1 text-lime-300/70"><span>•</span><span>•</span><span>•</span></span> : null)}
         </div>

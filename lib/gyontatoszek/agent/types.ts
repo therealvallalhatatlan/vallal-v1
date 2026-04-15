@@ -139,6 +139,15 @@ export interface DistortionHook {
   triggered: boolean;
 }
 
+export interface BehavioralExemplar {
+  id: string;
+  user: string;
+  intent: string;
+  emotion: string;
+  expected_strategy: string;
+  v_response: string;
+}
+
 export interface DistortionState {
   pendingHooks: DistortionHook[];
   cooldownUntilTurn: number;
@@ -161,5 +170,6 @@ export interface AgentTurnContext {
   action?: AgentAction | null;
   distortion?: DistortionHook | null;
   distortionState?: DistortionState;
+  exemplars?: BehavioralExemplar[];
   behavior: BehaviorEvaluation;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import type { VBehaviorModulation } from '@/lib/gyontatoszek/types';
 
 interface ReadingMetric {
@@ -34,6 +34,21 @@ const MODULATION_PRESETS: Array<{ label: string; description: string; value: VBe
     value: { alcohol: 0.18, amphetamine: 0.06, thc: 0.74, dopamine: 0.1 },
   },
 ];
+
+const METRIC_TOOLTIPS: Record<string, string> = {
+  'hirtelen mozdulat': 'Impulzív döntések, hirtelen irányváltások mintázata — V már észlelt belőled ilyet',
+  'kerülőív': 'Témák vagy érzések megkerülésének mintázata — amit inkább kikerülsz, mint szembenézel',
+  'kontrolléhség': 'Az irányítás igénye — hajlam arra, hogy te diktáld a keretet és a haladás ütemét',
+  'visszaigazoláséhség': 'Megerősítést kereső dinamika — V érzékeli, mikor vársz igenre',
+  'rágódás': 'Visszatérő körök ugyanazon a ponton — V látja, ha újra és újra visszatérsz valamihez',
+  'új ingerre mozdul': 'Újdonságéhség — V észrevette, mikor csap le valami frissre',
+};
+
+const SIGNAL_TOOLTIPS: Record<string, string> = {
+  bizalom: 'Mennyit engedett már közel magához V — lassan épül, gyorsan romlik',
+  súrlódás: 'Felhalmozódott feszültség V oldalán — ha magas, élesebb vagy türelmetlenebb választ kaphatsz',
+  ismétlés: 'Mennyire érzékeli V, hogy ugyanazokat a köröket járod — magas értéknél lecsendülhet vagy élesedhet',
+};
 
 export interface VReadingInsight {
   emotion: string;
@@ -90,7 +105,25 @@ function prettyDate(value?: string | null) {
     day: 'numeric',
   }).format(date);
 }
+function WithTooltip({ children, tip }: { children: ReactNode; tip: string }) {
+  return (
+    <span className="group relative inline-flex cursor-default items-center gap-1">
+      {children}
+      <span className="text-[9px] text-neutral-600 transition group-hover:text-lime-300/60">ⓘ</span>
+      <span className="pointer-events-none absolute left-0 top-full z-30 mt-1 w-60 rounded-xl border border-lime-300/20 bg-black/95 px-3 py-2 text-[11px] normal-case tracking-normal text-neutral-200 opacity-0 shadow-[0_12px_40px_rgba(0,0,0,0.45)] transition duration-200 group-hover:opacity-100">
+        {tip}
+      </span>
+    </span>
+  );
+}
 
+function SectionTitle({ label, tooltip }: { label: string; tooltip?: string }) {
+  return (
+    <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">
+      {tooltip ? <WithTooltip tip={tooltip}>{label}</WithTooltip> : label}
+    </p>
+  );
+}
 function describeBlend(modulation: VBehaviorModulation) {
   const notes: string[] = [];
 
@@ -102,11 +135,11 @@ function describeBlend(modulation: VBehaviorModulation) {
   return notes.length > 0 ? notes.join(' • ') : 'alapjáraton marad';
 }
 
-function MetricBar({ label, value, max = 5 }: { label: string; value: number; max?: number }) {
+function MetricBar({ label, value, max = 5, tooltip }: { label: string; value: number; max?: number; tooltip?: string }) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-neutral-400">
-        <span>{label}</span>
+        <span>{tooltip ? <WithTooltip tip={tooltip}>{label}</WithTooltip> : label}</span>
         <span className="text-lime-200/80">{value.toFixed(1)}</span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-white/6">
@@ -193,7 +226,7 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-neutral-300 transition hover:border-lime-300/40 hover:text-lime-200 md:hidden"
+            className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-neutral-300 transition hover:border-lime-300/40 hover:text-lime-200"
           >
             bezár
           </button>
@@ -315,7 +348,7 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
         ) : activeTab === 'user' ? (
           <>
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Most benned</p>
+              <SectionTitle label="Most benned" tooltip="A te aktuális érzelmi állapotod, ahogy V értelmezi — az utolsó üzenet alapján" />
               <div className="mt-3 flex items-end justify-between gap-3">
                 <div>
                   <p className="text-xl text-lime-100">{insight.emotion}</p>
@@ -326,7 +359,7 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
 
               <div className="mt-4">
                 <div className="mb-1.5 flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-neutral-400">
-                  <span>intenzitás</span>
+                  <span><WithTooltip tip="Mennyire erős érzelmileg ez a kör — 0% csendes, 100% csúcsra járatott">intenzitás</WithTooltip></span>
                   <span className="text-lime-200/80">{Math.round(insight.intensity * 100)}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-white/6">
@@ -339,17 +372,17 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
             </section>
 
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Köztetek most</p>
+              <SectionTitle label="Köztetek most" tooltip="A kettőtök viszonyának mért állapota — mennyire feszes, bizalmas vagy akadályokkal teli" />
               <div className="mt-3 space-y-3">
-                <MetricBar label="bizalom" value={insight.trust} />
-                <MetricBar label="súrlódás" value={insight.irritation} />
-                <MetricBar label="nyitottság" value={insight.openness} />
+                <MetricBar label="bizalom" value={insight.trust} tooltip="Mennyit engedett már közel magához V — lassan épül, gyorsan romlik" />
+                <MetricBar label="súrlódás" value={insight.irritation} tooltip="Felhalmozódott feszültség kettőtök között — nem feltétlenül rossz, néha ettől lesz éles" />
+                <MetricBar label="nyitottság" value={insight.openness} tooltip="Mennyire érzi V, hogy valódi dolgokról beszélsz — nem performanszból, hanem tényleg" />
               </div>
-              <p className="mt-3 text-xs text-neutral-400">kapcsolati állás: <span className="text-neutral-200">{insight.stance}</span></p>
+              <p className="mt-3 text-xs text-neutral-400"><WithTooltip tip="V belső minősítése a kettőtök viszonyáról ebben a pillanatban">kapcsolati állás</WithTooltip>: <span className="text-neutral-200">{insight.stance}</span></p>
             </section>
 
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Domináns mintázatok</p>
+              <SectionTitle label="Domináns mintázatok" tooltip="Ismétlődő témák vagy reakciók, amelyeket V visszatérőnek lát benned a korábbi körök alapján" />
               <div className="mt-3 flex flex-wrap gap-2">
                 {insight.motifs.length > 0 ? insight.motifs.map((motif) => (
                   <span
@@ -363,7 +396,7 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
             </section>
 
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Törésvonalak</p>
+              <SectionTitle label="Törésvonalak" tooltip="Nyitott hurkok — félbehagyott témák vagy kerülött pontok, amiket V észrevett, de még visszatartott" />
               <div className="mt-3 space-y-2">
                 {insight.openLoops.length > 0 ? insight.openLoops.map((loop) => (
                   <div key={loop} className="rounded-xl bg-black/20 px-3 py-2 text-sm text-neutral-200 ring-1 ring-white/6">
@@ -374,10 +407,10 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
             </section>
 
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Rejtett húzások</p>
+              <SectionTitle label="Rejtett húzások" tooltip="Belső erők, amiket V a mondásaid mintájából következtet ki — nem adatból, hanem ismétlésből és irányból" />
               <div className="mt-3 space-y-2">
                 {insight.traits.length > 0 ? insight.traits.map((trait) => (
-                  <MetricBar key={trait.label} label={trait.label} value={trait.value} max={1} />
+                  <MetricBar key={trait.label} label={trait.label} value={trait.value} max={1} tooltip={METRIC_TOOLTIPS[trait.label]} />
                 )) : <p className="text-xs text-neutral-500">még nincs elég jel</p>}
               </div>
             </section>
@@ -385,7 +418,7 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
         ) : (
           <>
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Most V-ben</p>
+              <SectionTitle label="Most V-ben" tooltip="Ahogy V önmagát érzékeli ebben a beszélgetésben — a saját belső állapota, nem a tiéd" />
               <div className="mt-3 flex items-end justify-between gap-3">
                 <div>
                   <p className="text-xl text-lime-100">{insight.vEmotion}</p>
@@ -396,7 +429,7 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
 
               <div className="mt-4">
                 <div className="mb-1.5 flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-neutral-400">
-                  <span>belső intenzitás</span>
+                  <span><WithTooltip tip="Mennyire van V 'felhúzva' — magasabb értéknél élesebb, tömörebb, kevésbé türelmes választ kaphatsz">belső intenzitás</WithTooltip></span>
                   <span className="text-lime-200/80">{Math.round(insight.vIntensity * 100)}%</span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-white/6">
@@ -407,20 +440,20 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
                 </div>
               </div>
 
-              <p className="mt-3 text-xs text-neutral-400">kapcsolati tónus: <span className="text-neutral-200">{insight.vTone}</span></p>
+              <p className="mt-3 text-xs text-neutral-400"><WithTooltip tip="V érzelmi regisztere veled szemben ebben a pillanatban — ahogy közelít vagy épp távolodik">kapcsolati tónus</WithTooltip>: <span className="text-neutral-200">{insight.vTone}</span></p>
             </section>
 
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Kapcsolat hőfoka</p>
+              <SectionTitle label="Kapcsolat hőfoka" tooltip="V oldalán mért dinamikai jelzők — a kettőtök közötti erőtér mértéke V nézőpontjából" />
               <div className="mt-3 space-y-3">
                 {insight.vSignals.map((signal) => (
-                  <MetricBar key={signal.label} label={signal.label} value={signal.value} />
+                  <MetricBar key={signal.label} label={signal.label} value={signal.value} tooltip={SIGNAL_TOOLTIPS[signal.label]} />
                 ))}
               </div>
             </section>
 
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Amit még magánál tart</p>
+              <SectionTitle label="Amit még magánál tart" tooltip="Területek, amiket V már észrevett benned, de még nem hozott szóba — kivárja a megfelelő pillanatot" />
               <div className="mt-3 flex flex-wrap gap-2">
                 {insight.vTopics.length > 0 ? insight.vTopics.map((topic) => (
                   <span
@@ -434,7 +467,7 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
             </section>
 
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Legutóbbi szikra</p>
+              <SectionTitle label="Legutóbbi szikra" tooltip="Az az utolsó inger, ami V-t kimozdította vagy élesítette — lehetett egy szó, egy szünet vagy egy ismétlődő minta" />
               <div className="mt-3 rounded-xl bg-black/20 px-3 py-2 text-sm text-neutral-200 ring-1 ring-white/6">
                 {insight.vTrigger ?? 'most még nem hagyott egyetlen éles nyomot sem'}
               </div>

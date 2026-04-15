@@ -1,5 +1,6 @@
 import { buildPrompt } from '../prompt';
 import { getAIResponse } from '../provider';
+import { deriveRegisterDescriptor } from './exemplars';
 import type { AgentTurnContext } from './types';
 
 function buildStructuredAgentContext(context: AgentTurnContext) {
@@ -25,6 +26,13 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
     .map(
       (chunk, index) =>
         `- fragment ${index + 1}: ${chunk.preview} [tone: ${chunk.tone}; themes: ${chunk.themes.join(', ') || 'none'}]`,
+    )
+    .join('\n');
+
+  const exemplarLines = (context.exemplars ?? [])
+    .map(
+      (ex) =>
+        `- exemplar [signal: ${ex.intent}+${ex.emotion}] → [${deriveRegisterDescriptor(ex)}]`,
     )
     .join('\n');
 
@@ -63,8 +71,14 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
     memoryCues ? `Relevant memory cues:\n${memoryCues}` : 'Relevant memory cues: none worth invoking directly',
     '- use the retrieved fragments as tonal anchors for rhythm, dirt, tension, and diction; never quote them as sources',
     '- blend motifs into the reply; never say “according to”, “from the text”, or quote them as sources',
-    '',
-    'USER MESSAGE:',
+    '',    ...(exemplarLines
+      ? [
+          'BEHAVIORAL CALIBRATION:',
+          exemplarLines,
+          '- use these as behavioral anchors for register, pacing, relational move; never copy verbatim',
+          '',
+        ]
+      : []),    'USER MESSAGE:',
     `- respond directly to this live turn: ${context.input}`,
     '',
     'STREAMING RULES:',

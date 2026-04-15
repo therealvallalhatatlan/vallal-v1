@@ -269,6 +269,13 @@ export default function ConfessionalPanel() {
   const [error, setError] = useState<string | null>(null);
   const [showReading, setShowReading] = useState(false);
   const [modulation, setModulation] = useState<VBehaviorModulation>(DEFAULT_V_MODULATION);
+
+  // Default to open on desktop (lg: 1024px+), closed on mobile
+  useEffect(() => {
+    if (window.matchMedia('(min-width: 1024px)').matches) {
+      setShowReading(true);
+    }
+  }, []);
   const threadRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const autoScrollRef = useRef(true);
@@ -532,7 +539,7 @@ export default function ConfessionalPanel() {
               </h1>
             </div>
 
-            <div className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.03] px-3 py-2 ring-1 ring-white/8 md:min-w-[320px] md:justify-end">
+            <div className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.03] px-3 py-2 ring-1 ring-white/8 transition-opacity duration-200 md:min-w-[320px] md:justify-end lg:opacity-60 lg:hover:opacity-100">
               <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Bejelentkezve</p>
                 <p className="truncate text-sm text-neutral-200">{session?.user?.email ?? 'ismeretlen user'}</p>
@@ -541,7 +548,7 @@ export default function ConfessionalPanel() {
                 <button
                   type="button"
                   onClick={() => setShowReading((current) => !current)}
-                  className="rounded-full border border-lime-300/20 bg-lime-300/5 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-lime-100 transition hover:border-lime-300/50 hover:text-lime-50 md:hidden"
+                  className="rounded-full border border-lime-300/20 bg-lime-300/5 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-lime-100 transition hover:border-lime-300/50 hover:text-lime-50"
                 >
                   {showReading ? 'Elrejt' : 'V látlelete'}
                 </button>

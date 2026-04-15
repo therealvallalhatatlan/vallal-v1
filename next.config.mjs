@@ -13,6 +13,11 @@ const nextConfig = {
         destination: '/nyitott-muhely',
         permanent: false,
       },
+      {
+        source: '/v',
+        destination: '/v3',
+        permanent: false,
+      },
     ];
   },
 }
