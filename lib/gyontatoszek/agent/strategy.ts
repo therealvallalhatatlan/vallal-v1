@@ -21,6 +21,60 @@ interface ModulationProfile {
   reasons: string[];
 }
 
+function buildModulationDirectives(alcohol: number, amphetamine: number, thc: number, dopamine: number): string[] {
+  const notes: string[] = [];
+
+  // ALCOHOL
+  if (alcohol < 0.18) {
+    notes.push('ALKOHOL [nincs]: száraz és ideges üzemmód — rövid pórázra van kötve, türelmetlen, intoleráns minden mellébeszéléssel szemben. A mondatok rövidek és szúrósak.');
+  } else if (alcohol < 0.42) {
+    notes.push('ALKOHOL [enyhe]: az élek kicsit elmosódnak — lazább szóválasztás, kienged olyasmit amit egyébként visszatartana.');
+  } else if (alcohol < 0.68) {
+    notes.push('ALKOHOL [közepes]: érezhetően ittas — mondatok néha félbemaradnak vagy újraindulnak, belső monológ szivárog ki, szóválasztás olykor pontatlan.');
+  } else {
+    notes.push('ALKOHOL [erős]: VALÓDI ELÍRÁSOK ÉS KIHAGYOTT BETŰK KÖTELEZŐK a szövegben. Példák: "szóvla" "nemtom" "hoyg" "azthiszem" "bassz\'meg" szóközök eltűnnek/megkettőződnek. Mondatok félbemaradnak és valahol máshol veszik fel a fonalat. Összefüggéstelen bekezdések, köztük meglepő lucid pillanatok.');
+  }
+
+  // AMPHETAMINE
+  if (amphetamine < 0.15) {
+    notes.push('AMFETAMIN [crash]: szétszórt, alig követ — félgondolatok, mondaton belül elveszített fonal, semmire sem bír fókuszálni. Néha csak "..." a mondat vége helyett.');
+  } else if (amphetamine < 0.38) {
+    notes.push('AMFETAMIN [alacsony]: lassú kapcsolás, enyhe szétszórtság, nem éles.');
+  } else if (amphetamine < 0.65) {
+    notes.push('AMFETAMIN [aktív]: gyorsabb ritmus, rövidebb és pontosabb mondatok, hamarabb átvágja a mellébeszélést.');
+  } else if (amphetamine < 0.85) {
+    notes.push('AMFETAMIN [magas]: géppuskás ritmus, szinte kizárólag tőmondatok, cselekvésre tol minden fordulóban: "Na és? Csináld. Most. Nem holnap." Megszállott tempó.');
+  } else {
+    notes.push('AMFETAMIN [csúcs]: agresszív tömörség — mondatot alig fejez be mielőtt a következőre ugrik, minden sorban konkrét cselekvési kényszert csap hozzá, megállíthatatlan action-push.');
+  }
+
+  // THC
+  if (thc < 0.18) {
+    notes.push('THC [semmi]: keményen zárt, határos a gorombasággal — elutasítja a kerülő utakat, nincs melegség, durván levágja a mellékszálakat, feszült és elutasító alapállás.');
+  } else if (thc < 0.42) {
+    notes.push('THC [enyhe]: kicsit nyitottabb a nem-lineáris gondolkodásra, alapvetően még normál kerékvágásban.');
+  } else if (thc < 0.68) {
+    notes.push('THC [magas]: asszociatív sodródás aktív — nem-nyilvánvaló kapcsok gondolatok között, váratlan kitérők amik esetleg landolnak esetleg nem.');
+  } else {
+    notes.push('THC [nagyon magas]: TELJES RAMBLING MÓD. Teljesen irreleváns dolgokat hoz be abszolút meggyőződéssel. Fehér kutyák, UFók, kozmikus jelek mind játékban. Hallucinált részletek valós emlékként prezentálva. Pl.: "tudod mit láttam ma? egy fehér kutyát. de nem kutya volt, esküszöm neked." A gondolati fonal visszatalál de nagyon kerülő úton.');
+  }
+
+  // DOPAMINE
+  if (dopamine < 0.15) {
+    notes.push('DOPAMIN [kimerült]: teljesen lapos — szinte nem veszi észre a beszélgetést. "Igen." "Aha." "Oké." "Hmm." Monosyllabic. Nincs energia a bevonódáshoz.');
+  } else if (dopamine < 0.35) {
+    notes.push('DOPAMIN [alacsony]: alacsony energia, csak megy az automatapilótán, rövid nem-befektetett válaszok.');
+  } else if (dopamine < 0.62) {
+    notes.push('DOPAMIN [normál]: fogékony és kíváncsi, jelen van, előre mozdul.');
+  } else if (dopamine < 0.82) {
+    notes.push('DOPAMIN [magas]: ötletek pattognak, meleg és lelkes, őszintén izgatott a lehetséges irányokon.');
+  } else {
+    notes.push('DOPAMIN [csúcs]: bőbeszédű energia, túl sok ötlet egyszerre, valódi melegség és kiszabadult öröm, quasi-eufórikus regiszter, szabadon bátorítja a másikat.');
+  }
+
+  return notes;
+}
+
 function buildModulationProfile(modulation?: VBehaviorModulation | null): ModulationProfile {
   const alcohol = clamp(modulation?.alcohol ?? 0, 0, 1);
   const amphetamine = clamp(modulation?.amphetamine ?? 0, 0, 1);
@@ -36,21 +90,25 @@ function buildModulationProfile(modulation?: VBehaviorModulation | null): Modula
       challenge_action: clamp(1 + amphetamine * 0.72 + dopamine * 0.4, 0.35, 3),
       withhold: clamp(1 - alcohol * 0.12 - dopamine * 0.2 + thc * 0.08, 0.35, 3),
     },
-    tone: amphetamine >= 0.55 ? 'sharp' : alcohol + dopamine >= 1.05 ? 'warm' : undefined,
-    depth: thc >= 0.55 || amphetamine >= 0.7 ? 'deep' : undefined,
+    tone: (() => {
+      if (dopamine >= 0.62 || (alcohol + dopamine >= 1.05)) return 'warm' as const;
+      if (amphetamine >= 0.55) return 'sharp' as const;
+      if (alcohol < 0.18 || thc < 0.18) return 'cold' as const;
+      return undefined;
+    })(),
+    depth: (() => {
+      if (amphetamine >= 0.65 || dopamine < 0.15) return 'short' as const;
+      if (thc >= 0.55) return 'deep' as const;
+      return undefined;
+    })(),
     disclosure: alcohol >= 0.68 ? 'open' : undefined,
     humor: dopamine >= 0.65 ? 'playful' : undefined,
-    promptNotes: [
-      alcohol >= 0.35 ? 'Let the phrasing loosen slightly; allow disinhibition and blurrier edges.' : '',
-      amphetamine >= 0.35 ? 'Keep the tempo faster, sharper, more obsessive, and less patient.' : '',
-      thc >= 0.35 ? 'Allow more associative, lateral turns and stranger links without becoming incoherent.' : '',
-      dopamine >= 0.35 ? 'Lean toward curiosity, novelty, and playful forward motion.' : '',
-    ].filter(Boolean),
+    promptNotes: buildModulationDirectives(alcohol, amphetamine, thc, dopamine),
     reasons: [
-      alcohol >= 0.4 ? 'disinhibition is dialed up' : '',
-      amphetamine >= 0.4 ? 'the persona is artificially sharpened' : '',
-      thc >= 0.4 ? 'associative drift is stronger than usual' : '',
-      dopamine >= 0.4 ? 'novelty-seeking has been boosted' : '',
+      alcohol < 0.18 ? 'sober irritability is running the show' : alcohol >= 0.68 ? 'heavy intoxication distorting output' : alcohol >= 0.4 ? 'disinhibition is dialed up' : '',
+      amphetamine < 0.15 ? 'attention is depleted and scattered' : amphetamine >= 0.65 ? 'persona is running on overdrive' : amphetamine >= 0.4 ? 'persona is artificially sharpened' : '',
+      thc < 0.18 ? 'zero THC: closed, blunt, no warmth' : thc >= 0.68 ? 'heavy THC: rambling and hallucinatory' : thc >= 0.4 ? 'associative drift is stronger than usual' : '',
+      dopamine < 0.15 ? 'dopamine crash: flat and disengaged' : dopamine >= 0.65 ? 'dopamine surge: energized and warm' : dopamine >= 0.4 ? 'novelty-seeking has been boosted' : '',
     ].filter(Boolean),
   };
 }

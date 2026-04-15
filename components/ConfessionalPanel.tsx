@@ -20,10 +20,10 @@ import { useSessionGuard } from '@/hooks/useSessionGuard';
 const SESSION_STORAGE_KEY = 'gyontatoszek-session-id';
 
 const DEFAULT_V_MODULATION: VBehaviorModulation = {
-  alcohol: 0.07,
-  amphetamine: 0.26,
-  thc: 0.63,
-  dopamine: 0.23,
+  alcohol: 0.22,
+  amphetamine: 0.38,
+  thc: 0.52,
+  dopamine: 0.32,
 };
 
 const EMOTION_LABELS: Record<string, string> = {

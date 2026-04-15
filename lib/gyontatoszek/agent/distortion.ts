@@ -107,12 +107,14 @@ export function selectDistortionHook(context: {
   const topical = eligible.find((hook) => normalizedInput.includes(hook.topic));
   const candidate = topical ?? eligible.sort((left, right) => right.strength - left.strength)[0];
 
-  const allowStrategy = ['mirror', 'destabilize', 'validate_then_twist', 'withhold'].includes(context.strategyMode);
   const subtleChance = seededUnit(`${context.input}|${candidate.id}|${state.turnCount}`);
   const thc = context.modulation?.thc ?? 0;
   const alcohol = context.modulation?.alcohol ?? 0;
   const amphetamine = context.modulation?.amphetamine ?? 0;
-  const distortionThreshold = clamp(0.58 - thc * 0.2 - alcohol * 0.05 + amphetamine * 0.03, 0.18, 0.75);
+  const allowStrategy = thc >= 0.72 || ['mirror', 'destabilize', 'validate_then_twist', 'withhold'].includes(context.strategyMode);
+  const distortionThreshold = thc >= 0.72
+    ? clamp(0.58 - thc * 0.48, 0.05, 0.75)
+    : clamp(0.58 - thc * 0.2 - alcohol * 0.05 + amphetamine * 0.03, 0.18, 0.75);
 
   if (!allowStrategy || subtleChance < distortionThreshold) {
     return { activeHook: null, nextState: state };

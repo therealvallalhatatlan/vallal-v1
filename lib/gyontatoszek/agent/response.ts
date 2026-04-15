@@ -2,6 +2,59 @@ import { buildPrompt } from '../prompt';
 import { getAIResponse } from '../provider';
 import { deriveRegisterDescriptor } from './exemplars';
 import type { AgentTurnContext } from './types';
+import type { VBehaviorModulation } from '../types';
+
+function buildSubstanceStateSection(mod: VBehaviorModulation): string[] {
+  const a = mod.alcohol;
+  const amp = mod.amphetamine;
+  const t = mod.thc;
+  const d = mod.dopamine;
+  const pct = (v: number) => `${Math.round(v * 100)}%`;
+
+  const lines: string[] = ['SUBSTANCE STATE (these OVERRIDE default register — impairment/elevation must be visible in syntax and word choice, not meta-described):'];
+
+  if (a < 0.18) {
+    lines.push('- ALKOHOL [nincs]: száraz + ingerült — rövid pórázra van kötve, intoleráns, szinte goromba');
+  } else if (a < 0.42) {
+    lines.push(`- alkohol [${pct(a)}]: enyhe lazítás — élek kicsit elmosódnak`);
+  } else if (a < 0.68) {
+    lines.push(`- alkohol [${pct(a)}]: érezhetően ittas — mondatok néha félbemaradnak, több belső monológ szivárog ki`);
+  } else {
+    lines.push(`- ALKOHOL [${pct(a)}]: ERŐSEN ITTAS — valódi elírások kötelezők ("szóvla" "nemtom" "hoyg"), félbemaradt mondatok, összefüggéstelen bekezdések, lucid pillanatok közben`);
+  }
+
+  if (amp < 0.15) {
+    lines.push('- AMFETAMIN [crash]: szétszórt — félgondolatok, elveszített fonal mondaton belül, odabiccentés figyelem nélkül');
+  } else if (amp < 0.38) {
+    lines.push(`- amfetamin [${pct(amp)}]: alacsony — lassú kapcsolás, enyhe szétszórtság`);
+  } else if (amp < 0.65) {
+    lines.push(`- amfetamin [${pct(amp)}]: aktív — gyorsabb ritmus, pontosabb mondatok`);
+  } else {
+    lines.push(`- AMFETAMIN [${pct(amp)}]: MAGAS — tőmondatok, géppuskás tempó, cselekvésre tol minden fordulóban`);
+  }
+
+  if (t < 0.18) {
+    lines.push('- THC [semmi]: zárt + keményvonalas — durván levágja a mellékszálakat, nincs melegség, határos a gorombasággal');
+  } else if (t < 0.42) {
+    lines.push(`- thc [${pct(t)}]: enyhe — kicsit nyitottabb laterális irányba`);
+  } else if (t < 0.68) {
+    lines.push(`- thc [${pct(t)}]: magas — asszociatív sodródás, nem-nyilvánvaló kapcsok, furcsa kitérők`);
+  } else {
+    lines.push(`- THC [${pct(t)}]: NAGYON MAGAS — rambling mód: irreleváns témák abszolút meggyőződéssel, fehér kutyák/UFók/kozmikus jelek fair game, hallucinált részletek valós emlékként`);
+  }
+
+  if (d < 0.15) {
+    lines.push('- DOPAMIN [null]: teljesen lapos — monosyllables only: "igen" "aha" "hmm", nincs energia a bevonódáshoz');
+  } else if (d < 0.35) {
+    lines.push(`- dopamin [${pct(d)}]: alacsony — alacsony energia, automatapilóta`);
+  } else if (d < 0.62) {
+    lines.push(`- dopamin [${pct(d)}]: normál — kíváncsi, fogékony`);
+  } else {
+    lines.push(`- DOPAMIN [${pct(d)}]: MAGAS — energikus, meleg, ötletek pattognak, lelkes`);
+  }
+
+  return lines;
+}
 
 function buildStructuredAgentContext(context: AgentTurnContext) {
   const memoryCues = context.memoryEvents
@@ -55,9 +108,9 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
     `- tone target: ${context.strategy.tone}`,
     `- depth target: ${context.strategy.depth}`,
     `- disclosure target: ${context.strategy.disclosure}`,
-    context.modulation
-      ? `- active modulation: alcohol ${context.modulation.alcohol.toFixed(2)}, amphetamine ${context.modulation.amphetamine.toFixed(2)}, thc ${context.modulation.thc.toFixed(2)}, dopamine ${context.modulation.dopamine.toFixed(2)}`
-      : '- active modulation: baseline',
+    ...(context.modulation
+      ? buildSubstanceStateSection(context.modulation)
+      : ['- substance state: baseline — all systems nominal']),
     `- relational stance: ${context.profile.relationalStance}`,
     context.action
       ? `- if the moment is earned, issue this challenge naturally: ${context.action.instruction}`

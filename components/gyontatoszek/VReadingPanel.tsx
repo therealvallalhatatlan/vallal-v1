@@ -11,27 +11,27 @@ interface ReadingMetric {
 type ReadingTab = 'user' | 'self' | 'modulation';
 
 const EMPTY_MODULATION: VBehaviorModulation = {
-  alcohol: 0.07,
-  amphetamine: 0.26,
-  thc: 0.63,
-  dopamine: 0.23,
+  alcohol: 0.22,
+  amphetamine: 0.38,
+  thc: 0.52,
+  dopamine: 0.32,
 };
 
 const MODULATION_PRESETS: Array<{ label: string; description: string; value: VBehaviorModulation }> = [
   {
     label: 'Szokásos',
-    description: 'az aktuális alapbeállítás, enyhén ködös és tompán figyelő',
-    value: { alcohol: 0.07, amphetamine: 0.26, thc: 0.63, dopamine: 0.23 },
+    description: 'alapállapot — enyhén lazult, valamelyest fókuszált, kicsit asszociatív sodródó',
+    value: { alcohol: 0.22, amphetamine: 0.38, thc: 0.52, dopamine: 0.32 },
   },
   {
     label: 'Hiperfixált',
-    description: 'élesebb, gyorsabb, rákapcsolt figyelem',
-    value: { alcohol: 0.04, amphetamine: 0.86, thc: 0.12, dopamine: 0.62 },
+    description: 'géppuskás ritmus, tőmondatok, cselekvésre tol — nincsen türelem a körmönfontra',
+    value: { alcohol: 0.04, amphetamine: 0.88, thc: 0.12, dopamine: 0.68 },
   },
   {
     label: 'Enervált/flegma',
-    description: 'laposabb, széthúzottabb, kevésbé reaktív jelenlét',
-    value: { alcohol: 0.18, amphetamine: 0.06, thc: 0.74, dopamine: 0.1 },
+    description: 'szétszórt és messze, halvány hallucinatív szál — fehér kutyák és figyelmi crash',
+    value: { alcohol: 0.20, amphetamine: 0.06, thc: 0.78, dopamine: 0.09 },
   },
 ];
 
@@ -125,14 +125,25 @@ function SectionTitle({ label, tooltip }: { label: string; tooltip?: string }) {
   );
 }
 function describeBlend(modulation: VBehaviorModulation) {
-  const notes: string[] = [];
+  const parts: string[] = [];
 
-  if (modulation.alcohol >= 0.45) notes.push('oldottabb');
-  if (modulation.amphetamine >= 0.45) notes.push('élesebb');
-  if (modulation.thc >= 0.45) notes.push('szürreálisabb');
-  if (modulation.dopamine >= 0.45) notes.push('játékosabb');
+  if (modulation.alcohol < 0.18) parts.push('száraz+ingerült');
+  else if (modulation.alcohol >= 0.68) parts.push('erősen ittas (elírások)');
+  else if (modulation.alcohol >= 0.42) parts.push('kicsit laza');
 
-  return notes.length > 0 ? notes.join(' • ') : 'alapjáraton marad';
+  if (modulation.amphetamine < 0.15) parts.push('szétszórt crash');
+  else if (modulation.amphetamine >= 0.65) parts.push('géppuskás tempó');
+  else if (modulation.amphetamine >= 0.38) parts.push('fókuszált');
+
+  if (modulation.thc < 0.18) parts.push('zárt+goromba');
+  else if (modulation.thc >= 0.68) parts.push('hallucinatív csapongás');
+  else if (modulation.thc >= 0.42) parts.push('asszociatív');
+
+  if (modulation.dopamine < 0.15) parts.push('lapos nem-figyel');
+  else if (modulation.dopamine >= 0.65) parts.push('energikus+meleg');
+  else if (modulation.dopamine >= 0.35) parts.push('kíváncsi');
+
+  return parts.length > 0 ? parts.join(' • ') : 'középső tartomány';
 }
 
 function MetricBar({ label, value, max = 5, tooltip }: { label: string; value: number; max?: number; tooltip?: string }) {
@@ -295,25 +306,25 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
                 label="Alkoholszint"
                 value={currentModulation.alcohol}
                 onChange={(value) => updateModulation('alcohol', value)}
-                description="oldottabb, csúszósabb, kevésbé feszes beszéd"
+                description="alacsony → száraz+ingerült; magas → elírások, félbemaradt mondatok"
               />
               <SliderControl
                 label="Amfetamin szint"
                 value={currentModulation.amphetamine}
                 onChange={(value) => updateModulation('amphetamine', value)}
-                description="gyorsabb, élesebb, megszállottabb ritmus"
+                description="alacsony → szétszórt, nem bír figyelni; magas → tőmondatok, cselekvésre tol"
               />
               <SliderControl
                 label="THC szint"
                 value={currentModulation.thc}
                 onChange={(value) => updateModulation('thc', value)}
-                description="asszociatívabb, ködösebb, szürreálisabb irány"
+                description="alacsony → zárkózott, goromba; magas → csapongó, hallucinatív, fehér kutyák"
               />
               <SliderControl
                 label="Dopamin szint"
                 value={currentModulation.dopamine}
                 onChange={(value) => updateModulation('dopamine', value)}
-                description="játékosság, kíváncsiság, újdonságéhség"
+                description="alacsony → érdektelen, csak hümmög; magas → energikus, meleg, ötletözön"
               />
             </section>
 
