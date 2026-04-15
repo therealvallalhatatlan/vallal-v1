@@ -1,18 +1,49 @@
-import { buildPrompt } from './prompt';
-import { getAIResponse } from './provider';
+import { executeAgentResponse, prepareAgentTurn } from './agent';
 import {
   createConversationMessage,
   ensureConversation,
   getGyontatasStorageMode,
   listConversationMessages,
   saveLegacyConfessionExchange,
+  updateConversationRelationshipMemory,
 } from './repository';
 import { checkSafety } from './safety';
 import type { GyontatasMessage, GyontatasRequest } from './types';
 
 const MODEL_NAME = 'gpt-4o';
 
-function createTextStreamResponse(body: string, sessionId: string) {
+function buildDebugPayload(agentTurn: Awaited<ReturnType<typeof prepareAgentTurn>>) {
+  return {
+    state: agentTurn.runtimeState ?? null,
+    strategy: agentTurn.strategy.mode,
+    retrievedChunks: (agentTurn.ragContext ?? []).slice(0, 3).map((chunk) => ({
+      id: chunk.id,
+      preview: chunk.preview,
+      tone: chunk.tone,
+      themes: chunk.themes,
+      score: chunk.score,
+    })),
+  };
+}
+
+function buildResponseHeaders(sessionId: string, action?: unknown, debugPayload?: unknown) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'x-session-id': sessionId,
+  };
+
+  if (action) {
+    headers['x-agent-action'] = encodeURIComponent(JSON.stringify(action));
+  }
+
+  if (debugPayload) {
+    headers['x-agent-debug'] = encodeURIComponent(JSON.stringify(debugPayload));
+  }
+
+  return headers;
+}
+
+function createTextStreamResponse(body: string, sessionId: string, action?: unknown, debugPayload?: unknown) {
   const encoder = new TextEncoder();
 
   return new Response(
@@ -23,17 +54,18 @@ function createTextStreamResponse(body: string, sessionId: string) {
       },
     }),
     {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'x-session-id': sessionId,
-      },
+      headers: buildResponseHeaders(sessionId, action, debugPayload),
     }
   );
 }
 
 export async function handleGyontatas(req: GyontatasRequest) {
   const storageMode = await getGyontatasStorageMode();
-  const conversation = await ensureConversation(req.session_id);
+  const conversation = await ensureConversation({
+    sessionId: req.session_id,
+    userId: req.user_id,
+    userEmail: req.user_email ?? null,
+  });
   let history: GyontatasMessage[] = [];
 
   if (storageMode === 'conversation') {
@@ -98,11 +130,24 @@ export async function handleGyontatas(req: GyontatasRequest) {
       });
     }
 
-    return createTextStreamResponse(safety.fallback, req.session_id);
+    return createTextStreamResponse(
+      safety.fallback,
+      conversation.session_id,
+      undefined,
+      req.debug ? { state: null, strategy: 'safety_fallback', retrievedChunks: [] } : undefined,
+    );
   }
 
-  const modelMessages = buildPrompt(history);
-  const textStream = await getAIResponse(modelMessages);
+  const agentTurn = await prepareAgentTurn({
+    input: req.confession,
+    history,
+    conversationId: conversation.id,
+    conversationMetadata: conversation.metadata,
+    userId: req.user_id,
+    userEmail: req.user_email ?? null,
+    modulation: req.modulation ?? null,
+  });
+  const textStream = await executeAgentResponse(agentTurn);
   const encoder = new TextEncoder();
 
   const responseStream = new ReadableStream<Uint8Array>({
@@ -116,6 +161,32 @@ export async function handleGyontatas(req: GyontatasRequest) {
         }
 
         const assistantReply = responseChunks.join('');
+        const behaviorMetadata = {
+          state: agentTurn.behavior.state.name,
+          intensity: agentTurn.behavior.state.intensity,
+          momentum: agentTurn.behavior.state.momentum,
+          volatility: agentTurn.behavior.state.volatility,
+          strategy: agentTurn.behavior.decision.strategy,
+          secondaryStrategy: agentTurn.behavior.decision.secondaryStrategy ?? null,
+          engageDepth: agentTurn.behavior.decision.engageDepth,
+          disclosure: agentTurn.behavior.decision.disclosure,
+          contradiction: agentTurn.behavior.decision.contradiction,
+          rationale: agentTurn.behavior.decision.rationale,
+          responseShape: agentTurn.behavior.responseShape,
+          relationship: agentTurn.behavior.memory,
+          persistentMemory: agentTurn.behavior.persistentMemory,
+          interpretation: agentTurn.interpretation,
+          runtimeState: agentTurn.runtimeState ?? null,
+          memoryEvents: agentTurn.memoryEvents,
+          patternMemory: agentTurn.patternMemory,
+          profile: agentTurn.profile,
+          strategyPlan: agentTurn.strategy,
+          retrievedChunks: agentTurn.ragContext ?? [],
+          action: agentTurn.action ?? null,
+          distortion: agentTurn.distortion ?? null,
+          appliedModulation: agentTurn.modulation ?? null,
+        };
+
         if (storageMode === 'conversation') {
           await createConversationMessage({
             conversation_id: conversation.id,
@@ -126,7 +197,18 @@ export async function handleGyontatas(req: GyontatasRequest) {
             metadata: {
               source: 'gyontatoszek',
               timestamp: new Date().toISOString(),
+              behavior: behaviorMetadata,
             },
+          });
+
+          await updateConversationRelationshipMemory({
+            conversationId: conversation.id,
+            memory: agentTurn.behavior.persistentMemory,
+            existingMetadata: conversation.metadata,
+            profile: agentTurn.profile as unknown as Record<string, unknown>,
+            patternMemory: agentTurn.patternMemory as unknown as Record<string, unknown>[],
+            memoryEvents: agentTurn.memoryEvents as unknown as Record<string, unknown>[],
+            distortionState: (agentTurn.distortionState ?? null) as unknown as Record<string, unknown> | null,
           });
         } else {
           await saveLegacyConfessionExchange({
@@ -138,6 +220,7 @@ export async function handleGyontatas(req: GyontatasRequest) {
             metadata: {
               source: 'gyontatoszek',
               timestamp: new Date().toISOString(),
+              behavior: behaviorMetadata,
             },
           });
         }
@@ -152,9 +235,10 @@ export async function handleGyontatas(req: GyontatasRequest) {
   });
 
   return new Response(responseStream, {
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'x-session-id': req.session_id,
-    },
+    headers: buildResponseHeaders(
+      conversation.session_id,
+      agentTurn.action ?? undefined,
+      req.debug ? buildDebugPayload(agentTurn) : undefined,
+    ),
   });
 }

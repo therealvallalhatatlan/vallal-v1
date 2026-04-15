@@ -92,7 +92,7 @@ export default function Hero() {
               <div className="space-y-3">
                 <p className="font-mono text-xs uppercase tracking-widest text-zinc-600">Első könyv</p>
                 <h2 className="text-xl font-black uppercase tracking-tight text-white">
-                  Vállalhatatlan I.
+                  Vállalhatatlan v1.0
                 </h2>
                 <p className="text-sm leading-relaxed text-zinc-500">
                   100 sorszámozott, fizikai példány. Egy koordináta, egy rejtekhelyre vezető fotó, 24 óra. Nem szállítás — kaland.
@@ -114,7 +114,7 @@ export default function Hero() {
               <div className="space-y-3">
                 <p className="font-mono text-xs uppercase tracking-widest text-lime-400/60">Második könyv — előrendelés</p>
                 <h2 className="text-xl font-black uppercase tracking-tight text-white">
-                  Vállalhatatlan II.
+                  Vállalhatatlan v2.0
                 </h2>
                 <p className="text-sm leading-relaxed text-zinc-500">
                   Internetkávézó, 2002. 100 sorszámozott, limitált példány — válassz egyet, mielőtt más megelőz. Dead drop terjesztéssel.

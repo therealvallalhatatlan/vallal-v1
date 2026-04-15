@@ -1,5 +1,5 @@
-import ConfessionalPanel from '@/components/ConfessionalPanel';
+import { redirect } from 'next/navigation';
 
 export default function GyontatoszekPage() {
-  return <ConfessionalPanel />;
+  redirect('/v3');
 }

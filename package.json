@@ -5,6 +5,8 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "ingest": "node scripts/ingest.mjs",
+    "ingest:text": "node scripts/ingest.mjs",
     "lint": "next lint",
     "start": "next start"
   },
@@ -53,6 +55,7 @@
     "date-fns": "4.1.0",
     "disqus-react": "^1.1.7",
     "dompurify": "^3.3.0",
+    "dotenv": "^17.4.2",
     "embla-carousel-react": "8.5.1",
     "framer-motion": "latest",
     "geist": "latest",

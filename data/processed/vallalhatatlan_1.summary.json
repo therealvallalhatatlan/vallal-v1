@@ -1,0 +1,2580 @@
+{
+  "source_file": "vallalhatatlan_1.txt",
+  "chunk_count": 141,
+  "created_at": "2026-04-14T21:39:20.497Z",
+  "items": [
+    {
+      "chunk_index": 0,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "impulsivity",
+        "rebellion"
+      ],
+      "tags": [
+        "drug use",
+        "rehabilitation",
+        "cognitive patterns"
+      ],
+      "is_signature": false,
+      "preview": "Vizsgálati jegyzőkönyv Vizsgálat alanya: Kontó Tamás Vizsgálat dátuma: 2000. 08. 20. A vizsgálati eredmények alapján az alany politoxikomán magatartásmintázatot mutat, heroinhasználat domi nanciájával. Impulzív, szabályk"
+    },
+    {
+      "chunk_index": 1,
+      "tone": "cynical",
+      "intensity": 0.75,
+      "score": 0.78,
+      "themes": [
+        "destructive behavior",
+        "emotional instability",
+        "risk-taking"
+      ],
+      "tags": [
+        "psychological struggle",
+        "addiction",
+        "impulsivity"
+      ],
+      "is_signature": false,
+      "preview": "Ez a készség azonban jelenleg gyakran destruktív irányban hasznosul, például a szabályok kijátszásában vagy a következmények minimalizálásában. A kockázatvállalás az alany személyiségében kiemelkedően magas, és jellemzőe"
+    },
+    {
+      "chunk_index": 2,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.92,
+      "themes": [
+        "control",
+        "resistance",
+        "intensity",
+        "loyalty",
+        "self-destruction"
+      ],
+      "tags": [
+        "therapy",
+        "relationships",
+        "addiction",
+        "trust"
+      ],
+      "is_signature": false,
+      "preview": "A kontrollt külső hatalomként értelmezi, ami automatikusan ellenállást vált ki, így a terápiás együttműködés kiszámíthatatlan és időszakosan szabotált. Társas kapcsolataiban keresi az intenzitást és a határok feszegetésé"
+    },
+    {
+      "chunk_index": 3,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "freedom",
+        "desperation"
+      ],
+      "tags": [
+        "rehab",
+        "escape",
+        "survival"
+      ],
+      "is_signature": false,
+      "preview": "2001. augusztus, Zsibrik, Drogrehabilitációs Intézet Jézus megszöktet a rehabról Egy pipacsmező szélén állok egy szál gatyában az autópálya mellett. Tűz a déli nap, viszketek mindenhol, éhes és szomjas vagyok, csípnek a "
+    },
+    {
+      "chunk_index": 4,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "escape",
+        "freedom",
+        "desperation"
+      ],
+      "tags": [
+        "labor",
+        "journey",
+        "unexpected"
+      ],
+      "is_signature": false,
+      "preview": "Reggeli után kimegyünk a földekre, kaszát nyomnak a kezünkbe, és félmeztelenül, szarrá égve a napon kifulladásig dolgozunk. Minden nap ez megy. - hagyjátok abba, elég lesz! Igyatok egy kis vizet. Én ezt már nem várom meg"
+    },
+    {
+      "chunk_index": 5,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "substance abuse",
+        "manipulation",
+        "power dynamics"
+      ],
+      "tags": [
+        "drug use",
+        "sexual tension",
+        "escape"
+      ],
+      "is_signature": false,
+      "preview": "A kesztyűtartóból előkerül egy zacskó spangli, meg valami fehér por is. Hát persze hogy tekerek egyet. Adogatjuk a spanglit, miközben a szemem sarkából látom, hogy a f ickó folyamatosan hesszel, hol a combomat nézi, hol "
+    },
+    {
+      "chunk_index": 6,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "desperation",
+        "betrayal",
+        "freedom"
+      ],
+      "tags": [
+        "crime",
+        "drug use",
+        "violence"
+      ],
+      "is_signature": false,
+      "preview": "Beülök a kormány mögé, beindítom az autót és kifarolva visszaindulok az autópálya felé. A faszi kiabálva fut utánam, és én pár méter után rájövök mekkora idiótaságot csinálok éppen. Beletaposok a fékbe, kiveszem a keszty"
+    },
+    {
+      "chunk_index": 7,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.78,
+      "themes": [
+        "disillusionment",
+        "nostalgia",
+        "substance use"
+      ],
+      "tags": [
+        "Budapest",
+        "party",
+        "trauma",
+        "youth"
+      ],
+      "is_signature": false,
+      "preview": "A többin meg majd túlteszem magam.\n\n1998. Július, Budapest K-hole a teleki téren Szétesik alattam a velem egyidős Ford Taurus amíg végig zötykölődök a Népszínház utcán. Pofám kiszáradva, szemből tűz a késő délutáni nap, "
+    },
+    {
+      "chunk_index": 8,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "hallucination",
+        "social disconnection",
+        "absurdity"
+      ],
+      "tags": [
+        "humor",
+        "hospital",
+        "anxiety"
+      ],
+      "is_signature": false,
+      "preview": "A társaságomban hot topic témák (ki-kit húzott le, ki-kit robbantott fel, vagy hogy ki-milyen furcsa zenét talált éppen) egyike sem tűnt valahogy ideillőnek, úgyhogy gondoltam könnyedebb témára váltok, és nevetgélve elme"
+    },
+    {
+      "chunk_index": 9,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.89,
+      "themes": [
+        "isolation",
+        "desperation",
+        "youth",
+        "chaos"
+      ],
+      "tags": [
+        "urban",
+        "frustration",
+        "surreal"
+      ],
+      "is_signature": false,
+      "preview": "Szarul esett egy pillanatra na, szarul esett. Úgy néztek rám, mint valami elmebetegre. 20 éves vagyok és nem direkt csinálom. De nincs időm alámerülni az önmarcangolásban, mert sziszegő hangot majd egy kurvanagy durranás"
+    },
+    {
+      "chunk_index": 10,
+      "tone": "detached",
+      "intensity": 0.6,
+      "score": 0.69,
+      "themes": [
+        "betrayal",
+        "isolation",
+        "futility"
+      ],
+      "tags": [
+        "urban",
+        "cyberpunk",
+        "surreal"
+      ],
+      "is_signature": false,
+      "preview": "A szamurájbuzi trikója beakad az ablaktörlőbe ahogy kizök kenve rámmered és föltápászkodik a mtorháztetőről, látom rajta, hogy ezt sosem fogja megbocsátani nekem. - Há valami kaját, ne hozzak? Itt megszakad a beszélgetés"
+    },
+    {
+      "chunk_index": 11,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "identity",
+        "trust",
+        "social class"
+      ],
+      "tags": [
+        "urban",
+        "youth",
+        "connection"
+      ],
+      "is_signature": false,
+      "preview": "Olyan mint ezek a kecses fajtatiszta macskák. Biztos autóval kell hozni-vinni és baromi kényes. Nekem túl ápolt na, én ugyanolyan atlétatrikós gyökér vagyok mint ez a Béci itt az előbb. Csak én nem vagyok cigány. A lány "
+    },
+    {
+      "chunk_index": 12,
+      "tone": "manic",
+      "intensity": 0.85,
+      "score": 0.87,
+      "themes": [
+        "new beginnings",
+        "intoxication",
+        "chaos"
+      ],
+      "tags": [
+        "party",
+        "drugs",
+        "youth",
+        "freedom"
+      ],
+      "is_signature": false,
+      "preview": "A lüktető zene felhangosodik ahogy kinyitja a bejárati ajtót, és érzem, hogy egy félelmetesen vonzó új világ nyílik meg előttem. Érzem, hogy ebből a pillanatból, amikor átlépem ezt a küszöböt, ebből a pár másodpercből em"
+    },
+    {
+      "chunk_index": 13,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "substance abuse",
+        "disorientation",
+        "chaos"
+      ],
+      "tags": [
+        "psychedelic",
+        "party",
+        "collapse"
+      ],
+      "is_signature": false,
+      "preview": "- speed. nem tudom. Tudom, ilyenkor normális ember azt mondja, köszi akkor nem kérek. De közülünk egy sem volt ilyen, ezért mindhár man felrántottunk egy csíkot, már csak illedelmességből is. Üldögélünk így pár pillanati"
+    },
+    {
+      "chunk_index": 14,
+      "tone": "paranoid",
+      "intensity": 0.75,
+      "score": 0.78,
+      "themes": [
+        "drug use",
+        "social dynamics",
+        "identity confusion"
+      ],
+      "tags": [
+        "ketamine",
+        "party",
+        "conflict"
+      ],
+      "is_signature": false,
+      "preview": "A barátja szintúgy, a szép ing lehány va, riadt szemek, érezhető hogy ez elég is volt nekik esti bulinak. Egy sráctól később megtudom, hogy ez ketamin volt. Végülis régóta ki akartam már próbálni. - Még egyet? - illedelm"
+    },
+    {
+      "chunk_index": 15,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "trust",
+        "violence",
+        "fear"
+      ],
+      "tags": [
+        "suspense",
+        "conflict",
+        "anxiety"
+      ],
+      "is_signature": false,
+      "preview": "Fogalmam sincs miért hívott ide. Nem kedveljük egymást. Valami nyomós oka lehet. Most látom csak, hogy be van gipszelve szinte térdig a jobb lába, alig bír járni. - Ülj le egy percre. Leülök vele szemben, és felbontom az"
+    },
+    {
+      "chunk_index": 16,
+      "tone": "paranoid",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "suspicion",
+        "friendship",
+        "drug use"
+      ],
+      "tags": [
+        "tension",
+        "unexpected",
+        "mystery"
+      ],
+      "is_signature": false,
+      "preview": "Maga elé húz egy tálcát teleszórva fűvel meg széttépett cigarettavégekkel, és tekerni kezd. -  Figyi odaadom az autót. Vidd le Beát Kétegyházára pár órás út. Jöttök is vissza oké? Vöri megy veletek. Kérdezném ki az a Vör"
+    },
+    {
+      "chunk_index": 17,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "desperation",
+        "ritual"
+      ],
+      "tags": [
+        "drug use",
+        "anxiety",
+        "satanic"
+      ],
+      "is_signature": false,
+      "preview": "Nem tudom mikor került egy inzulinos fecskendő a szájába, de a szájával lekapja a kupakját, felszív egy kis vizet a virágvázából amin mindhárman elszörnyedünk, majd belespriccel belőle egy keveset a kanálba. A fecskendő "
+    },
+    {
+      "chunk_index": 18,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "drug use",
+        "escape",
+        "tension"
+      ],
+      "tags": [
+        "road trip",
+        "addiction",
+        "danger"
+      ],
+      "is_signature": false,
+      "preview": "A Skoda nem indul. Félfüllel hallom, hogy valami elakadásjelzőről magyaráz, meg valamiről amire mindenképp figyeljek oda. Intek neki hogy nyugodjon meg minden fasza lesz. Óvatosan kiállok a parkolóhelyről, és figyelem az"
+    },
+    {
+      "chunk_index": 19,
+      "tone": "cynical",
+      "intensity": 0.6,
+      "score": 0.69,
+      "themes": [
+        "anticipation",
+        "surveillance",
+        "contrast"
+      ],
+      "tags": [
+        "journey",
+        "mansion",
+        "unexpected encounter"
+      ],
+      "is_signature": false,
+      "preview": "Vöri csak kábán kidugja a fejét a hátsó ablakon és odaszól,- Lalikához megyünk Palika bácsi. Palika bácsi biccent és hátrébb tolat a dzsippel, mi meg elindulunk a hosszú kanyargós, fehér salakkal felszórt úton, egy hatal"
+    },
+    {
+      "chunk_index": 20,
+      "tone": "paranoid",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "drug culture",
+        "friendship",
+        "discovery"
+      ],
+      "tags": [
+        "cannabis",
+        "urban life",
+        "introduction"
+      ],
+      "is_signature": false,
+      "preview": "Jó volt a White Widow? - Jó volt, jó volt. Vöri közben ránk mutat, és bemutatja nekünk a raszta urat annyival, hogy “ő a Kóstoló”. Előkotrom a csomagot amit hoztunk és miközben kipakolom az asztalra, gyereknevetést, egy "
+    },
+    {
+      "chunk_index": 21,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "surrealism",
+        "deception",
+        "domesticity"
+      ],
+      "tags": [
+        "suspicion",
+        "idyllic",
+        "absurd"
+      ],
+      "is_signature": false,
+      "preview": "Azonnal felbukkan a dzsip, és jól láthatóan, távcsővel f igyelni kezdenek minket. Úgy csinálunk mintha csak a naplementét csodálnánk, Bea átölel mintha romantikáznánk, és szép lassan, kézenfogva visszasétálunk a házhoz. "
+    },
+    {
+      "chunk_index": 22,
+      "tone": "paranoid",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "travel",
+        "anxiety",
+        "surrealism"
+      ],
+      "tags": [
+        "road trip",
+        "unexpected events",
+        "tension"
+      ],
+      "is_signature": false,
+      "preview": "Vagyis csak indultunk volna, ugyanis kifogyott a benzin. Épphogy elértünk idáig vele, és ki is ment az egész fejemből. Lali azonnal intézkedett és két házzal arrébb mit ad isten, egy otthonkás néni garázsában volt egy il"
+    },
+    {
+      "chunk_index": 23,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "paranoia",
+        "trust",
+        "disappointment"
+      ],
+      "tags": [
+        "drugs",
+        "anxiety",
+        "journey"
+      ],
+      "is_signature": false,
+      "preview": "Mi van, ha ez egy csapda? Bécikétől mondjuk? Tényleg bazdmeg… ez egy kibaszott csapda. Gondoljuk csak végig. Úton vagyok pest felé a csajával és egy szalmabálányi fűvel a hátsó ülésen. Kurvára féltékeny a csajára. Ki tud"
+    },
+    {
+      "chunk_index": 24,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "violence",
+        "fear",
+        "intimidation"
+      ],
+      "tags": [
+        "crime",
+        "threat",
+        "dark"
+      ],
+      "is_signature": false,
+      "preview": "Késő éjjel van, senki sincs rajtam kívül a fákkal szegélyezett, félhomályos utcán. Messziről látom, hogy egy 120 kilós faszi jön nagy lendülettel, széles gesztusokkal, vigyorogva felém, majd amikor odaér hozzám előkap eg"
+    },
+    {
+      "chunk_index": 25,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "betrayal",
+        "paranoia",
+        "confusion"
+      ],
+      "tags": [
+        "Ukrainian",
+        "Béci",
+        "suspense"
+      ],
+      "is_signature": false,
+      "preview": "tartozunk egy ukránnak A kocsiban ülve elmondom Beának röviden mi történt. Megnyugtatjuk egymást, hogy ez egyértelműen Béci faszsága volt, majd dumálja le ő a “megbízható és jófej” spanjával, aki akár szét is lőhette vol"
+    },
+    {
+      "chunk_index": 26,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "betrayal",
+        "fear",
+        "desperation"
+      ],
+      "tags": [
+        "suspense",
+        "crime",
+        "survival"
+      ],
+      "is_signature": false,
+      "preview": "Kihajítom a cigicsikket az ablakon, veszek egy nagy levegőt és felhívom a faszi számát. Sokadik csörgésre veszi csak fel. Valami piaci nyüzsgés hallattszódik a háttérben. - Hello Csaba, ööö van egy kis gond. - na! - lehú"
+    },
+    {
+      "chunk_index": 27,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "absurdity",
+        "tension",
+        "confusion"
+      ],
+      "tags": [
+        "surreal",
+        "humor",
+        "anxiety"
+      ],
+      "is_signature": false,
+      "preview": "Rikító színű susogós szabadidőruhát visel fekete bőrcipővel. Mivel sor áll előtte, sorbaállunk mi is, és amikor sorra kerülünk, végigmér minket vigyorogva, jéghideg, gonosz, huskey-kék szemekkel. - Ti...? Nem tudom mire "
+    },
+    {
+      "chunk_index": 28,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.83,
+      "themes": [
+        "childhood trauma",
+        "friendship",
+        "secrecy",
+        "humor"
+      ],
+      "tags": [
+        "nostalgia",
+        "playfulness",
+        "anxiety"
+      ],
+      "is_signature": false,
+      "preview": "Ülünk a parkettán, vagy az erkélyen a jéghideg kövön, és a gyerekkori traumáinkat osztogatjuk meg egymással. Halkan kinyitjuk a ház kapuját. A lépcsőházba érve lepisszegjük egymást. Kurvajó lenne ha a szomszédok nem szúr"
+    },
+    {
+      "chunk_index": 29,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "desperation",
+        "betrayal"
+      ],
+      "tags": [
+        "heroin",
+        "drug culture",
+        "survival"
+      ],
+      "is_signature": false,
+      "preview": "negyedkiló heroin Úgy negyedkiló heroin van a csomagban. Próbálok nem arra gondolni, hogy most baszom el az egész életemet. Vagyis hát mindkettőnként. Mindegy, valahogy meg kell oldani ezt a helyzetet. - Bea te ismersz h"
+    },
+    {
+      "chunk_index": 30,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "madness",
+        "disconnection",
+        "urban life"
+      ],
+      "tags": [
+        "chaos",
+        "relationships",
+        "surreal"
+      ],
+      "is_signature": false,
+      "preview": "Egy kis notesz kerül elő, ami tele van krikszkrakszokkal, rajzokkal, versekkel, és telefonszámokkal, majd kiáll a körúton a járda közepére, üvöltve telefonálni. - KUKAAC! Otthon vagy?? Kukaaac!! nyalcsi kell neked? NYALC"
+    },
+    {
+      "chunk_index": 31,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "drug culture",
+        "desperation",
+        "confusion"
+      ],
+      "tags": [
+        "heroin",
+        "waiting",
+        "awkwardness"
+      ],
+      "is_signature": false,
+      "preview": "Vöri röviden felvázolja a helyzetet, hogy mi egy szimpatikus pár vagyunk, akiket az előbb ismert meg az utcán és van nálunk egy féltéglányi eladó heroin, amit szeretnénk értékesíteni. Újrajátszuuk az oké, de előbb ki kel"
+    },
+    {
+      "chunk_index": 32,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "money",
+        "anxiety",
+        "trust"
+      ],
+      "tags": [
+        "surreal",
+        "unexpected",
+        "tension"
+      ],
+      "is_signature": false,
+      "preview": "- Sok! Vágja rá Bea, de amikor rámeredek gyorsan kijavítja magát. - Úgy értem nincs több. Kukac nagy nehezen föltápászkodik, fölhajtja a kanapé matracát, ami alá köteg pénzek, ezresek és tízezresek vannak csak úgy beszór"
+    },
+    {
+      "chunk_index": 33,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "crime",
+        "desperation"
+      ],
+      "tags": [
+        "drug trade",
+        "Ukrainian",
+        "phone call"
+      ],
+      "is_signature": false,
+      "preview": "Gyönyörű. totál belezúgtam.\n\nbosnyák tér Egymás után dobálom be a húszforintosokat a telefonfülkébe, miközben folyamatosan potyog ki belőle alul. Végre felveszi. - Szevasz Csaba, megvan a pénz! - milyen pénz? - hát ööö.."
+    },
+    {
+      "chunk_index": 34,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "money",
+        "adaptation",
+        "opportunity"
+      ],
+      "tags": [
+        "struggle",
+        "identity",
+        "survival"
+      ],
+      "is_signature": false,
+      "preview": "Oké még megvan a köteg pénz, gondosan elrejtve egy Dunkin Donuts-os, viseltes papírzacskóba. - Gyere nyuszi elugrunk a Bosnyákra. Csak vegyél fel valamit. Ezt valahogy mindig mondanom kell. És ezzel is csak azt érem el, "
+    },
+    {
+      "chunk_index": 35,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "surrealism",
+        "confusion",
+        "drug culture"
+      ],
+      "tags": [
+        "drugs",
+        "unexpected",
+        "youth"
+      ],
+      "is_signature": false,
+      "preview": "Vannak nála páran, úgyhogy beállunk a sorba. Közben kijön egy down-kóros kiscsávó a pult mögül és tartja a markát. Ránézek Csabára aki csak biccent a fejével. Ha jól értem adjam a kiscsávónak a pénzt. Milyen elmés. Előhú"
+    },
+    {
+      "chunk_index": 36,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "isolation",
+        "desperation"
+      ],
+      "tags": [
+        "drugs",
+        "friendship",
+        "chaos"
+      ],
+      "is_signature": false,
+      "preview": "Fogalmunk sincs ki ez a faszi. De az biztos, hogy mi abszolút senkik vagyunk. Drogosok. Senkik. A társadalom legalja. - Hát jó. Akkor tekerjünk egyet basszameg! Bea vihorászva odaszökdécsel a hifi-toronyhoz és elindítja "
+    },
+    {
+      "chunk_index": 37,
+      "tone": "melancholic",
+      "intensity": 0.7,
+      "score": 0.86,
+      "themes": [
+        "isolation",
+        "addiction",
+        "anxiety",
+        "disconnection"
+      ],
+      "tags": [
+        "morning routine",
+        "substance use",
+        "waiting",
+        "urban life"
+      ],
+      "is_signature": false,
+      "preview": "Kikászálódok az ágyból, nem akarom Beát felébreszteni. Magzatpózban, lábait felhúzva alszik. Csinálok egy nescafét és rágyújtok egy spanglira. Lassan kisimulnak az idegeim, és már tudok gondolkodni. Kiveszem a hűtőből a "
+    },
+    {
+      "chunk_index": 38,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "nostalgia",
+        "desperation",
+        "friendship"
+      ],
+      "tags": [
+        "urban",
+        "addiction",
+        "conflict"
+      ],
+      "is_signature": false,
+      "preview": "Eszembe jut a Tesz-vesz Város, amit gyerekkoromban annyira szerettem. Én ki lehetnék abban a mesében? Senki. Nincs ilyen karakter. Végre meglátom Vörit, ahogy jön a ferenciek-tere felöl. Bazdmeg ennél levágósabb figurát."
+    },
+    {
+      "chunk_index": 39,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "search for identity",
+        "addiction",
+        "social observation"
+      ],
+      "tags": [
+        "drugs",
+        "isolation",
+        "urban life"
+      ],
+      "is_signature": false,
+      "preview": "Ő is csak keresi a helyét ahogy én is. Csak egyikünk sem találja. - .. mennyi fű van nálad? Elkezd idegesen túrkálni a zsebeiben, majd végül a nadrágja oldalzsebéből előkotor valamit. - Tartsd a markod! - szórakozol...? "
+    },
+    {
+      "chunk_index": 40,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "intimacy",
+        "self-discovery",
+        "tranquility"
+      ],
+      "tags": [
+        "desire",
+        "comfort",
+        "confusion"
+      ],
+      "is_signature": false,
+      "preview": "Mellébújok, és szorosan átölelem. Beszívom a haja illatát. Félálomban befészkelődik az ölembe. Érzem a forróságot a combjai között. Mi nem ilyenek vagyunk. Mi normálisak vagyunk. Velünk minden rendben van. 1999. , egy hű"
+    },
+    {
+      "chunk_index": 41,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "escapism",
+        "intimacy"
+      ],
+      "tags": [
+        "drug use",
+        "friendship",
+        "euphoria"
+      ],
+      "is_signature": false,
+      "preview": "mindig is útáltam a füstjét de most mintha minden slukkal újabb és újabb szeretethullámok öntenének el. Hát... ez nem véletlenül kurvára illegális. Ez túl jó. Ez egy másik dimenzió. Mintha hirtelen a Tesz Vesz Városban l"
+    },
+    {
+      "chunk_index": 42,
+      "tone": "melancholic",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "nostalgia",
+        "intimacy",
+        "transformation"
+      ],
+      "tags": [
+        "night",
+        "connection",
+        "change"
+      ],
+      "is_signature": false,
+      "preview": "Kiállunk az erkélyre, késő éjjel van, töküres a rakpart, szemben a kivilágított pesti oldal a parlamenttel, a Dunán sétahajók, mintha egy képeslapot néznénk. A falnak dőlünk és rágyújtok a cigire. Beleszívok egy párat, é"
+    },
+    {
+      "chunk_index": 43,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "isolation",
+        "dependency",
+        "mental health"
+      ],
+      "tags": [
+        "urban",
+        "drug use",
+        "relationship dynamics"
+      ],
+      "is_signature": false,
+      "preview": "1999. , Kálvin-tér, egy őszi este a mérsékelten híres rapper Beának megjött, és most 3-5 napig nem hajlandó kijönni a szobából. Levélszámra eszi a meristint, én meg addig egyedül intézem a dolgokat. Igen, ez minden hónap"
+    },
+    {
+      "chunk_index": 44,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.84,
+      "themes": [
+        "chaos",
+        "betrayal",
+        "drug culture"
+      ],
+      "tags": [
+        "ecstasy",
+        "taxi",
+        "nightlife",
+        "suspense"
+      ],
+      "is_signature": false,
+      "preview": "- mit mucikám? Egy levákumozott tasakról van szó, benne pár száz ecstasyval. Oké, mi baj lehet, Bea elmondta pontosan miről ismerem fel az autót és hogy mindig ugyanott áll, merthogy a taxis egyben az üzletház éjjeliőre "
+    },
+    {
+      "chunk_index": 45,
+      "tone": "paranoid",
+      "intensity": 0.85,
+      "score": 0.84,
+      "themes": [
+        "paranoia",
+        "escape",
+        "urban isolation"
+      ],
+      "tags": [
+        "suspense",
+        "fear",
+        "confrontation"
+      ],
+      "is_signature": false,
+      "preview": "Ezzel sarkon is fordulok, és száguldoznak a gondolataim mit is kellene most csinálnom. Rakat cucc van nálam. Ez egy csapda. Meggyorsítom a lépteimet ahogy átvágok a kihalt körúton. Emlékszem vészjóslóan kihaltnak tűnt. A"
+    },
+    {
+      "chunk_index": 46,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "confrontation",
+        "desperation",
+        "isolation"
+      ],
+      "tags": [
+        "arrest",
+        "drugs",
+        "nightlife"
+      ],
+      "is_signature": false,
+      "preview": "2000. , Április Börtönbe kerülök Késő éjjel van, a Zöld Pardonból caplatok hazafelé, és mivel kicsit belassultam a söröktől, úgy döntök lemegyek a Duna partra tolni egyet mielőtt hazasétálok. Töküresek az utcák, senki ni"
+    },
+    {
+      "chunk_index": 47,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.84,
+      "themes": [
+        "drug use",
+        "police interrogation",
+        "fear of violence"
+      ],
+      "tags": [
+        "amfetamin",
+        "stress",
+        "authority",
+        "coercion"
+      ],
+      "is_signature": false,
+      "preview": "egy picsányi maradt a pakkban, de ez bőven elég lesz nekik hogy beazonosítsák, ez színtiszta amfetamin. Egy kéz elveszi a pakkot a térdemről, egy másik begyűjti az ötszázast. Hát ez fasza. Ennyire bénán megbukni, ezt álm"
+    },
+    {
+      "chunk_index": 48,
+      "tone": "manic",
+      "intensity": 0.9,
+      "score": 0.87,
+      "themes": [
+        "imprisonment",
+        "desperation",
+        "claustrophobia"
+      ],
+      "tags": [
+        "addiction",
+        "mental breakdown",
+        "violence"
+      ],
+      "is_signature": false,
+      "preview": "Mivel ez a nyócker kapitányság, jobbnak látom aláírni a papírt. Újabb rácsok, folyosók, két zsaru elkísér a cellámhoz, ahol ki tudja meddig fogok raboskodni. Le kell adnom az övemet, cipőfűzőmet, hogy nehogy felkössem ma"
+    },
+    {
+      "chunk_index": 49,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.84,
+      "themes": [
+        "violence",
+        "isolation",
+        "desperation"
+      ],
+      "tags": [
+        "prison",
+        "boxing",
+        "drugs",
+        "friendship"
+      ],
+      "is_signature": false,
+      "preview": "Valakit lökdösnek végig a folyosón, és úgy hallom kap egy gyomrost amikor a cellámhoz ér. Kinyílnak a zárak és egy félmeztelen bokszoló külsejű faszit lökdösnek be rajta, aki azonnal ököllel ütni kezdi a bezáródó ajtót. "
+    },
+    {
+      "chunk_index": 50,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.86,
+      "themes": [
+        "survival",
+        "justice",
+        "friendship",
+        "urban life"
+      ],
+      "tags": [
+        "prison",
+        "freedom",
+        "radio",
+        "anxiety"
+      ],
+      "is_signature": false,
+      "preview": "Kurvajól elbeszélgetünk a nyócker viszontagságairól, politikáról, túlélésről és olyan magas f ilozófiai dolgokról, mint az élet és a halál, vagy bizonyos jó minőségű kurvák futtatása. Nem tudom mennyi idő telik el, de eg"
+    },
+    {
+      "chunk_index": 51,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.78,
+      "themes": [
+        "crime",
+        "urban life",
+        "identity"
+      ],
+      "tags": [
+        "Kőbánya",
+        "Agresszív Laci",
+        "Cici",
+        "kocsma"
+      ],
+      "is_signature": false,
+      "preview": "- Itt vagy?? - itt, hozzak valamit? - el kéne vinned ezt Kőbányára a Lacihoz. - milyen Lacihoz...? - az Agresszív Lacihoz, mindegy... ott van neki egy kocsmája. Lead egy vaskos csomagot, és én nem kérdezősködöm, jobb a b"
+    },
+    {
+      "chunk_index": 52,
+      "tone": "paranoid",
+      "intensity": 0.9,
+      "score": 0.9,
+      "themes": [
+        "violence",
+        "nostalgia",
+        "fear"
+      ],
+      "tags": [
+        "chaos",
+        "pub",
+        "youth",
+        "aggression"
+      ],
+      "is_signature": false,
+      "preview": "Csak szótlanul bambán nyújtja a kezét. - Lacinak kell átadjam. - akkor üljél le. Okés, kérek egy sört leülök a gimnazisták közé, nézem ahogy biliárdoznak. Az egyik leckét ír az asztalnál, mások dőlnek-borulnak a 2dl boro"
+    },
+    {
+      "chunk_index": 53,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.86,
+      "themes": [
+        "violence",
+        "friendship",
+        "intimidation",
+        "community"
+      ],
+      "tags": [
+        "pub",
+        "tension",
+        "youth",
+        "urban"
+      ],
+      "is_signature": false,
+      "preview": "Összeakad a tekintetünk és végre leállítja a láncfűrészt. - Csak vicceltem gyerekek! Igyatok, szórakozzatok! Barátságosan mosolyogva felé intek a kezemmel. - Szia Laci, hoztam a cukorkát. Cici unott arccal végignézte aho"
+    },
+    {
+      "chunk_index": 54,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "isolation",
+        "community",
+        "survival"
+      ],
+      "tags": [
+        "autonomy",
+        "drug trade",
+        "loyalty"
+      ],
+      "is_signature": false,
+      "preview": "Senki sem akar vadidegenekkel disznót vágni az udvaron, rejtegetni a lopott szajrét, így aztán kialakultak ezek a kis kőbányai mikroközösségek. Egy ilyen autonóm terület kiskirálya, vagy inkább fáraója volt Agresszív Lac"
+    },
+    {
+      "chunk_index": 55,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.87,
+      "themes": [
+        "chaos",
+        "isolation",
+        "madness"
+      ],
+      "tags": [
+        "Mercedes",
+        "children",
+        "madness",
+        "security",
+        "mystery"
+      ],
+      "is_signature": false,
+      "preview": "Az udvar közepén egy hófehér Mercedes áll, amit szorgos kezek épp most tisztítanak meg flex-szel a motor és alvázszámtól. Körben autóroncsok, szétdobált számítógép és autóalkatrészek. Egy cserzett arcú néni krumplit puco"
+    },
+    {
+      "chunk_index": 56,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.83,
+      "themes": [
+        "meditation",
+        "conflict",
+        "trust",
+        "sacredness"
+      ],
+      "tags": [
+        "tension",
+        "drugs",
+        "spirituality"
+      ],
+      "is_signature": false,
+      "preview": "- Érted már?? Egyelőre nem. Körbenézek a szobában, ami töküres, csak a masszázsfotel áll benne és egy hatalmas vitrin vele szemben, tele szobrocskákkal és szentképekkel. Egyiptomi és Görög istenek, keresztre feszített Jé"
+    },
+    {
+      "chunk_index": 57,
+      "tone": "cynical",
+      "intensity": 0.6,
+      "score": 0.69,
+      "themes": [
+        "isolation",
+        "absurdity",
+        "helpfulness"
+      ],
+      "tags": [
+        "urban",
+        "summer",
+        "strangers"
+      ],
+      "is_signature": false,
+      "preview": "Nyilván, mert az is. Cici kikísér, és én nagyott szippantok az Ónodi utca orgonaillatú levegőjéből. Viszlát Laci. Remélem vigyáznak rád az isteneid. 2000. , egy nyári nap afterállatkák Egy vadidegen faszival tollasozok a"
+    },
+    {
+      "chunk_index": 58,
+      "tone": "melancholic",
+      "intensity": 0.6,
+      "score": 0.77,
+      "themes": [
+        "compensation",
+        "friendship",
+        "care",
+        "isolation"
+      ],
+      "tags": [
+        "relationships",
+        "pets",
+        "nostalgia"
+      ],
+      "is_signature": false,
+      "preview": "Nyilván nem tudunk segíteni neki, max egy még mélyebb szakadékba magunkkal rántani, de Bea valamit kompenzál ezzel, és én ezt elfogadtam. Még úgy is, hogy mindig azzal végződik (vagy már azzal is kezdődött), hogy belezúg"
+    },
+    {
+      "chunk_index": 59,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "betrayal",
+        "trust",
+        "friendship"
+      ],
+      "tags": [
+        "deception",
+        "survival",
+        "urban life"
+      ],
+      "is_signature": false,
+      "preview": "sose bízz egy herkásban Amit elsőnek megtanultam: sose bízz egy herkásban. Hiába laktok együtt hat éve, vagytok a legjobb barátok, egyszercsak arra mész haza, hogy full üres a kecó, az összes cuccodat és még a csaptelepe"
+    },
+    {
+      "chunk_index": 60,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "betrayal",
+        "addiction",
+        "urban life"
+      ],
+      "tags": [
+        "drugs",
+        "trust",
+        "social dynamics"
+      ],
+      "is_signature": false,
+      "preview": "- szóval adjak neked 50 zöldet, te meg felteszed a feketére és meglátjuk mi lesz? - adok valamit biztosítékként. Itt van 50 gyors, oké? A kezembe nyom egy öklömnyi fehér csomagot. Megszagolom, vegyszerszaga van. Még akár"
+    },
+    {
+      "chunk_index": 61,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "betrayal",
+        "deception",
+        "unexpected kindness"
+      ],
+      "tags": [
+        "drug trade",
+        "trust",
+        "surprise"
+      ],
+      "is_signature": false,
+      "preview": "Egyszercsak feltűnik a Kukac csontsovány, barna bőrű alakja, és egyenesen felém tart. - Tessék itt a pénz! És átnyújtja az összeget hiánytalanul. - A speedet dobd ki nyugodtan. Az csak porcukor és körömlakklemosó. - heh."
+    },
+    {
+      "chunk_index": 62,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "objectification",
+        "masculinity",
+        "intimidation"
+      ],
+      "tags": [
+        "body image",
+        "gym culture",
+        "sexuality"
+      ],
+      "is_signature": false,
+      "preview": "fefe elromlott cerkája A szemközti házban, a földszinten lakott Bea agyonszolizott, műmellű, műszájú, vaginaplasztikázott, szinte már teljesen mesterséges barátnője a testépítő-pornószínész, mindig savanyú arcú bikájával"
+    },
+    {
+      "chunk_index": 63,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "self-healing",
+        "miscommunication",
+        "isolation"
+      ],
+      "tags": [
+        "dark humor",
+        "awkwardness",
+        "urban life"
+      ],
+      "is_signature": false,
+      "preview": "A brutál fűszagból és a tű pupilláiból ítélve masszív öngyógyítással próbálkozik, láthatóan nem sok sikerrel. - de... miért? - forgattunk. - ja persze-persze... figyi öö... tudok valamiben segíteni? Azonnal meg is bánom "
+    },
+    {
+      "chunk_index": 64,
+      "tone": "melancholic",
+      "intensity": 0.6,
+      "score": 0.69,
+      "themes": [
+        "survival",
+        "exploration",
+        "nostalgia"
+      ],
+      "tags": [
+        "road trip",
+        "adventure",
+        "friendship"
+      ],
+      "is_signature": false,
+      "preview": "kirándulás a marsra Beával nem sokszor mozdultunk ki a fővárosból. Egy ponton minden kirándulásunk a puszta túlélésért folytatott harccá vált, így aztán eléggé meggondoltuk mielőtt útnak indultunk. De a Svájcban élő nagy"
+    },
+    {
+      "chunk_index": 65,
+      "tone": "cynical",
+      "intensity": 0.6,
+      "score": 0.69,
+      "themes": [
+        "misunderstanding",
+        "unexpected hospitality",
+        "romantic exploration"
+      ],
+      "tags": [
+        "awkward",
+        "surreal",
+        "nature"
+      ],
+      "is_signature": false,
+      "preview": "Lehuppanunk a teraszon a műanyag flair-székekre az Eskimo-s napernyő alá, rágyújtok egy cigire és csak úgy barátságosan odaintek az atlétatrikós faszinak aki füvet nyír éppen. Úgy látszik ő a pincér, mert leveszi a munká"
+    },
+    {
+      "chunk_index": 66,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "adventure",
+        "disillusionment",
+        "nature"
+      ],
+      "tags": [
+        "exploration",
+        "unexpected",
+        "journey"
+      ],
+      "is_signature": false,
+      "preview": "Szerencsére a faszi, és az időközben csodálkozó arccal megjelenő felesége nagyon jól szórakozik rajtunk, útbaigazítanak minket, hogy szerintük Gánt-ra lenne érdemes mennünk mert ott egészen különleges és elvarázsolt a tá"
+    },
+    {
+      "chunk_index": 67,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "struggle",
+        "teamwork",
+        "humor"
+      ],
+      "tags": [
+        "adventure",
+        "obstacle",
+        "friendship"
+      ],
+      "is_signature": false,
+      "preview": "Gyönyörűen vettük az akadályokat kezdetben, a V6-os motor bár kipörgött csomószor a félméteres sárban, de legalább egy kilómétert sikerült megtennünk a dőlések borulások miatt egymásba kapaszkodva, míg végül egy hatalmas"
+    },
+    {
+      "chunk_index": 68,
+      "tone": "cynical",
+      "intensity": 0.6,
+      "score": 0.69,
+      "themes": [
+        "adventure",
+        "exploration",
+        "nature"
+      ],
+      "tags": [
+        "journey",
+        "discovery",
+        "humor"
+      ],
+      "is_signature": false,
+      "preview": "Nyilván engem is tetőtöl talpig beterít a sár, de sikerül valami erőt kifejtenem, megkapaszkodik a hátsó kerék, és az autó métereket ugrik előre mielőtt lefullad a domb tetején. Elképesztő látvány tárul elénk. Rózsaszín,"
+    },
+    {
+      "chunk_index": 69,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "isolation",
+        "loss",
+        "paranoia"
+      ],
+      "tags": [
+        "fossil",
+        "camping",
+        "mystery"
+      ],
+      "is_signature": false,
+      "preview": "Bazdmeg egy tenyérnyi megkövesedett csigát tart a kezében... ez bizony fosszília a javából! Keresünk egy viszonylag száraz helyet ahol felverem a sátrat, és gyűjtünk fát, hogy tüzet rakjunk előtte. Szuper kis éjszakának "
+    },
+    {
+      "chunk_index": 70,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.89,
+      "themes": [
+        "fear",
+        "panic",
+        "unexpected",
+        "nature"
+      ],
+      "tags": [
+        "suspense",
+        "darkness",
+        "emergency"
+      ],
+      "is_signature": false,
+      "preview": "Bé pár percre magába roskad, de rájövünk, hogy igazából csak pár tampon és egy lejárt uszodabérlet volt benne, szóval hamar túllendülünk rajta. Azon viszont már nehezebben tudunk, hogy rajtunk kívül van itt valaki más is"
+    },
+    {
+      "chunk_index": 71,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "fear",
+        "paranoia",
+        "survival"
+      ],
+      "tags": [
+        "darkness",
+        "tension",
+        "escape"
+      ],
+      "is_signature": false,
+      "preview": "- Mi a kurva isten ez?? - vigyázz ott van még egy! Kezünk-lábunk remeg mire végre sikerül kimenteni őket, és most itt állunk olyan kukk sötétben, hogy még egymás arcát sem látjuk. - Haza akarok menni. - mondja elhaló han"
+    },
+    {
+      "chunk_index": 72,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.89,
+      "themes": [
+        "escape",
+        "danger",
+        "relief",
+        "friendship"
+      ],
+      "tags": [
+        "adventure",
+        "anxiety",
+        "humor"
+      ],
+      "is_signature": false,
+      "preview": "Úgy érzem órák óta bukdácsolunk el-elakadva a sárban, mikor egyszercsak végre szilárd felületet érzek a kerekek alatt. Bazmeg el sem hiszem... Kijutottunk az erdőből, és egy széles aszfaltúton állunk keresztben. Leállíto"
+    },
+    {
+      "chunk_index": 73,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "social anxiety",
+        "party culture",
+        "disconnection"
+      ],
+      "tags": [
+        "party",
+        "drugs",
+        "social dynamics"
+      ],
+      "is_signature": false,
+      "preview": "a leharapott hüvelykujj Egy buliba vagyunk hivatalosak. Nem igazán van kedvem hozzá, mert totál nem az én társaságom. Gazdag, agyonszteroidozott gyúrós figurák, akik kokón és tömegnövelőkön élnek. Nem azok a szerencsétle"
+    },
+    {
+      "chunk_index": 74,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "underground culture",
+        "celebration",
+        "substance use"
+      ],
+      "tags": [
+        "party",
+        "chaos",
+        "nostalgia"
+      ],
+      "is_signature": false,
+      "preview": "Keveredtek a külföldi túristák, kokós topmenedzserek, leszakadt junkiek, csak úgy beesett emberek, és adott egy pofont az egésznek, hogy Dönci játszott ott, a 80-as évek undergroundjának egyik legnagyobb idolja, aki több"
+    },
+    {
+      "chunk_index": 75,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "rebellion",
+        "transformation",
+        "chaos"
+      ],
+      "tags": [
+        "party",
+        "freedom",
+        "surveillance"
+      ],
+      "is_signature": false,
+      "preview": "Bea azonnal elvegyül, én meg egy ismerős, öltönyt viselő arcot veszek észre a tömegben. - Szevassz Gabikám, hát te? - itt dolgozom! Már vagy két hete bazdmeg, és még mindig nem rúgtak ki! Az egyik vásárlóm az, aki hajnal"
+    },
+    {
+      "chunk_index": 76,
+      "tone": "manic",
+      "intensity": 0.9,
+      "score": 0.87,
+      "themes": [
+        "violence",
+        "chaos",
+        "desperation"
+      ],
+      "tags": [
+        "police",
+        "rebellion",
+        "survival"
+      ],
+      "is_signature": false,
+      "preview": "Vagy 30 egyenruhás rendőr özönlik be a helységbe. Jobbnak látom, ha én is felteszem a kezem, és gyorsan kiköpöm a számból a spanglit. - Nem mozog, falhoz áll! Hátranézek és a vállam fölött látom, Csimpi ezt nem igazán íg"
+    },
+    {
+      "chunk_index": 77,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.86,
+      "themes": [
+        "vacation",
+        "escapism",
+        "youth",
+        "rebellion"
+      ],
+      "tags": [
+        "drugs",
+        "friendship",
+        "adventure",
+        "disguise"
+      ],
+      "is_signature": false,
+      "preview": "a pucér nyaralás Megmondom a nyaralást, mint olyat sose értettem. Napozni, lődörögni, nem csinálni semmit, csak elbaszni egy csomó pénzt túlárazott szarságokra. Nem tudom mi ebben a jó. De Bea dúsgazdag nagyszülei idén k"
+    },
+    {
+      "chunk_index": 78,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "freedom",
+        "intoxication",
+        "carefree living"
+      ],
+      "tags": [
+        "vacation",
+        "drug use",
+        "nudity"
+      ],
+      "is_signature": false,
+      "preview": "Szomszédok az ideálisnál eggyel közelebb vannak, de ettől mi még nagyon jól elleszünk. Na nézzük csak! Kezemben a strandtáska. Hol a fürdőgatyám a tetejéről? Hiszen ez az egyetlen dolog amit elcsomagoltam... átnézem a ko"
+    },
+    {
+      "chunk_index": 79,
+      "tone": "manic",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "absurdity",
+        "escapism",
+        "transience"
+      ],
+      "tags": [
+        "humor",
+        "drugs",
+        "vacation"
+      ],
+      "is_signature": false,
+      "preview": "Csak visznek magukkal a történések, halálra röhögöd magad mindenen, miközben mások megbotránkozva néznek rád, hogy mi a faszt csinálsz. És 360µg fejenként bizony elég sok, mint kiderült. - Úgy ennék egy fagyit! - menjünk"
+    },
+    {
+      "chunk_index": 80,
+      "tone": "melancholic",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "nostalgia",
+        "freedom",
+        "youth"
+      ],
+      "tags": [
+        "summer",
+        "water",
+        "childhood"
+      ],
+      "is_signature": false,
+      "preview": "Az az igazi “golden hour” mozifilmbe illő aranysárga napfény fogad minket a parton, nyugdíjas házaspárok ücsörögnek a padokon, a játszótéren családos anyukák apukák fárasztják még a gyerekeiket hogy nyugodtan alhassanak "
+    },
+    {
+      "chunk_index": 81,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "identity",
+        "disorientation",
+        "freedom"
+      ],
+      "tags": [
+        "sunset",
+        "nudity",
+        "adventure"
+      ],
+      "is_signature": false,
+      "preview": "El-el tűnik a lemenő nap a fák lombjai között, és a sugárzó narancsszínű fény úgy villódzik a retinám felszínén mintha valami kódot ismételgetne. Egy jelet... ez egy vészjelzés? - Te muci…  hol jöttünk be a vízbe? Valaho"
+    },
+    {
+      "chunk_index": 82,
+      "tone": "paranoid",
+      "intensity": 0.7,
+      "score": 0.86,
+      "themes": [
+        "wedding",
+        "paranoia",
+        "youth",
+        "exploration"
+      ],
+      "tags": [
+        "couple",
+        "anxiety",
+        "nature",
+        "home"
+      ],
+      "is_signature": false,
+      "preview": "Az ifjú pár épp most érkezik egy hófehér cabrióval, a násznép várja őket az étterem előtt. Édesek. Mintha minket néznének, mutogatnának felénk, de elhesegetem, betudom a jól megszokott állandó paranoiámnak. Túl kell lépn"
+    },
+    {
+      "chunk_index": 83,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "chaos",
+        "humor",
+        "fear"
+      ],
+      "tags": [
+        "surreal",
+        "absurd",
+        "playful"
+      ],
+      "is_signature": false,
+      "preview": "Közben üvegcsörömpölést hallok, rohannék a hang irányába de megtorpanok, mert nyílik a bejárati ajtó, belülről. Cukiskodva áll az ajtórésben lesütött szemekkel, mint akit leszídtak valamiért, majd egyszercsak telibe pofá"
+    },
+    {
+      "chunk_index": 84,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "survival",
+        "addiction",
+        "desperation"
+      ],
+      "tags": [
+        "drug culture",
+        "urban life",
+        "friendship"
+      ],
+      "is_signature": false,
+      "preview": "Vöri és a mentőstáska A herkásoknál nincs agyafurtabb, kreatívabb és intelligensebb állatfaj, ha a cucc megszerzéséről van szó. Egy jól menő belgyógyász, vagy egy maszek zöldséges napi bérét kell kitermeljék valahogy, mi"
+    },
+    {
+      "chunk_index": 85,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "chaos",
+        "urgency",
+        "confusion"
+      ],
+      "tags": [
+        "emergency",
+        "adrenaline",
+        "surreal"
+      ],
+      "is_signature": false,
+      "preview": "A legközelebbit. - Jójó bocsi, a Blaha az jó lesz. A király utcánál járunk, látom hogy megáll előttünk néhány autóval egy szirénázó mentő, kipattannak a mentősők a kocsiból, hátulról kiveszik a hordágyat és beszaladnak v"
+    },
+    {
+      "chunk_index": 86,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.67,
+      "themes": [
+        "abandonment",
+        "disillusionment"
+      ],
+      "tags": [
+        "urban decay",
+        "identity",
+        "neglect"
+      ],
+      "is_signature": false,
+      "preview": "Megállok hihetetlen csálén az első szabad parkolóhelyen, kilökdösöm Vörit a kocsiból és én is kiugrom belőle mintha sose lett volna az enyém. Mondjuk nem is volt az enyém, mert a nevemre sem irattam. De hogyan is irattam"
+    },
+    {
+      "chunk_index": 87,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "accident",
+        "friendship",
+        "winter"
+      ],
+      "tags": [
+        "humor",
+        "tension",
+        "survival"
+      ],
+      "is_signature": false,
+      "preview": "elgázolom az egyik vásárlómat Tél van, késő éjszaka, baromira csúszik az út a sűrű havazástól és egy kölcsönkapott autóval haladok egy kis eldugott mellékutcában a VI. kerületben. Egy vásárlómmal találkozom, Fülivel aki "
+    },
+    {
+      "chunk_index": 88,
+      "tone": "cynical",
+      "intensity": 0.75,
+      "score": 0.78,
+      "themes": [
+        "addiction",
+        "freedom",
+        "self-destruction"
+      ],
+      "tags": [
+        "heroin",
+        "trauma",
+        "existence"
+      ],
+      "is_signature": false,
+      "preview": "holnaptól leállok A heroinban az a legmókásabb, hogy - bár csak egy rövid időre - de Szabad Embernek érzed magad. Megszabadulsz a traumáidtól, a létezés összes nyűgétől, kívülről, mosolyogva nézed magad ahogy csetlesz-bo"
+    },
+    {
+      "chunk_index": 89,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "identity",
+        "escapism",
+        "addiction"
+      ],
+      "tags": [
+        "drugs",
+        "reflection",
+        "self-image"
+      ],
+      "is_signature": false,
+      "preview": "Ha gond lesz majd megoldom. - Ne most beszéljük ezt meg muci... de ja. Lehet. Bé önfeledten válogat még egy fél órát, én meg felrántok egy kis speedet hogy összeszedjem magam, de mindenhonnan tükrök vesznek körül, és ami"
+    },
+    {
+      "chunk_index": 90,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.78,
+      "themes": [
+        "isolation",
+        "absurdity",
+        "desperation"
+      ],
+      "tags": [
+        "winter",
+        "fashion",
+        "drug culture",
+        "accident"
+      ],
+      "is_signature": false,
+      "preview": "Hazaérve lerogyok a kanapéra és tekerek pár cigit amíg Bé divatbemutatót tart. Eltűnik a fürdőben és újabbnál újabb őrült szettben jelenik meg. Úgy látom nem igazán érdekli hogy a kocsiban kurvahideg lesz. Nincs szélvédő"
+    },
+    {
+      "chunk_index": 91,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "regret",
+        "addiction",
+        "friendship"
+      ],
+      "tags": [
+        "Supra",
+        "self-reflection",
+        "urban life"
+      ],
+      "is_signature": false,
+      "preview": "- ez egy kibaszott Supra bazdmeg! Hogy lehettem ekkora fasz, hogy kölcsönadtam??! Hát igen, eléggé be voltunk szakítva amikor ölelgetve, a hátamat lapogatva kölcsönadta az autót azzal a szöveggel, hogy: “Senkinek nem adn"
+    },
+    {
+      "chunk_index": 92,
+      "tone": "cynical",
+      "intensity": 0.6,
+      "score": 0.69,
+      "themes": [
+        "disconnection",
+        "intimacy",
+        "escapism"
+      ],
+      "tags": [
+        "relationship",
+        "dream",
+        "reality"
+      ],
+      "is_signature": false,
+      "preview": "Bekuckózunk az HBO elé, hogy megnézzük a Matrix ot, amit már többször is megnéztünk elvileg, de vagy bealudtunk, vagy egymásba csavarodtunk szóval egyikünk sem emlékszik semmire sem. Bea a mellkasomra hajtja a fejét és s"
+    },
+    {
+      "chunk_index": 93,
+      "tone": "manic",
+      "intensity": 0.9,
+      "score": 0.87,
+      "themes": [
+        "fear",
+        "chaos",
+        "desperation"
+      ],
+      "tags": [
+        "nightmare",
+        "pursuit",
+        "panic"
+      ],
+      "is_signature": false,
+      "preview": "szélvédő nélkül Egy szirénázó mentőautó száguld előttem, a hátsó ajtajai ki be csapódnak, ahogy eszelős tempóban veszi a kanyarokat a sötét, kivilágítatlan szerpentinen. Egyre gyorsulva követem, már alig bírom bevenni az"
+    },
+    {
+      "chunk_index": 94,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "anxiety",
+        "dreams"
+      ],
+      "tags": [
+        "nightmare",
+        "withdrawal",
+        "fear"
+      ],
+      "is_signature": false,
+      "preview": "- azt a kurva... mi a fasz... Totál leizzadva ébredek, és reszketek annyira fázom. Bea aggódva néz rám. - Rosszat álmodtál? Egy pólóval törölgeti a homlokom és rámdob egy meleg takarót. - olyasmi. Majd’ elharapom a nyelv"
+    },
+    {
+      "chunk_index": 95,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "absurdity",
+        "friendship",
+        "adventure"
+      ],
+      "tags": [
+        "humor",
+        "cold",
+        "road trip"
+      ],
+      "is_signature": false,
+      "preview": "Na mi van buzigyerek, sirdogálsz? Brühühű rosszat álmodtál? Folyik az orrod? Szedd már össze magad az isten szerelmére, mi a faszt csinálsz?! Lezuhanyozok és mivel nem találok mást felveszem Bé rózsaszín Hello Kitty-s pu"
+    },
+    {
+      "chunk_index": 96,
+      "tone": "paranoid",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "adventure",
+        "anxiety",
+        "friendship"
+      ],
+      "tags": [
+        "road trip",
+        "tension",
+        "humor"
+      ],
+      "is_signature": false,
+      "preview": "120 nál már sűvítő forgószél kerekedik az autóban ami azonnal lekapja rólam a sapkát és össze-vissza dobálja a kocsi hátuljában, míg Bea két kézzel kapaszkodik a rózsaszín usankájába. Kénytelen vagyok az első pihenőnél f"
+    },
+    {
+      "chunk_index": 97,
+      "tone": "melancholic",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "isolation",
+        "desperation",
+        "survival"
+      ],
+      "tags": [
+        "cold",
+        "journey",
+        "comfort"
+      ],
+      "is_signature": false,
+      "preview": "Újabb megálló következik, Bea nem bírja tovább és elfekszik a hátsó ülésen, teljesen bebugyolálva magát a pokrócba, és odaadja az usankáját amit meg tudok kötni az állam alatt mint az idióták, így nem viszi le a szél a f"
+    },
+    {
+      "chunk_index": 98,
+      "tone": "melancholic",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "isolation",
+        "desperation",
+        "journey"
+      ],
+      "tags": [
+        "travel",
+        "discomfort",
+        "friendship"
+      ],
+      "is_signature": false,
+      "preview": "Kellemesen átmelegít a forró rum, és mintha tűkkel szurkálnának ahogy kezd felengedni a megfagyott arcom. Kiterítem a hatalmas térképet az asztalra és próbálok rájönni hol lehetünk. - Elnézést, meg tudná mondani hol vagy"
+    },
+    {
+      "chunk_index": 99,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "navigating life",
+        "frustration",
+        "unexpected challenges"
+      ],
+      "tags": [
+        "life struggles",
+        "car repair",
+        "miscommunication"
+      ],
+      "is_signature": false,
+      "preview": "Tuti meg lehetett volna ezt oldani normálisabban. Ha normálisabbak lennénk. Nagy nehezen megtaláljuk az autószerelő utcáját, és beállok a kapukijáróba. Kint van a tábla: ZÁRVA- Baszki Bea, milyen nap van ma? - vasárnap. "
+    },
+    {
+      "chunk_index": 100,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "friendship",
+        "comfort",
+        "celebration"
+      ],
+      "tags": [
+        "joy",
+        "relaxation",
+        "homecoming"
+      ],
+      "is_signature": false,
+      "preview": "Szerencsére kurvajó arcok és még néhány spanglit is elszívunk nagy röhögcsélve miután elkészül az autó, megkínálnak teával, sütivel, és kicsit felengedünk a meleg irodában. Az egyik srác még ki is takarítja a havat és az"
+    },
+    {
+      "chunk_index": 101,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "self-discovery",
+        "crisis",
+        "fear"
+      ],
+      "tags": [
+        "emotional turmoil",
+        "identity",
+        "trauma"
+      ],
+      "is_signature": false,
+      "preview": "Megengedem a vizet a kádba, ledobálom a cuccaimat és a gatyám gombjával szarozok amikor elönt valami megmagyarázhatatlanul kellemes érzés. Egyszerre hihetetlenül felszabadultnak és boldognak érzem magam. Mi a fasz történ"
+    },
+    {
+      "chunk_index": 102,
+      "tone": "melancholic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "struggle",
+        "pain",
+        "isolation"
+      ],
+      "tags": [
+        "injury",
+        "winter",
+        "desperation"
+      ],
+      "is_signature": false,
+      "preview": "Stázi Minél magasabbra szállsz, annál mélyebbre zuhansz, így aztán az én és a hozzám hasonlók életét folyamatos, nagy amplitúdójú hullámhegyek és hullámvölgyek tarkították. 2001. telének egyik éjszakáján épp egy ilyen br"
+    },
+    {
+      "chunk_index": 103,
+      "tone": "paranoid",
+      "intensity": 0.75,
+      "score": 0.78,
+      "themes": [
+        "risk",
+        "desperation",
+        "social dynamics"
+      ],
+      "tags": [
+        "anxiety",
+        "expectation",
+        "danger"
+      ],
+      "is_signature": false,
+      "preview": "Röhöghetsz ezen, de nagyon is fontos csomagok voltak ezek, amiken sok minden múlhatott. Egy tárgyalás sikere, egy romantikus vagy bulizós este, oltári chemsex buli a srácokkal, egy üzleti deal megünneplése, vagy csak szi"
+    },
+    {
+      "chunk_index": 104,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "manipulation",
+        "betrayal",
+        "identity"
+      ],
+      "tags": [
+        "deception",
+        "power dynamics",
+        "social class"
+      ],
+      "is_signature": false,
+      "preview": "Behízelgően nyájas és kedves volt, miközben letapogatott az összes érzékszervével, kielemezte a gyengeségeidet, ellened fordította és kiszívta a véredet szép lassan ha nem vigyáztál. Állítólag a nagyapja Hitler mellett s"
+    },
+    {
+      "chunk_index": 105,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "memory",
+        "disorientation",
+        "intoxication"
+      ],
+      "tags": [
+        "party",
+        "substance use",
+        "confusion"
+      ],
+      "is_signature": false,
+      "preview": "Leveszem, és mivel nem akarom a többi felakasztott kabátot összehavazni, ledobom a kabátomat csak úgy földre, magam mellé. Az épületből és az ott tartózkodásomból nem sokra emlékszem, mert ahogy beértem a melegbe azonnal"
+    },
+    {
+      "chunk_index": 106,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.83,
+      "themes": [
+        "substance abuse",
+        "memory",
+        "identity",
+        "fiction vs reality"
+      ],
+      "tags": [
+        "drugs",
+        "perception",
+        "storytelling"
+      ],
+      "is_signature": false,
+      "preview": "Emellett a szervezetében ezidőtájt minimum 4 féle drog volt kimutatható, szóval nem lehet készpénznek venni a szavait. Ez csak az én valóságom, vagyis amit az elcseszett agyammal érzékeltem belőle. Fikció. Elkövettem azt"
+    },
+    {
+      "chunk_index": 107,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.89,
+      "themes": [
+        "hallucination",
+        "perversion",
+        "initiation",
+        "shame"
+      ],
+      "tags": [
+        "surreal",
+        "dark",
+        "social commentary"
+      ],
+      "is_signature": false,
+      "preview": "Azt hallucináltam, hogy tangabugyis tizenéves srácok masszíroznak valami vén faszt, aki ismerős volt valahonannan a TV-ből ahogy rámmordult,- Te jó ég, ez meg ki az isten?? Nyilván nem egy parlamenti közvetítésben láttam"
+    },
+    {
+      "chunk_index": 108,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "identity",
+        "trauma",
+        "betrayal"
+      ],
+      "tags": [
+        "psychological",
+        "conflict",
+        "self-reflection"
+      ],
+      "is_signature": false,
+      "preview": "A bőrötökbe, húsotokba égő izzó bélyeg, ami kiégette belőletek az  emberséget, az együttérzést, és minden pillanatban f igyelmeztet titeket, hogy a lelketek már kurvára, soha többé nem a tiétek. Nem akarom azt mondani, h"
+    },
+    {
+      "chunk_index": 109,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "paranoia",
+        "regret"
+      ],
+      "tags": [
+        "drug culture",
+        "fear",
+        "distrust"
+      ],
+      "is_signature": false,
+      "preview": "dr. Csernus rámbassza a telefont Félrehúzom a függönyt és kinyitom a konyhaablakot, mert megfulladok a fűszagtól. Sajnos az ablak a gangra, a belső udvarra nyílik, és mivel első emelet, egyenesen a bérház bejáratára láto"
+    },
+    {
+      "chunk_index": 110,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "panic",
+        "survival",
+        "irrationality"
+      ],
+      "tags": [
+        "emergency",
+        "decision-making",
+        "dark humor"
+      ],
+      "is_signature": false,
+      "preview": "Az első eléggé megviselt minket, főleg azért, mert akkor jöttünk rá fogalmunk sincs mit kell ilyenkor csinálni. A második esetben már arra is rájöttünk, hogy Bea ilyenkor durván bepánikol, megmagyarázhatatlan, irracionál"
+    },
+    {
+      "chunk_index": 111,
+      "tone": "cynical",
+      "intensity": 0.75,
+      "score": 0.78,
+      "themes": [
+        "addiction",
+        "isolation",
+        "mental health"
+      ],
+      "tags": [
+        "substance abuse",
+        "detachment",
+        "dark humor"
+      ],
+      "is_signature": false,
+      "preview": "De azt nem lehet megszokni, hogy a szikrázóan szellemes beszélgetőpartneredből egyszercsak kataton kómás agyhalott lesz pár percre, vagy hosszú órákra akár. Ilyenkor f igyelheted nem felejtett-e el levegőt venni például,"
+    },
+    {
+      "chunk_index": 112,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "self-awareness",
+        "desperation"
+      ],
+      "tags": [
+        "epilepsy",
+        "substance abuse",
+        "confrontation"
+      ],
+      "is_signature": false,
+      "preview": "Igaz, hogy kaptam egy epilepsziás rohamot és a frászt hoztam Béra, és most is olyan szarul vagyok mintha tegnap megittam volna egy üveg abszintot romlott kagylósalátával, de most büszke vagyok magamra. - Vöri hadd kérdez"
+    },
+    {
+      "chunk_index": 113,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "violence",
+        "urgency",
+        "chaos"
+      ],
+      "tags": [
+        "emergency",
+        "conflict",
+        "dark humor"
+      ],
+      "is_signature": false,
+      "preview": "Csörren a kulcs a zárban, és megjelenik Bea a bejárati ajtóban. Kicsit visszahőköl és kérdően az orrára hegyére csúsztatja a napszemüvegét, amikor meglátja Vörit az étkezőszékre feltett sáros lábbal, ahogy a kezéből az a"
+    },
+    {
+      "chunk_index": 114,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "humor",
+        "desperation"
+      ],
+      "tags": [
+        "drug",
+        "call",
+        "humiliation"
+      ],
+      "is_signature": false,
+      "preview": "Bea odadobta úgy a telefont, hogy már elkezdte hívni a számot. Tudja, hogy ezt mennyire útálom. Nem tudom előre átgondolni ezért faszságokat beszélek, ő meg röhög rajtam. - Haló? Heroinnal kapcsolatban érdeklődnék. - Par"
+    },
+    {
+      "chunk_index": 115,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "desperation",
+        "dark humor"
+      ],
+      "tags": [
+        "drug use",
+        "urban life",
+        "self-destructive behavior"
+      ],
+      "is_signature": false,
+      "preview": "Pukkadozok a röhögéstől és alig várom, hogy végre letehessem a telefont. - pfffsz.. az kurvajó lenne doktor úr! - tudja mit? Jöjjön el hozzám ma este. Mondom a címet. Elkapom a ficánkoló kis rohadékot és a térdemre fekte"
+    },
+    {
+      "chunk_index": 116,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "addiction",
+        "desperation",
+        "self-awareness"
+      ],
+      "tags": [
+        "therapy",
+        "struggle",
+        "confrontation"
+      ],
+      "is_signature": false,
+      "preview": "10-15 ember zsúfolódik össze a pici szobában akik döbbenten, fel-fel szisszenve méregetnek, és középen talpig feketében, szúrós szemekkel személyesen Csernus doktor ül egy hatalmas fotelban, miközben egy csésze teát keve"
+    },
+    {
+      "chunk_index": 117,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "mental health",
+        "urban life",
+        "escape"
+      ],
+      "tags": [
+        "anxiety",
+        "addiction",
+        "isolation"
+      ],
+      "is_signature": false,
+      "preview": "Halk kuncogás fut végig a szobán, amitől bennem is kicsit csökken a feszültség. - keressen fel holnap az OPNI-ban. - gondolkodom rajta! Köszönöm. Fel tud írni valamit addig is esetleg? - biztosan nem. Megoldja. - oh. Oké"
+    },
+    {
+      "chunk_index": 118,
+      "tone": "manic",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "escapism",
+        "friendship",
+        "partying"
+      ],
+      "tags": [
+        "drugs",
+        "music",
+        "youth"
+      ],
+      "is_signature": false,
+      "preview": "Pár hónappal később atropina belladonna I. Elnyúlva fekszünk a bolyhos puha szőnyegen, amit ágy helyett vettünk, mert könyebb volt hazahozni. Tök üres a hatalmas szoba körülöttünk, de már egész jól berendeztük. Mindenhov"
+    },
+    {
+      "chunk_index": 119,
+      "tone": "paranoid",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "drug use",
+        "reality distortion",
+        "risk-taking"
+      ],
+      "tags": [
+        "LSD",
+        "hallucination",
+        "Atropin"
+      ],
+      "is_signature": false,
+      "preview": "de nem extrázunk kicsit? - mire gondolsz? Bea az orvosi táskára mutat, amit Vöri hagyott itt legutóbb, mert nem tudta kifizetni a cuccát. Hm, nézzük csak. Végigfut az agyamon, hogy be vagyunk kicsit még gombázva, és LSD-"
+    },
+    {
+      "chunk_index": 120,
+      "tone": "paranoid",
+      "intensity": 0.85,
+      "score": 0.84,
+      "themes": [
+        "desperation",
+        "confusion",
+        "isolation"
+      ],
+      "tags": [
+        "struggle",
+        "perception",
+        "loss"
+      ],
+      "is_signature": false,
+      "preview": "Botorkálni kezdek a pad felé, de mintha végtelenül lelassult volna az idő és zuhannék lefele folyamatosan. A következő pillanatban azt érzem hogy nekinyomódik a fél arcom a megállóban álló fényreklámnak, fél szememre meg"
+    },
+    {
+      "chunk_index": 121,
+      "tone": "manic",
+      "intensity": 0.9,
+      "score": 0.87,
+      "themes": [
+        "hospital",
+        "disorientation",
+        "search for identity"
+      ],
+      "tags": [
+        "trauma",
+        "confusion",
+        "urgency"
+      ],
+      "is_signature": false,
+      "preview": "atropina belladonna II. Egy kórházi ágyon ébredek. Utcai cuccban vagyok, atléta és rövidnadrág. Fölülök nagy nehezen, kurvára fáj a mellkasom, és mintha valami másik dimenzióban lennék. Úristen mi ez? Egy kibaszott katét"
+    },
+    {
+      "chunk_index": 122,
+      "tone": "paranoid",
+      "intensity": 0.9,
+      "score": 0.87,
+      "themes": [
+        "fear",
+        "desperation",
+        "escape"
+      ],
+      "tags": [
+        "hospital",
+        "chaos",
+        "survival"
+      ],
+      "is_signature": false,
+      "preview": "Rohanok a kihalt szűk folyosókon. Ez nem is egy kórház. Félszemmel látom, hogy  eszelősen vihogva fut utánam a down kóros kissrác. Minden erőmet összeszedve felrohanok egy lépcsőn és próbálom bezárni magam mögött valahog"
+    },
+    {
+      "chunk_index": 123,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "escape",
+        "identity",
+        "violence"
+      ],
+      "tags": [
+        "surreal",
+        "dream",
+        "trauma"
+      ],
+      "is_signature": false,
+      "preview": "Képtelen vagyok felidézni honnan jöttünk, csak azt érzem menekülnünk kell innen, mert különben meghalunk. Fogalmam sincs hogyan, de hazaérünk a Veres Pálnéba. Beát lefektetem a kanapéra és szinte abban a pillanatban eláj"
+    },
+    {
+      "chunk_index": 124,
+      "tone": "paranoid",
+      "intensity": 0.85,
+      "score": 0.92,
+      "themes": [
+        "nightmare",
+        "panic",
+        "anarchy",
+        "loss"
+      ],
+      "tags": [
+        "trauma",
+        "confusion",
+        "desperation"
+      ],
+      "is_signature": false,
+      "preview": "atropina belladonna III. Szúró fájdalomra riadok fel, és kapkodom a levegőt. Basszameg micsoda rémálmom volt. Minden sejtem sikít ahogy feltápászkodok és remegve kitámolygok a fürdőszobába. Basszameg. Megijedek magamtól "
+    },
+    {
+      "chunk_index": 125,
+      "tone": "paranoid",
+      "intensity": 0.85,
+      "score": 0.92,
+      "themes": [
+        "abduction",
+        "memory loss",
+        "hospital",
+        "trauma"
+      ],
+      "tags": [
+        "violence",
+        "confusion",
+        "fear"
+      ],
+      "is_signature": false,
+      "preview": "Basszameg elütött minket egy autó? Látom a karján a zúzódásokat és a csuklóján, bokáján a piros foltokat. Megkötözték. Elraboltak minket?? - Nyuszikám mi történt? Emlékszel valamire? - ... megvertek minket... - … de kics"
+    },
+    {
+      "chunk_index": 126,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "fear",
+        "uncertainty",
+        "loss"
+      ],
+      "tags": [
+        "suspense",
+        "relationship",
+        "crisis"
+      ],
+      "is_signature": false,
+      "preview": "nem vittek be egy fiatal párt tegnap este, akiket öö.. talán elütött egy autó? - egy autó? Ide drogtúladagolás miatt kerülnek be leggyakrabban. Tegnap 4 embert hoztak be. - értem. nem tudja esetleg, egy fiatal párt is be"
+    },
+    {
+      "chunk_index": 127,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "fear",
+        "authority",
+        "identity"
+      ],
+      "tags": [
+        "police",
+        "anxiety",
+        "dread"
+      ],
+      "is_signature": false,
+      "preview": "Pontosan tudom milyen az, amikor dühös rendőrök rádtörik az ajtót hajnali fél 5-kor, és ott állsz alsógatyában feltartott kézzel az elemlámpáik fénypászmáiban. Jobb elébemenni a dolgoknak. Lezuhanyozok, felveszek egy ing"
+    },
+    {
+      "chunk_index": 128,
+      "tone": "paranoid",
+      "intensity": 0.75,
+      "score": 0.86,
+      "themes": [
+        "hospital",
+        "drug overdose",
+        "memory loss",
+        "anarchy"
+      ],
+      "tags": [
+        "anxiety",
+        "disorientation",
+        "dark humor"
+      ],
+      "is_signature": false,
+      "preview": "atropina belladonna IV. Állok a kórház előtt, abszolút nem ismerős. Sosem jártam még itt bazdmeg. Veszek egy nagy levegőt és benyitok a hatalmas kapun. Valószínűleg rendőrök várnak rám, akik le fognak tartóztatni. Hát ez"
+    },
+    {
+      "chunk_index": 129,
+      "tone": "paranoid",
+      "intensity": 0.85,
+      "score": 0.84,
+      "themes": [
+        "fear",
+        "consequences",
+        "desperation"
+      ],
+      "tags": [
+        "drugs",
+        "police",
+        "panic"
+      ],
+      "is_signature": false,
+      "preview": "Felémfordul és összehúzott szemöldökkel, megvetően néz rám. - Jó volt a buli? - hát... nem annyira. - újra kellett éleszteni magát, tud róla? Basszus... meg sem tudok szólalni. - valószínű néhány bordája is eltört. A kis"
+    },
+    {
+      "chunk_index": 130,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "fear",
+        "guilt",
+        "authority"
+      ],
+      "tags": [
+        "confrontation",
+        "police",
+        "anxiety"
+      ],
+      "is_signature": false,
+      "preview": "Azt akarod Beát hurcolják meg, mert te egy gyáva szar vagy? Menj be és add föl magad, ez a legjobb amit tehetsz. Belépek az épületbe, nagy sürgés forgás, mindenhol egyenruhás emberek. Odamegyek a recepcióhoz vagy mi a fa"
+    },
+    {
+      "chunk_index": 131,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "isolation",
+        "mental health",
+        "absurdity"
+      ],
+      "tags": [
+        "hospital",
+        "ping pong",
+        "anxiety"
+      ],
+      "is_signature": false,
+      "preview": "Megcsap a forró aszfalt szaga, csicseregnek a madarak, susognak a Kecskeméti utca fáinak levelei, autóduda, benzingőz... kint vagyok. Úgy tűnik ezt megúsztuk. Valaki lenyúlhatta amíg az út közepén pihengettünk. Mindenünk"
+    },
+    {
+      "chunk_index": 132,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.78,
+      "themes": [
+        "competition",
+        "mental state",
+        "anxiety"
+      ],
+      "tags": [
+        "pingpong",
+        "doctor",
+        "sedation",
+        "tension"
+      ],
+      "is_signature": false,
+      "preview": "Kicsit tartok a dologtól, mert bár nem pingpongozok valami jól és totál be vagyok nyugtatózva, viszont vagy két fejjel magasabb vagyok nála, míg ő olyan 160 centi lehet és legalább annyi idős is, szóval próbálok lassú és"
+    },
+    {
+      "chunk_index": 133,
+      "tone": "paranoid",
+      "intensity": 0.9,
+      "score": 0.87,
+      "themes": [
+        "control",
+        "violence",
+        "helplessness"
+      ],
+      "tags": [
+        "hospital",
+        "confrontation",
+        "medication"
+      ],
+      "is_signature": false,
+      "preview": "A doktor úr odafut, fölugrik, lecsapja a labdát a jobb sarokra, amit én lassan, fonákkal visszütök úgy hogy kettőt is pattan a labda a térfelén. Dühösen rámnéz. - rendben, 19:3! Egy villámgyors szervát ad, amit gyengéden"
+    },
+    {
+      "chunk_index": 134,
+      "tone": "paranoid",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "desperation",
+        "identity",
+        "isolation"
+      ],
+      "tags": [
+        "hospital",
+        "mental health",
+        "struggle"
+      ],
+      "is_signature": false,
+      "preview": "Folyik a vérem mindenfele, és most már négyen próbálnak lefogni, miközben a nővér addig forgatja a tűt míg végre vénát talál, és belémtolja a fecskendő tartalmát. Érzem, hogy a személyiségem darabokra hullik, és egy söté"
+    },
+    {
+      "chunk_index": 135,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.7,
+      "themes": [
+        "defiance",
+        "frustration"
+      ],
+      "tags": [
+        "confrontation",
+        "disrespect"
+      ],
+      "is_signature": false,
+      "preview": "Nyitva az ajtó, ott ül a doktor úr az íróasztala mögött, és meglepetten néz rám az orrára tolt szemüveg fölött. Felemelem az egyik kezem, és próbálom az ujjaimat mozgatni, míg végül sikerül egyedül a középső ujjamat felm"
+    },
+    {
+      "chunk_index": 136,
+      "tone": "cynical",
+      "intensity": 0.7,
+      "score": 0.75,
+      "themes": [
+        "ambition",
+        "pride",
+        "disillusionment"
+      ],
+      "tags": [
+        "internet cafe",
+        "urban life",
+        "self-reflection"
+      ],
+      "is_signature": false,
+      "preview": "Private Link Netcafe Rátámaszkodok a galéria korlátjára, és a hatalmas kirakatüvegen keresztül rálátok a József körút délelőtti forgatagára. Sietős, aktatáskás emberek térnek be a boltba fénymásolni, csekkolni az emailje"
+    },
+    {
+      "chunk_index": 137,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "violence",
+        "chaos",
+        "indifference"
+      ],
+      "tags": [
+        "urban",
+        "conflict",
+        "apathy"
+      ],
+      "is_signature": false,
+      "preview": "Üzletvezetői tapasztalatom, üzleti érzékem nincs, de képes vagyok lelkesen tolni bármilyen szar biciklit. Tökéletes vagyok egy fantomcég ügyvezetőjének a szerepére, és én lelkesen bele is vetettem magam. Pár perc múlva é"
+    },
+    {
+      "chunk_index": 138,
+      "tone": "cynical",
+      "intensity": 0.6,
+      "score": 0.72,
+      "themes": [
+        "employment",
+        "identity",
+        "despair"
+      ],
+      "tags": [
+        "interview",
+        "goth",
+        "humor",
+        "awkward"
+      ],
+      "is_signature": false,
+      "preview": "- én vagyok az üzletvezető. elnézést mindenkitől a ... - az új üzletvezető? - az. A fehér joggingos, jól táplált roma srác hangosan felkacag és a sarokba vágja az üres papírpoharát. Ott nincs is kuka. -Isu vagyok. Nagysz"
+    },
+    {
+      "chunk_index": 139,
+      "tone": "cynical",
+      "intensity": 0.6,
+      "score": 0.8,
+      "themes": [
+        "interview",
+        "youth",
+        "urban life",
+        "awkwardness"
+      ],
+      "tags": [
+        "dialogue",
+        "café",
+        "characters",
+        "tension"
+      ],
+      "is_signature": false,
+      "preview": "- remek! Látom rajta, hogy ezt eléggé komolyan is gondolja. Közben elővesz egy kis fémpipát a zsebéből meg egy öngyújtót és megkérdezi, - szabad? Persze parancsolj. Pöfékelve, csöndben üldögélünk pár percig, egymásra tei"
+    },
+    {
+      "chunk_index": 140,
+      "tone": "cynical",
+      "intensity": 0.8,
+      "score": 0.81,
+      "themes": [
+        "dystopia",
+        "existentialism",
+        "foreshadowing"
+      ],
+      "tags": [
+        "apocalypse",
+        "disillusionment",
+        "urban life"
+      ],
+      "is_signature": false,
+      "preview": "kerület szóval a legrosszabbra készüljetek. Havi száznyolcvan, fele bejelentve, plusz tiétek a jatt. Kérdés? - milyen kávé van? - kérdezi izgatottan Pixi. - nincs kávé. egy forróital automatánk van. más kérdés? Wes csak "
+    }
+  ]
+}

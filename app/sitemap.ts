@@ -28,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Static URLs (include /music index explicitly)
   const staticUrls: MetadataRoute.Sitemap = [
-    '', '/music', '/konyv', '/novellak', '/projektek', '/rolunk'
+    '', '/music', '/konyv', '/novellak', '/projektek', '/rolunk', '/v3'
   ].map((p) => ({
     url: `${base}${p}`,
     changeFrequency: 'weekly' as const,

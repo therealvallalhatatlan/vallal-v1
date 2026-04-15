@@ -3,6 +3,7 @@ import type {
   GyontatasConversation,
   GyontatasMessage,
   GyontatasMessageInsert,
+  PersistentRelationshipMemory,
 } from './types';
 
 type GyontatasStorageMode = 'conversation' | 'legacy';
@@ -28,6 +29,19 @@ function isMissingConversationSchemaError(message: string) {
     normalized.includes('could not find the table') ||
     normalized.includes('schema cache') ||
     normalized.includes('does not exist')
+  );
+}
+
+function isMissingMetadataColumnError(message: string) {
+  const normalized = message.toLowerCase();
+  return normalized.includes('metadata') && (normalized.includes('column') || normalized.includes('schema cache'));
+}
+
+function isMissingUserOwnershipColumnError(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    (normalized.includes('user_id') || normalized.includes('user_email')) &&
+    (normalized.includes('column') || normalized.includes('schema cache') || normalized.includes('does not exist'))
   );
 }
 
@@ -107,30 +121,116 @@ export async function getConversationBySessionId(sessionId: string): Promise<Gyo
   return data;
 }
 
-export async function ensureConversation(sessionId: string): Promise<GyontatasConversation> {
+export async function getConversationByUserId(userId: string): Promise<GyontatasConversation | null> {
+  const storageMode = await getGyontatasStorageMode();
+  if (storageMode === 'legacy') {
+    return null;
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('gyontato_conversations')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    if (error.message.toLowerCase().includes('user_id')) {
+      return null;
+    }
+    throw new Error(`Failed to load conversation by user: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function ensureConversation(input: {
+  sessionId: string;
+  userId?: string;
+  userEmail?: string | null;
+}): Promise<GyontatasConversation> {
   const storageMode = await getGyontatasStorageMode();
   if (storageMode === 'legacy') {
     return {
-      id: sessionId,
-      session_id: sessionId,
+      id: input.sessionId,
+      session_id: input.sessionId,
+      user_id: input.userId ?? null,
+      user_email: input.userEmail ?? null,
       created_at: new Date(0).toISOString(),
       updated_at: new Date(0).toISOString(),
       last_message_at: new Date(0).toISOString(),
     };
   }
 
-  const existing = await getConversationBySessionId(sessionId);
+  if (input.userId) {
+    const existingByUser = await getConversationByUserId(input.userId);
+    if (existingByUser) {
+      return existingByUser;
+    }
+  }
+
+  const existing = await getConversationBySessionId(input.sessionId);
   if (existing) {
+    if (input.userId && (!existing.user_id || existing.user_id !== input.userId)) {
+      const updatePayload: Record<string, unknown> = {
+        user_id: input.userId,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (input.userEmail) {
+        updatePayload.user_email = input.userEmail;
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('gyontato_conversations')
+        .update(updatePayload)
+        .eq('id', existing.id)
+        .select('*')
+        .single();
+
+      if (error) {
+        if (isMissingUserOwnershipColumnError(error.message)) {
+          return existing;
+        }
+        throw new Error(`Failed to update conversation ownership: ${error.message}`);
+      }
+
+      return data ?? existing;
+    }
+
     return existing;
+  }
+
+  const insertPayload: Record<string, unknown> = { session_id: input.sessionId };
+  if (input.userId) {
+    insertPayload.user_id = input.userId;
+  }
+  if (input.userEmail) {
+    insertPayload.user_email = input.userEmail;
   }
 
   const { data, error } = await supabaseAdmin
     .from('gyontato_conversations')
-    .insert([{ session_id: sessionId }])
+    .insert([insertPayload])
     .select('*')
     .single();
 
   if (error || !data) {
+    if (error && isMissingUserOwnershipColumnError(error.message)) {
+      const fallbackInsert = await supabaseAdmin
+        .from('gyontato_conversations')
+        .insert([{ session_id: input.sessionId }])
+        .select('*')
+        .single();
+
+      if (fallbackInsert.error || !fallbackInsert.data) {
+        throw new Error(`Failed to create conversation: ${fallbackInsert.error?.message || 'Unknown error'}`);
+      }
+
+      return fallbackInsert.data;
+    }
+
     throw new Error(`Failed to create conversation: ${error?.message || 'Unknown error'}`);
   }
 
@@ -242,6 +342,94 @@ export async function listMessagesBySessionId(sessionId: string, limit?: number)
   }
 
   return listConversationMessages(conversation.id, limit);
+}
+
+export async function getConversationForHistory(input: {
+  userId?: string;
+  sessionId?: string | null;
+}): Promise<GyontatasConversation | null> {
+  if (input.userId) {
+    const byUser = await getConversationByUserId(input.userId);
+    if (byUser) {
+      return byUser;
+    }
+  }
+
+  if (input.sessionId) {
+    return getConversationBySessionId(input.sessionId);
+  }
+
+  return null;
+}
+
+export async function listLiteraryRagChunkCandidates(input: {
+  limit?: number;
+  tone?: string;
+} = {}) {
+  const limit = Math.max(1, Math.min(200, input.limit ?? 60));
+
+  let query = supabaseAdmin
+    .from('literary_rag_chunks')
+    .select('id, source_file, chunk_index, text, embedding, themes, tone, intensity, score, is_signature')
+    .order('score', { ascending: false })
+    .limit(limit);
+
+  if (input.tone) {
+    query = query.eq('tone', input.tone);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    if (error.message.toLowerCase().includes('literary_rag_chunks')) {
+      return [];
+    }
+    throw new Error(`Failed to load RAG chunk candidates: ${error.message}`);
+  }
+
+  return data ?? [];
+}
+
+export async function updateConversationRelationshipMemory(input: {
+  conversationId: string;
+  memory: PersistentRelationshipMemory;
+  existingMetadata?: Record<string, unknown> | null;
+  profile?: Record<string, unknown> | null;
+  patternMemory?: Record<string, unknown>[] | null;
+  memoryEvents?: Record<string, unknown>[] | null;
+  distortionState?: Record<string, unknown> | null;
+}): Promise<void> {
+  const storageMode = await getGyontatasStorageMode();
+  if (storageMode === 'legacy') {
+    return;
+  }
+
+  const metadata = {
+    ...(input.existingMetadata ?? {}),
+    relationshipMemory: input.memory,
+    ...(input.profile ? { userProfile: input.profile } : {}),
+    ...(input.patternMemory ? { patternMemory: input.patternMemory } : {}),
+    ...(input.memoryEvents ? { memoryEvents: input.memoryEvents.slice(-12) } : {}),
+    ...(input.distortionState ? { distortionState: input.distortionState } : {}),
+  };
+
+  const { error } = await supabaseAdmin
+    .from('gyontato_conversations')
+    .update({
+      metadata,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', input.conversationId);
+
+  if (!error) {
+    return;
+  }
+
+  if (isMissingMetadataColumnError(error.message)) {
+    console.warn('Skipping gyontato conversation memory persistence until metadata column is available.');
+    return;
+  }
+
+  throw new Error(`Failed to persist conversation memory: ${error.message}`);
 }
 
 export async function saveLegacyConfessionExchange(input: {
