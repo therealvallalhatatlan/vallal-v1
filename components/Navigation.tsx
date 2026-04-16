@@ -51,6 +51,12 @@ export default function Navigation() {
                 >
                   Reader
                 </Link>
+                <Link
+                  href="/v3"
+                  className="rounded-lg bg-white px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-neutral-100"
+                >
+                  v3 AI
+                </Link>
                 <button
                   onClick={handleLogout}
                   disabled={isLoggingOut}
