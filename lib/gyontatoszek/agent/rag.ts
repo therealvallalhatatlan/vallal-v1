@@ -3,6 +3,38 @@ import type { RetrievedMemoryFragment } from './types';
 const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
+// ---------------------------------------------------------------------------
+// Embedding cache — module-scoped, process-lifetime LRU (max 200, TTL 1 hour)
+// ---------------------------------------------------------------------------
+const CACHE_MAX = 200;
+const CACHE_TTL_MS = 60 * 60 * 1000;
+
+interface CacheEntry { embedding: number[]; ts: number }
+const embeddingCache = new Map<string, CacheEntry>();
+
+function cacheKey(query: string) {
+  return query.toLowerCase().trim().slice(0, 200);
+}
+
+function cacheGet(query: string): number[] | null {
+  const key = cacheKey(query);
+  const entry = embeddingCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL_MS) { embeddingCache.delete(key); return null; }
+  return entry.embedding;
+}
+
+function cacheSet(query: string, embedding: number[]) {
+  const key = cacheKey(query);
+  if (embeddingCache.size >= CACHE_MAX) {
+    // evict the oldest entry
+    const oldest = embeddingCache.keys().next().value;
+    if (oldest) embeddingCache.delete(oldest);
+  }
+  embeddingCache.set(key, { embedding, ts: Date.now() });
+}
+// ---------------------------------------------------------------------------
+
 interface SearchRelevantChunksInput {
   query: string;
   themes?: string[];
@@ -98,7 +130,7 @@ function buildPreview(text: string) {
   return compact.length > 180 ? `${compact.slice(0, 177)}…` : compact;
 }
 
-function matchesFilters(row: RagCandidateRow, input: SearchRelevantChunksInput) {
+function matchesFilters(row: RagCandidateRow, input: Omit<SearchRelevantChunksInput, 'query' | 'limit'>) {
   if (input.themes && input.themes.length > 0) {
     const matchesTheme = input.themes.some((theme) => row.themes.includes(theme));
     if (!matchesTheme) {
@@ -153,6 +185,9 @@ export function rankRetrievedChunks(input: {
 }
 
 async function embedQuery(query: string): Promise<number[]> {
+  const cached = cacheGet(query);
+  if (cached) return cached;
+
   if (!OPENAI_API_KEY) {
     return [];
   }
@@ -175,7 +210,67 @@ async function embedQuery(query: string): Promise<number[]> {
   }
 
   const data = await response.json();
-  return parseEmbeddingVector(data?.data?.[0]?.embedding ?? []);
+  const embedding = parseEmbeddingVector(data?.data?.[0]?.embedding ?? []);
+  if (embedding.length > 0) cacheSet(query, embedding);
+  return embedding;
+}
+
+async function searchViaRpc(
+  queryEmbedding: number[],
+  input: SearchRelevantChunksInput,
+): Promise<RetrievedMemoryFragment[] | null> {
+  try {
+    const { supabaseAdmin } = await import('../../supabase/admin');
+    const limit = Math.max(1, Math.min(5, (input.limit ?? 3) * 3));
+    const tonFilter = normalizeToneFilter(input.tone);
+
+    const { data, error } = await supabaseAdmin.rpc('match_literary_rag_chunks', {
+      query_embedding: queryEmbedding as unknown as string,
+      match_count: limit,
+      filter_tone: tonFilter ?? null,
+    });
+
+    if (error || !Array.isArray(data)) return null;
+
+    // Apply theme + intensity filters client-side (RPC only filters by tone)
+    const filters = { themes: input.themes, tone: input.tone, intensity: input.intensity };
+    const filtered = (data as RagCandidateRow[]).filter((row) => matchesFilters(row, filters));
+
+    return filtered
+      .filter((row) => (row as unknown as { similarity: number }).similarity > 0)
+      .sort(
+        (a, b) =>
+          (b as unknown as { similarity: number }).similarity -
+          (a as unknown as { similarity: number }).similarity,
+      )
+      .slice(0, input.limit ?? 3)
+      .map((row) => {
+        const sim = Number(((row as unknown as { similarity: number }).similarity).toFixed(3));
+        const retrievalScore = Number(
+          (
+            sim * 0.67 +
+            row.score * 0.19 +
+            row.intensity * 0.08 +
+            (row.is_signature ? 0.06 : 0)
+          ).toFixed(3),
+        );
+        return {
+          id: row.id,
+          text: row.text,
+          preview: buildPreview(row.text),
+          themes: Array.isArray(row.themes) ? row.themes : [],
+          tone: row.tone,
+          intensity: row.intensity,
+          score: retrievalScore,
+          similarity: sim,
+          source_file: row.source_file,
+          chunk_index: row.chunk_index,
+          is_signature: Boolean(row.is_signature),
+        };
+      });
+  } catch {
+    return null;
+  }
 }
 
 export async function searchRelevantChunks(input: SearchRelevantChunksInput): Promise<RetrievedMemoryFragment[]> {
@@ -185,6 +280,13 @@ export async function searchRelevantChunks(input: SearchRelevantChunksInput): Pr
       return [];
     }
 
+    // Try native pgvector similarity search first
+    const rpcResult = await searchViaRpc(queryEmbedding, input);
+    if (rpcResult !== null) {
+      return rpcResult;
+    }
+
+    // Fallback: JS-side cosine ranking
     const { listLiteraryRagChunkCandidates } = await import('../repository');
     const rows = await listLiteraryRagChunkCandidates({
       limit: Math.max((input.limit ?? 3) * 12, 24),

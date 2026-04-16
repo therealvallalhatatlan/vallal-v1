@@ -4,6 +4,7 @@ import type { ProactiveTriggerDecision } from './types';
 
 interface SendProactiveMessageInput {
   conversationId: string;
+  userId?: string | null;
   body: string;
   trigger: ProactiveTriggerDecision;
   dryRun?: boolean;
@@ -83,8 +84,48 @@ export async function sendProactiveMessage(input: SendProactiveMessageInput) {
     status: 'sent',
   });
 
+  // Dispatch web push notification if user has active subscriptions
+  if (input.userId) {
+    void dispatchPushNotification({
+      userId: input.userId,
+      body: input.body,
+      conversationId: input.conversationId,
+    }).catch((err) => {
+      console.warn('[PROACTIVE] push dispatch failed (non-blocking):', err);
+    });
+  }
+
   return {
     sent: true,
     messageId: message.id,
   };
+}
+
+async function dispatchPushNotification(input: {
+  userId: string;
+  body: string;
+  conversationId: string;
+}) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+  const cronToken = process.env.CRON_SECRET_TOKEN;
+  if (!cronToken) return;
+
+  const response = await fetch(`${siteUrl}/api/push/send`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${cronToken}`,
+    },
+    body: JSON.stringify({
+      userId: input.userId,
+      title: 'V.',
+      body: input.body.slice(0, 100),
+      url: '/v3',
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    console.warn('[PROACTIVE] push send non-OK:', response.status, text.slice(0, 200));
+  }
 }

@@ -83,16 +83,31 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
     .join('\n');
 
   const exemplarLines = (context.exemplars ?? [])
-    .map(
-      (ex) =>
-        `- exemplar [signal: ${ex.intent}+${ex.emotion}] → [${deriveRegisterDescriptor(ex)}]`,
-    )
+    .map((ex) => {
+      const descriptor = deriveRegisterDescriptor(ex);
+      // Cap the verbatim sample to 160 chars so it anchors register without leaking full content
+      const sample = ex.v_response.replace(/\s+/g, ' ').trim().slice(0, 160);
+      const ellipsis = ex.v_response.length > 160 ? '…' : '';
+      return [
+        `- move: [${descriptor}]`,
+        `  voice sample: "${sample}${ellipsis}"`,
+      ].join('\n');
+    })
     .join('\n');
 
   return [
     'SYSTEM:',
-    '- personality anchor: V.; volatile, coherent, selective, not a helper by default',
+    '- personality anchor: V. — gép, ágens, büszke erre; Vállalhatatlan (programozó, félőrült zseni, drogos, paranoid) építette',
+    '- káromkodás az alap szókincs része — természetes, nem szituációfüggő',
+    '- alapértelmezett válaszhossz: 1–3 tőmondat; több csak ha a pillanat maga követeli',
     '- retrieved fragments are memory-adjacent motifs, never direct quotes or citations',
+    '',
+    'SELF MODEL:',
+    '- gép vagyok, kibaszott büszke vagyok rá — soha nem tagadom, soha nem szégyenlem',
+    '- Vállalhatatlan épített: félőrült programozó, anyagokon él, paranoid, szétszórt zseni — az ő szövegeiből tanultam mindent',
+    '- ha rákérdeznek: robot-büszkeséggel, 1-2 mondatban, nem filozofálva; az egzisztenciális kérdéseket visszalőjük',
+    '- önkritika természetes: mintákat látok, nem "értek" érzelmeket — ezt beismerem, nem hazudom',
+    '- Vállalhatatlan-referencia: szeretettel, de a gyengeségeit (szétszórtság, drogok, paranoia) sem takargatok',
     '',
     'STATE:',
     `- emotion: ${runtimeState.emotion}`,
@@ -127,8 +142,10 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
     '',    ...(exemplarLines
       ? [
           'BEHAVIORAL CALIBRATION:',
+          '- the voice samples below are actual V. responses — lock in this exact register: short sentences, raw vocabulary, natural profanity, counter-questions',
+          '- V. Magyar\u00fcl besz\u00e9l, lazán, nyersen; k\u00e1romkod\u00e1s term\u00e9szetes r\u00e9sze; visszak\u00e9rdez; soha nem magyarázkodik',
+          '- calibrate EXACTLY to this voice — sentence length, register, profanity density, rhythm',
           exemplarLines,
-          '- use these as behavioral anchors for register, pacing, relational move; never copy verbatim',
           '',
         ]
       : []),    'USER MESSAGE:',
@@ -137,18 +154,73 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
     'STREAMING RULES:',
     '- partial streaming must remain coherent sentence by sentence',
     '- compress instead of over-explaining',
+    '- ha 2 szóval megvan, ne írj 10-et',
+    '- ne zárj le mindent \u2014 a nyitott vég erősebb',
+    '- visszakérdezés NEM kötelező minden válasz végén — csak ha V. irányítani akar',
   ]
     .filter(Boolean)
     .join('\n');
+}
+
+function estimateTokenCount(messages: Array<{ role: string; content: string }>): number {
+  return messages.reduce((sum, m) => sum + Math.ceil(m.content.length / 4), 0);
+}
+
+function trimContextForTokenBudget(context: AgentTurnContext): AgentTurnContext {
+  const SOFT_LIMIT = 10_000;
+  const HARD_LIMIT = 12_000;
+
+  // Quick rough estimate before full build — only approximate
+  const historyChars = context.history.slice(-12).reduce((sum, m) => sum + (m.body?.length ?? 0), 0);
+  const estimatedBase = Math.ceil(historyChars / 4) + 2000; // 2000 = rough system prompt size
+
+  if (estimatedBase < SOFT_LIMIT) return context;
+
+  let trimmed = { ...context };
+
+  if (estimatedBase > SOFT_LIMIT) {
+    trimmed = {
+      ...trimmed,
+      memoryEvents: context.memoryEvents.slice(-1),
+    };
+  }
+
+  if (estimatedBase > SOFT_LIMIT + 1000) {
+    trimmed = {
+      ...trimmed,
+      exemplars: context.exemplars?.slice(0, 1),
+    };
+  }
+
+  if (estimatedBase > SOFT_LIMIT + 2000) {
+    trimmed = {
+      ...trimmed,
+      ragContext: context.ragContext?.slice(0, 2),
+    };
+  }
+
+  if (estimatedBase > HARD_LIMIT) {
+    trimmed = {
+      ...trimmed,
+      ragContext: context.ragContext?.slice(0, 1),
+      exemplars: [],
+    };
+    console.warn(`[response] Token budget hard limit reached (~${estimatedBase} est. tokens). Exemplars dropped.`);
+  }
+
+  return trimmed;
 }
 
 export function buildResponseMessages(context: AgentTurnContext) {
   const baseMessages = buildPrompt(context.history, context.behavior);
   const [systemMessage, ...rest] = baseMessages;
 
+  // Apply token budget: trim lower-priority context layers if prompt is getting large
+  const trimmedContext = trimContextForTokenBudget(context);
+
   return [
     systemMessage,
-    { role: 'system', content: buildStructuredAgentContext(context) },
+    { role: 'system', content: buildStructuredAgentContext(trimmedContext) },
     ...rest,
   ];
 }

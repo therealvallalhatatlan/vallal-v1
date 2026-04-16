@@ -135,7 +135,7 @@ export function evaluateProactiveTrigger(input: ProactiveEvaluationInput): Proac
     );
   }
 
-  if (hoursSinceLastUserMessage >= 8 && stateIntensity >= 0.8) {
+  if (hoursSinceLastUserMessage >= 10 / 60 && stateIntensity >= 0.8) {
     const score = 0.66 + Math.min(stateIntensity * 0.18, 0.18);
     pushCandidate(
       candidates,
@@ -146,7 +146,7 @@ export function evaluateProactiveTrigger(input: ProactiveEvaluationInput): Proac
     );
   }
 
-  if (hoursSinceLastUserMessage >= 18 && input.pendingAction) {
+  if (hoursSinceLastUserMessage >= 10 / 60 && input.pendingAction) {
     const score = 0.65 + Math.min(trust * 0.02, 0.12);
     pushCandidate(
       candidates,

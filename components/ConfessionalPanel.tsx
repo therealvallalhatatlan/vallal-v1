@@ -14,6 +14,7 @@ import { ChatContainer } from './gyontatoszek/ChatContainer';
 import { Composer } from './gyontatoszek/Composer';
 import { MessageList } from './gyontatoszek/MessageList';
 import { VReadingPanel, type VReadingInsight } from './gyontatoszek/VReadingPanel';
+import PushPermissionPrompt from './gyontatoszek/PushPermissionPrompt';
 import { createClient } from '@/lib/browser';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 
@@ -591,6 +592,7 @@ export default function ConfessionalPanel() {
       >
         <MessageList messages={messages} loading={loadingHistory} sending={sending} />
       </ChatContainer>
+      <PushPermissionPrompt accessToken={session?.access_token} />
     </motion.div>
   );
 }

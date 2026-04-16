@@ -93,9 +93,9 @@ describe('proactive trigger engine', () => {
 })
 
 describe('proactive message generation', () => {
-  it('builds a concise assistant-initiated message from the trigger context', () => {
+  it('builds a concise assistant-initiated message from the trigger context', async () => {
     const evaluation = evaluateProactiveTrigger(makeInput())
-    const message = buildProactiveMessage({
+    const message = await buildProactiveMessage({
       evaluation,
       userEmail: 'user@example.com',
       relationshipMemory: makeInput().relationshipMemory,

@@ -56,7 +56,7 @@ describe('strategy engine', () => {
       confidence: 0.82,
     }
 
-    const strategy = selectStrategy({
+    const { strategy } = selectStrategy({
       interpretation,
       patterns: [makePattern({ key: 'control:control-bid', name: 'control-bid', score: 0.9 })],
       profile: makeProfile({
@@ -84,7 +84,7 @@ describe('strategy engine', () => {
       confidence: 0.9,
     }
 
-    const strategy = selectStrategy({
+    const { strategy } = selectStrategy({
       interpretation,
       patterns: [makePattern({ key: 'shame:shame-disclosure', name: 'shame-disclosure', category: 'emotion', score: 0.85 })],
       profile: makeProfile({
@@ -113,7 +113,7 @@ describe('strategy engine', () => {
       confidence: 0.7,
     }
 
-    const strategy = selectStrategy({
+    const { strategy } = selectStrategy({
       interpretation,
       patterns: [makePattern({ key: 'humor:humor-shield', name: 'humor-shield', category: 'emotion', score: 0.8 })],
       profile: makeProfile({
@@ -152,8 +152,8 @@ describe('strategy engine', () => {
       userInput: 'What do you actually want from me?',
     }
 
-    const first = selectStrategy(state)
-    const second = selectStrategy(state)
+    const { strategy: first } = selectStrategy(state)
+    const { strategy: second } = selectStrategy(state)
 
     expect(first.mode).toBe(second.mode)
     expect(['mirror', 'confront', 'destabilize', 'validate_then_twist', 'challenge_action', 'withhold']).toContain(first.mode)
@@ -170,7 +170,7 @@ describe('strategy engine', () => {
       confidence: 0.86,
     }
 
-    const strategy = selectStrategy({
+    const { strategy } = selectStrategy({
       interpretation,
       patterns: [
         makePattern({ key: 'risk:self-deception', name: 'self-deception', category: 'risk', score: 0.92 }),
@@ -202,7 +202,7 @@ describe('strategy engine', () => {
       confidence: 0.4,
     }
 
-    const strategy = selectStrategy({
+    const { strategy } = selectStrategy({
       interpretation,
       patterns: [],
       profile: makeProfile(),
@@ -231,7 +231,7 @@ describe('strategy engine', () => {
       confidence: 0.78,
     }
 
-    const strategy = selectStrategy({
+    const { strategy } = selectStrategy({
       interpretation,
       patterns: [
         makePattern({ key: 'risk:avoidance', name: 'avoidance', category: 'risk', score: 0.9, occurrences: 4 }),
@@ -269,7 +269,7 @@ describe('strategy engine', () => {
       confidence: 0.8,
     }
 
-    const repeated = selectStrategy({
+    const { strategy: repeated } = selectStrategy({
       interpretation,
       patterns: [makePattern({ key: 'risk:pressure', name: 'pressure', category: 'risk', score: 0.75 })],
       profile: makeProfile(),
@@ -300,7 +300,7 @@ describe('strategy engine', () => {
       confidence: 0.77,
     }
 
-    const strategy = selectStrategy({
+    const { strategy } = selectStrategy({
       interpretation,
       patterns: [makePattern({ key: 'risk:pressure-retreat', name: 'pressure-retreat', category: 'risk', score: 0.92 })],
       profile: makeProfile(),
@@ -466,7 +466,7 @@ describe('strategy engine', () => {
       confidence: 0.81,
     }
 
-    const strategy = selectStrategy({
+    const { strategy } = selectStrategy({
       interpretation,
       patterns: [makePattern({ key: 'risk:pressure', name: 'pressure', category: 'risk', score: 0.78 })],
       profile: makeProfile(),
@@ -506,7 +506,8 @@ describe('strategy engine', () => {
       },
     })
 
-    expect(result.strategy.promptNotes.join(' ').toLowerCase()).toContain('associative')
+    // THC at 0.95 produces "TELJES RAMBLING MÓD" directive in the prompt notes (Hungarian)
+    expect(result.strategy.promptNotes.join(' ').toLowerCase()).toContain('rambling')
     expect(result.behavior.generation.temperature).toBeGreaterThan(0.7)
   })
 })

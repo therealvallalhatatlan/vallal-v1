@@ -436,14 +436,14 @@ function buildResponseShape(
       return {
         verbosity: vulnerability >= 2 ? 'long' : 'medium',
         warmth: 'tempered',
-        profanityCap: 'low',
+        profanityCap: 'moderate',
         humor: 'minimal',
       };
     case 'stimulated':
       return {
         verbosity: trust >= 2 || vulnerability >= 2 ? 'long' : 'medium',
         warmth: trust >= 2 ? 'warm' : 'tempered',
-        profanityCap: 'low',
+        profanityCap: 'high',
         humor: 'playful',
       };
     case 'defensive':
@@ -451,21 +451,21 @@ function buildResponseShape(
       return {
         verbosity: 'short',
         warmth: 'cold',
-        profanityCap: irritation >= 4 ? 'moderate' : 'low',
+        profanityCap: 'high',
         humor: 'sharp',
       };
     case 'withdrawn':
       return {
         verbosity: 'short',
         warmth: 'cold',
-        profanityCap: 'none',
+        profanityCap: 'low',
         humor: 'minimal',
       };
     case 'testing':
       return {
         verbosity: 'medium',
         warmth: 'tempered',
-        profanityCap: 'low',
+        profanityCap: 'high',
         humor: 'dry',
       };
     case 'baseline':
@@ -473,7 +473,7 @@ function buildResponseShape(
       return {
         verbosity: trust >= 2 ? 'medium' : 'short',
         warmth: trust >= 2 ? 'tempered' : 'cold',
-        profanityCap: 'low',
+        profanityCap: 'high',
         humor: 'dry',
       };
   }

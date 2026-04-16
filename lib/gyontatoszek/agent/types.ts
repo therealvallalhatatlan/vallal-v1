@@ -58,7 +58,7 @@ export interface MemoryEvent {
 
 export interface InterpretationResult {
   normalizedInput: string;
-  primaryIntent: 'confession' | 'question' | 'challenge' | 'connection' | 'unknown';
+  primaryIntent: 'confession' | 'question' | 'challenge' | 'connection' | 'self_reference' | 'unknown';
   emotionalTone: 'neutral' | 'vulnerable' | 'guarded' | 'tense' | 'playful';
   patterns: Pattern[];
   extractedTopics: string[];
@@ -167,6 +167,7 @@ export interface AgentTurnContext {
   runtimeState?: RuntimeState;
   ragContext?: RetrievedMemoryFragment[];
   strategy: Strategy;
+  weightTrace?: Record<string, number>;
   action?: AgentAction | null;
   distortion?: DistortionHook | null;
   distortionState?: DistortionState;

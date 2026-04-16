@@ -138,7 +138,7 @@ export interface BehaviorDecision {
 export interface ResponseShape {
   verbosity: 'short' | 'medium' | 'long';
   warmth: 'cold' | 'tempered' | 'warm';
-  profanityCap: 'none' | 'low' | 'moderate';
+  profanityCap: 'none' | 'low' | 'moderate' | 'high';
   humor: 'dry' | 'sharp' | 'playful' | 'minimal';
 }
 

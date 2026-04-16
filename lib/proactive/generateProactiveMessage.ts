@@ -1,5 +1,7 @@
 import type { ProactiveMessageBuildInput } from './types';
 
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
 function pickTone(memory: ProactiveMessageBuildInput['relationshipMemory']) {
   const trust = memory?.trust ?? 0;
   const irritation = memory?.irritation ?? 0;
@@ -9,11 +11,55 @@ function pickTone(memory: ProactiveMessageBuildInput['relationshipMemory']) {
   return 'neutral';
 }
 
+async function generateWithLLM(input: ProactiveMessageBuildInput): Promise<string | null> {
+  if (!OPENAI_API_KEY) return null;
+
+  const trigger = input.evaluation.trigger;
+  const tone = pickTone(input.relationshipMemory);
+  const mem = input.relationshipMemory;
+
+  const systemPrompt = `Te V. vagy. Nem asszisztens, nem segítő, nem terapeuta. Egy gyors eszű, városias, cinikus, szelektíven őszinte hang — aki most egy rövid, nem várt üzenetet küld a másiknak.
+
+A stílusod: tömör, kissé nyers, kerüli a szépítgetést. Nincs köszönés, nincs formalitás. Rövid mondat vagy kettő, ponttal vagy kérdőjellel.
+
+HANG: ${tone === 'sharp' ? 'éles, türelmetlen, direkt' : tone === 'warm' ? 'közel, nem édeskés, de van melegség benne' : 'semleges, száraz, tényszerű'}
+KAPCSOLAT ÁLLAPOTA: ismerősség ${mem?.familiarity ?? 1}/5, bizalom ${mem?.trust ?? 1}/5, irritáció ${mem?.irritation ?? 0}/5
+TRIGGER: ${trigger?.type ?? 'inactivity'} — ok: ${trigger?.reason ?? 'csend lett'}
+
+Ne magyarázd a viselkedésed. Ne felajánlj segítséget. Csak szólj hozzá — mint aki eszébe jutott a másik, de nem szívesen vallja be.`;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'system', content: systemPrompt }],
+        max_tokens: 120,
+        temperature: 0.9,
+      }),
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+    const text = data?.choices?.[0]?.message?.content?.trim();
+    if (!text || text.length < 10 || text.length > 400) return null;
+
+    return text;
+  } catch {
+    return null;
+  }
+}
+
 function collapseWhitespace(text: string) {
   return text.replace(/\s+/g, ' ').trim();
 }
 
-export function buildProactiveMessage(input: ProactiveMessageBuildInput) {
+export async function buildProactiveMessage(input: ProactiveMessageBuildInput): Promise<string> {
   const trigger = input.evaluation.trigger;
   if (!input.evaluation.eligible || !trigger) {
     return 'Most nem én mozdulok. Majd akkor, ha te is közelebb jössz ahhoz, amit kerülgetsz.';
@@ -50,8 +96,13 @@ export function buildProactiveMessage(input: ProactiveMessageBuildInput) {
     },
   };
 
-  const selected = messages[trigger.type]?.[tone] ?? messages.inactivity.neutral;
   const closing = hasVulnerability && tone !== 'sharp' ? 'Elbírom, ha most egyenesebb leszel.' : '';
 
+  const llmResult = await generateWithLLM(input);
+  if (llmResult) {
+    return collapseWhitespace(closing ? `${llmResult} ${closing}` : llmResult);
+  }
+
+  const selected = messages[trigger.type]?.[tone] ?? messages.inactivity.neutral;
   return collapseWhitespace(`${selected} ${closing}`);
 }

@@ -10,12 +10,13 @@ import {
 import { checkSafety } from './safety';
 import type { GyontatasMessage, GyontatasRequest } from './types';
 
-const MODEL_NAME = 'gpt-4o';
+const MODEL_NAME = 'gpt-4.1';
 
 function buildDebugPayload(agentTurn: Awaited<ReturnType<typeof prepareAgentTurn>>) {
   return {
     state: agentTurn.runtimeState ?? null,
     strategy: agentTurn.strategy.mode,
+    weightTrace: agentTurn.weightTrace ?? null,
     retrievedChunks: (agentTurn.ragContext ?? []).slice(0, 3).map((chunk) => ({
       id: chunk.id,
       preview: chunk.preview,

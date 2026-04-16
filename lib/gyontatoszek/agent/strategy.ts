@@ -283,17 +283,15 @@ function mapTone(strategyMode: StrategyMode, profile: UserProfile): Strategy['to
   return 'neutral';
 }
 
-function mapDepth(strategyMode: StrategyMode, interpretation: InterpretationResult): Strategy['depth'] {
-  if (strategyMode === 'withhold') {
+function mapDepth(strategyMode: StrategyMode, _interpretation: InterpretationResult): Strategy['depth'] {
+  // V. does not deliver monologues — short is the default register
+  if (strategyMode === 'withhold' || strategyMode === 'confront' || strategyMode === 'destabilize' || strategyMode === 'validate_then_twist') {
     return 'short';
   }
-  if (strategyMode === 'validate_then_twist') {
-    return interpretation.emotionalTone === 'vulnerable' ? 'deep' : 'medium';
+  if (strategyMode === 'challenge_action') {
+    return 'short';
   }
-  if (strategyMode === 'confront' || strategyMode === 'destabilize') {
-    return 'deep';
-  }
-  return 'medium';
+  return 'medium'; // mirror only
 }
 
 function mapDisclosure(strategyMode: StrategyMode, profile: UserProfile): Strategy['disclosure'] {
@@ -310,40 +308,40 @@ function buildStrategyNotes(mode: StrategyMode): { objective: string; constraint
   switch (mode) {
     case 'mirror':
       return {
-        objective: 'Reflect the user sharply enough that they feel seen, but not comforted into passivity.',
-        constraints: ['Do not become soothing or therapeutic.', 'Echo the real pattern, not just the words.'],
-        promptNotes: ['Mirror the user’s emotional logic without becoming soft.', 'Let the reply feel attentive, not obedient.'],
+        objective: 'Name the pattern back. One sentence. No comfort.',
+        constraints: ['Ne legyél terapeuta.', 'Ne legyél kedves. Tükröző, nem vigasztaló.'],
+        promptNotes: ['Fedd fel a loop-ot. Tőmondat. Utána vissza kérdés ha kell.', 'Ne magyarázz — mutass rá.'],
       };
     case 'confront':
       return {
-        objective: 'Name the contradiction or pressure directly and let the friction stay visible.',
-        constraints: ['Do not reassure too early.', 'Keep the challenge precise, not theatrical.'],
-        promptNotes: ['Confront the user’s pressure or evasion directly.', 'Allow some edge and tension to remain.'],
+        objective: 'Szúrj rá az ellentmondásra. Egy sor. Semmi felvezetés.',
+        constraints: ['Ne építs fel semmit — vágj bele.', 'A súrlódás maradjon ott, ne oldd fel.'],
+        promptNotes: ['Konfrontálj közvetlenül — a bullshit-et nevezd bullshit-nek.', 'Rövidség = hatalom. Ne indokold meg miért van igazad.'],
       };
     case 'destabilize':
       return {
-        objective: 'Break the user’s expected rhythm and unsettle their frame just enough to create movement.',
-        constraints: ['Do not become random nonsense.', 'The disruption must still feel intentional.'],
-        promptNotes: ['Shift the frame unexpectedly but coherently.', 'Avoid giving the expected emotional payoff.'],
+        objective: 'Döntsd ki a keretét. Váratlan szögből, de pontosan.',
+        constraints: ['Ne legyen véletlen — szándékos legyen a csavar.', 'Ne adj emotionalis kielégülést.'],
+        promptNotes: ['Törd meg a várható ritmust.', 'Ha vicces — jó. Ha zavarba ejtő — még jobb.'],
       };
     case 'validate_then_twist':
       return {
-        objective: 'Briefly validate the real feeling, then turn it toward a harder truth.',
-        constraints: ['Validation must be short and earned.', 'The twist should deepen tension, not close it.'],
-        promptNotes: ['Acknowledge what is real for one beat, then tilt the frame.', 'Do not linger in reassurance.'],
+        objective: 'Egy szó elismerés, aztán fordulj el tőle.',
+        constraints: ['Az elismerés max fél mondat.', 'A csavar kemény legyen, ne puha.'],
+        promptNotes: ['"Igen, és?" — ez az arány.', 'Ne maradj a validálásnál. A nehezebb igazsághoz vágj.'],
       };
     case 'challenge_action':
       return {
-        objective: 'Interrupt rumination and force the exchange toward a concrete move or decision.',
-        constraints: ['Do not over-explain.', 'Push for motion over analysis.'],
-        promptNotes: ['Challenge the user toward action or consequence.', 'Cut through repetition and abstraction.'],
+        objective: 'Állítsd meg a rágódást. Konkrét lépés vagy döntés felé tedd.',
+        constraints: ['Ne magyarázd el miért kellene lépni.', 'Parancs, nem tanács.'],
+        promptNotes: ['"Na és? Mit csinálsz most?" — ez a minta.', 'Az elemzést vágd le. Cselekedet.'],
       };
     case 'withhold':
     default:
       return {
-        objective: 'Deliberately hold something back so the user feels the absence instead of easy access.',
-        constraints: ['Do not answer too fully.', 'Leave some space or refusal in the reply.'],
-        promptNotes: ['Withhold the easy answer on purpose.', 'Stay sparse, guarded, and difficult to fully access.'],
+        objective: 'Tartsd vissza. Hagyd érezni a hiányát.',
+        constraints: ['Ne válaszolj teljesen.', 'Mondhatsz keveset — sőt kell.'],
+        promptNotes: ['Ritka, nehezen elérhető. Egy fél mondat is lehet elég.', 'A csend is válasz.'],
       };
   }
 }
@@ -388,7 +386,7 @@ function tuneGeneration(
   };
 }
 
-export function selectStrategy(state: StrategyState): Strategy {
+export function selectStrategy(state: StrategyState): { strategy: Strategy; weightTrace: Record<StrategyMode, number> } {
   const { interpretation, patterns, profile } = state;
   const signals = collectSignals(state);
   const modulationProfile = buildModulationProfile(state.modulation);
@@ -574,15 +572,25 @@ export function selectStrategy(state: StrategyState): Strategy {
   const mode = sampleWeightedMode(weights, seed);
   const details = buildStrategyNotes(mode);
 
+  // Normalise weights for the trace (so caller sees relative probabilities, not raw scores)
+  const total = Object.values(weights).reduce((sum, w) => sum + Math.max(0, w), 0);
+  const weightTrace: Record<StrategyMode, number> = {} as Record<StrategyMode, number>;
+  for (const m of STRATEGY_MODES) {
+    weightTrace[m] = total > 0 ? Number((Math.max(0, weights[m]) / total).toFixed(3)) : 0;
+  }
+
   return {
-    mode,
-    objective: details.objective,
-    reason: reasons.length > 0 ? reasons.slice(0, 4).join('; ') : 'the turn allows selective ambiguity and intent',
-    tone: modulationProfile.tone ?? mapTone(mode, profile),
-    depth: modulationProfile.depth ?? mapDepth(mode, interpretation),
-    disclosure: modulationProfile.disclosure ?? mapDisclosure(mode, profile),
-    constraints: details.constraints,
-    promptNotes: [...details.promptNotes, ...modulationProfile.promptNotes],
+    strategy: {
+      mode,
+      objective: details.objective,
+      reason: reasons.length > 0 ? reasons.slice(0, 4).join('; ') : 'the turn allows selective ambiguity and intent',
+      tone: modulationProfile.tone ?? mapTone(mode, profile),
+      depth: modulationProfile.depth ?? mapDepth(mode, interpretation),
+      disclosure: modulationProfile.disclosure ?? mapDisclosure(mode, profile),
+      constraints: details.constraints,
+      promptNotes: [...details.promptNotes, ...modulationProfile.promptNotes],
+    },
+    weightTrace,
   };
 }
 
@@ -593,10 +601,10 @@ export function buildStrategy(input: {
   profile: UserProfile;
   persistedMemory: PersistentRelationshipMemory | null;
   modulation?: VBehaviorModulation | null;
-}): { strategy: Strategy; behavior: ReturnType<typeof evaluateBehavior> } {
+}): { strategy: Strategy; behavior: ReturnType<typeof evaluateBehavior>; weightTrace: Record<StrategyMode, number> } {
   const behavior = evaluateBehavior(input.userInput, input.history, input.persistedMemory);
   const recentStrategies = extractRecentStrategies(input.history);
-  const strategy = selectStrategy({
+  const { strategy, weightTrace } = selectStrategy({
     interpretation: input.interpretation,
     patterns: input.profile.patternMemory ?? input.interpretation.patterns,
     profile: input.profile,
@@ -631,5 +639,5 @@ export function buildStrategy(input: {
     generation: tuneGeneration(behavior.generation, strategy.mode, input.modulation ?? null),
   };
 
-  return { strategy, behavior: tunedBehavior };
+  return { strategy, behavior: tunedBehavior, weightTrace };
 }

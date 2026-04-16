@@ -46,7 +46,6 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     strategy: strategyResult.strategy.mode,
     behaviorIntensity: strategyResult.behavior.state.intensity,
   });
-
   const existingMetadata = (input.conversationMetadata && typeof input.conversationMetadata === 'object'
     ? (input.conversationMetadata as Record<string, unknown>)
     : {}) as Record<string, unknown>;
@@ -93,6 +92,7 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     runtimeState,
     ragContext,
     strategy: strategyResult.strategy,
+    weightTrace: strategyResult.weightTrace,
     action,
     distortion: distortion.activeHook,
     distortionState: distortion.nextState,

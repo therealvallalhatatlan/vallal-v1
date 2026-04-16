@@ -29,7 +29,7 @@ const MODULATION_PRESETS: Array<{ label: string; description: string; value: VBe
     value: { alcohol: 0.04, amphetamine: 0.88, thc: 0.12, dopamine: 0.68 },
   },
   {
-    label: 'Enervált/flegma',
+    label: 'Másnapos',
     description: 'szétszórt és messze, halvány hallucinatív szál — fehér kutyák és figyelmi crash',
     value: { alcohol: 0.20, amphetamine: 0.06, thc: 0.78, dopamine: 0.09 },
   },

@@ -102,7 +102,7 @@ export async function runProactiveAgent(input: RunProactiveAgentInput = {}): Pro
 
     if (evaluation.eligible && evaluation.trigger) {
       eligible += 1;
-      preview = buildProactiveMessage({
+      preview = await buildProactiveMessage({
         evaluation,
         userEmail: conversation.user_email ?? null,
         relationshipMemory: extractRelationshipMemory(conversation),
@@ -111,6 +111,7 @@ export async function runProactiveAgent(input: RunProactiveAgentInput = {}): Pro
 
       const delivery = await sendProactiveMessage({
         conversationId: conversation.id,
+        userId: conversation.user_id ?? null,
         body: preview,
         trigger: evaluation.trigger,
         dryRun,

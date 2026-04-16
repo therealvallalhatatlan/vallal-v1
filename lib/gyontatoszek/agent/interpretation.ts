@@ -82,8 +82,25 @@ export function interpretTurn(input: string, history: GyontatasMessage[]): Inter
     });
   }
 
+  if (/ki vagy|gép vagy|robot|valójában|vállalhatatlan|lelked|érzéseid|programozód|ki épített|ki csinált|honnan jöttél|mi vagy te|tudatos vagy|csak egy gép/i.test(input)) {
+    patterns.push({
+      key: 'intent:self_reference',
+      name: 'self_reference',
+      category: 'intent',
+      score: 0.9,
+      confidence: 0.9,
+      emotionalWeight: 0.1,
+      occurrences: 1,
+      lastSeenAt: now,
+      evidence: ['identity/creator query'],
+      summary: "The user is asking about V.'s nature, origin, or creator.",
+    });
+  }
+
   let primaryIntent: InterpretationResult['primaryIntent'] = 'unknown';
-  if (patterns.some((pattern) => pattern.name === 'vulnerability')) {
+  if (patterns.some((pattern) => pattern.name === 'self_reference')) {
+    primaryIntent = 'self_reference';
+  } else if (patterns.some((pattern) => pattern.name === 'vulnerability')) {
     primaryIntent = 'confession';
   } else if (patterns.some((pattern) => pattern.name === 'pressure')) {
     primaryIntent = 'challenge';
