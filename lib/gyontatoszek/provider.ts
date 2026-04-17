@@ -7,7 +7,7 @@ interface AIResponseOptions {
 }
 
 export async function getAIResponse(messages: any[], options: AIResponseOptions = {}) {
-  const model = openai('gpt-4.1');
+  const model = openai('gpt-5.4');
   const result = await streamText({
     model,
     messages,

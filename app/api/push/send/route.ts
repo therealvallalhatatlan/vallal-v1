@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT ?? 'mailto:noreply@vallalhatatlan.online',
-  process.env.VAPID_PUBLIC_KEY ?? '',
-  process.env.VAPID_PRIVATE_KEY ?? '',
-);
+function initVapid() {
+  const subject = process.env.VAPID_SUBJECT ?? 'mailto:noreply@vallalhatatlan.online';
+  const publicKey = process.env.VAPID_PUBLIC_KEY ?? '';
+  const privateKey = process.env.VAPID_PRIVATE_KEY ?? '';
+  if (!publicKey || !privateKey) {
+    throw new Error('VAPID keys not configured');
+  }
+  webpush.setVapidDetails(subject, publicKey, privateKey);
+}
 
 // Internal endpoint — protected by CRON_SECRET_TOKEN, not public
 // POST /api/push/send
@@ -15,6 +19,12 @@ export async function POST(req: NextRequest) {
   const token = authHeader.replace(/^Bearer\s+/i, '');
   if (!token || token !== process.env.CRON_SECRET_TOKEN) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+
+  try {
+    initVapid();
+  } catch {
+    return NextResponse.json({ error: 'vapid_not_configured' }, { status: 500 });
   }
 
   let body: { userId?: string; title?: string; body?: string; url?: string };
