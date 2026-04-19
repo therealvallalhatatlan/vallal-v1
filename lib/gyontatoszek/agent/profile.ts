@@ -153,11 +153,3 @@ export function computeDepthTier(familiarity: number, trust: number): 0 | 1 | 2 
   if (familiarity >= 1) return 1;
   return 0;
 }
-
-export function computeDepthTier(familiarity: number, trust: number): 0 | 1 | 2 | 3 | 4 {
-  if (familiarity >= 4 && trust >= 3) return 4;
-  if (familiarity >= 3 && trust >= 2) return 3;
-  if (familiarity >= 2 && trust >= 1) return 2;
-  if (familiarity >= 1) return 1;
-  return 0;
-}
