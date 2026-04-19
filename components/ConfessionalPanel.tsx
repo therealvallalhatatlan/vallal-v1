@@ -452,6 +452,7 @@ export default function ConfessionalPanel() {
   const [preThoughts, setPreThoughts] = useState<string[]>([]);
   const [shadowText, setShadowText] = useState<string>('');
   const [dismissedAtCount, setDismissedAtCount] = useState(0);
+  const [depthTier, setDepthTier] = useState<number>(0);
 
   // Default to open on desktop (lg: 1024px+), closed on mobile
   useEffect(() => {
@@ -649,6 +650,9 @@ export default function ConfessionalPanel() {
       }
 
       // Capture follow-up hint before stream consumption (headers available immediately)
+      const rawDepthTier = res.headers.get('x-depth-tier');
+      if (rawDepthTier) setDepthTier(Number(rawDepthTier));
+
       const rawFollowUpHint = res.headers.get('x-follow-up-hint');
       const followUpHint = rawFollowUpHint ? (() => { try { return decodeURIComponent(rawFollowUpHint); } catch { return null; } })() : null;
 
@@ -829,9 +833,23 @@ export default function ConfessionalPanel() {
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex flex-col gap-2">
               <p className="text-[10px] uppercase tracking-[0.3em] text-lime-300/65">Vállalhatatlan</p>
-              <h1 className="text-balance text-2xl text-neutral-700 md:text-3xl">
-                v3.0
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-balance text-2xl text-neutral-700 md:text-3xl">
+                  v3.0
+                </h1>
+                {depthTier > 0 && (
+                  <div className="mb-0.5 flex self-end items-center gap-[3px]" title={`mélységi szint: ${depthTier}`}>
+                    {[1, 2, 3, 4].map((t) => (
+                      <span
+                        key={t}
+                        className={`h-[3px] w-[3px] rounded-full transition-all duration-700 ${
+                          t <= depthTier ? 'bg-lime-300/70' : 'bg-white/10'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-3 py-2 ring-1 ring-white/8 transition-opacity duration-200">

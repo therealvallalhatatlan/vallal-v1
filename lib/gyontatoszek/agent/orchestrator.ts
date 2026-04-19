@@ -4,7 +4,7 @@ import { analyzeInput, finalizeRuntimeState } from './analyzeInput';
 import { selectDistortionHook, updateDistortionState } from './distortion';
 import { selectExemplars } from './exemplars';
 import { buildMemoryContext } from './memory';
-import { updateProfile } from './profile';
+import { updateProfile, computeDepthTier } from './profile';
 import { interpretTurn } from './interpretation';
 import { searchRelevantChunks } from './rag';
 import { generateResponseStream } from './response';
@@ -135,6 +135,7 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     secretCodeJustRevealed: !!secretCodeResult,
     returningUser,
     hoursSinceLastVisit: hoursSinceLastVisit ?? null,
+    depthTier: computeDepthTier(profile.familiarity, profile.trust),
   };
 }
 

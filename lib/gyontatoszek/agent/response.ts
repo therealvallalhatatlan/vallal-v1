@@ -153,6 +153,17 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
       ? `- VISSZATÉRŐ: ${Math.round(context.hoursSinceLastVisit)} órája volt utoljára; a profil megvan, a minták megvannak — ha organikus, éreztetheted hogy folytatódik valami, de ne közöld explicit hogy "visszatértél" vagy "üdvözöllek"`
       : null,
     (() => {
+      const tier = context.depthTier ?? 0;
+      const lines: Record<number, string> = {
+        0: '- MÉLYSÉG [0 / idegen]: első körök; V méri a terepet; semmi önreferencia, semmi mélység — csak mér',
+        1: '- MÉLYSÉG [1 / ismerős]: van néhány körünk; V kezdi megjegyezni a mintákat; egy-egy önreferencia megengedett, de nem szükséges',
+        2: '- MÉLYSÉG [2 / belépő]: van már alap; V elkezdheti nevesíteni amit lát — nem csak visszatükröz, hanem direkt megjegyez; a visszatérő témák már megvannak',
+        3: '- MÉLYSÉG [3 / mélyebb]: van közös történet; V látja a dinamikákat; képes direkt nevet adni a pattern-nek mindenféle kerülgetés nélkül; a konfrontáció nem vad, hanem pontos',
+        4: '- MÉLYSÉG [4 / bizalmas]: ritka mélység; V megengedhet egy pillanatnyi valódi bizonytalanságot magáról, ha organikusan ott van — de csak ha az az üzenet maga is azt hívja elő',
+      };
+      return lines[tier] ?? lines[0];
+    })(),
+    (() => {
       const selfContradictChance = ((context.history.length * 13 + context.input.length * 7) % 100) / 100;
       const eligible = context.strategy.mode === 'destabilize' || context.strategy.mode === 'validate_then_twist';
       return eligible && selfContradictChance > 0.62

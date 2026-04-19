@@ -546,6 +546,40 @@ export function selectStrategy(state: StrategyState): { strategy: Strategy; weig
     weights.validate_then_twist += 0.55;
   }
 
+  // Depth tier weight modifiers — unlocks richer strategy space as trust deepens
+  const depthTier =
+    profile.familiarity >= 4 && profile.trust >= 3 ? 4 :
+    profile.familiarity >= 3 && profile.trust >= 2 ? 3 :
+    profile.familiarity >= 2 && profile.trust >= 1 ? 2 :
+    profile.familiarity >= 1 ? 1 : 0;
+
+  if (depthTier === 0) {
+    // Stranger: reserved, less confrontational, more reflective
+    weights.mirror += 0.4;
+    weights.withhold += 0.5;
+    weights.confront -= 0.35;
+    weights.destabilize -= 0.2;
+  } else if (depthTier === 1) {
+    // Acquaintance: slight warmth, patterns starting to emerge
+    weights.mirror += 0.2;
+    weights.validate_then_twist += 0.25;
+  } else if (depthTier === 2) {
+    // Entry: can challenge with care, names what it sees
+    weights.validate_then_twist += 0.55;
+    weights.confront += 0.25;
+  } else if (depthTier === 3) {
+    // Deeper: direct pattern-naming, earned confrontation
+    weights.validate_then_twist += 0.65;
+    weights.destabilize += 0.45;
+    weights.confront += 0.35;
+  } else if (depthTier === 4) {
+    // Confidant: deep mirror, rare honesty, less withholding
+    weights.mirror += 0.8;
+    weights.validate_then_twist += 0.5;
+    weights.withhold -= 0.55;
+    reasons.push('deep trust tier — rare honesty is on the table');
+  }
+
   if (profile.irritation >= 2.2 || profile.relationalStance === 'volatile') {
     weights.withhold += 0.85;
     weights.confront += 0.65;

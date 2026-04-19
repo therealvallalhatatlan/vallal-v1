@@ -271,6 +271,7 @@ export async function handleGyontatas(req: GyontatasRequest) {
     agentTurn.preThoughts,
   );
   responseHeaders['x-has-shadow'] = '1';
+  responseHeaders['x-depth-tier'] = String(agentTurn.depthTier ?? 0);
 
   return new Response(responseStream, { headers: responseHeaders });
 }

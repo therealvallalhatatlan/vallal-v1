@@ -182,4 +182,5 @@ export interface AgentTurnContext {
   secretCodeJustRevealed?: boolean;
   returningUser?: boolean;
   hoursSinceLastVisit?: number | null;
+  depthTier?: 0 | 1 | 2 | 3 | 4;
 }
