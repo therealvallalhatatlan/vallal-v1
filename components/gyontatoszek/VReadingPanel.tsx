@@ -114,6 +114,7 @@ interface VReadingPanelProps {
   onModulationChange?: (value: VBehaviorModulation) => void;
   onClose?: () => void;
   preThoughts?: string[];
+  userEmail?: string | null;
 }
 
 function clamp(value: number, min = 0, max = 1) {
@@ -250,8 +251,8 @@ function SliderControl({
   );
 }
 
-export function VReadingPanel({ insight, modulation, onModulationChange, onClose, preThoughts }: VReadingPanelProps) {
-  const [activeTab, setActiveTab] = useState<ReadingTab>('user');
+export function VReadingPanel({ insight, modulation, onModulationChange, onClose, preThoughts, userEmail }: VReadingPanelProps) {
+  const [activeTab, setActiveTab] = useState<ReadingTab>('self');
   const currentModulation = modulation ?? EMPTY_MODULATION;
   const title = activeTab === 'user' ? 'Ahogyan V lát téged' : activeTab === 'self' ? 'Ahogyan V érzi magát' : 'V beállításai';
 
@@ -266,7 +267,7 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
     <aside className="flex h-full flex-col bg-[linear-gradient(180deg,rgba(12,16,12,0.96)_0%,rgba(8,10,9,0.98)_100%)] text-neutral-100">
       <div className="flex items-start justify-between gap-3 border-b border-white/8 px-4 py-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-lime-300/70">V látlelete</p>
+          <p className="text-[10px] uppercase tracking-[0.28em] text-lime-300/70">{userEmail ?? 'V látlelete'}</p>
           <h2 className="mt-1 text-lg text-neutral-100">{title}</h2>
         </div>
         {onClose ? (

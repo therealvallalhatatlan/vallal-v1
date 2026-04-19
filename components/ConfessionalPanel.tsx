@@ -13,11 +13,13 @@ import {
 } from '@/lib/gyontatoszek/types';
 import { ChatContainer } from './gyontatoszek/ChatContainer';
 import { Composer } from './gyontatoszek/Composer';
+import { ExportBanner } from './gyontatoszek/ExportBanner';
 import { MessageList } from './gyontatoszek/MessageList';
 import { VReadingPanel, type VReadingInsight } from './gyontatoszek/VReadingPanel';
 import PushPermissionPrompt from './gyontatoszek/PushPermissionPrompt';
 import { createClient } from '@/lib/browser';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
+import { sendMessagesAsJsonl } from '@/utils/exportFineTuning';
 
 const SESSION_STORAGE_KEY = 'gyontatoszek-session-id';
 
@@ -412,10 +414,11 @@ function UserAvatar({ url }: { url?: string }) {
 export default function ConfessionalPanel() {
   const router = useRouter();
   const { session, loading: loadingSession } = useSessionGuard() as {
-    session: { access_token?: string; user?: { email?: string | null; user_metadata?: { avatar_url?: string } } } | null;
+    session: { access_token?: string; user?: { id?: string; email?: string | null; user_metadata?: { avatar_url?: string } } } | null;
     loading: boolean;
   };
   const supabaseRef = useRef(createClient());
+  const storageKeyRef = useRef(SESSION_STORAGE_KEY);
   const [confession, setConfession] = useState('');
   const [messages, setMessages] = useState<GyontatasMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -427,6 +430,7 @@ export default function ConfessionalPanel() {
   const [modulation, setModulation] = useState<VBehaviorModulation>(DEFAULT_V_MODULATION);
   const [preThoughts, setPreThoughts] = useState<string[]>([]);
   const [shadowText, setShadowText] = useState<string>('');
+  const [dismissedAtCount, setDismissedAtCount] = useState(0);
 
   // Default to open on desktop (lg: 1024px+), closed on mobile
   useEffect(() => {
@@ -438,6 +442,10 @@ export default function ConfessionalPanel() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const autoScrollRef = useRef(true);
   const readingInsight = useMemo(() => buildReadingInsight(messages), [messages]);
+
+  const userQuestionCount = messages.filter(m => m.sender_role === 'user').length;
+  const showExportBanner = userQuestionCount >= 10;
+  const canExport = userQuestionCount >= 10 && userQuestionCount - dismissedAtCount >= 10;
 
   function scrollThreadToBottom(behavior: ScrollBehavior = 'auto') {
     const node = threadRef.current;
@@ -474,7 +482,7 @@ export default function ConfessionalPanel() {
       if (data.session_id && data.session_id !== currentSessionId) {
         setSessionId(data.session_id);
         try {
-          window.localStorage.setItem(SESSION_STORAGE_KEY, data.session_id);
+          window.localStorage.setItem(storageKeyRef.current, data.session_id);
         } catch {}
       }
       setMessages(data.messages || []);
@@ -497,13 +505,17 @@ export default function ConfessionalPanel() {
       return;
     }
 
+    const userId = session?.user?.id;
+    const storageKey = userId ? `${SESSION_STORAGE_KEY}-${userId}` : SESSION_STORAGE_KEY;
+    storageKeyRef.current = storageKey;
+
     let storedSessionId = '';
 
     try {
-      storedSessionId = window.localStorage.getItem(SESSION_STORAGE_KEY) || '';
+      storedSessionId = window.localStorage.getItem(storageKey) || '';
       if (!storedSessionId) {
         storedSessionId = generateSessionId();
-        window.localStorage.setItem(SESSION_STORAGE_KEY, storedSessionId);
+        window.localStorage.setItem(storageKey, storedSessionId);
       }
     } catch {
       storedSessionId = generateSessionId();
@@ -762,7 +774,8 @@ export default function ConfessionalPanel() {
       <ChatContainer
         scrollRef={threadRef}
         header={
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex flex-col gap-2">
               <p className="text-[10px] uppercase tracking-[0.3em] text-lime-300/65">Vállalhatatlan</p>
               <h1 className="text-balance text-2xl text-neutral-700 md:text-3xl">
@@ -795,6 +808,19 @@ export default function ConfessionalPanel() {
               </button>
             </div>
           </div>
+          {showExportBanner && (
+            <ExportBanner
+              pairCount={userQuestionCount}
+              canExport={canExport}
+              onExport={async () => {
+                const token = session?.access_token;
+                if (!token) throw new Error('Nincs token');
+                await sendMessagesAsJsonl(messages, token, userQuestionCount);
+              }}
+              onDismiss={() => setDismissedAtCount(userQuestionCount)}
+            />
+          )}
+          </div>
         }
         aside={
           <VReadingPanel
@@ -803,6 +829,7 @@ export default function ConfessionalPanel() {
             onModulationChange={setModulation}
             onClose={() => setShowReading(false)}
             preThoughts={preThoughts}
+            userEmail={session?.user?.email}
           />
         }
         asideOpen={showReading}

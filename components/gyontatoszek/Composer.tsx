@@ -40,7 +40,7 @@ export function Composer({
               maxLength={MAX_GYONTATAS_MESSAGE_LENGTH}
               disabled={isDisabled}
               rows={1}
-              placeholder="Ird le, mit cipelsz..."
+              placeholder="Írj ide"
               className="max-h-48 min-h-[52px] flex-1 resize-none bg-transparent px-3 py-3 font-mono text-[15px] leading-6 text-neutral-100 outline-none placeholder:text-neutral-500"
             />
             <button

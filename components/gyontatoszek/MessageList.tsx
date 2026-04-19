@@ -31,31 +31,20 @@ function MessageListComponent({ messages, loading, sending, thcLevel = 0, preTho
           Ez nem egy chatbot.
         </h2>
         <p className="mt-2 text-base leading-7 text-neutral-400">
-          V. egy ágens: figyel és tanul.
+          V. egy ágens: figyel, tanul. Képes döntéseket hozni. A gondolatait is láthatod. Tanítsuk be együtt, okos kérdésekkel és őszinte emberi gondolatokkal.{' '}
+          <a
+            href="https://github.com/therealvallalhatatlan/vallal-v1/blob/main/README.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-lime-400/70 underline underline-offset-2 hover:text-lime-300"
+          >
+            Github
+          </a>
         </p>
-
-        <ul className="mt-8 flex flex-col gap-3">
-          {[
-            ['Emlékezik', 'Minden váltás között megőrzi a mintáidat és az előzményeket.'],
-            ['Elemzi a viselkedésedet', 'Azonosítja az ismétlődő motívumokat, elakadásokat, nyitott hurkokat.'],
-            ['Stratégiát vált', 'Tükröz, nekimegy, visszatart, kimozdít — ahogy a helyzet kívánja.'],
-            ['Figyeli az érzelmi állapotát is', 'Saját hangulata, feszültsége és reakciói valósak — és változnak.'],
-            ['Nyomot hagy', 'Amit mondasz, beépül. Felhasználja. Nem felejt.'],
-          ].map(([title, desc]) => (
-            <li key={title} className="flex gap-3 rounded-xl border border-white/6 bg-white/[0.025] px-4 py-3">
-              <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-lime-400/70" />
-              <div>
-                <p className="text-sm font-medium text-neutral-200">{title}</p>
-                <p className="mt-0.5 text-sm leading-6 text-neutral-500">{desc}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
 
         <div className="mt-8 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3">
           <p className="text-sm leading-6 text-amber-200/80">
-            <span className="font-semibold text-amber-200">Jól gondold meg, mit kérdezel.</span>{' '}
-            V. tanul belőle. Hogy mire lesz jó, azt majd meglátjuk.
+            *Fogalmam sincs mire lesz jó. Majd meglátjuk.
           </p>
         </div>
       </div>
