@@ -32,6 +32,16 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     userId: input.userId,
     userEmail: input.userEmail ?? null,
   });
+  // Returning user detection — uses stored lastInteractionAt before updateProfile overwrites it
+  const storedLastInteraction = memory.baseProfile.lastInteractionAt;
+  const hoursSinceLastVisit = storedLastInteraction
+    ? (Date.now() - new Date(storedLastInteraction).getTime()) / (1000 * 60 * 60)
+    : null;
+  const returningUser =
+    hoursSinceLastVisit !== null &&
+    hoursSinceLastVisit > 4 &&
+    (memory.baseProfile.familiarity > 0 || memory.patternMemory.length > 0);
+
   const profile = updateProfile(memory.baseProfile, interpretation, memory.memoryEvents, memory.patternMemory);
   const strategyResult = buildStrategy({
     userInput: input.input,
@@ -123,6 +133,8 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     preThoughts,
     secretCodeTrigger: secretCodeResult?.directive ?? null,
     secretCodeJustRevealed: !!secretCodeResult,
+    returningUser,
+    hoursSinceLastVisit: hoursSinceLastVisit ?? null,
   };
 }
 

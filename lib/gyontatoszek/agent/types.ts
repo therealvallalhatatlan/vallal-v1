@@ -180,4 +180,6 @@ export interface AgentTurnContext {
   preThoughts?: string[];
   secretCodeTrigger?: string | null;
   secretCodeJustRevealed?: boolean;
+  returningUser?: boolean;
+  hoursSinceLastVisit?: number | null;
 }

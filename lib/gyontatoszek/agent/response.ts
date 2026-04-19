@@ -149,6 +149,9 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
     context.secretCodeTrigger
       ? `- SECRET DIRECTIVE [egyszer, most]: ${context.secretCodeTrigger}`
       : null,
+    context.returningUser && context.hoursSinceLastVisit
+      ? `- VISSZATÉRŐ: ${Math.round(context.hoursSinceLastVisit)} órája volt utoljára; a profil megvan, a minták megvannak — ha organikus, éreztetheted hogy folytatódik valami, de ne közöld explicit hogy "visszatértél" vagy "üdvözöllek"`
+      : null,
     (() => {
       const selfContradictChance = ((context.history.length * 13 + context.input.length * 7) % 100) / 100;
       const eligible = context.strategy.mode === 'destabilize' || context.strategy.mode === 'validate_then_twist';

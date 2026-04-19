@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -80,6 +80,27 @@ const STRATEGY_HINTS: Record<string, string> = {
   validate_then_twist: 'Előbb megértést ad, aztán finoman átfordítja a nézőpontodat egy kényelmetlenebb igazság felé.',
   challenge_action: 'Nem maradna a szavaknál: abba az irányba tol, ahol már lépned is kellene.',
   withhold: 'V szándékosan visszafogja magát, hogy te töltsd ki a csendet azzal, amit eddig kerültél.',
+};
+
+const EMOTION_HUE: Record<string, number> = {
+  vulnerable: 35,
+  tense: 5,
+  guarded: 220,
+  playful: 160,
+  neutral: 90,
+  fear: 270,
+  anger: 10,
+  numb: 200,
+};
+
+const VSTATE_INTENSITY_BOOST: Record<string, number> = {
+  confrontational: 0.45,
+  'rare-honesty': 0.35,
+  stimulated: 0.25,
+  defensive: 0.15,
+  testing: 0.1,
+  baseline: 0,
+  withdrawn: -0.1,
 };
 
 const STANCE_LABELS: Record<string, string> = {
@@ -443,6 +464,26 @@ export default function ConfessionalPanel() {
   const autoScrollRef = useRef(true);
   const readingInsight = useMemo(() => buildReadingInsight(messages), [messages]);
 
+  const ambientState = useMemo(() => {
+    const latest = [...messages]
+      .reverse()
+      .find((m) => m.sender_role === 'assistant' && asRecord(m.metadata)?.behavior);
+    if (!latest) return null;
+    const behavior = asRecord(asRecord(latest.metadata)?.behavior);
+    const rs = asRecord(behavior?.runtimeState);
+    const rel = asRecord(behavior?.relationship) ?? asRecord(behavior?.persistentMemory);
+    return {
+      emotion: typeof rs?.emotion === 'string' ? rs.emotion : 'neutral',
+      intensity: typeof rs?.intensity === 'number' ? (rs.intensity as number) : 0.4,
+      vState: typeof rel?.state_name === 'string' ? rel.state_name : 'baseline',
+    };
+  }, [messages]);
+
+  const ambientHue = ambientState ? (EMOTION_HUE[ambientState.emotion] ?? 90) : 90;
+  const ambientIntensity = ambientState
+    ? Math.min(1, Math.max(0, ambientState.intensity + (VSTATE_INTENSITY_BOOST[ambientState.vState] ?? 0)))
+    : 0;
+
   const userQuestionCount = messages.filter(m => m.sender_role === 'user').length;
   const showExportBanner = userQuestionCount >= 10;
   const canExport = userQuestionCount >= 10 && userQuestionCount - dismissedAtCount >= 10;
@@ -740,7 +781,17 @@ export default function ConfessionalPanel() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, ease: 'easeOut' }}
       className="w-full px-2 py-3 md:px-4 md:py-5"
+      style={{ '--v-hue': ambientHue, '--v-intensity': ambientIntensity } as React.CSSProperties}
     >
+      {/* Ambient emotional state glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          background: `radial-gradient(ellipse 90% 55% at 50% 100%, hsla(${ambientHue}, 55%, 35%, ${(ambientIntensity * 0.11).toFixed(3)}) 0%, transparent 68%)`,
+          transition: 'background 4s ease-in-out',
+        }}
+      />
       {showSupport && (
         <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-lime-300/15 bg-[linear-gradient(90deg,rgba(140,255,160,0.08),rgba(255,255,255,0.02))] px-4 py-2 text-sm text-neutral-200 shadow-[0_8px_30px_rgba(0,0,0,0.18)]">
           <div className="min-w-0">
