@@ -12,17 +12,17 @@ interface ReadingMetric {
 type ReadingTab = 'user' | 'self' | 'modulation';
 
 const EMPTY_MODULATION: VBehaviorModulation = {
-  alcohol: 0.22,
+  alcohol: 0.48,
   amphetamine: 0.38,
-  thc: 0.52,
+  thc: 0.72,
   dopamine: 0.32,
 };
 
 const MODULATION_PRESETS: Array<{ label: string; description: string; value: VBehaviorModulation }> = [
   {
     label: 'Szokásos',
-    description: 'alapállapot — enyhén lazult, valamelyest fókuszált, kicsit asszociatív sodródó',
-    value: { alcohol: 0.22, amphetamine: 0.38, thc: 0.52, dopamine: 0.32 },
+    description: 'alapállapot — elírások, csapongás, figyelemzavar az alaprétegben',
+    value: { alcohol: 0.48, amphetamine: 0.38, thc: 0.72, dopamine: 0.32 },
   },
   {
     label: 'Hiperfixált',

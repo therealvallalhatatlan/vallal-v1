@@ -23,9 +23,9 @@ import { sendMessagesAsJsonl } from '@/utils/exportFineTuning';
 const SESSION_STORAGE_KEY = 'gyontatoszek-session-id';
 
 const DEFAULT_V_MODULATION: VBehaviorModulation = {
-  alcohol: 0.22,
+  alcohol: 0.48,
   amphetamine: 0.38,
-  thc: 0.52,
+  thc: 0.72,
   dopamine: 0.32,
 };
 
