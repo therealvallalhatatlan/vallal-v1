@@ -178,4 +178,6 @@ export interface AgentTurnContext {
   triggerDirective?: string | null;
   followUpHint?: string | null;
   preThoughts?: string[];
+  secretCodeTrigger?: string | null;
+  secretCodeJustRevealed?: boolean;
 }

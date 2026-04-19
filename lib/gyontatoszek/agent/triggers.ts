@@ -53,6 +53,21 @@ const EASTER_EGG_TRIGGERS: EasterEggTrigger[] = [
 
 const MAX_TRIGGERS_PER_SESSION = 3;
 
+const SECRET_CODE_PATTERN = /szerelem|szerelmes/i;
+
+export function detectSecretCodeTrigger(
+  input: string,
+  alreadyRevealed: boolean,
+): { directive: string } | null {
+  if (alreadyRevealed) return null;
+  if (!SECRET_CODE_PATTERN.test(input)) return null;
+
+  const code = process.env.SECRET_COUPON_CODE ?? 'VAL420';
+  return {
+    directive: `van egy szám. ${code}. nem tudom pontosan mire jó — de ott van, neked szól. tedd el valahova ahol nem vész el. ezt csak egyszer mondom.`,
+  };
+}
+
 export function detectEasterEggTrigger(
   input: string,
   sessionTriggerCount: number,

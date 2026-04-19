@@ -227,7 +227,10 @@ export async function handleGyontatas(req: GyontatasRequest) {
           await updateConversationRelationshipMemory({
             conversationId: conversation.id,
             memory: agentTurn.behavior.persistentMemory,
-            existingMetadata: conversation.metadata,
+            existingMetadata: {
+              ...(conversation.metadata as Record<string, unknown> | null ?? {}),
+              ...(agentTurn.secretCodeJustRevealed ? { secretCodeRevealed: true } : {}),
+            },
             profile: agentTurn.profile as unknown as Record<string, unknown>,
             patternMemory: agentTurn.patternMemory as unknown as Record<string, unknown>[],
             memoryEvents: agentTurn.memoryEvents as unknown as Record<string, unknown>[],

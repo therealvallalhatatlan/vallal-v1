@@ -146,6 +146,9 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
     context.triggerTag && context.triggerDirective
       ? `- EGYEDI DIREKTÍVA [${context.triggerTag}]: ${context.triggerDirective}`
       : null,
+    context.secretCodeTrigger
+      ? `- SECRET DIRECTIVE [egyszer, most]: ${context.secretCodeTrigger}`
+      : null,
     (() => {
       const selfContradictChance = ((context.history.length * 13 + context.input.length * 7) % 100) / 100;
       const eligible = context.strategy.mode === 'destabilize' || context.strategy.mode === 'validate_then_twist';

@@ -9,7 +9,7 @@ import { interpretTurn } from './interpretation';
 import { searchRelevantChunks } from './rag';
 import { generateResponseStream } from './response';
 import { buildStrategy } from './strategy';
-import { detectEasterEggTrigger } from './triggers';
+import { detectEasterEggTrigger, detectSecretCodeTrigger } from './triggers';
 import type { AgentTurnContext, DistortionState, UserProfile } from './types';
 
 interface PrepareAgentTurnInput {
@@ -70,6 +70,10 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
   const sessionTriggerCount = typeof existingMetadata.triggerCount === 'number' ? existingMetadata.triggerCount : 0;
   const easterEgg = detectEasterEggTrigger(input.input, sessionTriggerCount);
 
+  // Secret code easter egg (once per conversation)
+  const secretCodeRevealed = existingMetadata.secretCodeRevealed === true;
+  const secretCodeResult = detectSecretCodeTrigger(input.input, secretCodeRevealed);
+
   // Build follow-up hint when a follow_up_interrupt hook fires
   const followUpHint = buildFollowUpHint(distortion.activeHook, profile);
   const preThoughts = buildPreThoughts(interpretation, strategyResult.strategy, distortion.activeHook);
@@ -117,6 +121,8 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     triggerDirective: easterEgg?.directive ?? null,
     followUpHint: followUpHint ?? null,
     preThoughts,
+    secretCodeTrigger: secretCodeResult?.directive ?? null,
+    secretCodeJustRevealed: !!secretCodeResult,
   };
 }
 
