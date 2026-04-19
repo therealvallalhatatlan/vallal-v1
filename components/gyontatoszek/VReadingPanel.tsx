@@ -168,6 +168,61 @@ function SectionTitle({ label, tooltip }: { label: string; tooltip?: string }) {
     </p>
   );
 }
+
+// ── User narrative helpers ────────────────────────────────────────────────────
+
+const TRAIT_EMOJI: Record<string, string> = {
+  'hirtelen mozdulat': '⚡',
+  'kerülőív': '🌀',
+  'kontrolléhség': '🔒',
+  'visszaigazoláséhség': '🪞',
+  'rágódás': '🔁',
+  'új ingerre mozdul': '✨',
+};
+
+const STANCE_LABEL: Record<string, string> = {
+  wary: 'óvatos',
+  guarded: 'visszafogott',
+  engaged: 'bevonódott',
+  open: 'nyitott',
+  volatile: 'robbanékony',
+};
+
+function buildUserNarrative(insight: VReadingInsight): string {
+  const intensityAdv =
+    insight.intensity > 0.7 ? 'erősen' : insight.intensity > 0.4 ? 'közepesen' : 'halkan';
+  const trustHu =
+    insight.trust < 0.8 ? 'szinte semmi'
+    : insight.trust < 1.8 ? 'formálódik'
+    : insight.trust < 3.0 ? 'van alap'
+    : insight.trust < 4.2 ? 'erős'
+    : 'mély';
+  const openHu =
+    insight.openness < 0.8 ? 'zárt'
+    : insight.openness < 1.8 ? 'tartózkodó'
+    : insight.openness < 3.0 ? 'részben nyitott'
+    : insight.openness < 4.2 ? 'nyílt'
+    : 'teljesen nyitott';
+  const stanceHu = STANCE_LABEL[insight.stance] ?? insight.stance;
+  const friction =
+    insight.irritation < 0.8 ? null
+    : insight.irritation < 2.0 ? 'Van egy kis feszültség.'
+    : insight.irritation < 3.2 ? 'Érezhető a súrlódás.'
+    : 'Komoly feszültség van köztetek.';
+  const topTrait = insight.traits
+    .filter(t => t.value > 0.55)
+    .sort((a, b) => b.value - a.value)[0];
+  const traitLine = topTrait
+    ? `A legerősebb húzás amit V lát benned: ${TRAIT_EMOJI[topTrait.label] ?? '·'} ${topTrait.label}.`
+    : null;
+  return [
+    `Most ${intensityAdv} ${insight.emotion} V szerint.`,
+    `Köztetek a bizalom ${trustHu}, a hangulatod ${openHu} — V-vel szemben ${stanceHu} vagy.`,
+    friction,
+    traitLine,
+  ].filter(Boolean).join(' ');
+}
+
 function describeBlend(modulation: VBehaviorModulation) {
   const parts: string[] = [];
 
@@ -411,80 +466,90 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
           </div>
         ) : activeTab === 'user' ? (
           <>
+            {/* Narratív összefoglaló */}
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <SectionTitle label="Most benned" tooltip="A te aktuális érzelmi állapotod, ahogy V értelmezi — az utolsó üzenet alapján" />
-              <div className="mt-3 flex items-end justify-between gap-3">
-                <div>
-                  <p className="text-xl text-lime-100">{insight.emotion}</p>
-                  <p className="mt-1 text-xs text-neutral-400">V most így olvassa az alaphangulatod.</p>
-                </div>
-                <InsightBadge label={insight.strategy} hint={insight.strategyHint} />
+              <div className="mb-3 flex items-center justify-between">
+                <SectionTitle label="V olvasata" tooltip="Összefoglalás V szemszögéből — az érzelmek, viszony és belső erők értelmező szövegbe fordítva" />
+                <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] text-lime-200/80">
+                  {insight.emotion}
+                </span>
               </div>
-
-              <div className="mt-4">
-                <div className="mb-1.5 flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-neutral-400">
-                  <span><WithTooltip tip="Mennyire erős érzelmileg ez a kör — 0% csendes, 100% csúcsra járatott">intenzitás</WithTooltip></span>
-                  <span className="text-lime-200/80">{Math.round(insight.intensity * 100)}%</span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-white/6">
+              <p className="text-sm leading-7 text-neutral-200">{buildUserNarrative(insight)}</p>
+              <div className="mt-4 flex items-center gap-3">
+                <span className="text-[11px] text-neutral-600">🔋</span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/6">
                   <div
                     className="h-full rounded-full bg-[linear-gradient(90deg,rgba(115,255,140,0.2),rgba(115,255,140,0.95))]"
                     style={{ width: intensityWidth(insight.intensity) }}
                   />
                 </div>
+                <span className="text-[11px] tabular-nums text-neutral-500">{Math.round(insight.intensity * 100)}%</span>
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <SectionTitle label="Köztetek most" tooltip="A kettőtök viszonyának mért állapota — mennyire feszes, bizalmas vagy akadályokkal teli" />
-              <div className="mt-3 space-y-3">
-                <MetricBar label="bizalom" value={insight.trust} tooltip="Mennyit engedett már közel magához V — lassan épül, gyorsan romlik" />
-                <MetricBar label="súrlódás" value={insight.irritation} tooltip="Felhalmozódott feszültség kettőtök között — nem feltétlenül rossz, néha ettől lesz éles" />
-                <MetricBar label="nyitottság" value={insight.openness} tooltip="Mennyire érzi V, hogy valódi dolgokról beszélsz — nem performanszból, hanem tényleg" />
-              </div>
-              <p className="mt-3 text-xs text-neutral-400"><WithTooltip tip="V belső minősítése a kettőtök viszonyáról ebben a pillanatban">kapcsolati állás</WithTooltip>: <span className="text-neutral-200">{insight.stance}</span></p>
-            </section>
+            {/* Trait pillek */}
+            {insight.traits.filter(t => t.value > 0.35).length > 0 && (
+              <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                <SectionTitle label="Amit V lát benned" tooltip="Belső erők, amiket V a mondásaid mintájából következtet ki — nem adatból, hanem ismétlésből és irányból" />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {insight.traits
+                    .filter(t => t.value > 0.35)
+                    .sort((a, b) => b.value - a.value)
+                    .map(t => {
+                      const emoji = TRAIT_EMOJI[t.label] ?? '·';
+                      const cls =
+                        t.value > 0.75
+                          ? 'border-lime-300/35 text-lime-200/90'
+                          : t.value > 0.55
+                          ? 'border-white/15 text-neutral-200'
+                          : 'border-white/8 text-neutral-400';
+                      return (
+                        <WithTooltip key={t.label} tip={METRIC_TOOLTIPS[t.label] ?? t.label}>
+                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition ${cls}`}>
+                            <span>{emoji}</span>
+                            <span>{t.label}</span>
+                          </span>
+                        </WithTooltip>
+                      );
+                    })}
+                </div>
+              </section>
+            )}
 
-            <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <SectionTitle label="Domináns mintázatok" tooltip="Ismétlődő témák vagy reakciók, amelyeket V visszatérőnek lát benned a korábbi körök alapján" />
-              <div className="mt-3 flex flex-wrap gap-2">
-                {insight.motifs.length > 0 ? insight.motifs.map((motif) => (
-                  <span
-                    key={motif}
-                    className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[11px] text-neutral-200"
-                  >
-                    {motif}
-                  </span>
-                )) : <span className="text-xs text-neutral-500">még alakul</span>}
-              </div>
-            </section>
+            {/* Visszatérő témák */}
+            {insight.motifs.length > 0 && (
+              <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                <SectionTitle label="Visszatérő témák" tooltip="Ismétlődő témák vagy reakciók, amelyeket V visszatérőnek lát benned a korábbi körök alapján" />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {insight.motifs.map(motif => (
+                    <span key={motif} className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-[11px] text-neutral-300">
+                      # {motif}
+                    </span>
+                  ))}
+                </div>
+              </section>
+            )}
 
-            <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <SectionTitle label="Törésvonalak" tooltip="Nyitott hurkok — félbehagyott témák vagy kerülött pontok, amiket V észrevett, de még visszatartott" />
-              <div className="mt-3 space-y-2">
-                {insight.openLoops.length > 0 ? insight.openLoops.map((loop) => (
-                  <div key={loop} className="rounded-xl bg-black/20 px-3 py-2 text-sm text-neutral-200 ring-1 ring-white/6">
-                    {loop}
-                  </div>
-                )) : <p className="text-xs text-neutral-500">nincs még elég nyitott hurok</p>}
-              </div>
-            </section>
+            {/* Nyitott hurkok */}
+            {insight.openLoops.length > 0 && (
+              <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                <SectionTitle label="Nyitott hurkok" tooltip="Félbehagyott témák vagy kerülött pontok, amiket V észrevett, de még visszatartott" />
+                <div className="mt-3 space-y-2">
+                  {insight.openLoops.map(loop => (
+                    <div key={loop} className="flex items-start gap-2 text-sm text-neutral-300">
+                      <span className="mt-0.5 shrink-0 text-neutral-600">↳</span>
+                      <span>{loop}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
-            <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-              <SectionTitle label="Rejtett húzások" tooltip="Belső erők, amiket V a mondásaid mintájából következtet ki — nem adatból, hanem ismétlésből és irányból" />
-              <div className="mt-3 space-y-2">
-                {insight.traits.length > 0 ? insight.traits.map((trait) => (
-                  <MetricBar key={trait.label} label={trait.label} value={trait.value} max={1} tooltip={METRIC_TOOLTIPS[trait.label]} />
-                )) : <p className="text-xs text-neutral-500">még nincs elég jel</p>}
-              </div>
-            </section>
-
+            {/* V sejtése */}
             {insight.messageCount !== undefined && insight.messageCount >= 10 && insight.trust > 3.5 && insight.vGuess ? (
               <section className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] p-4">
                 <SectionTitle label="V sejtése rólad" tooltip="Ennyi kör után V összerakott valamit. Ez az ő hipotézise — nem diagnózis, nem tény." />
-                <div className="mt-3 rounded-xl bg-black/25 px-4 py-3 text-sm italic text-amber-100/85 ring-1 ring-amber-400/15">
-                  {insight.vGuess}
-                </div>
+                <p className="mt-3 text-sm italic leading-7 text-amber-100/85">"{insight.vGuess}"</p>
               </section>
             ) : insight.messageCount !== undefined && insight.messageCount >= 10 && insight.trust > 3.5 ? (
               <section className="rounded-2xl border border-dashed border-amber-400/15 bg-amber-400/[0.02] p-4">
