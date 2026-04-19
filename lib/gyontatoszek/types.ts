@@ -157,4 +157,5 @@ export interface BehaviorEvaluation {
 
 export type SafetyResult =
   | { safe: true }
-  | { safe: false; reason: string; fallback: string };
+  | { safe: false; phase: 'tease'; reason: string; tease: string }
+  | { safe: false; phase: 'confirm'; reason: string; fallback: string };

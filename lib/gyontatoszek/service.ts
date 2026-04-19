@@ -110,41 +110,45 @@ export async function handleGyontatas(req: GyontatasRequest) {
     ];
   }
 
-  const safety = checkSafety(req.confession);
+  // Detect pending tease category from the last assistant message
+  const lastAssistantMsg = [...history].reverse().find(
+    (m) => m.sender_role === 'assistant' && (m.metadata as Record<string, unknown> | null)?.safety_tease,
+  );
+  const pendingCategory = (lastAssistantMsg?.metadata as Record<string, unknown> | null)?.safety_tease as import('./safety').SafetyCategory | undefined;
+
+  const safety = checkSafety(req.confession, pendingCategory);
   if (!safety.safe) {
+    const isTease = safety.phase === 'tease';
+    const responseBody = isTease ? safety.tease : safety.fallback;
+    const safetyMeta = isTease
+      ? { source: 'gyontatoszek', timestamp: new Date().toISOString(), safety_tease: safety.reason }
+      : { source: 'gyontatoszek', timestamp: new Date().toISOString(), safety_reason: safety.reason };
+
     if (storageMode === 'conversation') {
       await createConversationMessage({
         conversation_id: conversation.id,
         sender_role: 'assistant',
-        body: safety.fallback,
+        body: responseBody,
         model: MODEL_NAME,
-        safety_flag: true,
-        metadata: {
-          source: 'gyontatoszek',
-          timestamp: new Date().toISOString(),
-          safety_reason: safety.reason,
-        },
+        safety_flag: !isTease,
+        metadata: safetyMeta,
       });
     } else {
       await saveLegacyConfessionExchange({
         session_id: req.session_id,
         confession: req.confession,
-        response: safety.fallback,
+        response: responseBody,
         model: MODEL_NAME,
-        safety_flag: true,
-        metadata: {
-          source: 'gyontatoszek',
-          timestamp: new Date().toISOString(),
-          safety_reason: safety.reason,
-        },
+        safety_flag: !isTease,
+        metadata: safetyMeta,
       });
     }
 
     return createTextStreamResponse(
-      safety.fallback,
+      responseBody,
       conversation.session_id,
       undefined,
-      req.debug ? { state: null, strategy: 'safety_fallback', retrievedChunks: [] } : undefined,
+      req.debug ? { state: null, strategy: isTease ? 'safety_tease' : 'safety_fallback', retrievedChunks: [] } : undefined,
     );
   }
 
