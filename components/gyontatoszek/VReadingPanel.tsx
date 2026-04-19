@@ -35,6 +35,22 @@ const MODULATION_PRESETS: Array<{ label: string; description: string; value: VBe
   },
 ];
 
+const VTHOUGHT_PREFIX_TOOLTIPS: Record<string, string> = {
+  'láttam:': 'Mit olvasott ki V az üzenetedből — milyen szándékot, hangulati tónust és kockázatot azonosított',
+  'témacsomók:': 'Milyen konkrét témákat, motívumokat vett észre V a szövegben — ezekre fog visszautalni',
+  'miért ez a mód:': 'Miért választotta ezt a stratégiát — V saját belső indoklása a megközelítés mögött',
+  'cél:': 'Mi volt V tudatos célja a válasszal — mit akart kiváltani vagy elérni benned',
+  'belső note:': 'V privát megjegyzése önmagának a döntésről — nem szánt neked, mégis látod',
+  'torzítás:': 'Aktiválódott-e valamilyen ADHD-torzítás — tangent, interrupt, vagy más eltérítő mód',
+};
+
+function getVThoughtTooltip(thought: string): string | undefined {
+  for (const prefix of Object.keys(VTHOUGHT_PREFIX_TOOLTIPS)) {
+    if (thought.startsWith(prefix)) return VTHOUGHT_PREFIX_TOOLTIPS[prefix];
+  }
+  return undefined;
+}
+
 const METRIC_TOOLTIPS: Record<string, string> = {
   'hirtelen mozdulat': 'Impulzív döntések, hirtelen irányváltások mintázata — V már észlelt belőled ilyet',
   'kerülőív': 'Témák vagy érzések megkerülésének mintázata — amit inkább kikerülsz, mint szembenézel',
@@ -71,6 +87,11 @@ export interface VReadingInsight {
   vTopics: string[];
   vSignals: ReadingMetric[];
   updatedAt?: string | null;
+  tangentCount?: number;
+  focusLevel?: number;
+  vGuess?: string | null;
+  messageCount?: number;
+  vThoughts?: string[];
 }
 
 interface VReadingPanelProps {
@@ -78,6 +99,7 @@ interface VReadingPanelProps {
   modulation?: VBehaviorModulation;
   onModulationChange?: (value: VBehaviorModulation) => void;
   onClose?: () => void;
+  preThoughts?: string[];
 }
 
 function clamp(value: number, min = 0, max = 1) {
@@ -214,7 +236,7 @@ function SliderControl({
   );
 }
 
-export function VReadingPanel({ insight, modulation, onModulationChange, onClose }: VReadingPanelProps) {
+export function VReadingPanel({ insight, modulation, onModulationChange, onClose, preThoughts }: VReadingPanelProps) {
   const [activeTab, setActiveTab] = useState<ReadingTab>('user');
   const currentModulation = modulation ?? EMPTY_MODULATION;
   const title = activeTab === 'user' ? 'Ahogyan V lát téged' : activeTab === 'self' ? 'Ahogyan V érzi magát' : 'V beállításai';
@@ -425,9 +447,79 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
                 )) : <p className="text-xs text-neutral-500">még nincs elég jel</p>}
               </div>
             </section>
+
+            {insight.messageCount !== undefined && insight.messageCount >= 10 && insight.trust > 3.5 && insight.vGuess ? (
+              <section className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] p-4">
+                <SectionTitle label="V sejtése rólad" tooltip="Ennyi kör után V összerakott valamit. Ez az ő hipotézise — nem diagnózis, nem tény." />
+                <div className="mt-3 rounded-xl bg-black/25 px-4 py-3 text-sm italic text-amber-100/85 ring-1 ring-amber-400/15">
+                  {insight.vGuess}
+                </div>
+              </section>
+            ) : insight.messageCount !== undefined && insight.messageCount >= 10 && insight.trust > 3.5 ? (
+              <section className="rounded-2xl border border-dashed border-amber-400/15 bg-amber-400/[0.02] p-4">
+                <p className="text-xs text-amber-200/40">V összerak valamit. Hamarosan.</p>
+              </section>
+            ) : null}
           </>
         ) : (
           <>
+            {preThoughts && preThoughts.length > 0 ? (
+              <section className="rounded-2xl border border-lime-300/15 bg-lime-300/[0.03] p-4">
+                <SectionTitle label="V gondolatai" tooltip="Most dolgozik — ezek a válasz előtt keletkező belső töredékek" />
+                <ul className="mt-3 space-y-2">
+                  {preThoughts.map((thought, i) => (
+                    <li
+                      key={i}
+                      className="flex gap-2 rounded-xl bg-black/20 px-3 py-2 text-xs text-lime-300/60 ring-1 ring-lime-300/10 animate-pulse"
+                    >
+                      <span className="shrink-0 text-lime-300/30">—</span>
+                      <span>{thought}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : (
+              <section className="rounded-2xl border border-white/8 bg-white/[0.025] p-4">
+                <SectionTitle label="V gondolatai" tooltip="Az előző válasz előtt keletkezett belső értelmezési lépések — mit olvasott ki, miért ezt a stratégiát, mit akart elérni" />
+                {insight.vThoughts && insight.vThoughts.length > 0 ? (
+                  <ol className="mt-3 space-y-2">
+                    {insight.vThoughts.map((thought, i) => {
+                      const tip = getVThoughtTooltip(thought);
+                      return (
+                        <li
+                          key={i}
+                          className="flex gap-2 rounded-xl bg-black/20 px-3 py-2 text-xs text-neutral-400 ring-1 ring-white/5"
+                        >
+                          <span className="shrink-0 text-lime-300/30">{i + 1}.</span>
+                          {tip ? (
+                            <WithTooltip tip={tip}><span>{thought}</span></WithTooltip>
+                          ) : (
+                            <span>{thought}</span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                ) : (
+                  <p className="mt-3 text-xs text-neutral-600">még nincs feldolgozott üzenet</p>
+                )}
+              </section>
+            )}
+
+            {typeof insight.tangentCount === 'number' && insight.tangentCount > 0 ? (
+              <section className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
+                <SectionTitle label="V elkalandozásai" tooltip="Hányszor vesztette el a fonalat és tért vissza V ebben a sessionben — az ADHD mérhető" />
+                <div className="mt-2 text-sm text-neutral-400">
+                  {insight.tangentCount === 1
+                    ? 'V egyszer kalandozott el ma'
+                    : `V ma ${insight.tangentCount}× kalandozott el`}
+                </div>
+                {insight.tangentCount >= 3 ? (
+                  <div className="mt-1 text-[11px] text-lime-300/40">a THC erős ma</div>
+                ) : null}
+              </section>
+            ) : null}
+
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
               <SectionTitle label="Most V-ben" tooltip="Ahogy V önmagát érzékeli ebben a beszélgetésben — a saját belső állapota, nem a tiéd" />
               <div className="mt-3 flex items-end justify-between gap-3">
@@ -450,6 +542,21 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
                   />
                 </div>
               </div>
+
+              {typeof insight.focusLevel === 'number' ? (
+                <div className="mt-3">
+                  <div className="mb-1.5 flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-neutral-400">
+                    <span><WithTooltip tip="Ha az ismétlés magas vagy V irritált, a figyelem elkalandozhat">v fókusza</WithTooltip></span>
+                    <span className={insight.focusLevel > 0.5 ? 'text-lime-200/80' : 'text-amber-300/70'}>{Math.round(insight.focusLevel * 100)}%</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/6">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${insight.focusLevel > 0.5 ? 'bg-[linear-gradient(90deg,rgba(115,255,140,0.2),rgba(115,255,140,0.7))]' : 'bg-[linear-gradient(90deg,rgba(255,180,60,0.2),rgba(255,160,40,0.55))]'}`}
+                      style={{ width: intensityWidth(insight.focusLevel) }}
+                    />
+                  </div>
+                </div>
+              ) : null}
 
               <p className="mt-3 text-xs text-neutral-400"><WithTooltip tip="V érzelmi regisztere veled szemben ebben a pillanatban — ahogy közelít vagy épp távolodik">kapcsolati tónus</WithTooltip>: <span className="text-neutral-200">{insight.vTone}</span></p>
             </section>
@@ -483,6 +590,7 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
                 {insight.vTrigger ?? 'most még nem hagyott egyetlen éles nyomot sem'}
               </div>
             </section>
+
           </>
         )}
 

@@ -47,6 +47,29 @@ const STRATEGY_LABELS: Record<string, string> = {
   withhold: 'visszatart',
 };
 
+const INTENT_LABELS: Record<string, string> = {
+  confession: 'vallomás',
+  question: 'kérdés',
+  challenge: 'kihívás / szembesítés',
+  connection: 'kapcsolódás',
+  self_reference: 'önreferencia',
+  unknown: 'ismeretlen',
+};
+
+const TONE_LABELS: Record<string, string> = {
+  neutral: 'semleges',
+  vulnerable: 'sérülékeny',
+  guarded: 'óvatos',
+  tense: 'feszült',
+  playful: 'játékos',
+};
+
+const RISK_LABELS: Record<string, string> = {
+  low: 'alacsony',
+  medium: 'közepes',
+  high: 'magas',
+};
+
 const STRATEGY_HINTS: Record<string, string> = {
   mirror: 'V most inkább visszatükrözi, amit kimondasz, hogy jobban meghalld a saját mintádat.',
   confront: 'V itt direkt nekimegy az ellentmondásnak vagy az önáltatásnak, hogy kizökkentsen.',
@@ -154,6 +177,31 @@ function humanizeKey(value: string) {
   return value.replace(/[_-]+/g, ' ').trim();
 }
 
+function buildVGuess(params: {
+  traits: Array<{ label: string; value: number }>;
+  motifs: string[];
+  trust: number;
+}): string | null {
+  const topTrait = params.traits[0]?.label;
+  const topMotif = params.motifs[0];
+  const { trust } = params;
+
+  if (!topTrait && !topMotif) return null;
+
+  const options: string[] = [];
+  if (topTrait) {
+    options.push(`V-nek az a sejtése, hogy a "${topTrait}" nem szokás nálad, hanem valami régebbről jön.`);
+  }
+  if (topMotif) {
+    options.push(`V szerint a "${topMotif}" nem véletlen visszatérés — van mögötte valami, amihez még nem értél el.`);
+  }
+  if (trust > 3.5) {
+    options.push('Ennyi körből V-nek az az érzése: te nem segítséget keresel, hanem valakiit, aki nem tér ki.');
+  }
+
+  return options[0] ?? null;
+}
+
 function buildReadingInsight(messages: GyontatasMessage[]): VReadingInsight | null {
   const latestAssistant = [...messages]
     .reverse()
@@ -251,6 +299,62 @@ function buildReadingInsight(messages: GyontatasMessage[]): VReadingInsight | nu
       { label: 'ismétlés', value: typeof relationship?.repetition === 'number' ? relationship.repetition : 0 },
     ],
     updatedAt: latestAssistant.created_at,
+    tangentCount: typeof behavior?.tangentCount === 'number' ? (behavior.tangentCount as number) : undefined,
+    focusLevel: (() => {
+      const vInt = typeof relationship?.state_intensity === 'number'
+        ? clamp(relationship.state_intensity as number)
+        : typeof runtimeState?.intensity === 'number'
+          ? clamp(runtimeState.intensity as number)
+          : 0.35;
+      const rep = typeof relationship?.repetition === 'number' ? (relationship.repetition as number) : 0;
+      const irr = typeof relationship?.irritation === 'number' ? (relationship.irritation as number) : 0;
+      return clamp(vInt * (1 - Math.min(rep / 5, 0.6) * 0.5) * (1 - Math.min(irr / 5, 0.5) * 0.4));
+    })(),
+    vGuess: buildVGuess({ traits, motifs, trust: typeof relationship?.trust === 'number' ? (relationship.trust as number) : 0 }),
+    messageCount: messages.length,
+    vThoughts: (() => {
+      const thoughts: string[] = [];
+      const interp = asRecord(behavior?.interpretation);
+      const stratPlan = asRecord(behavior?.strategyPlan);
+      const decision = asRecord(behavior?.decision);
+
+      const intent = typeof interp?.primaryIntent === 'string' ? interp.primaryIntent : null;
+      const tone = typeof interp?.emotionalTone === 'string' ? interp.emotionalTone : null;
+      const risk = typeof interp?.riskLevel === 'string' ? interp.riskLevel : null;
+      const topics = Array.isArray(interp?.extractedTopics)
+        ? (interp.extractedTopics as unknown[]).filter((t): t is string => typeof t === 'string').slice(0, 3)
+        : [];
+
+      if (intent) {
+        thoughts.push(
+          `láttam: ${INTENT_LABELS[intent] ?? intent}${tone ? ` — hangulat: ${TONE_LABELS[tone] ?? tone}` : ''}${risk && risk !== 'low' ? ` — kockázat: ${RISK_LABELS[risk] ?? risk}` : ''}`
+        );
+      }
+
+      if (topics.length > 0) {
+        thoughts.push(`témacsomók: ${topics.map(humanizeKey).join(', ')}`);
+      }
+
+      const reason = typeof stratPlan?.reason === 'string' ? stratPlan.reason.trim() : null;
+      if (reason) thoughts.push(`miért ez a mód: ${reason}`);
+
+      const objective = typeof stratPlan?.objective === 'string' ? stratPlan.objective.trim() : null;
+      if (objective) thoughts.push(`cél: ${objective}`);
+
+      const rationale = typeof decision?.rationale === 'string' ? decision.rationale.trim() : null;
+      if (rationale && rationale !== reason && rationale !== objective) {
+        thoughts.push(`belső note: ${rationale}`);
+      }
+
+      const distortion = asRecord(behavior?.distortion);
+      const distortionCue = typeof distortion?.cue === 'string' ? distortion.cue.trim() : null;
+      const distortionType = typeof distortion?.type === 'string' ? distortion.type : null;
+      if (distortionType && distortionType !== 'none') {
+        thoughts.push(distortionCue ? `torzítás: ${distortionCue}` : `torzítás bekapcsolva: ${distortionType}`);
+      }
+
+      return thoughts;
+    })(),
   };
 }
 
@@ -270,6 +374,7 @@ export default function ConfessionalPanel() {
   const [error, setError] = useState<string | null>(null);
   const [showReading, setShowReading] = useState(false);
   const [modulation, setModulation] = useState<VBehaviorModulation>(DEFAULT_V_MODULATION);
+  const [preThoughts, setPreThoughts] = useState<string[]>([]);
 
   // Default to open on desktop (lg: 1024px+), closed on mobile
   useEffect(() => {
@@ -437,6 +542,18 @@ export default function ConfessionalPanel() {
         } catch {}
       }
 
+      // Capture follow-up hint before stream consumption (headers available immediately)
+      const rawFollowUpHint = res.headers.get('x-follow-up-hint');
+      const followUpHint = rawFollowUpHint ? (() => { try { return decodeURIComponent(rawFollowUpHint); } catch { return null; } })() : null;
+
+      const rawPreThoughts = res.headers.get('x-pre-thoughts');
+      if (rawPreThoughts) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(rawPreThoughts)) as unknown;
+          if (Array.isArray(parsed)) setPreThoughts(parsed as string[]);
+        } catch {}
+      }
+
       if (res.status === 401) {
         router.replace('/auth?from=/v3');
         return;
@@ -477,6 +594,20 @@ export default function ConfessionalPanel() {
       await loadHistory(returnedSessionId || sessionId, { preserveView: true });
       scrollThreadToBottom('auto');
       setLoadingHistory(false);
+      setPreThoughts([]);
+
+      // Schedule follow-up interrupt: V "remembers" something 3-5s after the main reply
+      if (followUpHint) {
+        const delay = 3000 + Math.random() * 2000;
+        setTimeout(() => {
+          setMessages((prev) => [
+            ...prev,
+            createOptimisticMessage(`follow-up-${Date.now()}`, 'assistant', followUpHint),
+          ]);
+          autoScrollRef.current = true;
+          window.requestAnimationFrame(() => scrollThreadToBottom('smooth'));
+        }, delay);
+      }
     } catch {
       setMessages((prev) =>
         prev.filter((message) => message.id !== optimisticUserId && message.id !== optimisticAssistantId)
@@ -540,7 +671,7 @@ export default function ConfessionalPanel() {
               </h1>
             </div>
 
-            <div className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.03] px-3 py-2 ring-1 ring-white/8 transition-opacity duration-200 md:min-w-[320px] md:justify-end lg:opacity-60 lg:hover:opacity-100">
+            <div className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.03] px-3 py-2 ring-1 ring-white/8 transition-opacity duration-200 md:min-w-[320px] md:justify-end">
               <div className="min-w-0">
                 <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Bejelentkezve</p>
                 <p className="truncate text-sm text-neutral-200">{session?.user?.email ?? 'ismeretlen user'}</p>
@@ -571,6 +702,7 @@ export default function ConfessionalPanel() {
             modulation={modulation}
             onModulationChange={setModulation}
             onClose={() => setShowReading(false)}
+            preThoughts={preThoughts}
           />
         }
         asideOpen={showReading}
@@ -590,7 +722,7 @@ export default function ConfessionalPanel() {
           </form>
         }
       >
-        <MessageList messages={messages} loading={loadingHistory} sending={sending} />
+        <MessageList messages={messages} loading={loadingHistory} sending={sending} thcLevel={modulation.thc} preThoughts={preThoughts} />
       </ChatContainer>
       <PushPermissionPrompt accessToken={session?.access_token} />
     </motion.div>

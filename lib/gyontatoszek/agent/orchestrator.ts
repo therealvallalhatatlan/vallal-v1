@@ -9,7 +9,8 @@ import { interpretTurn } from './interpretation';
 import { searchRelevantChunks } from './rag';
 import { generateResponseStream } from './response';
 import { buildStrategy } from './strategy';
-import type { AgentTurnContext, DistortionState } from './types';
+import { detectEasterEggTrigger } from './triggers';
+import type { AgentTurnContext, DistortionState, UserProfile } from './types';
 
 interface PrepareAgentTurnInput {
   input: string;
@@ -50,7 +51,13 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     ? (input.conversationMetadata as Record<string, unknown>)
     : {}) as Record<string, unknown>;
   const existingDistortion = (existingMetadata.distortionState ?? null) as DistortionState | null;
-  const nextDistortionState = updateDistortionState(existingDistortion, memory.memoryEvents, input.input);
+
+  // Queue tangent hook when novelty_seeking is high or THC modulation is active
+  const noveltySeeking = (profile.hiddenTraits as Record<string, { value: number } | undefined>)?.noveltySeeking?.value ?? 0;
+  const thcLevel = input.modulation?.thc ?? 0;
+  const queueTangent = noveltySeeking > 0.5 || thcLevel > 0.5;
+
+  const nextDistortionState = updateDistortionState(existingDistortion, memory.memoryEvents, input.input, undefined, { queueTangent });
   const distortion = selectDistortionHook({
     input: input.input,
     memoryEvents: memory.memoryEvents,
@@ -58,6 +65,14 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     strategyMode: strategyResult.strategy.mode,
     modulation: input.modulation ?? null,
   });
+
+  // Easter egg trigger detection
+  const sessionTriggerCount = typeof existingMetadata.triggerCount === 'number' ? existingMetadata.triggerCount : 0;
+  const easterEgg = detectEasterEggTrigger(input.input, sessionTriggerCount);
+
+  // Build follow-up hint when a follow_up_interrupt hook fires
+  const followUpHint = buildFollowUpHint(distortion.activeHook, profile);
+  const preThoughts = buildPreThoughts(interpretation, strategyResult.strategy, distortion.activeHook);
 
   const exemplars = selectExemplars(
     strategyResult.strategy.mode,
@@ -98,9 +113,79 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
     distortionState: distortion.nextState,
     exemplars,
     behavior: strategyResult.behavior,
+    triggerTag: easterEgg?.tag ?? null,
+    triggerDirective: easterEgg?.directive ?? null,
+    followUpHint: followUpHint ?? null,
+    preThoughts,
   };
 }
 
 export async function executeAgentResponse(context: AgentTurnContext) {
   return generateResponseStream(context);
+}
+
+function buildFollowUpHint(
+  hook: import('./types').DistortionHook | null,
+  profile: UserProfile,
+): string | null {
+  if (!hook || hook.type !== 'follow_up_interrupt') return null;
+
+  const topic = profile.recurringTopics[0] ?? hook.topic ?? null;
+  if (!topic || topic === 'mellékszál') return null;
+
+  const templates = [
+    `...egyébként — ${topic} még mindig ott kering.`,
+    `...visszatérve: ${topic}. ezt nem engedem el.`,
+    `...${topic}. erre majd visszajövök.`,
+    `...ja, és ${topic}. ezt ejtettük, de nem érdemes.`,
+  ];
+
+  const idx = Math.abs((topic.length * 7 + profile.recurringTopics.length * 3) % templates.length);
+  return templates[idx];
+}
+
+function buildPreThoughts(
+  interpretation: import('./types').InterpretationResult,
+  strategy: import('./types').Strategy,
+  distortion: import('./types').DistortionHook | null,
+): string[] {
+  const intentMap: Record<string, string[]> = {
+    confession: ['na ez egy vallomás', 'ezzel mi a fasz legyek', 'komolyan gondolja?'],
+    question: ['megint kérdez', 'erre van válaszom?', 'mit akar tudni'],
+    challenge: ['nekijön — rendben', 'mi a fasz ez most', 'megint ezt tolja'],
+    connection: ['közelebb akar jönni', 'hm. miért most', 'kapcsolódni próbál'],
+    self_reference: ['magáról mesél — ezt figyelni kell', 'hova vezet ez', 'ez fontos'],
+    unknown: ['nem értem mit akar', 'várj egy pillanat', 'mi ez pontosan'],
+  };
+
+  const toneMap: Record<string, string> = {
+    vulnerable: 'sérülékeny — ezt nem tépem szét',
+    tense: 'feszült — talán élesíteni kell',
+    playful: 'játszik — de mi van mögötte',
+    guarded: 'védekezik valami ellen',
+  };
+
+  const strategyMap: Record<string, string> = {
+    confront: 'neki kell menni, nem kerülni',
+    destabilize: 'ki kell billenteni',
+    validate_then_twist: 'előbb igen — aztán elfordítani',
+    challenge_action: 'lépésre kell tolni',
+    withhold: 'visszatartom, hadd üljön',
+  };
+
+  const thoughts: string[] = [];
+
+  const opts = intentMap[interpretation.primaryIntent] ?? intentMap.unknown;
+  const seed = (interpretation.normalizedInput.length * 7 + Math.round(interpretation.confidence * 100)) % opts.length;
+  thoughts.push(opts[seed]);
+
+  const toneTh = toneMap[interpretation.emotionalTone];
+  if (toneTh) thoughts.push(toneTh);
+
+  const stratTh = strategyMap[strategy.mode];
+  if (stratTh) thoughts.push(stratTh);
+
+  if (distortion?.type === 'tangent') thoughts.push('el kéne kalandoznom valahová');
+
+  return thoughts.slice(0, 4);
 }

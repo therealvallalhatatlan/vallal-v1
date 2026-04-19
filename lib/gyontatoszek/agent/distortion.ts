@@ -25,8 +25,12 @@ function pickCue(type: DistortionHook['type'], topic: string, event: MemoryEvent
     case 'delayed_callback':
       return `Something you said earlier is still echoing: ${event.summary}`;
     case 'pattern_slip':
-    default:
       return `You keep finding the same edge through ${topic || 'another angle'}.`;
+    case 'tangent':
+      return `TANGENT:${topic}`;
+    case 'follow_up_interrupt':
+    default:
+      return `FOLLOW_UP:${topic}:${event.summary.slice(0, 80)}`;
   }
 }
 
@@ -38,12 +42,14 @@ export function updateDistortionState(
   existing: DistortionState | null | undefined,
   events: MemoryEvent[],
   input: string,
-  now = new Date().toISOString()
+  now = new Date().toISOString(),
+  options?: { queueTangent?: boolean },
 ): DistortionState {
   const current: DistortionState = existing ?? {
     pendingHooks: [],
     cooldownUntilTurn: 0,
     turnCount: 0,
+    tangentCount: 0,
   };
 
   const nextTurnCount = current.turnCount + 1;
@@ -62,7 +68,9 @@ export function updateDistortionState(
         ? 'delayed_callback'
         : topic === 'control'
           ? 'pattern_slip'
-          : 'unexpected_recall';
+          : seededUnit(`${event.id}:type:${current.turnCount}`) > 0.82
+            ? 'follow_up_interrupt'
+            : 'unexpected_recall';
 
     pendingHooks.push({
       id: `${event.id}:hook`,
@@ -77,11 +85,42 @@ export function updateDistortionState(
     });
   }
 
+  // Queue a tangent hook if profile/modulation conditions are met and none is pending
+  if (
+    options?.queueTangent &&
+    !pendingHooks.some((hook) => hook.type === 'tangent' && !hook.triggered)
+  ) {
+    const syntheticEvent: MemoryEvent = {
+      id: `tangent:synthetic:${nextTurnCount}`,
+      conversationId: '',
+      kind: 'pattern',
+      summary: 'gondolatkalandozás',
+      topics: ['mellékszál'],
+      confidence: 1,
+      emotionalWeight: 0.5,
+      novelty: 0.85,
+      salience: 0.65,
+      createdAt: now,
+    };
+    pendingHooks.push({
+      id: `tangent:${nextTurnCount}`,
+      type: 'tangent',
+      topic: 'mellékszál',
+      cue: pickCue('tangent', 'mellékszál', syntheticEvent),
+      sourceEventId: syntheticEvent.id,
+      strength: 0.72,
+      turnsUntilEligible: 4,
+      createdAt: now,
+      triggered: false,
+    });
+  }
+
   return {
     pendingHooks: pendingHooks.slice(-8),
     cooldownUntilTurn: current.cooldownUntilTurn,
     turnCount: nextTurnCount,
     lastCue: current.lastCue,
+    tangentCount: current.tangentCount ?? 0,
   };
 }
 
@@ -124,9 +163,12 @@ export function selectDistortionHook(context: {
     pendingHooks: state.pendingHooks.map((hook) =>
       hook.id === candidate.id ? { ...hook, triggered: true } : hook
     ),
-    cooldownUntilTurn: state.turnCount + 2,
+    cooldownUntilTurn: state.turnCount + (candidate.type === 'tangent' ? 4 : 2),
     turnCount: state.turnCount,
     lastCue: candidate.cue,
+    tangentCount: candidate.type === 'tangent'
+      ? (state.tangentCount ?? 0) + 1
+      : (state.tangentCount ?? 0),
   };
 
   return {

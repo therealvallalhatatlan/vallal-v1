@@ -27,7 +27,7 @@ function buildDebugPayload(agentTurn: Awaited<ReturnType<typeof prepareAgentTurn
   };
 }
 
-function buildResponseHeaders(sessionId: string, action?: unknown, debugPayload?: unknown) {
+function buildResponseHeaders(sessionId: string, action?: unknown, debugPayload?: unknown, followUpHint?: string, preThoughts?: string[]) {
   const headers: Record<string, string> = {
     'Content-Type': 'text/plain; charset=utf-8',
     'x-session-id': sessionId,
@@ -39,6 +39,14 @@ function buildResponseHeaders(sessionId: string, action?: unknown, debugPayload?
 
   if (debugPayload) {
     headers['x-agent-debug'] = encodeURIComponent(JSON.stringify(debugPayload));
+  }
+
+  if (followUpHint) {
+    headers['x-follow-up-hint'] = encodeURIComponent(followUpHint);
+  }
+
+  if (preThoughts && preThoughts.length > 0) {
+    headers['x-pre-thoughts'] = encodeURIComponent(JSON.stringify(preThoughts));
   }
 
   return headers;
@@ -186,6 +194,7 @@ export async function handleGyontatas(req: GyontatasRequest) {
           action: agentTurn.action ?? null,
           distortion: agentTurn.distortion ?? null,
           appliedModulation: agentTurn.modulation ?? null,
+          tangentCount: agentTurn.distortionState?.tangentCount ?? 0,
         };
 
         if (storageMode === 'conversation') {
@@ -210,6 +219,9 @@ export async function handleGyontatas(req: GyontatasRequest) {
             patternMemory: agentTurn.patternMemory as unknown as Record<string, unknown>[],
             memoryEvents: agentTurn.memoryEvents as unknown as Record<string, unknown>[],
             distortionState: (agentTurn.distortionState ?? null) as unknown as Record<string, unknown> | null,
+            triggerCount: (typeof (conversation.metadata as Record<string, unknown> | null)?.triggerCount === 'number'
+              ? (conversation.metadata as Record<string, unknown>).triggerCount as number
+              : 0) + (agentTurn.triggerTag ? 1 : 0),
           });
         } else {
           await saveLegacyConfessionExchange({
@@ -240,6 +252,8 @@ export async function handleGyontatas(req: GyontatasRequest) {
       conversation.session_id,
       agentTurn.action ?? undefined,
       req.debug ? buildDebugPayload(agentTurn) : undefined,
+      agentTurn.followUpHint ?? undefined,
+      agentTurn.preThoughts,
     ),
   });
 }

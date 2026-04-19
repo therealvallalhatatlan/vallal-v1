@@ -129,7 +129,7 @@ export interface AgentAction {
 
 export interface DistortionHook {
   id: string;
-  type: 'unexpected_recall' | 'delayed_callback' | 'pattern_slip';
+  type: 'unexpected_recall' | 'delayed_callback' | 'pattern_slip' | 'tangent' | 'follow_up_interrupt';
   topic: string;
   cue: string;
   sourceEventId: string;
@@ -153,6 +153,7 @@ export interface DistortionState {
   cooldownUntilTurn: number;
   turnCount: number;
   lastCue?: string;
+  tangentCount?: number;
 }
 
 export interface AgentTurnContext {
@@ -173,4 +174,8 @@ export interface AgentTurnContext {
   distortionState?: DistortionState;
   exemplars?: BehavioralExemplar[];
   behavior: BehaviorEvaluation;
+  triggerTag?: string | null;
+  triggerDirective?: string | null;
+  followUpHint?: string | null;
+  preThoughts?: string[];
 }

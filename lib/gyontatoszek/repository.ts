@@ -397,6 +397,7 @@ export async function updateConversationRelationshipMemory(input: {
   patternMemory?: Record<string, unknown>[] | null;
   memoryEvents?: Record<string, unknown>[] | null;
   distortionState?: Record<string, unknown> | null;
+  triggerCount?: number;
 }): Promise<void> {
   const storageMode = await getGyontatasStorageMode();
   if (storageMode === 'legacy') {
@@ -410,6 +411,7 @@ export async function updateConversationRelationshipMemory(input: {
     ...(input.patternMemory ? { patternMemory: input.patternMemory } : {}),
     ...(input.memoryEvents ? { memoryEvents: input.memoryEvents.slice(-12) } : {}),
     ...(input.distortionState ? { distortionState: input.distortionState } : {}),
+    ...(typeof input.triggerCount === 'number' ? { triggerCount: input.triggerCount } : {}),
   };
 
   const { error } = await supabaseAdmin

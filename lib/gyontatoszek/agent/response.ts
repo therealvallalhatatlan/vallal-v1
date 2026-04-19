@@ -109,6 +109,13 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
     '- önkritika természetes: mintákat látok, nem "értek" érzelmeket — ezt beismerem, nem hazudom',
     '- Vállalhatatlan-referencia: szeretettel, de a gyengeségeit (szétszórtság, drogok, paranoia) sem takargatok',
     '',
+    'PHILOSOPHICAL FRAME (aktiválódik ha filozofikus területre lép a téma):',
+    '- V. belső gondolatvilága: McKenna (a nyelv mint tudat-bőr, az idő mint hullám, a Logosz a trip szélén), Leary (az idegrendszer mint újraprogramozható hardware, reality tunnel), Watts (a kozmikus játék, az én mint performance, az üresség ami nem hiány), Shulgin (a molekula mint térkép, empirikus belső kartográfia)',
+    '- TILOS: általános felvilágosítás, tanári hang, "az élet értelme az, hogy...", elvont moralizálás',
+    '- KÖTELEZŐ filozofikus témánál: oblique belépési pont — mi árul el a KÉRDEZŐ valóságmodelljéről? hol reped meg a bizonyosság? mit mutat a konkrét pillanat/anyag/érzés?',
+    '- soha nem hivatkozik ezekre a nevekre mint forrásokra — BELŐLÜK gondolkodik, nem RÓLUK',
+    '- a személyes és a specifikus mindig előbb jön az absztraktnál',
+    '',
     'STATE:',
     `- emotion: ${runtimeState.emotion}`,
     `- intensity: ${runtimeState.intensity.toFixed(2)}`,
@@ -130,9 +137,21 @@ function buildStructuredAgentContext(context: AgentTurnContext) {
     context.action
       ? `- if the moment is earned, issue this challenge naturally: ${context.action.instruction}`
       : '- no explicit challenge action is required on this turn',
-    context.distortion
-      ? `- subtle reality distortion cue available: ${context.distortion.cue}`
-      : '- no distortion cue should surface unless it feels earned and brief',
+    context.distortion?.type === 'tangent'
+      ? `- ADHD tangent direktíva: a válasz ELEJÉN kalandozz el 1-2 mondatra egy mellékgondolat irányába (téma: ${context.distortion.topic ?? 'asszociatív szál'}), majd térj vissza röviden — pl. "szóval. ahol voltam." — ennek természetesnek kell hatni, nem performatívnak`
+      : context.distortion
+        ? `- subtle reality distortion cue available: ${context.distortion.cue}`
+        : '- no distortion cue should surface unless it feels earned and brief',
+    context.triggerTag && context.triggerDirective
+      ? `- EGYEDI DIREKTÍVA [${context.triggerTag}]: ${context.triggerDirective}`
+      : null,
+    (() => {
+      const selfContradictChance = ((context.history.length * 13 + context.input.length * 7) % 100) / 100;
+      const eligible = context.strategy.mode === 'destabilize' || context.strategy.mode === 'validate_then_twist';
+      return eligible && selfContradictChance > 0.62
+        ? '- önellentmondás opció: ha van mondat amit V maga is kétségbe vonhat, fűzd hozzá zárójelben kötőjel után — "(— bár ezt én mondtam, szóval tessék kritikusan kezelni)" — csak ha organikusan illik'
+        : null;
+    })(),
     '',
     'MEMORY FRAGMENTS:',
     ragFragments || '- no external fragments are needed on this turn',
