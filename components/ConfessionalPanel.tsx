@@ -924,6 +924,7 @@ export default function ConfessionalPanel() {
               await sendMessagesAsJsonl(messages, token, userQuestionCount);
             }}
             onDismissExport={() => setDismissedAtCount(userQuestionCount)}
+            depthTier={depthTier}
           />
         }
         asideOpen={showReading}

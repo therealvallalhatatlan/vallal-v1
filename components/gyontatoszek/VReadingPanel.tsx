@@ -121,6 +121,7 @@ interface VReadingPanelProps {
   exportPairCount?: number;
   onExport?: () => Promise<void>;
   onDismissExport?: () => void;
+  depthTier?: number;
 }
 
 function clamp(value: number, min = 0, max = 1) {
@@ -257,7 +258,7 @@ function SliderControl({
   );
 }
 
-export function VReadingPanel({ insight, modulation, onModulationChange, onClose, preThoughts, userEmail, showExportBanner, canExport, exportPairCount, onExport, onDismissExport }: VReadingPanelProps) {
+export function VReadingPanel({ insight, modulation, onModulationChange, onClose, preThoughts, userEmail, showExportBanner, canExport, exportPairCount, onExport, onDismissExport, depthTier = 0 }: VReadingPanelProps) {
   const [activeTab, setActiveTab] = useState<ReadingTab>('self');
   const currentModulation = modulation ?? EMPTY_MODULATION;
   const title = activeTab === 'user' ? 'Ahogyan V lát téged' : activeTab === 'self' ? 'Ahogyan V érzi magát' : 'V beállításai';
@@ -642,6 +643,39 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
               ) : null}
 
               <p className="mt-3 text-xs text-neutral-400"><WithTooltip tip="V érzelmi regisztere veled szemben ebben a pillanatban — ahogy közelít vagy épp távolodik">kapcsolati tónus</WithTooltip>: <span className="text-neutral-200">{insight.vTone}</span></p>
+
+              <div className="mt-4 border-t border-white/6 pt-4">
+                <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-neutral-500">
+                  <WithTooltip tip="Mennyire enged közel V ehhez a beszélgetéshez — alacsony szinten mér és tart távolságot, magas szinten nevezi meg a dolgokat és megmutathat egy pillanatra valamit magából">
+                    mélységi szint
+                  </WithTooltip>
+                  <span className={depthTier >= 3 ? 'text-lime-300/80' : depthTier >= 1 ? 'text-neutral-300' : 'text-neutral-600'}>
+                    {(['idegen', 'ismerős', 'belépő', 'mélyebb', 'bizalmas'] as const)[depthTier]}
+                  </span>
+                </div>
+                <div className="flex gap-1.5">
+                  {[0, 1, 2, 3, 4].map((step) => (
+                    <div
+                      key={step}
+                      className="h-1.5 flex-1 overflow-hidden rounded-full"
+                      style={{ background: step <= depthTier ? undefined : 'rgba(255,255,255,0.06)' }}
+                    >
+                      {step <= depthTier && (
+                        <div
+                          className="h-full w-full rounded-full"
+                          style={{
+                            background: depthTier >= 4
+                              ? 'linear-gradient(90deg,rgba(163,230,53,0.4),rgba(163,230,53,0.9))'
+                              : depthTier >= 3
+                              ? 'linear-gradient(90deg,rgba(115,255,140,0.3),rgba(115,255,140,0.75))'
+                              : 'linear-gradient(90deg,rgba(255,255,255,0.1),rgba(255,255,255,0.35))',
+                          }}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </section>
 
             <section className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
