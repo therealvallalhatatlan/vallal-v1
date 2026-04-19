@@ -1,4 +1,5 @@
 import { executeAgentResponse, prepareAgentTurn } from './agent';
+import { generateShadowStream } from './agent/shadow';
 import {
   createConversationMessage,
   ensureConversation,
@@ -157,18 +158,28 @@ export async function handleGyontatas(req: GyontatasRequest) {
     modulation: req.modulation ?? null,
   });
   const textStream = await executeAgentResponse(agentTurn);
+  const shadowStream = generateShadowStream(agentTurn);
   const encoder = new TextEncoder();
+  const SHADOW_SEP = '\x1E';
 
   const responseStream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      const shadowChunks: string[] = [];
       const responseChunks: string[] = [];
 
       try {
+        for await (const chunk of shadowStream) {
+          shadowChunks.push(chunk);
+          controller.enqueue(encoder.encode(chunk));
+        }
+        controller.enqueue(encoder.encode(SHADOW_SEP));
+
         for await (const chunk of textStream) {
           responseChunks.push(chunk);
           controller.enqueue(encoder.encode(chunk));
         }
 
+        const shadowText = shadowChunks.join('');
         const assistantReply = responseChunks.join('');
         const behaviorMetadata = {
           state: agentTurn.behavior.state.name,
@@ -195,6 +206,8 @@ export async function handleGyontatas(req: GyontatasRequest) {
           distortion: agentTurn.distortion ?? null,
           appliedModulation: agentTurn.modulation ?? null,
           tangentCount: agentTurn.distortionState?.tangentCount ?? 0,
+          weightTrace: agentTurn.weightTrace ?? null,
+          shadowText,
         };
 
         if (storageMode === 'conversation') {
@@ -247,13 +260,14 @@ export async function handleGyontatas(req: GyontatasRequest) {
     },
   });
 
-  return new Response(responseStream, {
-    headers: buildResponseHeaders(
-      conversation.session_id,
-      agentTurn.action ?? undefined,
-      req.debug ? buildDebugPayload(agentTurn) : undefined,
-      agentTurn.followUpHint ?? undefined,
-      agentTurn.preThoughts,
-    ),
-  });
+  const responseHeaders = buildResponseHeaders(
+    conversation.session_id,
+    agentTurn.action ?? undefined,
+    req.debug ? buildDebugPayload(agentTurn) : undefined,
+    agentTurn.followUpHint ?? undefined,
+    agentTurn.preThoughts,
+  );
+  responseHeaders['x-has-shadow'] = '1';
+
+  return new Response(responseStream, { headers: responseHeaders });
 }

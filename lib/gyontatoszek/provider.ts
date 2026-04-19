@@ -4,6 +4,7 @@ import { openai } from '@ai-sdk/openai';
 interface AIResponseOptions {
   temperature?: number;
   topP?: number;
+  maxTokens?: number;
 }
 
 export async function getAIResponse(messages: any[], options: AIResponseOptions = {}) {
@@ -13,6 +14,7 @@ export async function getAIResponse(messages: any[], options: AIResponseOptions 
     messages,
     temperature: options.temperature ?? 0.85,
     topP: options.topP ?? 0.95,
+    ...(options.maxTokens !== undefined ? { maxTokens: options.maxTokens } : {}),
   });
   return result.textStream;
 }

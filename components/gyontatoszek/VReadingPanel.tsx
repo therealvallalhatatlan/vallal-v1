@@ -92,6 +92,20 @@ export interface VReadingInsight {
   vGuess?: string | null;
   messageCount?: number;
   vThoughts?: string[];
+  shadowText?: string;
+  vReasoning?: {
+    strategyMode: string;
+    strategyReason: string;
+    strategyObjective: string;
+    strategyTone: string;
+    intent: string;
+    emotionalTone: string;
+    riskLevel: string;
+    topics: string[];
+    confidence: number;
+    weightTrace: Record<string, number> | null;
+    ragPreviews: { preview: string; themes: string[]; score: number }[];
+  };
 }
 
 interface VReadingPanelProps {
@@ -506,16 +520,25 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
               </section>
             )}
 
+            {insight.shadowText ? (
+              <section className="rounded-2xl border border-white/6 bg-white/[0.025] p-4">
+                <SectionTitle label="V belső hangja" tooltip="A szűretlen belső monológ — ami V fejében fut le mielőtt válaszol" />
+                <p className="mt-3 border-l-2 border-lime-300/15 pl-3 text-sm italic leading-7 text-neutral-400">
+                  {insight.shadowText}
+                </p>
+              </section>
+            ) : null}
+
             {typeof insight.tangentCount === 'number' && insight.tangentCount > 0 ? (
               <section className="rounded-2xl border border-white/6 bg-white/[0.02] p-4">
-                <SectionTitle label="V elkalandozásai" tooltip="Hányszor vesztette el a fonalat és tért vissza V ebben a sessionben — az ADHD mérhető" />
+                <SectionTitle label="V elkalandoz\u00e1sai" tooltip="H\u00e1nyszor vesztette el a fonalat \u00e9s t\u00e9rt vissza V ebben a sessionben \u2014 az ADHD m\u00e9rhet\u0151" />
                 <div className="mt-2 text-sm text-neutral-400">
                   {insight.tangentCount === 1
                     ? 'V egyszer kalandozott el ma'
-                    : `V ma ${insight.tangentCount}× kalandozott el`}
+                    : `V ma ${insight.tangentCount}\u00d7 kalandozott el`}
                 </div>
                 {insight.tangentCount >= 3 ? (
-                  <div className="mt-1 text-[11px] text-lime-300/40">a THC erős ma</div>
+                  <div className="mt-1 text-[11px] text-lime-300/40">a THC er\u0151s ma</div>
                 ) : null}
               </section>
             ) : null}
@@ -590,6 +613,76 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
                 {insight.vTrigger ?? 'most még nem hagyott egyetlen éles nyomot sem'}
               </div>
             </section>
+
+            {insight.vReasoning ? (
+              <details className="group rounded-2xl border border-white/6 bg-white/[0.02]">
+                <summary className="flex cursor-pointer list-none items-center justify-between p-4">
+                  <SectionTitle label="Pipeline részletek" tooltip="A teljes agent-pipeline reasoning — interpretáció, stratégia-indoklás, RAG-kontextus, súlyozás" />
+                  <span className="text-[10px] text-neutral-600 transition group-open:text-lime-300/50">▸</span>
+                </summary>
+                <div className="space-y-3 px-4 pb-4">
+                  <div className="rounded-xl bg-black/20 p-3 ring-1 ring-white/5 space-y-1.5">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">Interpretáció</p>
+                    <p className="text-xs text-neutral-300">
+                      <span className="text-neutral-600">szándék:</span> {insight.vReasoning.intent}
+                      {' · '}
+                      <span className="text-neutral-600">hangulat:</span> {insight.vReasoning.emotionalTone}
+                      {' · '}
+                      <span className="text-neutral-600">kockázat:</span> {insight.vReasoning.riskLevel}
+                      {' · '}
+                      <span className="text-neutral-600">bizonyosság:</span> {Math.round(insight.vReasoning.confidence * 100)}%
+                    </p>
+                    {insight.vReasoning.topics.length > 0 && (
+                      <p className="text-xs text-neutral-400">témák: {insight.vReasoning.topics.join(', ')}</p>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl bg-black/20 p-3 ring-1 ring-white/5 space-y-1.5">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">Stratégia</p>
+                    <p className="text-xs font-medium text-lime-300/80">{insight.vReasoning.strategyMode} · {insight.vReasoning.strategyTone}</p>
+                    {insight.vReasoning.strategyReason && (
+                      <p className="text-xs text-neutral-300"><span className="text-neutral-600">miért: </span>{insight.vReasoning.strategyReason}</p>
+                    )}
+                    {insight.vReasoning.strategyObjective && (
+                      <p className="text-xs text-neutral-300"><span className="text-neutral-600">cél: </span>{insight.vReasoning.strategyObjective}</p>
+                    )}
+                  </div>
+
+                  {insight.vReasoning.weightTrace && Object.keys(insight.vReasoning.weightTrace).length > 0 && (
+                    <div className="rounded-xl bg-black/20 p-3 ring-1 ring-white/5">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-neutral-500 mb-2">Stratégia-súlyozás</p>
+                      <div className="space-y-1.5">
+                        {Object.entries(insight.vReasoning.weightTrace)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([key, val]) => (
+                            <div key={key} className="flex items-center gap-2">
+                              <span className="w-32 shrink-0 text-[11px] text-neutral-400 truncate">{key}</span>
+                              <div className="flex-1 h-1.5 rounded-full bg-white/6 overflow-hidden">
+                                <div className="h-full rounded-full bg-lime-300/40" style={{ width: `${Math.min(val / 2, 1) * 100}%` }} />
+                              </div>
+                              <span className="text-[11px] text-neutral-500 w-8 text-right">{val.toFixed(1)}</span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {insight.vReasoning.ragPreviews.filter(r => r.preview).length > 0 && (
+                    <div className="rounded-xl bg-black/20 p-3 ring-1 ring-white/5 space-y-2">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">Előhívott memória</p>
+                      {insight.vReasoning.ragPreviews.filter(r => r.preview).map((r, i) => (
+                        <div key={i} className="text-xs text-neutral-400 border-l-2 border-lime-300/20 pl-2">
+                          <p className="text-neutral-300 italic">„{r.preview}”</p>
+                          {r.themes.length > 0 && (
+                            <p className="mt-0.5 text-neutral-600">{r.themes.join(' · ')} · {(r.score * 100).toFixed(0)}%</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </details>
+            ) : null}
 
           </>
         )}

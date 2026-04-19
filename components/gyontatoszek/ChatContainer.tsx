@@ -57,8 +57,7 @@ export function ChatContainer({ children, scrollRef, header, composer, aside, as
               // Mobile: absolute overlay sliding from right
               'absolute inset-y-0 right-0 z-[19] w-full max-w-[380px] border-l border-white/8 bg-black/70 backdrop-blur-xl transition-transform duration-300',
               // Desktop: static flex child, no backdrop, dimmed until hover
-              'lg:static lg:inset-auto lg:z-auto lg:w-[420px] lg:max-w-none lg:shrink-0 lg:backdrop-blur-none lg:transition-[transform,opacity] lg:duration-200',
-              'lg:opacity-60 lg:hover:opacity-100',
+              'lg:static lg:inset-auto lg:z-auto lg:w-[420px] lg:max-w-none lg:shrink-0 lg:backdrop-blur-none lg:transition-[transform] lg:duration-200',
               // Visibility
               asideOpen ? 'translate-x-0' : 'translate-x-full lg:hidden',
             ].join(' ')}

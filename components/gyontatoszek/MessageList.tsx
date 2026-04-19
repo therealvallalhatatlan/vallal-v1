@@ -10,9 +10,10 @@ interface MessageListProps {
   sending: boolean;
   thcLevel?: number;
   preThoughts?: string[];
+  shadowText?: string;
 }
 
-function MessageListComponent({ messages, loading, sending, thcLevel = 0, preThoughts }: MessageListProps) {
+function MessageListComponent({ messages, loading, sending, thcLevel = 0, preThoughts, shadowText }: MessageListProps) {
   if (loading && messages.length === 0) {
     return (
       <div className="flex min-h-full items-center justify-center px-6 py-12 text-sm uppercase tracking-[0.24em] text-neutral-500">
@@ -64,14 +65,22 @@ function MessageListComponent({ messages, loading, sending, thcLevel = 0, preTho
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-3 py-6 md:px-6 md:py-8">
       {messages.map((message, i) => {
-        const isPendingAssistant = sending && message.sender_role === 'assistant' && !message.body && i === messages.length - 1;
+        const isCurrentAssistant = sending && message.sender_role === 'assistant' && i === messages.length - 1;
+        const isPendingAssistant = isCurrentAssistant && !message.body;
+        const msgBehavior = message.sender_role === 'assistant'
+          ? (message.metadata as Record<string, unknown> | null | undefined)?.behavior as Record<string, unknown> | undefined
+          : undefined;
+        const msgShadowText = isCurrentAssistant
+          ? shadowText
+          : (typeof msgBehavior?.shadowText === 'string' ? msgBehavior.shadowText : undefined);
         return (
           <MessageItem
             key={message.id}
             message={message}
-            isStreaming={isPendingAssistant}
+            isStreaming={isCurrentAssistant}
             thcLevel={thcLevel}
             preThoughts={isPendingAssistant ? preThoughts : undefined}
+            shadowText={msgShadowText}
           />
         );
       })}

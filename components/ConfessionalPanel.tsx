@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { FormEvent, KeyboardEvent } from 'react';
 import {
@@ -355,13 +356,63 @@ function buildReadingInsight(messages: GyontatasMessage[]): VReadingInsight | nu
 
       return thoughts;
     })(),
+    vReasoning: (() => {
+      const stratPlan = asRecord(behavior?.strategyPlan);
+      const interp = asRecord(behavior?.interpretation);
+      if (!stratPlan && !interp) return undefined;
+      const chunks = Array.isArray(behavior?.retrievedChunks)
+        ? (behavior.retrievedChunks as unknown[]).filter((c): c is Record<string, unknown> => typeof c === 'object' && c !== null)
+        : [];
+      const wt = behavior?.weightTrace && typeof behavior.weightTrace === 'object' && !Array.isArray(behavior.weightTrace)
+        ? (behavior.weightTrace as Record<string, number>)
+        : null;
+      return {
+        strategyMode: typeof stratPlan?.mode === 'string' ? stratPlan.mode : '',
+        strategyReason: typeof stratPlan?.reason === 'string' ? stratPlan.reason : '',
+        strategyObjective: typeof stratPlan?.objective === 'string' ? stratPlan.objective : '',
+        strategyTone: typeof stratPlan?.tone === 'string' ? stratPlan.tone : '',
+        intent: typeof interp?.primaryIntent === 'string' ? interp.primaryIntent : '',
+        emotionalTone: typeof interp?.emotionalTone === 'string' ? interp.emotionalTone : '',
+        riskLevel: typeof interp?.riskLevel === 'string' ? interp.riskLevel : '',
+        topics: Array.isArray(interp?.extractedTopics)
+          ? (interp.extractedTopics as unknown[]).filter((t): t is string => typeof t === 'string')
+          : [],
+        confidence: typeof interp?.confidence === 'number' ? interp.confidence : 0,
+        weightTrace: wt,
+        ragPreviews: chunks.slice(0, 3).map(c => ({
+          preview: typeof c.preview === 'string' ? c.preview : '',
+          themes: Array.isArray(c.themes) ? (c.themes as unknown[]).filter((t): t is string => typeof t === 'string') : [],
+          score: typeof c.score === 'number' ? c.score : 0,
+        })),
+      };
+    })(),
+    shadowText: typeof behavior?.shadowText === 'string' ? behavior.shadowText : undefined,
   };
+}
+
+function UserAvatar({ url }: { url?: string }) {
+  const [broken, setBroken] = useState(false);
+  const cls = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-[13px] text-neutral-400 ring-1 ring-white/10';
+
+  if (!url || broken) {
+    return <span className={cls}>U</span>;
+  }
+
+  return (
+    <img
+      src={url}
+      alt="avatar"
+      className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-white/10"
+      onError={() => setBroken(true)}
+      referrerPolicy="no-referrer"
+    />
+  );
 }
 
 export default function ConfessionalPanel() {
   const router = useRouter();
   const { session, loading: loadingSession } = useSessionGuard() as {
-    session: { access_token?: string; user?: { email?: string | null } } | null;
+    session: { access_token?: string; user?: { email?: string | null; user_metadata?: { avatar_url?: string } } } | null;
     loading: boolean;
   };
   const supabaseRef = useRef(createClient());
@@ -375,6 +426,7 @@ export default function ConfessionalPanel() {
   const [showReading, setShowReading] = useState(false);
   const [modulation, setModulation] = useState<VBehaviorModulation>(DEFAULT_V_MODULATION);
   const [preThoughts, setPreThoughts] = useState<string[]>([]);
+  const [shadowText, setShadowText] = useState<string>('');
 
   // Default to open on desktop (lg: 1024px+), closed on mobile
   useEffect(() => {
@@ -513,6 +565,7 @@ export default function ConfessionalPanel() {
 
     setError(null);
     setSending(true);
+    setShadowText('');
     setConfession('');
     autoScrollRef.current = true;
     setMessages((prev) => [
@@ -569,6 +622,9 @@ export default function ConfessionalPanel() {
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
+      const hasShadow = res.headers.get('x-has-shadow') === '1';
+      let shadowBuf = '';
+      let shadowDone = !hasShadow;
       let assistantText = '';
 
       while (true) {
@@ -577,12 +633,35 @@ export default function ConfessionalPanel() {
           break;
         }
 
-        assistantText += decoder.decode(value, { stream: true });
-        setMessages((prev) =>
-          prev.map((message) =>
-            message.id === optimisticAssistantId ? { ...message, body: assistantText } : message
-          )
-        );
+        const chunk = decoder.decode(value, { stream: true });
+
+        if (!shadowDone) {
+          const combined = shadowBuf + chunk;
+          const markerIdx = combined.indexOf('\x1E');
+          if (markerIdx !== -1) {
+            shadowBuf = combined.slice(0, markerIdx);
+            assistantText = combined.slice(markerIdx + 1);
+            shadowDone = true;
+            setShadowText(shadowBuf);
+            if (assistantText) {
+              setMessages((prev) =>
+                prev.map((message) =>
+                  message.id === optimisticAssistantId ? { ...message, body: assistantText } : message
+                )
+              );
+            }
+          } else {
+            shadowBuf = combined;
+            setShadowText(shadowBuf);
+          }
+        } else {
+          assistantText += chunk;
+          setMessages((prev) =>
+            prev.map((message) =>
+              message.id === optimisticAssistantId ? { ...message, body: assistantText } : message
+            )
+          );
+        }
 
         if (autoScrollRef.current) {
           window.requestAnimationFrame(() => {
@@ -595,6 +674,7 @@ export default function ConfessionalPanel() {
       scrollThreadToBottom('auto');
       setLoadingHistory(false);
       setPreThoughts([]);
+      setShadowText('');
 
       // Schedule follow-up interrupt: V "remembers" something 3-5s after the main reply
       if (followUpHint) {
@@ -638,6 +718,10 @@ export default function ConfessionalPanel() {
     }
   }
 
+  const [showSupport, setShowSupport] = useState(() => {
+    try { return window.localStorage.getItem('v3_support_dismissed') !== '1'; } catch { return true; }
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -645,20 +729,35 @@ export default function ConfessionalPanel() {
       transition={{ duration: 0.32, ease: 'easeOut' }}
       className="w-full px-2 py-3 md:px-4 md:py-5"
     >
-      <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-lime-300/15 bg-[linear-gradient(90deg,rgba(140,255,160,0.08),rgba(255,255,255,0.02))] px-4 py-2 text-sm text-neutral-200 shadow-[0_8px_30px_rgba(0,0,0,0.18)]">
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.24em] text-lime-300/75">Támogatás</p>
-          <p className="truncate text-sm text-neutral-200">Támogasd a fejlesztést.</p>
+      {showSupport && (
+        <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-lime-300/15 bg-[linear-gradient(90deg,rgba(140,255,160,0.08),rgba(255,255,255,0.02))] px-4 py-2 text-sm text-neutral-200 shadow-[0_8px_30px_rgba(0,0,0,0.18)]">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.24em] text-lime-300/75">Támogatás</p>
+            <p className="truncate text-sm text-neutral-200">Támogasd a fejlesztést.</p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <a
+              href="https://buy.stripe.com/bJe9ATenoaR23C70RV8Ra0o"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-lime-300/30 bg-lime-300/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-lime-100 transition hover:border-lime-300/55 hover:bg-lime-300/15 hover:text-lime-50"
+            >
+              Támogatom
+            </a>
+            <button
+              type="button"
+              aria-label="Bezár"
+              onClick={() => {
+                setShowSupport(false);
+                try { window.localStorage.setItem('v3_support_dismissed', '1'); } catch {}
+              }}
+              className="rounded-full p-1 text-neutral-600 transition hover:text-neutral-400"
+            >
+              ✕
+            </button>
+          </div>
         </div>
-        <a
-          href="https://buy.stripe.com/bJe9ATenoaR23C70RV8Ra0o"
-          target="_blank"
-          rel="noreferrer"
-          className="shrink-0 rounded-full border border-lime-300/30 bg-lime-300/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] text-lime-100 transition hover:border-lime-300/55 hover:bg-lime-300/15 hover:text-lime-50"
-        >
-          Támogatom
-        </a>
-      </div>
+      )}
 
       <ChatContainer
         scrollRef={threadRef}
@@ -671,28 +770,29 @@ export default function ConfessionalPanel() {
               </h1>
             </div>
 
-            <div className="flex items-center justify-between gap-3 rounded-2xl bg-white/[0.03] px-3 py-2 ring-1 ring-white/8 transition-opacity duration-200 md:min-w-[320px] md:justify-end">
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Bejelentkezve</p>
-                <p className="truncate text-sm text-neutral-200">{session?.user?.email ?? 'ismeretlen user'}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowReading((current) => !current)}
-                  className="rounded-full border border-lime-300/20 bg-lime-300/5 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-lime-100 transition hover:border-lime-300/50 hover:text-lime-50"
-                >
-                  {showReading ? 'Elrejt' : 'V látlelete'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleSignOut()}
-                  disabled={loggingOut}
-                  className="rounded-full border border-white/10 px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-neutral-200 transition hover:border-lime-300/40 hover:text-lime-200 disabled:opacity-50"
-                >
-                  {loggingOut ? 'Kilepes...' : 'Kilepes'}
-                </button>
-              </div>
+            <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-3 py-2 ring-1 ring-white/8 transition-opacity duration-200">
+              <UserAvatar url={session?.user?.user_metadata?.avatar_url} />
+              <button
+                type="button"
+                onClick={() => void handleSignOut()}
+                disabled={loggingOut}
+                title={loggingOut ? 'Kilépés...' : 'Kilépés'}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-neutral-400 transition hover:border-lime-300/40 hover:text-lime-200 disabled:opacity-50"
+              >
+                <LogOut size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowReading((current) => !current)}
+                title={showReading ? 'Elrejt' : 'V látlelete'}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-lime-300/20 bg-lime-300/5 text-lime-300/70 transition hover:border-lime-300/50 hover:text-lime-200"
+              >
+                <span className="flex gap-[3px]">
+                  <span className="h-[3px] w-[3px] rounded-full bg-current" />
+                  <span className="h-[3px] w-[3px] rounded-full bg-current" />
+                  <span className="h-[3px] w-[3px] rounded-full bg-current" />
+                </span>
+              </button>
             </div>
           </div>
         }
@@ -722,7 +822,7 @@ export default function ConfessionalPanel() {
           </form>
         }
       >
-        <MessageList messages={messages} loading={loadingHistory} sending={sending} thcLevel={modulation.thc} preThoughts={preThoughts} />
+        <MessageList messages={messages} loading={loadingHistory} sending={sending} thcLevel={modulation.thc} preThoughts={preThoughts} shadowText={shadowText} />
       </ChatContainer>
       <PushPermissionPrompt accessToken={session?.access_token} />
     </motion.div>

@@ -9,6 +9,7 @@ interface MessageItemProps {
   isStreaming?: boolean;
   thcLevel?: number;
   preThoughts?: string[];
+  shadowText?: string;
 }
 
 function formatTimestamp(value: string) {
@@ -108,10 +109,11 @@ function parseVBody(body: string): React.ReactNode {
   return nodes.length > 0 ? <>{nodes}</> : <>{body}</>;
 }
 
-function MessageItemComponent({ message, isStreaming = false, thcLevel = 0, preThoughts }: MessageItemProps) {
+function MessageItemComponent({ message, isStreaming = false, thcLevel = 0, preThoughts, shadowText }: MessageItemProps) {
   const isUser = message.sender_role === 'user';
   const isOptimistic = (message.metadata as Record<string, unknown> | null | undefined)?.optimistic === true;
   const doScramble = !isUser && thcLevel > 0.7 && isOptimistic;
+  const isShadowPhase = !message.body && isStreaming && !isUser && !!shadowText;
 
   return (
     <motion.article
@@ -136,6 +138,17 @@ function MessageItemComponent({ message, isStreaming = false, thcLevel = 0, preT
           <span>{formatTimestamp(message.created_at)}</span>
         </div>
 
+        {!isUser && shadowText && message.body ? (
+          <details open={isStreaming} className="group mb-3">
+            <summary className="cursor-pointer list-none text-[10px] text-neutral-600 transition hover:text-neutral-500 group-open:text-lime-300/40">
+              V fej&eacute;ben &middot;&#9658;
+            </summary>
+            <p className="mt-1.5 border-l border-neutral-700/60 pl-2.5 text-sm italic leading-7 text-neutral-500/70">
+              {shadowText}
+            </p>
+          </details>
+        ) : null}
+
         <div
           className={
             isUser
@@ -144,7 +157,13 @@ function MessageItemComponent({ message, isStreaming = false, thcLevel = 0, preT
           }
         >
           {!message.body && isStreaming && !isUser ? (
-            <ErraticThinkingDots thoughts={preThoughts} />
+            isShadowPhase ? (
+              <span className="text-[15px] italic leading-8 text-neutral-500/60 transition-opacity duration-200">
+                {shadowText}
+              </span>
+            ) : (
+              <ErraticThinkingDots thoughts={preThoughts} />
+            )
           ) : isUser ? (
             message.body
           ) : (
