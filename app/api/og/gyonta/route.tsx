@@ -23,8 +23,11 @@ export async function GET(req: Request) {
   const rawQ = searchParams.get("q") ?? "";
   const rawS = searchParams.get("s") ?? "";
 
-  const quote = truncate(stripMarkup(rawQ), 280);
-  const shadow = rawS ? truncate(stripMarkup(rawS), 120) : null;
+  const quote = truncate(stripMarkup(rawQ), 260);
+  const shadow = rawS ? truncate(stripMarkup(rawS), 400) : null;
+
+  // Adaptive quote font size based on length
+  const quoteFontSize = quote.length > 180 ? "24px" : quote.length > 100 ? "29px" : "36px";
 
   return new ImageResponse(
     (
@@ -35,13 +38,14 @@ export async function GET(req: Request) {
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-start",
-          justifyContent: "center",
+          justifyContent: "flex-start",
           background: "#0a0a0a",
           color: "white",
           fontFamily:
             "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
           position: "relative",
-          padding: "80px 96px 80px 112px",
+          padding: "60px 96px 80px 112px",
+          overflow: "hidden",
         }}
       >
         {/* Left lime border accent */}
@@ -62,7 +66,8 @@ export async function GET(req: Request) {
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            marginBottom: "44px",
+            marginBottom: "32px",
+            flexShrink: 0,
           }}
         >
           <span
@@ -90,13 +95,14 @@ export async function GET(req: Request) {
         {/* Quote */}
         <p
           style={{
-            fontSize: quote.length > 160 ? "26px" : quote.length > 80 ? "32px" : "40px",
+            fontSize: quoteFontSize,
             lineHeight: 1.55,
             color: "rgba(255,255,255,0.92)",
             margin: 0,
             fontWeight: 400,
-            maxWidth: "920px",
+            maxWidth: "980px",
             wordBreak: "break-word",
+            flexShrink: 0,
           }}
         >
           {quote}
@@ -104,34 +110,41 @@ export async function GET(req: Request) {
 
         {/* Shadow text — V.'s inner thought */}
         {shadow && (
-          <p
+          <div
             style={{
-              marginTop: "28px",
-              fontSize: "18px",
-              lineHeight: 1.6,
-              fontStyle: "italic",
-              color: "rgba(255,255,255,0.3)",
-              maxWidth: "760px",
-              borderLeft: "2px solid rgba(255,255,255,0.1)",
-              paddingLeft: "16px",
-              margin: "28px 0 0 0",
-              wordBreak: "break-word",
+              marginTop: "24px",
+              borderLeft: "2px solid rgba(255,255,255,0.12)",
+              paddingLeft: "18px",
+              maxWidth: "900px",
+              flexShrink: 0,
             }}
           >
-            {shadow}
-          </p>
+            <p
+              style={{
+                fontSize: "16px",
+                lineHeight: 1.65,
+                fontStyle: "italic",
+                color: "rgba(255,255,255,0.28)",
+                margin: 0,
+                wordBreak: "break-word",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {shadow}
+            </p>
+          </div>
         )}
 
         {/* Bottom right: site name */}
         <div
           style={{
             position: "absolute",
-            bottom: "44px",
+            bottom: "40px",
             right: "64px",
             fontSize: "11px",
             letterSpacing: "0.28em",
             textTransform: "uppercase",
-            color: "rgba(255,255,255,0.18)",
+            color: "rgba(255,255,255,0.15)",
           }}
         >
           vallalhatatlan.online
@@ -141,11 +154,11 @@ export async function GET(req: Request) {
         <div
           style={{
             position: "absolute",
-            bottom: "24px",
+            bottom: "16px",
             left: "64px",
-            fontSize: "120px",
+            fontSize: "110px",
             lineHeight: 1,
-            color: "rgba(163, 230, 53, 0.05)",
+            color: "rgba(163, 230, 53, 0.04)",
             fontFamily: "serif",
           }}
         >

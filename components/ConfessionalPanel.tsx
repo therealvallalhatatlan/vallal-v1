@@ -606,8 +606,8 @@ export default function ConfessionalPanel() {
   async function handleShare(body: string, shadow?: string) {
     const strip = (t: string) =>
       t.replace(/~~([\/\s\S]+?)~~/g, '$1').replace(/\[\[[\s\S]+?\]\]/g, '').replace(/\s+/g, ' ').trim();
-    const q = strip(body).slice(0, 280);
-    const s = shadow ? strip(shadow).slice(0, 120) : '';
+    const q = strip(body).slice(0, 260);
+    const s = shadow ? strip(shadow).slice(0, 400) : '';
     const params = new URLSearchParams({ q });
     if (s) params.set('s', s);
     const url = `/api/og/gyonta?${params.toString()}`;
