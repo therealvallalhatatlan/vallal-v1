@@ -2,6 +2,7 @@
 
 import { type ReactNode, useState } from 'react';
 import type { VBehaviorModulation } from '@/lib/gyontatoszek/types';
+import { ExportBanner } from './ExportBanner';
 
 interface ReadingMetric {
   label: string;
@@ -115,6 +116,11 @@ interface VReadingPanelProps {
   onClose?: () => void;
   preThoughts?: string[];
   userEmail?: string | null;
+  showExportBanner?: boolean;
+  canExport?: boolean;
+  exportPairCount?: number;
+  onExport?: () => Promise<void>;
+  onDismissExport?: () => void;
 }
 
 function clamp(value: number, min = 0, max = 1) {
@@ -251,7 +257,7 @@ function SliderControl({
   );
 }
 
-export function VReadingPanel({ insight, modulation, onModulationChange, onClose, preThoughts, userEmail }: VReadingPanelProps) {
+export function VReadingPanel({ insight, modulation, onModulationChange, onClose, preThoughts, userEmail, showExportBanner, canExport, exportPairCount, onExport, onDismissExport }: VReadingPanelProps) {
   const [activeTab, setActiveTab] = useState<ReadingTab>('self');
   const currentModulation = modulation ?? EMPTY_MODULATION;
   const title = activeTab === 'user' ? 'Ahogyan V lát téged' : activeTab === 'self' ? 'Ahogyan V érzi magát' : 'V beállításai';
@@ -388,6 +394,15 @@ export function VReadingPanel({ insight, modulation, onModulationChange, onClose
                 </button>
               </div>
             </section>
+
+            {showExportBanner && onExport && onDismissExport && (
+              <ExportBanner
+                pairCount={exportPairCount ?? 0}
+                canExport={canExport ?? false}
+                onExport={onExport}
+                onDismiss={onDismissExport}
+              />
+            )}
           </>
         ) : !insight ? (
           <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-neutral-400">

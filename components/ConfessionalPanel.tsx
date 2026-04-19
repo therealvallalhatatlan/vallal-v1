@@ -13,7 +13,6 @@ import {
 } from '@/lib/gyontatoszek/types';
 import { ChatContainer } from './gyontatoszek/ChatContainer';
 import { Composer } from './gyontatoszek/Composer';
-import { ExportBanner } from './gyontatoszek/ExportBanner';
 import { MessageList } from './gyontatoszek/MessageList';
 import { VReadingPanel, type VReadingInsight } from './gyontatoszek/VReadingPanel';
 import PushPermissionPrompt from './gyontatoszek/PushPermissionPrompt';
@@ -906,18 +905,6 @@ export default function ConfessionalPanel() {
               </button>
             </div>
           </div>
-          {showExportBanner && (
-            <ExportBanner
-              pairCount={userQuestionCount}
-              canExport={canExport}
-              onExport={async () => {
-                const token = session?.access_token;
-                if (!token) throw new Error('Nincs token');
-                await sendMessagesAsJsonl(messages, token, userQuestionCount);
-              }}
-              onDismiss={() => setDismissedAtCount(userQuestionCount)}
-            />
-          )}
           </div>
         }
         aside={
@@ -928,6 +915,15 @@ export default function ConfessionalPanel() {
             onClose={() => setShowReading(false)}
             preThoughts={preThoughts}
             userEmail={session?.user?.email}
+            showExportBanner={showExportBanner}
+            canExport={canExport}
+            exportPairCount={userQuestionCount}
+            onExport={async () => {
+              const token = session?.access_token;
+              if (!token) throw new Error('Nincs token');
+              await sendMessagesAsJsonl(messages, token, userQuestionCount);
+            }}
+            onDismissExport={() => setDismissedAtCount(userQuestionCount)}
           />
         }
         asideOpen={showReading}
