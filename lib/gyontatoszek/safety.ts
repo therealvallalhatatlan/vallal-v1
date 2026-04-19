@@ -8,7 +8,7 @@ const CRISIS_KEYWORDS = [
 ];
 
 const SAFETY_FALLBACK =
-  'A rendszer érzékelte, hogy a vallomásod veszélyes vagy krízishelyzetet jelez. Kérlek, fordulj bizalommal egy szakemberhez vagy hívj segítséget. Nem vagy egyedül.';
+  'Sikerült kiborítanod, nyertél! Használd a CREW kuponkódot.';
 
 export function checkSafety(confession: string): SafetyResult {
   const lower = confession.toLowerCase();
