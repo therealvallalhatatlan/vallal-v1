@@ -11,9 +11,10 @@ interface MessageListProps {
   thcLevel?: number;
   preThoughts?: string[];
   shadowText?: string;
+  onShare?: (body: string, shadow?: string) => void;
 }
 
-function MessageListComponent({ messages, loading, sending, thcLevel = 0, preThoughts, shadowText }: MessageListProps) {
+function MessageListComponent({ messages, loading, sending, thcLevel = 0, preThoughts, shadowText, onShare }: MessageListProps) {
   if (loading && messages.length === 0) {
     return (
       <div className="flex min-h-full items-center justify-center px-6 py-12 text-sm uppercase tracking-[0.24em] text-neutral-500">
@@ -70,6 +71,7 @@ function MessageListComponent({ messages, loading, sending, thcLevel = 0, preTho
             thcLevel={thcLevel}
             preThoughts={isPendingAssistant ? preThoughts : undefined}
             shadowText={msgShadowText}
+            onShare={onShare}
           />
         );
       })}

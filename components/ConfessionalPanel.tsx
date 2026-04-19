@@ -453,6 +453,7 @@ export default function ConfessionalPanel() {
   const [shadowText, setShadowText] = useState<string>('');
   const [dismissedAtCount, setDismissedAtCount] = useState(0);
   const [depthTier, setDepthTier] = useState<number>(0);
+  const [shareToast, setShareToast] = useState(false);
 
   // Default to open on desktop (lg: 1024px+), closed on mobile
   useEffect(() => {
@@ -602,6 +603,34 @@ export default function ConfessionalPanel() {
       window.cancelAnimationFrame(frame);
     };
   }, [messages, loadingHistory, sending]);
+
+  async function handleShare(body: string, shadow?: string) {
+    const strip = (t: string) =>
+      t.replace(/~~([\/\s\S]+?)~~/g, '$1').replace(/\[\[[\s\S]+?\]\]/g, '').replace(/\s+/g, ' ').trim();
+    const q = strip(body).slice(0, 280);
+    const s = shadow ? strip(shadow).slice(0, 120) : '';
+    const params = new URLSearchParams({ q });
+    if (s) params.set('s', s);
+    const url = `/api/og/gyonta?${params.toString()}`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('image fetch failed');
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = 'vallalhatatlan-v.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      // fallback: open the image in a new tab
+      window.open(url, '_blank');
+    }
+    setShareToast(true);
+    setTimeout(() => setShareToast(false), 2000);
+  }
 
   async function submitConfession() {
     const trimmed = confession.trim();
@@ -918,9 +947,19 @@ export default function ConfessionalPanel() {
           </form>
         }
       >
-        <MessageList messages={messages} loading={loadingHistory} sending={sending} thcLevel={modulation.thc} preThoughts={preThoughts} shadowText={shadowText} />
+        <MessageList messages={messages} loading={loadingHistory} sending={sending} thcLevel={modulation.thc} preThoughts={preThoughts} shadowText={shadowText} onShare={handleShare} />
       </ChatContainer>
       <PushPermissionPrompt accessToken={session?.access_token} />
+
+      {/* Share / download toast */}
+      <div
+        aria-live="polite"
+        className={`pointer-events-none fixed bottom-6 left-1/2 -translate-x-1/2 rounded-full border border-lime-300/20 bg-neutral-900/90 px-4 py-2 text-[11px] uppercase tracking-[0.22em] text-lime-300/80 backdrop-blur-sm transition-all duration-300 ${
+          shareToast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+        }`}
+      >
+        letöltve
+      </div>
     </motion.div>
   );
 }

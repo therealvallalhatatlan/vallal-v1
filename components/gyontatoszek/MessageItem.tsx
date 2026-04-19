@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Download } from 'lucide-react';
 import type { GyontatasMessage } from '@/lib/gyontatoszek/types';
 
 interface MessageItemProps {
@@ -10,6 +11,7 @@ interface MessageItemProps {
   thcLevel?: number;
   preThoughts?: string[];
   shadowText?: string;
+  onShare?: (body: string, shadow?: string) => void;
 }
 
 function formatTimestamp(value: string) {
@@ -113,11 +115,14 @@ function parseVBody(body: string): React.ReactNode {
   return nodes.length > 0 ? <>{nodes}</> : <>{body}</>;
 }
 
-function MessageItemComponent({ message, isStreaming = false, thcLevel = 0, preThoughts, shadowText }: MessageItemProps) {
+function MessageItemComponent({ message, isStreaming = false, thcLevel = 0, preThoughts, shadowText, onShare }: MessageItemProps) {
   const isUser = message.sender_role === 'user';
   const isOptimistic = (message.metadata as Record<string, unknown> | null | undefined)?.optimistic === true;
   const doScramble = !isUser && thcLevel > 0.7 && isOptimistic;
   const isShadowPhase = !message.body && isStreaming && !isUser && !!shadowText;
+  const [downloading, setDownloading] = useState(false);
+
+  const showShareBtn = !isUser && !isStreaming && !!message.body && !!onShare;
 
   return (
     <motion.article
@@ -128,7 +133,7 @@ function MessageItemComponent({ message, isStreaming = false, thcLevel = 0, preT
       }}
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)', letterSpacing: 'normal' }}
       transition={{ duration: doScramble ? 0.72 : 0.18, ease: 'easeOut' }}
-      className={isUser ? 'ml-auto w-full max-w-[78%] md:max-w-[70%]' : 'w-full max-w-[92%] md:max-w-[82%]'}
+      className={isUser ? 'ml-auto w-full max-w-[78%] md:max-w-[70%]' : 'group w-full max-w-[92%] md:max-w-[82%]'}
     >
       <div
         className={
@@ -174,6 +179,33 @@ function MessageItemComponent({ message, isStreaming = false, thcLevel = 0, preT
             parseVBody(message.body)
           )}
         </div>
+
+        {showShareBtn && (
+          <div className="mt-2 flex justify-end">
+            <button
+              type="button"
+              disabled={downloading}
+              title="Kártya letöltése"
+              onClick={async () => {
+                if (downloading) return;
+                setDownloading(true);
+                try {
+                  await onShare!(message.body, shadowText);
+                } finally {
+                  setDownloading(false);
+                }
+              }}
+              className="flex items-center gap-1.5 rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-neutral-500 opacity-0 transition-all duration-200 hover:border-lime-300/25 hover:text-lime-300/70 group-hover:opacity-100 focus-visible:opacity-100 disabled:cursor-wait sm:opacity-0 max-sm:opacity-100"
+            >
+              {downloading ? (
+                <span className="h-3 w-3 animate-spin rounded-full border border-lime-300/40 border-t-transparent" />
+              ) : (
+                <Download size={11} />
+              )}
+              <span>kártya</span>
+            </button>
+          </div>
+        )}
       </div>
     </motion.article>
   );
