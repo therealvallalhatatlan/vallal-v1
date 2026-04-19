@@ -4,11 +4,6 @@ import { ImageResponse } from "next/og";
 export const runtime = "edge";
 export const contentType = "image/png";
 
-function truncate(str: string, max: number): string {
-  if (str.length <= max) return str;
-  return str.slice(0, max - 1) + "…";
-}
-
 // Strip ~~...~~ markup and [[...]] tangential notes from V.'s message
 function stripMarkup(text: string): string {
   return text
@@ -18,16 +13,28 @@ function stripMarkup(text: string): string {
     .trim();
 }
 
+// Pick font sizes so total content fits within ~420px usable height
+// Usable = 630 - 80top - 80bottom - 76 header = ~394px; leave 20px buffer
+function pickSizes(quoteLen: number, shadowLen: number): { qSize: number; sSize: number } {
+  const total = quoteLen + shadowLen;
+  if (total <= 80)  return { qSize: 40, sSize: 20 };
+  if (total <= 160) return { qSize: 34, sSize: 18 };
+  if (total <= 260) return { qSize: 28, sSize: 16 };
+  if (total <= 380) return { qSize: 24, sSize: 15 };
+  if (total <= 520) return { qSize: 20, sSize: 14 };
+  if (total <= 700) return { qSize: 17, sSize: 13 };
+  return { qSize: 15, sSize: 12 };
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const rawQ = searchParams.get("q") ?? "";
   const rawS = searchParams.get("s") ?? "";
 
-  const quote = truncate(stripMarkup(rawQ), 260);
-  const shadow = rawS ? truncate(stripMarkup(rawS), 400) : null;
+  const quote = stripMarkup(rawQ);
+  const shadow = rawS ? stripMarkup(rawS) : null;
 
-  // Adaptive quote font size based on length
-  const quoteFontSize = quote.length > 180 ? "24px" : quote.length > 100 ? "29px" : "36px";
+  const { qSize, sSize } = pickSizes(quote.length, shadow?.length ?? 0);
 
   return new ImageResponse(
     (
@@ -44,7 +51,7 @@ export async function GET(req: Request) {
           fontFamily:
             "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
           position: "relative",
-          padding: "60px 96px 80px 112px",
+          padding: "52px 88px 64px 104px",
           overflow: "hidden",
         }}
       >
@@ -95,7 +102,7 @@ export async function GET(req: Request) {
         {/* Quote */}
         <p
           style={{
-            fontSize: quoteFontSize,
+            fontSize: `${qSize}px`,
             lineHeight: 1.55,
             color: "rgba(255,255,255,0.92)",
             margin: 0,
@@ -110,57 +117,37 @@ export async function GET(req: Request) {
 
         {/* Shadow text — V.'s inner thought */}
         {shadow && (
-          <div
+          <p
             style={{
-              marginTop: "24px",
-              borderLeft: "2px solid rgba(255,255,255,0.12)",
-              paddingLeft: "18px",
-              maxWidth: "900px",
+              marginTop: "20px",
+              fontSize: `${sSize}px`,
+              lineHeight: 1.6,
+              color: "rgba(255,255,255,0.3)",
+              maxWidth: "860px",
+              borderLeft: "2px solid rgba(255,255,255,0.1)",
+              paddingLeft: "16px",
+              margin: "20px 0 0 0",
+              wordBreak: "break-word",
               flexShrink: 0,
             }}
           >
-            <p
-              style={{
-                fontSize: "16px",
-                lineHeight: 1.65,
-                color: "rgba(255,255,255,0.28)",
-                margin: 0,
-                wordBreak: "break-word",
-              }}
-            >
-              {shadow}
-            </p>
-          </div>
+            {shadow}
+          </p>
         )}
 
         {/* Bottom right: site name */}
         <div
           style={{
             position: "absolute",
-            bottom: "40px",
-            right: "64px",
+            bottom: "32px",
+            right: "56px",
             fontSize: "11px",
             letterSpacing: "0.28em",
             textTransform: "uppercase",
-            color: "rgba(255,255,255,0.15)",
+            color: "rgba(255,255,255,0.18)",
           }}
         >
           vallalhatatlan.online
-        </div>
-
-        {/* Bottom left: subtle quote mark watermark */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "16px",
-            left: "64px",
-            fontSize: "110px",
-            lineHeight: 1,
-            color: "rgba(163, 230, 53, 0.04)",
-            fontFamily: "serif",
-          }}
-        >
-          "
         </div>
       </div>
     ),
