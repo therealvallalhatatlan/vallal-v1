@@ -123,11 +123,9 @@ export async function GET(req: Request) {
               style={{
                 fontSize: "16px",
                 lineHeight: 1.65,
-                fontStyle: "italic",
                 color: "rgba(255,255,255,0.28)",
                 margin: 0,
                 wordBreak: "break-word",
-                whiteSpace: "pre-wrap",
               }}
             >
               {shadow}
