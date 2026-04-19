@@ -180,6 +180,19 @@ function MessageItemComponent({ message, isStreaming = false, thcLevel = 0, preT
           )}
         </div>
 
+        {!isUser && message.safety_flag && !isStreaming && (
+          <div className="mt-4">
+            <a
+              href="https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block rounded-full bg-lime-300/10 px-5 py-2.5 text-[13px] font-medium text-lime-200 ring-1 ring-lime-300/25 transition hover:bg-lime-300/20 hover:ring-lime-300/40"
+            >
+              Megveszem a könyvet →
+            </a>
+          </div>
+        )}
+
         {showShareBtn && (
           <div className="mt-2 flex justify-end">
             <button
