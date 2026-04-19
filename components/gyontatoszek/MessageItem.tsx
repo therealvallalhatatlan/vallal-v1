@@ -21,19 +21,23 @@ function formatTimestamp(value: string) {
 
 // Erratic ADHD half-thoughts shown while V is "typing"
 const ADHD_THOUGHTS = [
-  '...na de',
+  '...ezt a fost',
   '...várj',
-  '...szóval',
-  '...igen de',
-  '...ez furcsa',
-  '...nem',
-  '...hm',
-  '...valami...',
+  '...szóval izé',
+  '...jaja de',
+  '...faszomatmár',
+  '...félbeszakít bazdmeg',
+  '...hm hm',
+   '...plöm plöm',
+   '...miafasz',
+    '...jaa értem',
+  '...valami',
   '...fogd meg ezt',
   '...egysec',
   '...szart se',
   '...ott volt',
   '...jó jó',
+   '...mér ott nézed',
 ];
 
 function ErraticThinkingDots({ thoughts }: { thoughts?: string[] }) {
@@ -67,7 +71,7 @@ function ErraticThinkingDots({ thoughts }: { thoughts?: string[] }) {
 
 // Parse V's message body for ~~strikethrough~~ and [[tangential notes]]
 function parseVBody(body: string): React.ReactNode {
-  const regex = /~~(.+?)~~|\[\[(.+?)\]\]/gs;
+  const regex = /~~([\s\S]+?)~~|\[\[([\s\S]+?)\]\]/g;
   const nodes: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
