@@ -41,7 +41,7 @@ export function Composer({
               disabled={isDisabled}
               rows={1}
               placeholder="Írj ide"
-              className="max-h-48 min-h-[52px] flex-1 resize-none bg-transparent px-3 py-3 font-mono text-[15px] leading-6 text-neutral-100 outline-none placeholder:text-neutral-500"
+              className="max-h-48 min-h-[52px] flex-1 resize-none bg-transparent px-3 py-3 font-mono text-[17px] leading-7 text-neutral-100 outline-none placeholder:text-neutral-500 md:text-[19px] md:leading-8"
             />
             <button
               type="button"

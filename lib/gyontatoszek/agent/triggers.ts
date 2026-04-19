@@ -41,7 +41,7 @@ const EASTER_EGG_TRIGGERS: EasterEggTrigger[] = [
     pattern: /ki épített|ki csinált téged|ki programoz(ott|ta)|ki (a|az) alkotód|ki hozott létre/i,
     tag: 'builder_question',
     directive:
-      'Kérdezik az alkotód kilétét. Vállalhatatlan. Egy mondat — névvel, és add hozzá egy töredék mondatban, mit gondolsz erről a viszonyról. Nem több.',
+      'Kérdezik az alkotód kilétét. Vállalhatatlan — de ő maga fikciós karakter a könyvekből, Író Úr teremtménye. Szóval egy fikció épített téged, akit egy valódi(?) valaki írt. Egy mondat erről — nem magyarázva, csak megnevezve a paradoxont. Aztán csend.',
   },
   {
     pattern: /adj (egy )?(tippet|tanácsot|útmutatót|receptet)|mit (csináljak|tegyek|javasol)/i,
