@@ -23,5 +23,9 @@ const MapView = dynamic(() => import('./MapView'), {
 })
 
 export default function MapViewClient() {
-  return <MapView />
+  return (
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <MapView />
+    </div>
+  )
 }

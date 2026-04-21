@@ -43,6 +43,7 @@ export default function MapView() {
   const [mapLoaded, setMapLoaded] = useState(false)
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
   const [geoError, setGeoError] = useState<string | null>(null)
+  const [geoRetry, setGeoRetry] = useState(0)
   const [spots, setSpots] = useState<StickerSpot[]>([])
   const [selectedSpot, setSelectedSpot] = useState<StickerSpot | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -54,6 +55,7 @@ export default function MapView() {
     if (!containerRef.current || mapRef.current) return
     if (!MAPBOX_TOKEN) {
       console.error('[MapView] NEXT_PUBLIC_MAPBOX_TOKEN is not set')
+      setGeoError('Térkép konfiguráció hiba. Kérjük, jelezd az üzemeltetőnek.')
       return
     }
 
@@ -86,6 +88,7 @@ export default function MapView() {
       setGeoError('A böngésző nem támogatja a helymeghatározást.')
       return
     }
+    setGeoError(null)
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
@@ -120,7 +123,13 @@ export default function MapView() {
         }
       },
       (err) => {
-        setGeoError(`Helymeghatározási hiba: ${err.message}`)
+        if (err.code === 1) {
+          setGeoError('A helymeghatározás le van tiltva. Kattints a lakat ikonra a cím sávban, majd engedélyezd a helymeghatározást.')
+        } else if (err.code === 2) {
+          setGeoError('Nem sikerült meghatározni a helyzeted. Ellenőrizd, hogy be van-e kapcsolva a GPS.')
+        } else {
+          setGeoError('Helymeghatározás időtúllépés. Próbáld meg újra.')
+        }
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
     )
@@ -130,7 +139,9 @@ export default function MapView() {
       userMarkerRef.current?.remove()
       userMarkerRef.current = null
     }
-  }, [])
+  // geoRetry changes when the user clicks Retry → re-runs the effect
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoRetry])
 
   // ── Fetch spots ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -173,7 +184,7 @@ export default function MapView() {
   const handleClosePanel = useCallback(() => setSelectedSpot(null), [])
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div style={{ position: 'absolute', inset: 0 }}>
       {/* Global CSS for marker animations */}
       <style>{`
         @keyframes userPulse {
@@ -208,17 +219,35 @@ export default function MapView() {
             top: 16,
             left: '50%',
             transform: 'translateX(-50%)',
-            background: 'rgba(239,68,68,0.9)',
-            color: '#fff',
-            padding: '8px 14px',
-            borderRadius: 8,
+            background: 'rgba(24,24,27,0.95)',
+            border: '1px solid rgba(239,68,68,0.6)',
+            color: '#fca5a5',
+            padding: '12px 16px',
+            borderRadius: 10,
             fontSize: 13,
             zIndex: 20,
             maxWidth: 'calc(100vw - 32px)',
             textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
           }}
         >
-          {geoError}
+          <span>{geoError}</span>
+          <button
+            onClick={() => setGeoRetry(r => r + 1)}
+            style={{
+              background: 'rgba(239,68,68,0.15)',
+              border: '1px solid rgba(239,68,68,0.4)',
+              color: '#fca5a5',
+              padding: '4px 12px',
+              borderRadius: 6,
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            Újra próbálom
+          </button>
         </div>
       )}
 
