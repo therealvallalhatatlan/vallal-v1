@@ -15,9 +15,10 @@ import type { StickerSpot } from '@/lib/matrica'
 interface Props {
   map: mapboxgl.Map
   spot: StickerSpot
+  radiusMeters?: number
 }
 
-export default function SpotCircle({ map, spot }: Props) {
+export default function SpotCircle({ map, spot, radiusMeters }: Props) {
   const sourceId = `spot-circle-src-${spot.id}`
   const fillId = `spot-circle-fill-${spot.id}`
   const outlineId = `spot-circle-outline-${spot.id}`
@@ -25,7 +26,7 @@ export default function SpotCircle({ map, spot }: Props) {
   useEffect(() => {
     if (!map) return
 
-    const geojson = geoCirclePolygon(spot.lng, spot.lat, spot.radius_visibility)
+    const geojson = geoCirclePolygon(spot.lng, spot.lat, radiusMeters ?? spot.radius_visibility)
 
     // Add GeoJSON source
     if (!map.getSource(sourceId)) {
@@ -65,7 +66,7 @@ export default function SpotCircle({ map, spot }: Props) {
       if (map.getLayer(fillId)) map.removeLayer(fillId)
       if (map.getSource(sourceId)) map.removeSource(sourceId)
     }
-  }, [map, spot, sourceId, fillId, outlineId])
+  }, [map, spot, sourceId, fillId, outlineId, radiusMeters])
 
   return null
 }

@@ -177,20 +177,20 @@ export default function MapView() {
   }, [])
 
   // ── Classify spots ──────────────────────────────────────────────────────────
-  const visibleSpots: StickerSpot[] = []
-  const vagueSpots: StickerSpot[] = []
+  const clickableSpots: StickerSpot[] = []
+  const hintSpots: StickerSpot[] = []
 
   for (const spot of spots) {
+    clickableSpots.push(spot)
+
     if (!userLocation) {
-      // No location yet — show all as vague
-      vagueSpots.push(spot)
-    } else {
-      const d = getDistanceMeters(userLocation.lat, userLocation.lng, spot.lat, spot.lng)
-      if (d <= spot.radius_visibility) {
-        visibleSpots.push(spot)
-      } else {
-        vagueSpots.push(spot)
-      }
+      hintSpots.push(spot)
+      continue
+    }
+
+    const d = getDistanceMeters(userLocation.lat, userLocation.lng, spot.lat, spot.lng)
+    if (d > spot.radius_visibility) {
+      hintSpots.push(spot)
     }
   }
 
@@ -234,10 +234,15 @@ export default function MapView() {
       {/* Overlay layers (rendered after map is fully loaded) */}
       {mapLoaded && mapRef.current && (
         <>
-          {vagueSpots.map((spot) => (
-            <SpotCircle key={spot.id} map={mapRef.current!} spot={spot} />
+          {hintSpots.map((spot) => (
+            <SpotCircle
+              key={spot.id}
+              map={mapRef.current!}
+              spot={spot}
+              radiusMeters={Math.max(40, Math.min(spot.radius_claim, 120))}
+            />
           ))}
-          {visibleSpots.map((spot) => (
+          {clickableSpots.map((spot) => (
             <SpotMarker key={spot.id} map={mapRef.current!} spot={spot} onSelect={handleSelect} />
           ))}
         </>
