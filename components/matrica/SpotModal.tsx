@@ -15,6 +15,7 @@ import { createClient } from '@/lib/browser'
 import { getDistanceMeters } from '@/lib/matrica'
 import type { StickerSpot } from '@/lib/matrica'
 import ClaimForm from './ClaimForm'
+import type { ShowToast } from './useToast'
 
 type ModalView = 'info' | 'claim' | 'success'
 
@@ -27,6 +28,7 @@ interface Props {
   spot: StickerSpot
   userLocation: UserLocation | null
   onClose: () => void
+  showToast?: ShowToast
 }
 
 // ── Backdrop ──────────────────────────────────────────────────────────────────
@@ -45,7 +47,7 @@ function Backdrop({ onClick }: { onClick: () => void }) {
   )
 }
 
-export default function SpotModal({ spot, userLocation, onClose }: Props) {
+export default function SpotModal({ spot, userLocation, onClose, showToast }: Props) {
   const [view, setView] = useState<ModalView>('info')
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [authError, setAuthError] = useState(false)
@@ -104,14 +106,22 @@ export default function SpotModal({ spot, userLocation, onClose }: Props) {
           background: '#0f0f14',
           borderTop: '1px solid rgba(232,121,249,0.25)',
           borderRadius: '16px 16px 0 0',
-          padding: '20px 20px 32px',
-          maxHeight: '85dvh',
+          padding: '12px 20px 40px',
+          maxHeight: '88dvh',
           overflowY: 'auto',
           color: '#f4f4f5',
-          // Subtle entrance animation
-          animation: 'slideUp 0.22s ease',
+          animation: 'slideUp 0.25s cubic-bezier(0.22, 1, 0.36, 1)',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
         }}
       >
+        {/* Drag handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+          <div style={{
+            width: 36, height: 4, borderRadius: 2,
+            background: 'rgba(255,255,255,0.18)',
+          }} />
+        </div>
         {/* Close button */}
         <button
           onClick={onClose}
@@ -214,27 +224,43 @@ export default function SpotModal({ spot, userLocation, onClose }: Props) {
             )}
 
             {/* CTA */}
-            <button
-              onClick={handleFoundIt}
-              disabled={spot.remaining_quantity <= 0}
-              style={{
-                width: '100%',
-                padding: '13px 0',
-                background:
-                  spot.remaining_quantity <= 0
-                    ? 'rgba(255,255,255,0.05)'
-                    : '#e879f9',
-                border: 'none',
-                borderRadius: 10,
-                color: spot.remaining_quantity <= 0 ? '#52525b' : '#fff',
-                fontWeight: 700,
-                fontSize: 15,
-                cursor: spot.remaining_quantity <= 0 ? 'not-allowed' : 'pointer',
-                letterSpacing: '0.02em',
-              }}
-            >
-              {spot.remaining_quantity <= 0 ? 'Elfogyott' : 'Megtaláltam!'}
-            </button>
+            {(() => {
+              const isEmpty = spot.remaining_quantity <= 0
+              const tooFar = distance !== null && !withinClaimRadius
+              const disabled = isEmpty || tooFar
+
+              let label = 'Megtaláltam!'
+              if (isEmpty) label = 'Elfogyott'
+              else if (tooFar) label = `Túl messze (${distance} m)`
+
+              return (
+                <button
+                  onClick={handleFoundIt}
+                  disabled={disabled}
+                  title={tooFar ? `Legalább ${spot.radius_claim} m-en belül kell lenned` : undefined}
+                  style={{
+                    width: '100%',
+                    padding: '14px 0',
+                    background: disabled ? 'rgba(255,255,255,0.05)' : '#e879f9',
+                    border: disabled ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                    borderRadius: 12,
+                    color: disabled ? '#52525b' : '#fff',
+                    fontWeight: 700,
+                    fontSize: 15,
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    letterSpacing: '0.02em',
+                    transition: 'background 0.2s ease, transform 0.1s ease',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                  onMouseDown={e => !disabled && ((e.currentTarget.style.transform = 'scale(0.98)'))}
+                  onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+                  onTouchStart={e => !disabled && ((e.currentTarget.style.transform = 'scale(0.97)'))}
+                  onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
+                >
+                  {label}
+                </button>
+              )
+            })()}
           </>
         )}
 
@@ -270,6 +296,7 @@ export default function SpotModal({ spot, userLocation, onClose }: Props) {
               accessToken={accessToken}
               onSuccess={handleClaimSuccess}
               onCancel={() => setView('info')}
+              showToast={showToast}
             />
           </>
         )}
@@ -305,7 +332,7 @@ export default function SpotModal({ spot, userLocation, onClose }: Props) {
         {/* Slide-up keyframe */}
         <style>{`
           @keyframes slideUp {
-            from { transform: translateY(40px); opacity: 0; }
+            from { transform: translateY(60px); opacity: 0; }
             to   { transform: translateY(0);    opacity: 1; }
           }
         `}</style>

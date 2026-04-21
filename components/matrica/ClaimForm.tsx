@@ -9,6 +9,7 @@
 import { useRef, useState } from 'react'
 import { createClient } from '@/lib/browser'
 import type { StickerSpot } from '@/lib/matrica'
+import type { ShowToast } from './useToast'
 
 type ClaimState = 'idle' | 'uploading' | 'submitting' | 'success' | 'error'
 
@@ -33,6 +34,7 @@ interface Props {
   accessToken: string
   onSuccess: () => void
   onCancel: () => void
+  showToast?: ShowToast
 }
 
 export default function ClaimForm({
@@ -42,8 +44,10 @@ export default function ClaimForm({
   accessToken,
   onSuccess,
   onCancel,
+  showToast,
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
+  const submittingRef = useRef(false)      // debounce: prevent double-submit
   const [comment, setComment] = useState('')
   const [preview, setPreview] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -62,6 +66,8 @@ export default function ClaimForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (submittingRef.current) return   // debounce guard
+    submittingRef.current = true
     setErrorMsg(null)
 
     let uploadedUrl: string | null = null
@@ -95,7 +101,10 @@ export default function ClaimForm({
         uploadedUrl = publicData.publicUrl
       } catch (err) {
         setState('error')
-        setErrorMsg(`Képfeltöltés sikertelen: ${err instanceof Error ? err.message : String(err)}`)
+        const msg = `Képfeltöltés sikertelen: ${err instanceof Error ? err.message : String(err)}`
+        setErrorMsg(msg)
+        showToast?.(msg, 'error')
+        submittingRef.current = false
         return
       }
     }
@@ -125,14 +134,20 @@ export default function ClaimForm({
         const msg = key ? (ERROR_MESSAGES[key] ?? json.error) : 'Ismeretlen hiba.'
         setState('error')
         setErrorMsg(msg)
+        showToast?.(msg, 'error')
+        submittingRef.current = false
         return
       }
 
       setState('success')
+      showToast?.('Igénylés beküldve! Hamarosan átnézzük.', 'success')
       onSuccess()
     } catch {
+      const msg = 'Hálózati hiba. Ellenőrizd az internetkapcsolatodat.'
       setState('error')
-      setErrorMsg('Hálózati hiba. Ellenőrizd az internetkapcsolatodat.')
+      setErrorMsg(msg)
+      showToast?.(msg, 'error')
+      submittingRef.current = false
     }
   }
 

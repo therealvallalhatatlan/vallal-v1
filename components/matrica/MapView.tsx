@@ -21,6 +21,9 @@ import type { StickerSpot } from '@/lib/matrica'
 import SpotCircle from './SpotCircle'
 import SpotMarker from './SpotMarker'
 import SpotModal from './SpotModal'
+import ToastContainer from './ToastContainer'
+import ScoreBadge from './ScoreBadge'
+import { useToast } from './useToast'
 
 // Token comes from env; set it once at module level
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
@@ -35,6 +38,7 @@ export default function MapView() {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null)
+  const firstFixRef = useRef(false)
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
@@ -42,6 +46,8 @@ export default function MapView() {
   const [spots, setSpots] = useState<StickerSpot[]>([])
   const [selectedSpot, setSelectedSpot] = useState<StickerSpot | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
+
+  const { toasts, show: showToast, dismiss: dismissToast } = useToast()
 
   // ── Initialize map ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -88,8 +94,9 @@ export default function MapView() {
         setGeoError(null)
 
         // Fly to user on first fix
-        if (mapRef.current && !userMarkerRef.current) {
-          mapRef.current.flyTo({ center: [loc.lng, loc.lat], zoom: 15, duration: 1200 })
+        if (mapRef.current && !firstFixRef.current) {
+          firstFixRef.current = true
+          mapRef.current.flyTo({ center: [loc.lng, loc.lat], zoom: 15, duration: 1400, essential: true })
         }
 
         // Update / create user marker
@@ -98,11 +105,13 @@ export default function MapView() {
             userMarkerRef.current.setLngLat([loc.lng, loc.lat])
           } else {
             const el = document.createElement('div')
+            el.className = 'matrica-user-dot'
             el.style.cssText = `
-              width: 16px; height: 16px; border-radius: 50%;
+              width: 18px; height: 18px; border-radius: 50%;
               background: #38bdf8;
               border: 3px solid #fff;
               box-shadow: 0 0 0 6px rgba(56,189,248,0.25);
+              animation: userPulse 2.4s ease-in-out infinite;
             `
             userMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
               .setLngLat([loc.lng, loc.lat])
@@ -165,8 +174,19 @@ export default function MapView() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Global CSS for marker animations */}
+      <style>{`
+        @keyframes userPulse {
+          0%, 100% { box-shadow: 0 0 0 4px rgba(56,189,248,0.3); }
+          50%       { box-shadow: 0 0 0 10px rgba(56,189,248,0.08); }
+        }
+      `}</style>
+
       {/* Map container */}
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+
+      {/* Score badge */}
+      <ScoreBadge />
 
       {/* Overlay layers (rendered after map is fully loaded) */}
       {mapLoaded && mapRef.current && (
@@ -230,8 +250,12 @@ export default function MapView() {
           spot={selectedSpot}
           userLocation={userLocation}
           onClose={handleClosePanel}
+          showToast={showToast}
         />
       )}
+
+      {/* Toasts */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }
