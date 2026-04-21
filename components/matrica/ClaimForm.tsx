@@ -7,7 +7,6 @@
  */
 
 import { useRef, useState } from 'react'
-import { createClient } from '@/lib/browser'
 import type { StickerSpot } from '@/lib/matrica'
 import type { ShowToast } from './useToast'
 
@@ -76,29 +75,23 @@ export default function ClaimForm({
     if (selectedFile) {
       setState('uploading')
       try {
-        const supabase = createClient()
-        // File stored at: matrica-claims/<spot_id>/<timestamp>-<original-name>
         const ext = selectedFile.name.split('.').pop() ?? 'jpg'
         const fileName = `${spot.id}/${Date.now()}.${ext}`
 
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('matrica-claims')
-          .upload(fileName, selectedFile, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: selectedFile.type,
-          })
+        const fd = new FormData()
+        fd.append('file', selectedFile)
+        fd.append('path', fileName)
 
-        if (uploadError) {
-          throw new Error(uploadError.message)
-        }
+        const uploadRes = await fetch('/api/matrica/upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: fd,
+        })
 
-        // Build public URL
-        const { data: publicData } = supabase.storage
-          .from('matrica-claims')
-          .getPublicUrl(uploadData.path)
+        const uploadJson = await uploadRes.json()
+        if (!uploadRes.ok) throw new Error(uploadJson.error ?? `HTTP ${uploadRes.status}`)
 
-        uploadedUrl = publicData.publicUrl
+        uploadedUrl = uploadJson.url
       } catch (err) {
         setState('error')
         const msg = `Képfeltöltés sikertelen: ${err instanceof Error ? err.message : String(err)}`

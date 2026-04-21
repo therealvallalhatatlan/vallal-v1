@@ -6,6 +6,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // mapbox-gl 3.x needs transpilation in Next.js / Turbopack
+  transpilePackages: ['mapbox-gl'],
   async redirects() {
     return [
       {

@@ -41,6 +41,7 @@ export default function MapView() {
   const firstFixRef = useRef(false)
 
   const [mapLoaded, setMapLoaded] = useState(false)
+  const [mapError, setMapError] = useState<string | null>(null)
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
   const [geoError, setGeoError] = useState<string | null>(null)
   const [geoRetry, setGeoRetry] = useState(0)
@@ -61,18 +62,34 @@ export default function MapView() {
 
     mapboxgl.accessToken = MAPBOX_TOKEN
 
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [19.04, 47.49], // Budapest default
-      zoom: 13,
-      attributionControl: false,
-    })
+    let map: mapboxgl.Map
+    try {
+      map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [19.04, 47.49],
+        zoom: 13,
+        attributionControl: false,
+        // needed for Next.js / Turbopack bundling
+        localFontFamily: false as unknown as string,
+      })
+    } catch (e) {
+      console.error('[MapView] mapboxgl.Map init error', e)
+      setMapError('Térkép inicializálása sikertelen. Frissítsd az oldalt.')
+      return
+    }
 
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right')
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right')
 
-    map.on('load', () => setMapLoaded(true))
+    map.on('load', () => {
+      map.resize()
+      setMapLoaded(true)
+    })
+
+    map.on('error', (e) => {
+      console.error('[MapView] map error', e)
+    })
 
     mapRef.current = map
 
@@ -194,10 +211,25 @@ export default function MapView() {
       `}</style>
 
       {/* Map container */}
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+      <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
 
       {/* Score badge */}
       <ScoreBadge />
+
+      {/* Loading state */}
+      {!mapLoaded && !mapError && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#71717a', fontSize: 14, pointerEvents: 'none' }}>
+          Térkép betöltése…
+        </div>
+      )}
+
+      {/* Map init error */}
+      {mapError && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: 24, textAlign: 'center' }}>
+          <span style={{ color: '#fca5a5', fontSize: 14 }}>{mapError}</span>
+          <button onClick={() => window.location.reload()} style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', color: '#fca5a5', padding: '6px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>Oldal frissítése</button>
+        </div>
+      )}
 
       {/* Overlay layers (rendered after map is fully loaded) */}
       {mapLoaded && mapRef.current && (

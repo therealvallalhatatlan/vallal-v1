@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { validateAdminKey } from '@/lib/actions'
-import { createClient } from '@/lib/browser'
 import type { StickerSpot, SpotStatus } from '@/lib/matrica'
 
 const MapPicker = dynamic(() => import('@/components/matrica/MapPicker'), { ssr: false })
@@ -151,15 +150,21 @@ function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
     if (imageFile) {
       setUploadProgress('Kép feltöltése…')
       try {
-        const supabase = createClient()
         const ext = imageFile.name.split('.').pop() ?? 'jpg'
         const path = `spot-covers/${Date.now()}.${ext}`
-        const { data: up, error: upErr } = await supabase.storage
-          .from('matrica-claims')
-          .upload(path, imageFile, { cacheControl: '31536000', upsert: false, contentType: imageFile.type })
-        if (upErr) throw new Error(upErr.message)
-        const { data: pub } = supabase.storage.from('matrica-claims').getPublicUrl(up.path)
-        imageUrl = pub.publicUrl
+
+        const fd = new FormData()
+        fd.append('file', imageFile)
+        fd.append('path', path)
+
+        const uploadRes = await fetch('/api/matrica/upload', {
+          method: 'POST',
+          headers: { 'x-admin-key': adminKey },
+          body: fd,
+        })
+        const uploadJson = await uploadRes.json()
+        if (!uploadRes.ok) throw new Error(uploadJson.error ?? `HTTP ${uploadRes.status}`)
+        imageUrl = uploadJson.url
       } catch (err) {
         setError(`Képfeltöltés hiba: ${err instanceof Error ? err.message : String(err)}`)
         setSubmitting(false)
