@@ -1,0 +1,458 @@
+'use client'
+
+import { useState, useEffect, useCallback, useRef } from 'react'
+import dynamic from 'next/dynamic'
+import { validateAdminKey } from '@/lib/actions'
+import { createClient } from '@/lib/browser'
+import type { StickerSpot, SpotStatus } from '@/lib/matrica'
+
+const MapPicker = dynamic(() => import('@/components/matrica/MapPicker'), { ssr: false })
+
+// ── Shared styles ─────────────────────────────────────────────────────────────
+const s = {
+  page: {
+    minHeight: '100vh',
+    background: '#09090b',
+    color: '#f4f4f5',
+    padding: '32px 20px',
+    fontFamily: 'inherit',
+  } as React.CSSProperties,
+  card: {
+    background: '#111113',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: 12,
+    padding: '20px 24px',
+    marginBottom: 24,
+  } as React.CSSProperties,
+  label: {
+    display: 'block',
+    fontSize: 12,
+    color: '#a1a1aa',
+    marginBottom: 6,
+  } as React.CSSProperties,
+  input: {
+    width: '100%',
+    background: 'rgba(255,255,255,0.05)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    color: '#f4f4f5',
+    padding: '8px 10px',
+    fontSize: 14,
+    boxSizing: 'border-box' as const,
+    outline: 'none',
+    fontFamily: 'inherit',
+  } as React.CSSProperties,
+  btn: (color = '#e879f9', disabled = false): React.CSSProperties => ({
+    padding: '9px 18px',
+    background: disabled ? 'rgba(255,255,255,0.06)' : color,
+    border: 'none',
+    borderRadius: 8,
+    color: disabled ? '#52525b' : '#fff',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontSize: 13,
+    fontWeight: 600,
+  }),
+}
+
+const STATUS_LABEL: Record<SpotStatus, string> = {
+  active: 'Aktív',
+  empty: 'Elfogyott',
+  archived: 'Archivált',
+}
+
+const STATUS_COLOR: Record<SpotStatus, string> = {
+  active: '#86efac',
+  empty: '#fbbf24',
+  archived: '#71717a',
+}
+
+// ── Admin key gate ─────────────────────────────────────────────────────────────
+function AdminKeyGate({ onAuth }: { onAuth: (key: string) => void }) {
+  const [key, setKey] = useState('')
+  const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError(false)
+    const valid = await validateAdminKey(key)
+    setLoading(false)
+    if (valid) {
+      onAuth(key)
+    } else {
+      setError(true)
+    }
+  }
+
+  return (
+    <div style={{ ...s.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <form onSubmit={submit} style={{ ...s.card, width: 320 }}>
+        <h2 style={{ margin: '0 0 16px', fontSize: 18 }}>Admin hozzáférés</h2>
+        <label style={s.label} htmlFor="admin-key">Admin kulcs</label>
+        <input
+          id="admin-key"
+          type="password"
+          value={key}
+          onChange={(e) => setKey(e.target.value)}
+          style={{ ...s.input, marginBottom: 12 }}
+          autoFocus
+        />
+        {error && (
+          <p style={{ color: '#fca5a5', fontSize: 13, margin: '0 0 10px' }}>Érvénytelen kulcs.</p>
+        )}
+        <button type="submit" disabled={loading || !key} style={s.btn()}>
+          {loading ? 'Ellenőrzés…' : 'Belépés'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+// ── Create spot form ───────────────────────────────────────────────────────────
+interface CreateFormProps {
+  adminKey: string
+  onCreated: (spot: StickerSpot) => void
+}
+
+function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [lat, setLat] = useState<number | null>(null)
+  const [lng, setLng] = useState<number | null>(null)
+  const [radiusVisibility, setRadiusVisibility] = useState(500)
+  const [radiusClaim, setRadiusClaim] = useState(50)
+  const [totalQty, setTotalQty] = useState(1)
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null
+    setImageFile(file)
+    setImagePreview(file ? URL.createObjectURL(file) : null)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (!title.trim()) { setError('A cím kötelező.'); return }
+    if (lat === null || lng === null) { setError('Kattints a térképre a hely megadásához.'); return }
+
+    setSubmitting(true)
+
+    let imageUrl: string | null = null
+
+    // Upload image if provided
+    if (imageFile) {
+      setUploadProgress('Kép feltöltése…')
+      try {
+        const supabase = createClient()
+        const ext = imageFile.name.split('.').pop() ?? 'jpg'
+        const path = `spot-covers/${Date.now()}.${ext}`
+        const { data: up, error: upErr } = await supabase.storage
+          .from('matrica-claims')
+          .upload(path, imageFile, { cacheControl: '31536000', upsert: false, contentType: imageFile.type })
+        if (upErr) throw new Error(upErr.message)
+        const { data: pub } = supabase.storage.from('matrica-claims').getPublicUrl(up.path)
+        imageUrl = pub.publicUrl
+      } catch (err) {
+        setError(`Képfeltöltés hiba: ${err instanceof Error ? err.message : String(err)}`)
+        setSubmitting(false)
+        setUploadProgress(null)
+        return
+      }
+    }
+
+    setUploadProgress('Spot mentése…')
+    try {
+      const res = await fetch('/api/admin/matrica/spots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim() || null,
+          image_url: imageUrl,
+          lat,
+          lng,
+          radius_visibility: radiusVisibility,
+          radius_claim: radiusClaim,
+          total_quantity: totalQty,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
+      setSuccess(true)
+      onCreated(json.spot)
+      // Reset form
+      setTitle(''); setDescription(''); setLat(null); setLng(null)
+      setRadiusVisibility(500); setRadiusClaim(50); setTotalQty(1)
+      setImageFile(null); setImagePreview(null)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (err) {
+      setError(`Mentési hiba: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setSubmitting(false)
+      setUploadProgress(null)
+    }
+  }
+
+  return (
+    <div style={s.card}>
+      <h2 style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 700 }}>Új matrica spot</h2>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {/* Title */}
+        <div>
+          <label style={s.label} htmlFor="sp-title">Cím *</label>
+          <input id="sp-title" style={s.input} value={title} onChange={e => setTitle(e.target.value)} placeholder="pl. Blaha aluljáró" />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label style={s.label} htmlFor="sp-desc">Leírás</label>
+          <textarea
+            id="sp-desc"
+            style={{ ...s.input, resize: 'vertical', minHeight: 60 }}
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Tipp vagy kontextus a megtalálóknak…"
+          />
+        </div>
+
+        {/* Image upload */}
+        <div>
+          <label style={s.label}>Borítókép</label>
+          {imagePreview ? (
+            <div style={{ position: 'relative', marginBottom: 6 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imagePreview} alt="preview" style={{ width: '100%', maxHeight: 160, objectFit: 'cover', borderRadius: 8 }} />
+              <button type="button" onClick={() => { setImageFile(null); setImagePreview(null); if (fileRef.current) fileRef.current.value = '' }}
+                style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.7)', border: 'none', borderRadius: '50%', color: '#fff', width: 24, height: 24, cursor: 'pointer', fontSize: 14 }}>
+                ×
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => fileRef.current?.click()}
+              style={{ width: '100%', padding: '10px 0', background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 8, color: '#71717a', cursor: 'pointer', fontSize: 13 }}>
+              + Kép hozzáadása
+            </button>
+          )}
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+        </div>
+
+        {/* Map picker */}
+        <div>
+          <label style={s.label}>Helyszín *</label>
+          <MapPicker lat={lat} lng={lng} onChange={(la, ln) => { setLat(la); setLng(ln) }} />
+        </div>
+
+        {/* Radii + quantity */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+          <div>
+            <label style={s.label} htmlFor="sp-vis">Láthatóság (m)</label>
+            <input id="sp-vis" type="number" min={1} style={s.input} value={radiusVisibility}
+              onChange={e => setRadiusVisibility(Math.max(1, Number(e.target.value)))} />
+          </div>
+          <div>
+            <label style={s.label} htmlFor="sp-claim">Claim zóna (m)</label>
+            <input id="sp-claim" type="number" min={1} style={s.input} value={radiusClaim}
+              onChange={e => setRadiusClaim(Math.max(1, Number(e.target.value)))} />
+          </div>
+          <div>
+            <label style={s.label} htmlFor="sp-qty">Darabszám</label>
+            <input id="sp-qty" type="number" min={1} style={s.input} value={totalQty}
+              onChange={e => setTotalQty(Math.max(1, Number(e.target.value)))} />
+          </div>
+        </div>
+
+        {error && (
+          <p style={{ margin: 0, padding: '8px 12px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#fca5a5', fontSize: 13 }}>
+            {error}
+          </p>
+        )}
+        {success && (
+          <p style={{ margin: 0, padding: '8px 12px', background: 'rgba(134,239,172,0.1)', border: '1px solid rgba(134,239,172,0.25)', borderRadius: 8, color: '#86efac', fontSize: 13 }}>
+            ✓ Spot létrehozva!
+          </p>
+        )}
+
+        <button type="submit" disabled={submitting} style={{ ...s.btn('#e879f9', submitting), alignSelf: 'flex-start' }}>
+          {uploadProgress ?? (submitting ? 'Mentés…' : 'Spot létrehozása')}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+// ── Spot list ──────────────────────────────────────────────────────────────────
+interface SpotListProps {
+  spots: StickerSpot[]
+  adminKey: string
+  onStatusChanged: (id: string, status: SpotStatus) => void
+}
+
+function SpotList({ spots, adminKey, onStatusChanged }: SpotListProps) {
+  const [pending, setPending] = useState<Record<string, boolean>>({})
+
+  async function changeStatus(id: string, status: SpotStatus) {
+    setPending(p => ({ ...p, [id]: true }))
+    try {
+      const res = await fetch('/api/admin/matrica/spots', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ id, status }),
+      })
+      if (res.ok) onStatusChanged(id, status)
+    } finally {
+      setPending(p => ({ ...p, [id]: false }))
+    }
+  }
+
+  if (spots.length === 0) {
+    return (
+      <div style={s.card}>
+        <p style={{ margin: 0, color: '#52525b', fontSize: 14 }}>Még nincs spot.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div style={s.card}>
+      <h2 style={{ margin: '0 0 16px', fontSize: 17, fontWeight: 700 }}>Összes spot</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {spots.map(spot => (
+          <div key={spot.id} style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 10,
+            padding: '12px 16px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12,
+          }}>
+            {/* Spot image thumbnail */}
+            {spot.image_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={spot.image_url} alt={spot.title}
+                style={{ width: 52, height: 52, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
+            )}
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{spot.title}</span>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 99,
+                  background: `${STATUS_COLOR[spot.status as SpotStatus]}22`,
+                  color: STATUS_COLOR[spot.status as SpotStatus],
+                  border: `1px solid ${STATUS_COLOR[spot.status as SpotStatus]}44`,
+                }}>
+                  {STATUS_LABEL[spot.status as SpotStatus] ?? spot.status}
+                </span>
+              </div>
+              <p style={{ margin: '0 0 6px', fontSize: 12, color: '#71717a' }}>
+                {spot.lat.toFixed(5)}, {spot.lng.toFixed(5)} &nbsp;·&nbsp;
+                Maradt: <strong style={{ color: '#f4f4f5' }}>{spot.remaining_quantity}</strong>/{spot.total_quantity} &nbsp;·&nbsp;
+                Vis: {spot.radius_visibility}m &nbsp;·&nbsp; Claim: {spot.radius_claim}m
+              </p>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {spot.status !== 'active' && (
+                  <button
+                    disabled={pending[spot.id]}
+                    onClick={() => changeStatus(spot.id, 'active')}
+                    style={s.btn('#38bdf8', pending[spot.id])}
+                  >
+                    Aktiválás
+                  </button>
+                )}
+                {spot.status === 'active' && (
+                  <button
+                    disabled={pending[spot.id]}
+                    onClick={() => changeStatus(spot.id, 'empty')}
+                    style={s.btn('#fbbf24', pending[spot.id])}
+                  >
+                    Megjelölés: elfogyott
+                  </button>
+                )}
+                {spot.status !== 'archived' && (
+                  <button
+                    disabled={pending[spot.id]}
+                    onClick={() => changeStatus(spot.id, 'archived')}
+                    style={s.btn('#71717a', pending[spot.id])}
+                  >
+                    Archiválás
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+export default function MatricaAdminPage() {
+  const [adminKey, setAdminKey] = useState<string | null>(null)
+  const [spots, setSpots] = useState<StickerSpot[]>([])
+  const [loadingSpots, setLoadingSpots] = useState(false)
+
+  const fetchSpots = useCallback(async (key: string) => {
+    setLoadingSpots(true)
+    try {
+      const res = await fetch('/api/admin/matrica/spots', {
+        headers: { 'x-admin-key': key },
+      })
+      if (res.ok) {
+        const json = await res.json()
+        setSpots(json.spots ?? [])
+      }
+    } finally {
+      setLoadingSpots(false)
+    }
+  }, [])
+
+  function handleAuth(key: string) {
+    setAdminKey(key)
+    fetchSpots(key)
+  }
+
+  function handleCreated(spot: StickerSpot) {
+    setSpots(prev => [spot, ...prev])
+  }
+
+  function handleStatusChanged(id: string, status: SpotStatus) {
+    setSpots(prev => prev.map(s => s.id === id ? { ...s, status } : s))
+  }
+
+  if (!adminKey) {
+    return <AdminKeyGate onAuth={handleAuth} />
+  }
+
+  return (
+    <div style={s.page}>
+      <div style={{ maxWidth: 760, margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Matrica admin</h1>
+          <button onClick={() => fetchSpots(adminKey)} disabled={loadingSpots}
+            style={{ ...s.btn('rgba(255,255,255,0.08)', loadingSpots), color: '#a1a1aa' }}>
+            {loadingSpots ? 'Frissítés…' : '↻ Frissítés'}
+          </button>
+        </div>
+
+        <CreateSpotForm adminKey={adminKey} onCreated={handleCreated} />
+
+        {loadingSpots ? (
+          <div style={{ ...s.card, color: '#71717a', fontSize: 14 }}>Betöltés…</div>
+        ) : (
+          <SpotList spots={spots} adminKey={adminKey} onStatusChanged={handleStatusChanged} />
+        )}
+      </div>
+    </div>
+  )
+}

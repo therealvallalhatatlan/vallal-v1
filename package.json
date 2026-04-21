@@ -67,6 +67,7 @@
     "livekit-client": "^1.15.13",
     "livekit-server-sdk": "2.15.1",
     "lucide-react": "^0.454.0",
+    "mapbox-gl": "^3.22.0",
     "nanoid": "latest",
     "next": "^16.1.0-canary.12",
     "next-themes": "latest",
@@ -87,6 +88,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
+    "@types/mapbox-gl": "^3.5.0",
     "@types/node": "^22.19.3",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",

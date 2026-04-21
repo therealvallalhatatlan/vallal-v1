@@ -10,9 +10,10 @@ interface ChatContainerProps {
   aside?: ReactNode;
   asideOpen?: boolean;
   onCloseAside?: () => void;
+  backgroundMedia?: ReactNode;
 }
 
-export function ChatContainer({ children, scrollRef, header, composer, aside, asideOpen = false, onCloseAside }: ChatContainerProps) {
+export function ChatContainer({ children, scrollRef, header, composer, aside, asideOpen = false, onCloseAside, backgroundMedia }: ChatContainerProps) {
   const hasVisibleAside = aside && asideOpen;
 
   return (
@@ -22,6 +23,11 @@ export function ChatContainer({ children, scrollRef, header, composer, aside, as
         hasVisibleAside ? 'max-w-[560px] lg:max-w-[980px] lg:flex-row' : 'max-w-[560px]',
       ].join(' ')}
     >
+      {backgroundMedia ? (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[28px]">
+          {backgroundMedia}
+        </div>
+      ) : null}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 retro-chat-noise opacity-40" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 fx-stripes opacity-25" />
 

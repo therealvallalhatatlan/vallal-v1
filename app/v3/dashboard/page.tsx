@@ -54,10 +54,19 @@ export default async function DashboardPage() {
     messages: messagesByConvId[c.id] ?? [],
   }));
 
+  const allMsgs = allMessages ?? [];
+  const stats = {
+    totalConversations: convList.length,
+    totalMessages: allMsgs.length,
+    safetyFlagCount: allMsgs.filter(m => m.safety_flag).length,
+    uniqueEmails: new Set(convList.map(c => c.user_email).filter(Boolean)).size,
+  };
+
   return (
     <DashboardView
       conversations={enriched as Parameters<typeof DashboardView>[0]['conversations']}
       fetchedAt={new Date().toISOString()}
+      stats={stats}
     />
   );
 }

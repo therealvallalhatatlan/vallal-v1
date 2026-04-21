@@ -32,3 +32,8 @@ export async function getAllStories(): Promise<Story[]> {
 
   return stories
 }
+
+export async function getStoryBySlug(slug: string): Promise<Story | null> {
+  const stories = await getAllStories()
+  return stories.find((s) => s.id === slug) ?? null
+}

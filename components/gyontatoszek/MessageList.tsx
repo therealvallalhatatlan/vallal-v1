@@ -26,27 +26,29 @@ function MessageListComponent({ messages, loading, sending, thcLevel = 0, preTho
   if (messages.length === 0) {
     return (
       <div className="mx-auto flex min-h-full max-w-2xl flex-col justify-center px-6 py-16">
-        <p className="text-[10px] uppercase tracking-[0.32em] text-lime-300/50">Vállalhatatlan · v3</p>
+        <div className="relative z-10">
+          <p className="text-[10px] uppercase tracking-[0.32em] text-lime-300/70">Vállalhatatlan · v3</p>
 
-        <h2 className="mt-4 text-2xl leading-snug text-neutral-100 md:text-3xl">
-          Ez nem egy chatbot.
-        </h2>
-        <p className="mt-2 text-base leading-7 text-neutral-400">
-          V. egy ágens: figyel, tanul. Képes döntéseket hozni. A gondolatait is láthatod. Tanítsuk be együtt, okos kérdésekkel és őszinte emberi gondolatokkal.{' '}
-          <a
-            href="https://github.com/therealvallalhatatlan/vallal-v1/blob/main/README.md"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-lime-400/70 underline underline-offset-2 hover:text-lime-300"
-          >
-            Github
-          </a>
-        </p>
-
-        <div className="mt-8 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3">
-          <p className="text-sm leading-6 text-amber-200/80">
-            *Fogalmam sincs mire lesz jó. Majd meglátjuk.
+          <h2 className="mt-4 text-2xl leading-snug text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] md:text-3xl">
+            Ez nem egy chatbot.
+          </h2>
+          <p className="mt-2 text-base leading-7 text-neutral-200 drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)]">
+            V. egy ágens: figyel, tanul. Képes döntéseket hozni. A gondolatait is láthatod. Tanítsuk be együtt, okos kérdésekkel és őszinte emberi gondolatokkal.{' '}
+            <a
+              href="https://github.com/therealvallalhatatlan/vallal-v1/blob/main/README.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-lime-300/90 underline underline-offset-2 hover:text-lime-200"
+            >
+              Github
+            </a>
           </p>
+
+          <div className="mt-8 rounded-xl border border-amber-400/20 bg-black/40 px-4 py-3 backdrop-blur-sm">
+            <p className="text-sm leading-6 text-amber-200/90">
+              *Fogalmam sincs mire lesz jó. Majd meglátjuk.
+            </p>
+          </div>
         </div>
       </div>
     );
