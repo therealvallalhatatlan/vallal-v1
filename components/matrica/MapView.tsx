@@ -22,7 +22,6 @@ import SpotCircle from './SpotCircle'
 import SpotMarker from './SpotMarker'
 import SpotModal from './SpotModal'
 import ToastContainer from './ToastContainer'
-import ScoreBadge from './ScoreBadge'
 import { useToast } from './useToast'
 
 // Token comes from env; set it once at module level
@@ -241,9 +240,6 @@ export default function MapView() {
 
       {/* Map container */}
       <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
-
-      {/* Score badge */}
-      <ScoreBadge />
 
       {/* Loading state */}
       {!mapLoaded && !mapError && (

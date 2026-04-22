@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import MapViewClient from '@/components/matrica/MapViewClient'
+import MatricaNav from '@/components/matrica/MatricaNav'
 
 export const metadata: Metadata = {
   title: 'Matrica vadászat',
@@ -15,7 +16,11 @@ export default function MatricaPage() {
         background: '#09090b',
       }}
     >
-      <MapViewClient />
+      <MatricaNav />
+      {/* Push map content below nav */}
+      <div style={{ position: 'absolute', inset: '52px 0 0 0' }}>
+        <MapViewClient />
+      </div>
     </main>
   )
 }

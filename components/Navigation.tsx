@@ -112,7 +112,13 @@ export default function Navigation() {
                 href="/reader"
                 className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
               >
-                Tovább a readerre
+                Reader
+              </Link>
+              <Link
+                href="/matrica"
+                className="rounded-lg bg-purple-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-purple-400"
+              >
+                Maps
               </Link>
               <Link
                 href="/v3"

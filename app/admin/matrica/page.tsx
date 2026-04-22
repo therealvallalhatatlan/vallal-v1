@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
 import { validateAdminKey } from '@/lib/actions'
 import type { StickerSpot, SpotStatus } from '@/lib/matrica'
+import MatricaNav from '@/components/matrica/MatricaNav'
+import { useSessionGuard } from '@/hooks/useSessionGuard'
 
 const MapPicker = dynamic(() => import('@/components/matrica/MapPicker'), { ssr: false })
 
@@ -13,7 +16,7 @@ const s = {
     minHeight: '100vh',
     background: '#09090b',
     color: '#f4f4f5',
-    padding: '32px 20px',
+    padding: '84px 20px 32px',
     fontFamily: 'inherit',
   } as React.CSSProperties,
   card: {
@@ -403,9 +406,25 @@ function SpotList({ spots, adminKey, onStatusChanged }: SpotListProps) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function MatricaAdminPage() {
+  const router = useRouter()
+  const { session, loading: authLoading } = useSessionGuard()
   const [adminKey, setAdminKey] = useState<string | null>(null)
   const [spots, setSpots] = useState<StickerSpot[]>([])
   const [loadingSpots, setLoadingSpots] = useState(false)
+
+  useEffect(() => {
+    if (!authLoading && !session) {
+      router.replace('/auth?from=/admin/matrica')
+    }
+  }, [authLoading, session, router])
+
+  if (authLoading || !session) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#71717a', fontSize: 14 }}>
+        {authLoading ? 'Betöltés…' : null}
+      </div>
+    )
+  }
 
   const fetchSpots = useCallback(async (key: string) => {
     setLoadingSpots(true)
@@ -441,6 +460,7 @@ export default function MatricaAdminPage() {
 
   return (
     <div style={s.page}>
+      <MatricaNav />
       <div style={{ maxWidth: 760, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Matrica admin</h1>

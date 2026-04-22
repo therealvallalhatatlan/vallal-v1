@@ -130,7 +130,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${crimson.variable} ${inter.variable} ${specialElite.variable} antialiased overflow-x-hidden`}
         style={{ touchAction: 'pan-y' }}
