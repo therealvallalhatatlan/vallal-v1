@@ -118,8 +118,9 @@ interface CreateFormProps {
 }
 
 const MAX_SPOT_IMAGE_SIZE_BYTES = 8 * 1024 * 1024
-const TARGET_SPOT_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
-const MAX_SPOT_IMAGE_DIMENSION = 1800
+const TARGET_SPOT_IMAGE_SIZE_BYTES = 450 * 1024
+const MAX_SPOT_IMAGE_DIMENSION = 1280
+const MIN_SPOT_IMAGE_DIMENSION = 640
 
 async function loadImageForCompression(file: File): Promise<HTMLImageElement> {
   const objectUrl = URL.createObjectURL(file)
@@ -181,14 +182,51 @@ async function optimizeSpotImage(file: File): Promise<File> {
   context.fillRect(0, 0, targetWidth, targetHeight)
   context.drawImage(image, 0, 0, targetWidth, targetHeight)
 
-  const qualities = [0.86, 0.76, 0.66, 0.56]
-  let bestBlob = await canvasToBlob(canvas, qualities[0])
+  const qualitySteps = [0.82, 0.72, 0.62, 0.52, 0.42, 0.34]
+  let bestBlob = await canvasToBlob(canvas, qualitySteps[0])
 
-  for (const quality of qualities) {
+  for (const quality of qualitySteps) {
     const blob = await canvasToBlob(canvas, quality)
     bestBlob = blob
     if (blob.size <= TARGET_SPOT_IMAGE_SIZE_BYTES) {
       break
+    }
+  }
+
+  // If still too large, continue with iterative downscaling until we hit target
+  // or reach a reasonable minimum dimension.
+  let workingCanvas = canvas
+  while (
+    bestBlob.size > TARGET_SPOT_IMAGE_SIZE_BYTES &&
+    (workingCanvas.width > MIN_SPOT_IMAGE_DIMENSION || workingCanvas.height > MIN_SPOT_IMAGE_DIMENSION)
+  ) {
+    const nextWidth = Math.max(MIN_SPOT_IMAGE_DIMENSION, Math.round(workingCanvas.width * 0.84))
+    const nextHeight = Math.max(MIN_SPOT_IMAGE_DIMENSION, Math.round(workingCanvas.height * 0.84))
+
+    if (nextWidth === workingCanvas.width && nextHeight === workingCanvas.height) {
+      break
+    }
+
+    const downscaledCanvas = document.createElement('canvas')
+    downscaledCanvas.width = nextWidth
+    downscaledCanvas.height = nextHeight
+
+    const downscaledCtx = downscaledCanvas.getContext('2d')
+    if (!downscaledCtx) {
+      break
+    }
+
+    downscaledCtx.fillStyle = '#111113'
+    downscaledCtx.fillRect(0, 0, nextWidth, nextHeight)
+    downscaledCtx.drawImage(workingCanvas, 0, 0, nextWidth, nextHeight)
+    workingCanvas = downscaledCanvas
+
+    for (const quality of qualitySteps) {
+      const blob = await canvasToBlob(workingCanvas, quality)
+      bestBlob = blob
+      if (blob.size <= TARGET_SPOT_IMAGE_SIZE_BYTES) {
+        break
+      }
     }
   }
 
