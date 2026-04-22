@@ -120,3 +120,35 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({ spot: data })
 }
+
+// ── DELETE /api/admin/matrica/spots  (delete a spot) ─────────────────────────
+export async function DELETE(req: NextRequest) {
+  if (!authorize(req)) {
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
+  let body: Record<string, unknown>
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
+  }
+
+  const { id } = body
+  if (typeof id !== 'string' || !id.trim()) {
+    return NextResponse.json({ error: 'id_required' }, { status: 400 })
+  }
+
+  const db = supabaseAdmin()
+  const { error } = await db
+    .from('sticker_spots')
+    .delete()
+    .eq('id', id.trim())
+
+  if (error) {
+    console.error('[admin/matrica/spots] DELETE error', error)
+    return NextResponse.json({ error: 'server_error' }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true })
+}

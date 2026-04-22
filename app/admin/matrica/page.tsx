@@ -302,9 +302,10 @@ interface SpotListProps {
   spots: StickerSpot[]
   adminKey: string
   onStatusChanged: (id: string, status: SpotStatus) => void
+  onDeleted: (id: string) => void
 }
 
-function SpotList({ spots, adminKey, onStatusChanged }: SpotListProps) {
+function SpotList({ spots, adminKey, onStatusChanged, onDeleted }: SpotListProps) {
   const [pending, setPending] = useState<Record<string, boolean>>({})
 
   async function changeStatus(id: string, status: SpotStatus) {
@@ -316,6 +317,23 @@ function SpotList({ spots, adminKey, onStatusChanged }: SpotListProps) {
         body: JSON.stringify({ id, status }),
       })
       if (res.ok) onStatusChanged(id, status)
+    } finally {
+      setPending(p => ({ ...p, [id]: false }))
+    }
+  }
+
+  async function deleteSpot(id: string) {
+    const confirmed = window.confirm('Biztosan torlod ezt a spotot? Ez nem visszavonhato.')
+    if (!confirmed) return
+
+    setPending(p => ({ ...p, [id]: true }))
+    try {
+      const res = await fetch('/api/admin/matrica/spots', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) onDeleted(id)
     } finally {
       setPending(p => ({ ...p, [id]: false }))
     }
@@ -395,6 +413,13 @@ function SpotList({ spots, adminKey, onStatusChanged }: SpotListProps) {
                     Archiválás
                   </button>
                 )}
+                <button
+                  disabled={pending[spot.id]}
+                  onClick={() => deleteSpot(spot.id)}
+                  style={s.btn('#ef4444', pending[spot.id])}
+                >
+                  Spot törlése
+                </button>
               </div>
             </div>
           </div>
@@ -454,6 +479,10 @@ export default function MatricaAdminPage() {
     setSpots(prev => prev.map(s => s.id === id ? { ...s, status } : s))
   }
 
+  function handleDeleted(id: string) {
+    setSpots(prev => prev.filter(s => s.id !== id))
+  }
+
   if (!adminKey) {
     return <AdminKeyGate onAuth={handleAuth} />
   }
@@ -475,7 +504,7 @@ export default function MatricaAdminPage() {
         {loadingSpots ? (
           <div style={{ ...s.card, color: '#71717a', fontSize: 14 }}>Betöltés…</div>
         ) : (
-          <SpotList spots={spots} adminKey={adminKey} onStatusChanged={handleStatusChanged} />
+          <SpotList spots={spots} adminKey={adminKey} onStatusChanged={handleStatusChanged} onDeleted={handleDeleted} />
         )}
       </div>
     </div>
