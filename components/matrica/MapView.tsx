@@ -124,14 +124,25 @@ export default function MapView() {
             userMarkerRef.current.setLngLat([loc.lng, loc.lat])
           } else {
             const el = document.createElement('div')
-            el.className = 'matrica-user-dot'
-            el.style.cssText = `
+            el.className = 'matrica-user-marker'
+
+            const label = document.createElement('div')
+            label.className = 'matrica-user-tooltip'
+            label.textContent = 'sajat poziciod'
+
+            const dot = document.createElement('div')
+            dot.className = 'matrica-user-dot'
+            dot.style.cssText = `
               width: 18px; height: 18px; border-radius: 50%;
               background: #38bdf8;
               border: 3px solid #fff;
               box-shadow: 0 0 0 6px rgba(56,189,248,0.25);
               animation: userPulse 2.4s ease-in-out infinite;
             `
+
+            el.appendChild(label)
+            el.appendChild(dot)
+
             userMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
               .setLngLat([loc.lng, loc.lat])
               .addTo(mapRef.current)
@@ -232,6 +243,45 @@ export default function MapView() {
     <div style={{ position: 'absolute', inset: 0 }}>
       {/* Global CSS for marker animations */}
       <style>{`
+        .matrica-user-marker {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 18px;
+          height: 18px;
+        }
+
+        .matrica-user-tooltip {
+          position: absolute;
+          left: 50%;
+          bottom: calc(100% + 10px);
+          transform: translateX(-50%);
+          white-space: nowrap;
+          padding: 5px 8px;
+          border-radius: 999px;
+          background: rgba(9, 9, 11, 0.92);
+          border: 1px solid rgba(56, 189, 248, 0.35);
+          color: #e0f2fe;
+          font-size: 11px;
+          font-weight: 600;
+          line-height: 1;
+          letter-spacing: 0.02em;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+          pointer-events: none;
+        }
+
+        .matrica-user-tooltip::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          top: 100%;
+          transform: translateX(-50%);
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+          border-top: 6px solid rgba(9, 9, 11, 0.92);
+        }
+
         @keyframes userPulse {
           0%, 100% { box-shadow: 0 0 0 4px rgba(56,189,248,0.3); }
           50%       { box-shadow: 0 0 0 10px rgba(56,189,248,0.08); }
