@@ -15,6 +15,7 @@ import { createClient } from '@/lib/browser'
 import { getDistanceMeters } from '@/lib/matrica'
 import type { StickerSpot } from '@/lib/matrica'
 import ClaimForm from './ClaimForm'
+import type { ClaimSubmitSpotUpdate } from './ClaimForm'
 import type { ShowToast } from './useToast'
 
 type ModalView = 'info' | 'claim' | 'success'
@@ -28,6 +29,7 @@ interface Props {
   spot: StickerSpot
   userLocation: UserLocation | null
   onClose: () => void
+  onClaimSubmitted?: (spotUpdate?: ClaimSubmitSpotUpdate) => void
   showToast?: ShowToast
 }
 
@@ -47,7 +49,7 @@ function Backdrop({ onClick }: { onClick: () => void }) {
   )
 }
 
-export default function SpotModal({ spot, userLocation, onClose, showToast }: Props) {
+export default function SpotModal({ spot, userLocation, onClose, onClaimSubmitted, showToast }: Props) {
   const [view, setView] = useState<ModalView>('info')
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [authError, setAuthError] = useState(false)
@@ -76,9 +78,10 @@ export default function SpotModal({ spot, userLocation, onClose, showToast }: Pr
     setView('claim')
   }, [accessToken])
 
-  const handleClaimSuccess = useCallback(() => {
+  const handleClaimSuccess = useCallback((spotUpdate?: ClaimSubmitSpotUpdate) => {
+    onClaimSubmitted?.(spotUpdate)
     setView('success')
-  }, [])
+  }, [onClaimSubmitted])
 
   // Close on Escape
   useEffect(() => {

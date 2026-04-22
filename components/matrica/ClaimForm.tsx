@@ -25,13 +25,19 @@ const ERROR_MESSAGES: Record<string, string> = {
   server_error: 'Szerverhiba. Próbáld újra később.',
 }
 
+export interface ClaimSubmitSpotUpdate {
+  id: string
+  remaining_quantity: number
+  status: StickerSpot['status']
+}
+
 interface Props {
   spot: StickerSpot
   userLat: number
   userLng: number
   /** Session access token from useSessionGuard */
   accessToken: string
-  onSuccess: () => void
+  onSuccess: (spotUpdate?: ClaimSubmitSpotUpdate) => void
   onCancel: () => void
   showToast?: ShowToast
 }
@@ -134,7 +140,7 @@ export default function ClaimForm({
 
       setState('success')
       showToast?.('Igénylés beküldve! Hamarosan átnézzük.', 'success')
-      onSuccess()
+      onSuccess(json?.spot)
     } catch {
       const msg = 'Hálózati hiba. Ellenőrizd az internetkapcsolatodat.'
       setState('error')

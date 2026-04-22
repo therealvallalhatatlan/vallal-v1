@@ -18,6 +18,7 @@ export async function GET() {
       'id, title, description, image_url, lat, lng, radius_visibility, radius_claim, total_quantity, remaining_quantity, status, created_at',
     )
     .eq('status', 'active')
+    .gt('remaining_quantity', 0)
     .order('created_at', { ascending: false })
 
   if (error) {

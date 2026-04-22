@@ -198,6 +198,35 @@ export default function MapView() {
     setSelectedSpot(spot)
   }, [])
 
+  const handleClaimSubmitted = useCallback((spotUpdate?: { id: string; remaining_quantity: number; status: StickerSpot['status'] }) => {
+    if (!spotUpdate) return
+
+    setSpots((prev) => {
+      const next = prev
+        .map((spot) => {
+          if (spot.id !== spotUpdate.id) return spot
+          return {
+            ...spot,
+            remaining_quantity: spotUpdate.remaining_quantity,
+            status: spotUpdate.status,
+          }
+        })
+        .filter((spot) => spot.status === 'active' && spot.remaining_quantity > 0)
+
+      return next
+    })
+
+    setSelectedSpot((prev) => {
+      if (!prev || prev.id !== spotUpdate.id) return prev
+      if (spotUpdate.status !== 'active' || spotUpdate.remaining_quantity <= 0) return null
+      return {
+        ...prev,
+        remaining_quantity: spotUpdate.remaining_quantity,
+        status: spotUpdate.status,
+      }
+    })
+  }, [])
+
   const handleClosePanel = useCallback(() => setSelectedSpot(null), [])
 
   return (
@@ -316,6 +345,7 @@ export default function MapView() {
           spot={selectedSpot}
           userLocation={userLocation}
           onClose={handleClosePanel}
+          onClaimSubmitted={handleClaimSubmitted}
           showToast={showToast}
         />
       )}

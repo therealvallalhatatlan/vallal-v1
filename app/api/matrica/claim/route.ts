@@ -26,7 +26,8 @@ interface ClaimBody {
  *  5. User has not already claimed this spot
  *  6. Spot still has remaining_quantity > 0
  *
- * On success inserts a claim with status = 'pending'.
+ * On success inserts a claim with status = 'pending' and reserves one sticker
+ * immediately by decrementing remaining_quantity.
  */
 export async function POST(req: NextRequest) {
   // ── 1. Auth ──────────────────────────────────────────────────────────────
@@ -146,5 +147,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
 
-  return NextResponse.json({ claim }, { status: 201 })
+  // ── 7. Reserve one sticker immediately on submission ─────────────────────
+  const nextRemaining = spot.remaining_quantity - 1
+  const nextStatus = nextRemaining <= 0 ? 'empty' : 'active'
+
+  const { data: reservedSpot, error: reserveError } = await db
+    .from('sticker_spots')
+    .update({
+      remaining_quantity: nextRemaining,
+      status: nextStatus,
+    })
+    .eq('id', spot.id)
+    .eq('status', 'active')
+    .eq('remaining_quantity', spot.remaining_quantity)
+    .select('id, remaining_quantity, status')
+    .maybeSingle()
+
+  // If reservation fails due concurrent update, undo pending claim so state stays consistent.
+  if (reserveError || !reservedSpot) {
+    await db.from('claims').delete().eq('id', claim.id)
+
+    if (reserveError) {
+      console.error('[matrica/claim] reserve error', reserveError)
+      return NextResponse.json({ error: 'server_error' }, { status: 500 })
+    }
+
+    return NextResponse.json({ error: 'spot_empty' }, { status: 409 })
+  }
+
+  return NextResponse.json({ claim, spot: reservedSpot }, { status: 201 })
 }
