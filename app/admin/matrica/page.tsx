@@ -418,14 +418,6 @@ export default function MatricaAdminPage() {
     }
   }, [authLoading, session, router])
 
-  if (authLoading || !session) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#71717a', fontSize: 14 }}>
-        {authLoading ? 'Betöltés…' : null}
-      </div>
-    )
-  }
-
   const fetchSpots = useCallback(async (key: string) => {
     setLoadingSpots(true)
     try {
@@ -440,6 +432,14 @@ export default function MatricaAdminPage() {
       setLoadingSpots(false)
     }
   }, [])
+
+  if (authLoading || !session) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#71717a', fontSize: 14 }}>
+        {authLoading ? 'Betöltés…' : null}
+      </div>
+    )
+  }
 
   function handleAuth(key: string) {
     setAdminKey(key)
