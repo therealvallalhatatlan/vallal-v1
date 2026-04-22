@@ -118,6 +118,87 @@ interface CreateFormProps {
 }
 
 const MAX_SPOT_IMAGE_SIZE_BYTES = 8 * 1024 * 1024
+const TARGET_SPOT_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
+const MAX_SPOT_IMAGE_DIMENSION = 1800
+
+async function loadImageForCompression(file: File): Promise<HTMLImageElement> {
+  const objectUrl = URL.createObjectURL(file)
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(new Error('A kép nem olvasható.'))
+      img.src = objectUrl
+    })
+    return image
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
+async function canvasToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('A kép tömörítése sikertelen.'))
+          return
+        }
+        resolve(blob)
+      },
+      'image/jpeg',
+      quality,
+    )
+  })
+}
+
+async function optimizeSpotImage(file: File): Promise<File> {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Csak képfájl tölthető fel.')
+  }
+
+  if (file.type === 'image/gif') {
+    return file
+  }
+
+  const image = await loadImageForCompression(file)
+  const longestSide = Math.max(image.naturalWidth, image.naturalHeight)
+  const scale = longestSide > MAX_SPOT_IMAGE_DIMENSION ? MAX_SPOT_IMAGE_DIMENSION / longestSide : 1
+  const targetWidth = Math.max(1, Math.round(image.naturalWidth * scale))
+  const targetHeight = Math.max(1, Math.round(image.naturalHeight * scale))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = targetWidth
+  canvas.height = targetHeight
+
+  const context = canvas.getContext('2d')
+  if (!context) {
+    throw new Error('A böngésző nem tudja előkészíteni a képet.')
+  }
+
+  context.fillStyle = '#111113'
+  context.fillRect(0, 0, targetWidth, targetHeight)
+  context.drawImage(image, 0, 0, targetWidth, targetHeight)
+
+  const qualities = [0.86, 0.76, 0.66, 0.56]
+  let bestBlob = await canvasToBlob(canvas, qualities[0])
+
+  for (const quality of qualities) {
+    const blob = await canvasToBlob(canvas, quality)
+    bestBlob = blob
+    if (blob.size <= TARGET_SPOT_IMAGE_SIZE_BYTES) {
+      break
+    }
+  }
+
+  const outputName = file.name.replace(/\.[^.]+$/, '') || 'spot-cover'
+
+  return new File([bestBlob], `${outputName}.jpg`, {
+    type: 'image/jpeg',
+    lastModified: Date.now(),
+  })
+}
 
 function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
   const [title, setTitle] = useState('')
@@ -129,26 +210,46 @@ function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
   const [totalQty, setTotalQty] = useState(1)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [preparingImage, setPreparingImage] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null
     setError(null)
 
-    if (file && file.size > MAX_SPOT_IMAGE_SIZE_BYTES) {
+    if (!file) {
       setImageFile(null)
       setImagePreview(null)
-      setError('A borítókép túl nagy. Maximum 8 MB-os képet tölts fel.')
-      if (fileRef.current) fileRef.current.value = ''
       return
     }
 
-    setImageFile(file)
-    setImagePreview(file ? URL.createObjectURL(file) : null)
+    setPreparingImage(true)
+
+    try {
+      const optimizedFile = await optimizeSpotImage(file)
+
+      if (optimizedFile.size > MAX_SPOT_IMAGE_SIZE_BYTES) {
+        setImageFile(null)
+        setImagePreview(null)
+        setError('A borítókép még tömörítés után is túl nagy. Maximum 8 MB-os képet tölts fel.')
+        if (fileRef.current) fileRef.current.value = ''
+        return
+      }
+
+      setImageFile(optimizedFile)
+      setImagePreview(URL.createObjectURL(optimizedFile))
+    } catch (err) {
+      setImageFile(null)
+      setImagePreview(null)
+      setError(`Kép előkészítési hiba: ${err instanceof Error ? err.message : String(err)}`)
+      if (fileRef.current) fileRef.current.value = ''
+    } finally {
+      setPreparingImage(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -282,9 +383,9 @@ function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
               </button>
             </div>
           ) : (
-            <button type="button" onClick={() => fileRef.current?.click()}
+            <button type="button" onClick={() => fileRef.current?.click()} disabled={preparingImage}
               style={{ width: '100%', padding: '10px 0', background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 8, color: '#71717a', cursor: 'pointer', fontSize: 13 }}>
-              + Kép hozzáadása
+              {preparingImage ? 'Kép előkészítése…' : '+ Kép hozzáadása'}
             </button>
           )}
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
@@ -326,8 +427,8 @@ function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
           </p>
         )}
 
-        <button type="submit" disabled={submitting} style={{ ...s.btn('#e879f9', submitting), alignSelf: 'flex-start' }}>
-          {uploadProgress ?? (submitting ? 'Mentés…' : 'Spot létrehozása')}
+        <button type="submit" disabled={submitting || preparingImage} style={{ ...s.btn('#e879f9', submitting || preparingImage), alignSelf: 'flex-start' }}>
+          {uploadProgress ?? (preparingImage ? 'Kép előkészítése…' : submitting ? 'Mentés…' : 'Spot létrehozása')}
         </button>
       </form>
     </div>
