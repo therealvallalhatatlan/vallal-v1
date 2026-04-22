@@ -191,15 +191,15 @@ export default function MapView() {
   const hintSpots: StickerSpot[] = []
 
   for (const spot of spots) {
-    clickableSpots.push(spot)
-
     if (!userLocation) {
       hintSpots.push(spot)
       continue
     }
 
     const d = getDistanceMeters(userLocation.lat, userLocation.lng, spot.lat, spot.lng)
-    if (d > spot.radius_visibility) {
+    if (d <= spot.radius_visibility) {
+      clickableSpots.push(spot)
+    } else {
       hintSpots.push(spot)
     }
   }

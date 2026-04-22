@@ -60,6 +60,8 @@ export default function SpotModal({ spot, userLocation, onClose, onClaimSubmitte
       ? Math.round(getDistanceMeters(userLocation.lat, userLocation.lng, spot.lat, spot.lng))
       : null
   const withinClaimRadius = distance !== null && distance <= spot.radius_claim
+  const withinVisibilityRadius = distance !== null && distance <= spot.radius_visibility
+  const metersToClaim = distance !== null ? Math.max(0, distance - spot.radius_claim) : null
 
   // Fetch session token on mount
   useEffect(() => {
@@ -189,25 +191,43 @@ export default function SpotModal({ spot, userLocation, onClose, onClaimSubmitte
             </p>
 
             {/* Distance badge */}
-            {distance !== null && (
-              <div
-                style={{
-                  marginBottom: 16,
-                  padding: '8px 12px',
-                  borderRadius: 8,
-                  background: withinClaimRadius
+            <div
+              style={{
+                marginBottom: 16,
+                padding: '10px 12px',
+                borderRadius: 10,
+                background: !userLocation
+                  ? 'rgba(56,189,248,0.1)'
+                  : withinClaimRadius
                     ? 'rgba(134,239,172,0.1)'
-                    : 'rgba(251,191,36,0.08)',
-                  border: `1px solid ${withinClaimRadius ? 'rgba(134,239,172,0.3)' : 'rgba(251,191,36,0.25)'}`,
-                  fontSize: 13,
-                  color: withinClaimRadius ? '#86efac' : '#fbbf24',
-                }}
-              >
-                {withinClaimRadius
-                  ? `✓ Elég közel vagy (${distance} m)`
-                  : `${distance} m távolságra vagy — közelebb kell menned (max ${spot.radius_claim} m)`}
-              </div>
-            )}
+                    : withinVisibilityRadius
+                      ? 'rgba(232,121,249,0.1)'
+                      : 'rgba(251,191,36,0.08)',
+                border: `1px solid ${
+                  !userLocation
+                    ? 'rgba(56,189,248,0.35)'
+                    : withinClaimRadius
+                      ? 'rgba(134,239,172,0.3)'
+                      : withinVisibilityRadius
+                        ? 'rgba(232,121,249,0.28)'
+                        : 'rgba(251,191,36,0.25)'
+                }`,
+                fontSize: 13,
+                color: !userLocation
+                  ? '#7dd3fc'
+                  : withinClaimRadius
+                    ? '#86efac'
+                    : withinVisibilityRadius
+                      ? '#f0abfc'
+                      : '#fbbf24',
+                lineHeight: 1.5,
+              }}
+            >
+              {!userLocation && 'Kapcsold be a helymeghatározást, hogy lásd, claimelhető-e ez a spot.'}
+              {userLocation && withinClaimRadius && `✓ Claim-távolságban vagy (${distance} m). Mehet a matrica rögzítése.`}
+              {userLocation && !withinClaimRadius && withinVisibilityRadius && `Közel jársz: még kb. ${metersToClaim} m kell a claimhez. Menj rá pontosabban a helyszínre.`}
+              {userLocation && !withinVisibilityRadius && `${distance} m-re vagy. Előbb érj be a keresési zónába, utána felfedjük pontosabban.`}
+            </div>
 
             {/* Auth error */}
             {authError && (
@@ -230,10 +250,11 @@ export default function SpotModal({ spot, userLocation, onClose, onClaimSubmitte
             {(() => {
               const isEmpty = spot.remaining_quantity <= 0
               const tooFar = distance !== null && !withinClaimRadius
-              const disabled = isEmpty || tooFar
+              const disabled = isEmpty || tooFar || !userLocation
 
               let label = 'Megtaláltam!'
               if (isEmpty) label = 'Elfogyott'
+              else if (!userLocation) label = 'Helymeghatározás szükséges'
               else if (tooFar) label = `Túl messze (${distance} m)`
 
               return (
