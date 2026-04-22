@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { KeyRound, LogOut } from "lucide-react";
@@ -9,19 +9,25 @@ import { useSessionGuard } from "@/hooks/useSessionGuard";
 import { createClient } from "@/lib/browser";
 
 export default function Navigation() {
-  const { session, loading, error } = useSessionGuard();
+  const { session, error } = useSessionGuard();
+  const [isClient, setIsClient] = useState(false);
   const userEmail = (session as any)?.user?.email || null;
   const userId = (session as any)?.user?.id || null;
   const router = useRouter();
   const supabase = createClient();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  // Ensure we only render on client to prevent hydration mismatch
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   if (error) {
     console.error('[Navigation] Auth error:', error);
   }
 
-  // On mobile, show loading state while session is being fetched to prevent hydration mismatch
-  if (loading) {
+  // Prevent hydration mismatch by not rendering until client is ready
+  if (!isClient) {
     return (
       <div className="relative">
         <nav className="max-w-3xl mx-auto py-6 md:px-0 px-6">
@@ -33,7 +39,6 @@ export default function Navigation() {
                 className="h-10 w-auto"
               />
             </a>
-            <div style={{ fontSize: 11, color: '#71717a' }}>…</div>
           </div>
         </nav>
       </div>
@@ -74,6 +79,12 @@ export default function Navigation() {
                   className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
                 >
                   Reader
+                </Link>
+                <Link
+                  href="/matrica"
+                  className="rounded-lg bg-purple-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-purple-400"
+                >
+                  Maps
                 </Link>
                 <Link
                   href="/v3"
