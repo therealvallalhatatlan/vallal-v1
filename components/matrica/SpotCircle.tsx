@@ -16,9 +16,10 @@ interface Props {
   map: mapboxgl.Map
   spot: StickerSpot
   radiusMeters?: number
+  onSelect?: (spot: StickerSpot) => void
 }
 
-export default function SpotCircle({ map, spot, radiusMeters }: Props) {
+export default function SpotCircle({ map, spot, radiusMeters, onSelect }: Props) {
   const sourceId = `spot-circle-src-${spot.id}`
   const fillId = `spot-circle-fill-${spot.id}`
   const outlineId = `spot-circle-outline-${spot.id}`
@@ -61,12 +62,35 @@ export default function SpotCircle({ map, spot, radiusMeters }: Props) {
       })
     }
 
+    const onCircleClick = () => {
+      onSelect?.(spot)
+    }
+
+    const onCircleMouseEnter = () => {
+      map.getCanvas().style.cursor = 'pointer'
+    }
+
+    const onCircleMouseLeave = () => {
+      map.getCanvas().style.cursor = ''
+    }
+
+    if (onSelect) {
+      map.on('click', fillId, onCircleClick)
+      map.on('mouseenter', fillId, onCircleMouseEnter)
+      map.on('mouseleave', fillId, onCircleMouseLeave)
+    }
+
     return () => {
+      if (onSelect) {
+        map.off('click', fillId, onCircleClick)
+        map.off('mouseenter', fillId, onCircleMouseEnter)
+        map.off('mouseleave', fillId, onCircleMouseLeave)
+      }
       if (map.getLayer(outlineId)) map.removeLayer(outlineId)
       if (map.getLayer(fillId)) map.removeLayer(fillId)
       if (map.getSource(sourceId)) map.removeSource(sourceId)
     }
-  }, [map, spot, sourceId, fillId, outlineId, radiusMeters])
+  }, [map, spot, sourceId, fillId, outlineId, radiusMeters, onSelect])
 
   return null
 }

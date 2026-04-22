@@ -314,7 +314,8 @@ export default function MapView() {
               key={spot.id}
               map={mapRef.current!}
               spot={spot}
-              radiusMeters={Math.max(40, Math.min(spot.radius_claim, 120))}
+              radiusMeters={spot.radius_visibility}
+              onSelect={handleSelect}
             />
           ))}
           {clickableSpots.map((spot) => (
