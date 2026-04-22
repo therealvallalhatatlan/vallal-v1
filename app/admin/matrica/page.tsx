@@ -117,6 +117,8 @@ interface CreateFormProps {
   onCreated: (spot: StickerSpot) => void
 }
 
+const MAX_SPOT_IMAGE_SIZE_BYTES = 8 * 1024 * 1024
+
 function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -135,6 +137,16 @@ function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null
+    setError(null)
+
+    if (file && file.size > MAX_SPOT_IMAGE_SIZE_BYTES) {
+      setImageFile(null)
+      setImagePreview(null)
+      setError('A borítókép túl nagy. Maximum 8 MB-os képet tölts fel.')
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+
     setImageFile(file)
     setImagePreview(file ? URL.createObjectURL(file) : null)
   }
@@ -153,6 +165,10 @@ function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
     if (imageFile) {
       setUploadProgress('Kép feltöltése…')
       try {
+        if (imageFile.size > MAX_SPOT_IMAGE_SIZE_BYTES) {
+          throw new Error('A borítókép túl nagy. Maximum 8 MB-os képet tölts fel.')
+        }
+
         const ext = imageFile.name.split('.').pop() ?? 'jpg'
         const path = `spot-covers/${Date.now()}.${ext}`
 
@@ -165,8 +181,29 @@ function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
           headers: { 'x-admin-key': adminKey },
           body: fd,
         })
-        const uploadJson = await uploadRes.json()
-        if (!uploadRes.ok) throw new Error(uploadJson.error ?? `HTTP ${uploadRes.status}`)
+
+        const uploadText = await uploadRes.text()
+        let uploadJson: { error?: string; url?: string } | null = null
+
+        if (uploadText) {
+          try {
+            uploadJson = JSON.parse(uploadText) as { error?: string; url?: string }
+          } catch {
+            uploadJson = null
+          }
+        }
+
+        if (!uploadRes.ok) {
+          const fallbackMessage = uploadRes.status === 413
+            ? 'A feltöltött kép túl nagy. Próbálj kisebb vagy jobban tömörített képet feltölteni.'
+            : uploadText.trim() || `HTTP ${uploadRes.status}`
+          throw new Error(uploadJson?.error ?? fallbackMessage)
+        }
+
+        if (!uploadJson?.url) {
+          throw new Error('A képfeltöltés sikerült, de a szerver nem adott vissza képcímet.')
+        }
+
         imageUrl = uploadJson.url
       } catch (err) {
         setError(`Képfeltöltés hiba: ${err instanceof Error ? err.message : String(err)}`)
