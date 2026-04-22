@@ -9,12 +9,36 @@ import { useSessionGuard } from "@/hooks/useSessionGuard";
 import { createClient } from "@/lib/browser";
 
 export default function Navigation() {
-  const { session } = useSessionGuard();
+  const { session, loading, error } = useSessionGuard();
   const userEmail = (session as any)?.user?.email || null;
   const userId = (session as any)?.user?.id || null;
   const router = useRouter();
   const supabase = createClient();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  if (error) {
+    console.error('[Navigation] Auth error:', error);
+  }
+
+  // On mobile, show loading state while session is being fetched to prevent hydration mismatch
+  if (loading) {
+    return (
+      <div className="relative">
+        <nav className="max-w-3xl mx-auto py-6 md:px-0 px-6">
+          <div className="flex md:hidden items-center justify-between gap-4 text-sm w-full">
+            <a href="/" className="hover:text-lime-300 transition-colors">
+              <img
+                src="/img/logo.png"
+                alt="Vállalhatatlan"
+                className="h-10 w-auto"
+              />
+            </a>
+            <div style={{ fontSize: 11, color: '#71717a' }}>…</div>
+          </div>
+        </nav>
+      </div>
+    );
+  }
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
