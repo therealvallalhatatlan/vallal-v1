@@ -426,7 +426,7 @@ function CreateSpotForm({ adminKey, onCreated }: CreateFormProps) {
               {preparingImage ? 'Kép előkészítése…' : '+ Kép hozzáadása'}
             </button>
           )}
-          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleFileChange} />
         </div>
 
         {/* Map picker */}
