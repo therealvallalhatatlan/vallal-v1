@@ -7,6 +7,25 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const NICKNAME_MIN = 3;
+const NICKNAME_MAX = 20;
+const RESERVED_NICKNAMES = new Set([
+  "admin",
+  "administrator",
+  "system",
+  "moderator",
+  "mod",
+  "support",
+]);
+
+function normalizeNickname(value: string): string {
+  return value.trim().toLocaleLowerCase("hu-HU");
+}
+
+function isValidNickname(value: string): boolean {
+  return /^[\p{L}\p{N}_-]+$/u.test(value);
+}
+
 // PATCH /api/user/profile - Update user's nickname
 export async function PATCH(req: Request) {
   try {
@@ -25,12 +44,27 @@ export async function PATCH(req: Request) {
 
     // Parse body
     const json = await req.json();
-    const nickname = (json.nickname || "").toString().trim();
+    const rawNickname = (json.nickname || "").toString();
+    const nickname = normalizeNickname(rawNickname);
 
-    if (nickname.length < 1 || nickname.length > 50) {
+    if (nickname.length < NICKNAME_MIN || nickname.length > NICKNAME_MAX) {
       return NextResponse.json(
-        { ok: false, error: "Nickname 1-50 karakter között kell lennie" }, 
+        { ok: false, error: `A felhasznalonev ${NICKNAME_MIN}-${NICKNAME_MAX} karakter kozott kell legyen` }, 
         { status: 400 }
+      );
+    }
+
+    if (!isValidNickname(nickname)) {
+      return NextResponse.json(
+        { ok: false, error: "Csak betu, szam, _ es - karakter hasznalhato" },
+        { status: 400 }
+      );
+    }
+
+    if (RESERVED_NICKNAMES.has(nickname)) {
+      return NextResponse.json(
+        { ok: false, error: "Ez a felhasznalonev foglalt" },
+        { status: 409 }
       );
     }
 
@@ -49,6 +83,21 @@ export async function PATCH(req: Request) {
       .select("id, email")
       .eq("id", user.id)
       .maybeSingle(); // Use maybeSingle instead of single to avoid error on no results
+
+    const { data: nicknameOwner, error: nicknameCheckError } = await supabase
+      .from("users")
+      .select("id")
+      .eq("nickname", nickname)
+      .maybeSingle();
+
+    if (nicknameCheckError) {
+      console.error("Nickname uniqueness check error:", nicknameCheckError);
+      return NextResponse.json({ ok: false, error: "db_error" }, { status: 500 });
+    }
+
+    if (nicknameOwner && nicknameOwner.id !== user.id) {
+      return NextResponse.json({ ok: false, error: "nickname_taken" }, { status: 409 });
+    }
 
     let data, error;
 
@@ -94,6 +143,9 @@ export async function PATCH(req: Request) {
     }
 
     if (error) {
+      if ((error as any)?.code === "23505") {
+        return NextResponse.json({ ok: false, error: "nickname_taken" }, { status: 409 });
+      }
       console.error("Supabase operation error:", error);
       console.error("User data:", { id: user.id, email: user.email, nickname });
       return NextResponse.json({ ok: false, error: "db_error", details: error.message }, { status: 500 });

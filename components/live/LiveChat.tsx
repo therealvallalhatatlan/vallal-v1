@@ -11,6 +11,8 @@ type Props = {
   compact?: boolean;
   onUnreadChange?: (count: number) => void;
   active?: boolean;
+  authToken?: string | null;
+  requireAuth?: boolean;
 };
 
 type ChatMessage = {
@@ -36,6 +38,8 @@ export default function LiveChat({
   compact = false,
   onUnreadChange,
   active = true,
+  authToken = null,
+  requireAuth = false,
 }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -120,14 +124,23 @@ export default function LiveChat({
   async function sendMessage() {
     const body = input.trim();
     if (!body || sending) return;
+    if (requireAuth && !authToken) {
+      setError('Bejelentkezes szukseges az uzenetkuldeshez.');
+      return;
+    }
 
     setSending(true);
     setError(null);
 
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      }
+
       const res = await fetch('/api/live-chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           room_id: roomId,
           display_name: displayName,
@@ -139,6 +152,10 @@ export default function LiveChat({
       if (!res.ok || !json.ok) {
         if (json?.error === 'rate_limited') {
           setError('Tul gyorsan kuldesz. Varj egy kicsit.');
+        } else if (json?.error === 'auth_required' || json?.error === 'unauthenticated') {
+          setError('Bejelentkezes szukseges az uzenetkuldeshez.');
+        } else if (json?.error === 'nickname_required') {
+          setError('Elobb valassz felhasznalonevet.');
         } else {
           setError('Nem sikerult elkuldeni az uzenetet.');
         }
@@ -205,7 +222,7 @@ export default function LiveChat({
           placeholder="Irj egy rovid uzenetet..."
           maxLength={MAX_MESSAGE_LENGTH}
           rows={2}
-          disabled={sending}
+          disabled={sending || (requireAuth && !authToken)}
           className="w-full resize-none rounded-md border border-gray-700 bg-black px-3 py-2 text-sm text-white outline-none focus:border-lime-500"
         />
         <div className="flex items-center justify-between">
@@ -213,12 +230,13 @@ export default function LiveChat({
           <button
             type="button"
             onClick={sendMessage}
-            disabled={sending || !input.trim()}
+            disabled={sending || !input.trim() || (requireAuth && !authToken)}
             className="rounded-md bg-lime-500 px-3 py-1.5 text-sm font-semibold text-black disabled:opacity-40"
           >
             {sending ? 'Kuldes...' : 'Kuld'}
           </button>
         </div>
+        {requireAuth && !authToken ? <div className="text-xs text-amber-300">Uzenetkuldeshez be kell jelentkezned.</div> : null}
         {error ? <div className="text-xs text-rose-400">{error}</div> : null}
       </div>
     </div>

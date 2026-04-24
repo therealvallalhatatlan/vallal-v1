@@ -6,6 +6,9 @@ import { useState, useEffect, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSessionGuard } from '@/hooks/useSessionGuard'
 import { createClient } from '@/lib/browser'
+import type { StickerSpot } from '@/lib/matrica'
+
+const MATRICA_FOCUS_SPOT_EVENT = 'matrica:focus-spot'
 
 export default function MatricaNav() {
   const pathname = usePathname()
@@ -21,6 +24,11 @@ export default function MatricaNav() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [score, setScore] = useState<number | null>(null)
   const [accepted, setAccepted] = useState<number | null>(null)
+  const [nickname, setNickname] = useState<string | null>(null)
+  const [spotsSheetOpen, setSpotsSheetOpen] = useState(false)
+  const [spots, setSpots] = useState<StickerSpot[]>([])
+  const [spotsLoading, setSpotsLoading] = useState(false)
+  const [spotsError, setSpotsError] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Fetch score when session is available and after successful claims.
@@ -56,6 +64,90 @@ export default function MatricaNav() {
       window.removeEventListener('matrica:claim-submitted', onClaimSubmitted)
     }
   }, [session])
+
+  useEffect(() => {
+    if (!user?.id) {
+      setNickname(null)
+      return
+    }
+
+    let cancelled = false
+
+    const loadNickname = async () => {
+      try {
+        const res = await fetch(`/api/user/profile?userId=${encodeURIComponent(user.id)}`)
+        const json = await res.json()
+
+        if (cancelled) return
+
+        if (res.ok && json?.ok && typeof json?.profile?.nickname === 'string') {
+          const value = json.profile.nickname.trim()
+          setNickname(value || null)
+          return
+        }
+
+        setNickname(null)
+      } catch {
+        if (!cancelled) setNickname(null)
+      }
+    }
+
+    void loadNickname()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!spotsSheetOpen) return
+
+    let cancelled = false
+    const loadSpots = async () => {
+      setSpotsLoading(true)
+      setSpotsError(null)
+      try {
+        const res = await fetch('/api/matrica/spots')
+        const json = await res.json()
+
+        if (cancelled) return
+
+        if (!res.ok) {
+          setSpotsError('Nem sikerult betolteni a szpotokat.')
+          setSpots([])
+          return
+        }
+
+        setSpots(Array.isArray(json?.spots) ? json.spots : [])
+      } catch {
+        if (!cancelled) {
+          setSpotsError('Nem sikerult betolteni a szpotokat.')
+          setSpots([])
+        }
+      } finally {
+        if (!cancelled) setSpotsLoading(false)
+      }
+    }
+
+    void loadSpots()
+
+    return () => {
+      cancelled = true
+    }
+  }, [spotsSheetOpen])
+
+  function focusSpot(spot: StickerSpot) {
+    window.dispatchEvent(
+      new CustomEvent(MATRICA_FOCUS_SPOT_EVENT, {
+        detail: {
+          spotId: spot.id,
+          lat: spot.lat,
+          lng: spot.lng,
+        },
+      })
+    )
+    setSpotsSheetOpen(false)
+  }
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -139,8 +231,27 @@ export default function MatricaNav() {
             transition: 'background 0.15s, color 0.15s',
           }}
         >
-          Admin
+          Szpot hozzáadása
         </Link>
+
+        <button
+          type="button"
+          onClick={() => setSpotsSheetOpen((prev) => !prev)}
+          style={{
+            padding: '6px 13px',
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 600,
+            textDecoration: 'none',
+            color: spotsSheetOpen ? '#f4f4f5' : '#a1a1aa',
+            background: spotsSheetOpen ? 'rgba(236,72,153,0.18)' : 'transparent',
+            border: spotsSheetOpen ? '1px solid rgba(236,72,153,0.35)' : '1px solid transparent',
+            transition: 'background 0.15s, color 0.15s',
+            cursor: 'pointer',
+          }}
+        >
+          Szpotok
+        </button>
 
         {/* Avatar + dropdown */}
         {user && (
@@ -182,6 +293,31 @@ export default function MatricaNav() {
               )}
             </button>
 
+            <span
+              style={{
+                position: 'absolute',
+                top: -5,
+                right: -5,
+                minWidth: 18,
+                height: 18,
+                borderRadius: 999,
+                background: 'linear-gradient(135deg, #f0abfc, #e879f9)',
+                border: '1px solid rgba(24,24,27,0.85)',
+                color: '#18181b',
+                fontSize: 10,
+                fontWeight: 800,
+                lineHeight: '18px',
+                textAlign: 'center',
+                padding: '0 4px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.35)',
+                pointerEvents: 'none',
+                zIndex: 2,
+              }}
+              aria-hidden="true"
+            >
+              {score !== null ? Math.min(score, 999) : '…'}
+            </span>
+
             {menuOpen && (
               <div
                 style={{
@@ -199,11 +335,17 @@ export default function MatricaNav() {
                   zIndex: 300,
                 }}
               >
-                {/* Email */}
+                {/* Identity */}
                 <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                   <p style={{ margin: 0, fontSize: 11, color: '#71717a', marginBottom: 3 }}>Bejelentkezve</p>
                   <p style={{
-                    margin: 0, fontSize: 13, color: '#f4f4f5', fontWeight: 600,
+                    margin: 0, fontSize: 14, color: '#f4f4f5', fontWeight: 700,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 188,
+                  }}>
+                    {nickname || 'nevtelen'}
+                  </p>
+                  <p style={{
+                    margin: '2px 0 0 0', fontSize: 11, color: '#71717a', fontWeight: 500,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 188,
                   }}>
                     {email}
@@ -251,6 +393,160 @@ export default function MatricaNav() {
             )}
           </div>
         )}
+      </div>
+
+      <div
+        style={{
+          position: 'fixed',
+          top: 52,
+          left: 0,
+          right: 0,
+          zIndex: 190,
+          transform: spotsSheetOpen ? 'translateY(0)' : 'translateY(-110%)',
+          opacity: spotsSheetOpen ? 1 : 0,
+          pointerEvents: spotsSheetOpen ? 'auto' : 'none',
+          transition: 'transform 240ms ease, opacity 200ms ease',
+        }}
+        aria-hidden={!spotsSheetOpen}
+      >
+        <div
+          style={{
+            margin: '0 auto',
+            width: 'min(1200px, calc(100vw - 20px))',
+            borderBottomLeftRadius: 14,
+            borderBottomRightRadius: 14,
+            border: '1px solid rgba(236,72,153,0.25)',
+            borderTop: 'none',
+            background: 'linear-gradient(180deg, rgba(10,10,14,0.97), rgba(17,24,39,0.94))',
+            boxShadow: '0 22px 50px rgba(0,0,0,0.45)',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 14px',
+              borderBottom: '1px solid rgba(255,255,255,0.07)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <strong style={{ fontSize: 14, color: '#fbcfe8' }}>Aktív szpotok</strong>
+              <span style={{ fontSize: 12, color: '#a1a1aa' }}>{spots.length} db</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSpotsSheetOpen(false)}
+              style={{
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'transparent',
+                color: '#d4d4d8',
+                borderRadius: 8,
+                padding: '4px 8px',
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              Bezár
+            </button>
+          </div>
+
+          <div style={{ padding: 12 }}>
+            {spotsLoading ? (
+              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Szpotok betöltése...</div>
+            ) : spotsError ? (
+              <div style={{ color: '#fda4af', fontSize: 13 }}>{spotsError}</div>
+            ) : spots.length === 0 ? (
+              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Jelenleg nincs élő szpot.</div>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 12,
+                  overflowX: 'auto',
+                  paddingBottom: 4,
+                  scrollSnapType: 'x mandatory',
+                }}
+              >
+                {spots.map((spot) => (
+                  <article
+                    key={spot.id}
+                    style={{
+                      minWidth: 'min(310px, 78vw)',
+                      maxWidth: 340,
+                      borderRadius: 12,
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      background: 'rgba(2,6,23,0.7)',
+                      overflow: 'hidden',
+                      scrollSnapAlign: 'start',
+                    }}
+                  >
+                    <div style={{ height: 128, background: 'rgba(148,163,184,0.12)' }}>
+                      {spot.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={spot.image_url}
+                          alt={spot.title}
+                          loading="lazy"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#94a3b8',
+                            fontSize: 12,
+                          }}
+                        >
+                          Nincs kep
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ padding: 11, display: 'grid', gap: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                        <strong style={{ color: '#f4f4f5', fontSize: 14, lineHeight: 1.25 }}>{spot.title}</strong>
+                        <span style={{ color: '#86efac', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                          {spot.remaining_quantity} maradt
+                        </span>
+                      </div>
+
+                      <p style={{ margin: 0, color: '#cbd5e1', fontSize: 12, lineHeight: 1.4, minHeight: 34 }}>
+                        {spot.description || 'Nincs leiras ehhez a szpothoz.'}
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => focusSpot(spot)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                          borderRadius: 9,
+                          border: '1px solid rgba(244,114,182,0.45)',
+                          background: 'rgba(244,114,182,0.16)',
+                          color: '#fbcfe8',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          padding: '7px 10px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Ugras a terkeprol ide
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </nav>
   )

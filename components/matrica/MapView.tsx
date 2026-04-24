@@ -23,17 +23,30 @@ import SpotMarker from './SpotMarker'
 import SpotModal from './SpotModal'
 import ToastContainer from './ToastContainer'
 import { useToast } from './useToast'
+import MatricaLivePanel from './MatricaLivePanel'
 
 // Token comes from env; set it once at module level
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
+const MATRICA_FOCUS_SPOT_EVENT = 'matrica:focus-spot'
 
 interface UserLocation {
   lat: number
   lng: number
 }
 
+interface MapViewProps {
+  chatDisplayName: string
+  chatAuthToken: string | null
+}
 
-export default function MapView() {
+interface FocusSpotDetail {
+  spotId?: string
+  lat?: number
+  lng?: number
+}
+
+
+export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null)
@@ -185,6 +198,39 @@ export default function MapView() {
     }
     loadSpots()
   }, [])
+
+  useEffect(() => {
+    function handleFocusSpot(event: Event) {
+      const customEvent = event as CustomEvent<FocusSpotDetail>
+      const detail = customEvent.detail
+      if (!detail) return
+
+      const targetSpot = typeof detail.spotId === 'string'
+        ? spots.find((spot) => spot.id === detail.spotId)
+        : undefined
+
+      const lat = typeof detail.lat === 'number' ? detail.lat : targetSpot?.lat
+      const lng = typeof detail.lng === 'number' ? detail.lng : targetSpot?.lng
+
+      if (!mapRef.current || !Number.isFinite(lat) || !Number.isFinite(lng)) return
+
+      mapRef.current.flyTo({
+        center: [lng, lat],
+        zoom: 16.4,
+        duration: 1200,
+        essential: true,
+      })
+
+      if (targetSpot) {
+        setSelectedSpot(targetSpot)
+      }
+    }
+
+    window.addEventListener(MATRICA_FOCUS_SPOT_EVENT, handleFocusSpot as EventListener)
+    return () => {
+      window.removeEventListener(MATRICA_FOCUS_SPOT_EVENT, handleFocusSpot as EventListener)
+    }
+  }, [spots])
 
   // ── Classify spots ──────────────────────────────────────────────────────────
   const clickableSpots: StickerSpot[] = []
@@ -396,6 +442,8 @@ export default function MapView() {
           showToast={showToast}
         />
       )}
+
+      <MatricaLivePanel displayName={chatDisplayName} authToken={chatAuthToken} />
 
       {/* Toasts */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
