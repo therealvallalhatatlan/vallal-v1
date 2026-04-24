@@ -56,6 +56,10 @@ interface RouteState {
   durationSeconds: number | null
 }
 
+function isFiniteCoordinate(value: number | undefined): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
 function formatRouteDistance(distanceMeters: number | null): string {
   if (distanceMeters === null) return '--'
   if (distanceMeters < 1000) return `${Math.round(distanceMeters)} m`
@@ -96,6 +100,50 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const [routeError, setRouteError] = useState<string | null>(null)
 
   const { toasts, show: showToast, dismiss: dismissToast } = useToast()
+
+  const clearRouteFromMap = useCallback(() => {
+    if (!mapRef.current) return
+    const map = mapRef.current
+    if (map.getLayer(ROUTE_LAYER_ID)) {
+      map.removeLayer(ROUTE_LAYER_ID)
+    }
+    if (map.getSource(ROUTE_SOURCE_ID)) {
+      map.removeSource(ROUTE_SOURCE_ID)
+    }
+  }, [])
+
+  const startRouteForSpot = useCallback((spot: StickerSpot, originOverride?: UserLocation | null) => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [spot.lng, spot.lat],
+        zoom: 15.8,
+        offset: [0, -120],
+        duration: 900,
+        essential: true,
+      })
+    }
+
+    const nextOrigin = originOverride ?? userLocation
+    if (!nextOrigin) {
+      setRouteError('Kapcsold be a helymeghatarozast az utvonaltervezeshez.')
+      setRouteLoading(false)
+      setRouteState({
+        spot,
+        origin: null,
+        distanceMeters: null,
+        durationSeconds: null,
+      })
+      return
+    }
+
+    setRouteError(null)
+    setRouteState({
+      spot,
+      origin: nextOrigin,
+      distanceMeters: null,
+      durationSeconds: null,
+    })
+  }, [userLocation])
 
   // ── Initialize map ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -234,17 +282,6 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   }, [])
 
   useEffect(() => {
-    function clearRouteFromMap() {
-      if (!mapRef.current) return
-      const map = mapRef.current
-      if (map.getLayer(ROUTE_LAYER_ID)) {
-        map.removeLayer(ROUTE_LAYER_ID)
-      }
-      if (map.getSource(ROUTE_SOURCE_ID)) {
-        map.removeSource(ROUTE_SOURCE_ID)
-      }
-    }
-
     if (!mapLoaded || !mapRef.current || !routeState.spot || !routeState.origin) {
       clearRouteFromMap()
       return
@@ -318,7 +355,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         const bounds = new mapboxgl.LngLatBounds([origin.lng, origin.lat], [origin.lng, origin.lat])
         bounds.extend([target.lng, target.lat])
         map.fitBounds(bounds, {
-          padding: { top: 90, right: 32, bottom: 210, left: 32 },
+          padding: { top: 96, right: 32, bottom: 250, left: 32 },
           duration: 1200,
           essential: true,
         })
@@ -349,7 +386,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     return () => {
       cancelled = true
     }
-  }, [mapLoaded, routeState.origin, routeState.spot])
+  }, [clearRouteFromMap, mapLoaded, routeState.origin, routeState.spot])
 
   useEffect(() => {
     function handleFocusSpot(event: Event) {
@@ -394,7 +431,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         ? spots.find((spot) => spot.id === detail.spotId) ?? null
         : null
 
-      const fallbackSpot = targetSpot ?? (Number.isFinite(detail.lat) && Number.isFinite(detail.lng)
+      const fallbackSpot = targetSpot ?? (isFiniteCoordinate(detail.lat) && isFiniteCoordinate(detail.lng)
         ? {
             id: detail.spotId ?? 'route-target',
             title: detail.title ?? 'Szpot',
@@ -413,41 +450,14 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
 
       if (!fallbackSpot) return
 
-      if (mapRef.current) {
-        mapRef.current.flyTo({
-          center: [fallbackSpot.lng, fallbackSpot.lat],
-          zoom: 15.4,
-          duration: 900,
-          essential: true,
-        })
-      }
-
-      if (!userLocation) {
-        setRouteError('Kapcsold be a helymeghatarozast az utvonaltervezeshez.')
-        setRouteLoading(false)
-        setRouteState({
-          spot: fallbackSpot,
-          origin: null,
-          distanceMeters: null,
-          durationSeconds: null,
-        })
-        return
-      }
-
-      setRouteError(null)
-      setRouteState({
-        spot: fallbackSpot,
-        origin: userLocation,
-        distanceMeters: null,
-        durationSeconds: null,
-      })
+      startRouteForSpot(fallbackSpot)
     }
 
     window.addEventListener(MATRICA_START_ROUTE_EVENT, handleStartRoute as EventListener)
     return () => {
       window.removeEventListener(MATRICA_START_ROUTE_EVENT, handleStartRoute as EventListener)
     }
-  }, [spots, userLocation])
+  }, [spots, startRouteForSpot])
 
   // ── Classify spots ──────────────────────────────────────────────────────────
   const clickableSpots: StickerSpot[] = []
@@ -503,16 +513,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const handleClosePanel = useCallback(() => setSelectedSpot(null), [])
 
   const handleCloseRoute = useCallback(() => {
-    if (mapRef.current) {
-      const map = mapRef.current
-      if (map.getLayer(ROUTE_LAYER_ID)) {
-        map.removeLayer(ROUTE_LAYER_ID)
-      }
-      if (map.getSource(ROUTE_SOURCE_ID)) {
-        map.removeSource(ROUTE_SOURCE_ID)
-      }
-    }
-
+    clearRouteFromMap()
     setRouteLoading(false)
     setRouteError(null)
     setRouteState({
@@ -521,7 +522,29 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       distanceMeters: null,
       durationSeconds: null,
     })
-  }, [])
+  }, [clearRouteFromMap])
+
+  const handleRefreshRoute = useCallback(() => {
+    if (!routeState.spot) return
+    startRouteForSpot(routeState.spot, userLocation)
+  }, [routeState.spot, startRouteForSpot, userLocation])
+
+  const handleOpenExternalNavigation = useCallback(() => {
+    const spot = routeState.spot
+    if (!spot) return
+
+    const googleMapsUrl = new URL('https://www.google.com/maps/dir/')
+    if (userLocation) {
+      googleMapsUrl.searchParams.set('api', '1')
+      googleMapsUrl.searchParams.set('origin', `${userLocation.lat},${userLocation.lng}`)
+      googleMapsUrl.searchParams.set('destination', `${spot.lat},${spot.lng}`)
+      googleMapsUrl.searchParams.set('travelmode', 'walking')
+    } else {
+      googleMapsUrl.pathname = `/maps/search/${encodeURIComponent(`${spot.lat},${spot.lng}`)}`
+    }
+
+    window.open(googleMapsUrl.toString(), '_blank', 'noopener,noreferrer')
+  }, [routeState.spot, userLocation])
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
@@ -706,6 +729,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               <div style={{ marginTop: 6, display: 'flex', gap: 10, flexWrap: 'wrap', color: '#d4d4d8', fontSize: 12 }}>
                 <span>Tav: {formatRouteDistance(routeState.distanceMeters)}</span>
                 <span>Ido: {formatRouteDuration(routeState.durationSeconds)}</span>
+                {routeState.origin ? <span>Kiindulas: sajat poziciod</span> : null}
               </div>
             </div>
             <button
@@ -754,11 +778,28 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             </button>
             <button
               type="button"
+              onClick={handleRefreshRoute}
+              style={{
+                borderRadius: 10,
+                border: '1px solid rgba(244,114,182,0.28)',
+                background: 'rgba(244,114,182,0.14)',
+                color: '#fbcfe8',
+                fontSize: 12,
+                fontWeight: 700,
+                padding: '8px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              Ujratervezes
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 if (!mapRef.current || !routeState.spot) return
                 mapRef.current.flyTo({
                   center: [routeState.spot.lng, routeState.spot.lat],
                   zoom: 16.2,
+                  offset: [0, -120],
                   duration: 900,
                   essential: true,
                 })
@@ -775,6 +816,22 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               }}
             >
               Ujraközépre
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenExternalNavigation}
+              style={{
+                borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.12)',
+                background: 'rgba(255,255,255,0.05)',
+                color: '#a1a1aa',
+                fontSize: 12,
+                fontWeight: 600,
+                padding: '8px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              Google Maps fallback
             </button>
           </div>
         </div>
