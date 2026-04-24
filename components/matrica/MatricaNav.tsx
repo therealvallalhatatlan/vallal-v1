@@ -23,22 +23,38 @@ export default function MatricaNav() {
   const [accepted, setAccepted] = useState<number | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // Fetch score when session is available
+  // Fetch score when session is available and after successful claims.
   useEffect(() => {
     if (!session) return
     const token = (session as any).access_token
     if (!token) return
+
     let cancelled = false
-    fetch('/api/matrica/score', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then(json => {
-        if (!cancelled && json) {
-          setScore(json.score ?? 0)
-          setAccepted(json.accepted ?? 0)
-        }
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
+
+    const loadScore = () => {
+      fetch('/api/matrica/score', { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.ok ? r.json() : null)
+        .then(json => {
+          if (!cancelled && json) {
+            setScore(json.score ?? 0)
+            setAccepted(json.accepted ?? 0)
+          }
+        })
+        .catch(() => {})
+    }
+
+    loadScore()
+
+    const onClaimSubmitted = () => {
+      loadScore()
+    }
+
+    window.addEventListener('matrica:claim-submitted', onClaimSubmitted)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('matrica:claim-submitted', onClaimSubmitted)
+    }
   }, [session])
 
   // Close dropdown on outside click

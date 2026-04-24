@@ -140,6 +140,7 @@ export default function ClaimForm({
 
       setState('success')
       showToast?.('Igénylés beküldve! Hamarosan átnézzük.', 'success')
+      window.dispatchEvent(new CustomEvent('matrica:claim-submitted'))
       onSuccess(json?.spot)
     } catch {
       const msg = 'Hálózati hiba. Ellenőrizd az internetkapcsolatodat.'

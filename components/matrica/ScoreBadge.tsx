@@ -9,7 +9,7 @@ export default function ScoreBadge() {
   useEffect(() => {
     let cancelled = false
 
-    async function load() {
+    const load = async () => {
       const supabase = createClient()
       const { data } = await supabase.auth.getSession()
       const token = data?.session?.access_token
@@ -28,7 +28,16 @@ export default function ScoreBadge() {
     }
 
     load()
-    return () => { cancelled = true }
+
+    const onClaimSubmitted = () => {
+      load()
+    }
+    window.addEventListener('matrica:claim-submitted', onClaimSubmitted)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('matrica:claim-submitted', onClaimSubmitted)
+    }
   }, [])
 
   if (score === null) return null
