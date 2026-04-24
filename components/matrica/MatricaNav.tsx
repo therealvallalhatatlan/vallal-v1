@@ -9,6 +9,7 @@ import { createClient } from '@/lib/browser'
 import type { StickerSpot } from '@/lib/matrica'
 
 const MATRICA_FOCUS_SPOT_EVENT = 'matrica:focus-spot'
+const MATRICA_START_ROUTE_EVENT = 'matrica:start-route'
 
 export default function MatricaNav() {
   const pathname = usePathname()
@@ -25,6 +26,10 @@ export default function MatricaNav() {
   const [score, setScore] = useState<number | null>(null)
   const [accepted, setAccepted] = useState<number | null>(null)
   const [nickname, setNickname] = useState<string | null>(null)
+  const [nicknameDraft, setNicknameDraft] = useState('')
+  const [nicknameEditing, setNicknameEditing] = useState(false)
+  const [nicknameSaving, setNicknameSaving] = useState(false)
+  const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [spotsSheetOpen, setSpotsSheetOpen] = useState(false)
   const [spots, setSpots] = useState<StickerSpot[]>([])
   const [spotsLoading, setSpotsLoading] = useState(false)
@@ -83,12 +88,17 @@ export default function MatricaNav() {
         if (res.ok && json?.ok && typeof json?.profile?.nickname === 'string') {
           const value = json.profile.nickname.trim()
           setNickname(value || null)
+          setNicknameDraft(value || '')
           return
         }
 
         setNickname(null)
+        setNicknameDraft('')
       } catch {
-        if (!cancelled) setNickname(null)
+        if (!cancelled) {
+          setNickname(null)
+          setNicknameDraft('')
+        }
       }
     }
 
@@ -98,6 +108,55 @@ export default function MatricaNav() {
       cancelled = true
     }
   }, [user?.id])
+
+  async function handleSaveNickname() {
+    const token = (session as any)?.access_token
+    if (!token) {
+      setNicknameError('Bejelentkezes szukseges a menteshez.')
+      return
+    }
+
+    const trimmed = nicknameDraft.trim().toLocaleLowerCase('hu-HU')
+    if (!trimmed) {
+      setNicknameError('Adj meg egy felhasznalonevet.')
+      return
+    }
+
+    setNicknameSaving(true)
+    setNicknameError(null)
+
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ nickname: trimmed }),
+      })
+
+      const json = await res.json()
+      if (!res.ok || !json?.ok) {
+        if (json?.error === 'nickname_taken') {
+          setNicknameError('Ez a felhasznalonev mar foglalt.')
+        } else if (typeof json?.error === 'string') {
+          setNicknameError(json.error)
+        } else {
+          setNicknameError('Nem sikerult menteni a felhasznalonevet.')
+        }
+        return
+      }
+
+      const savedNickname = typeof json?.profile?.nickname === 'string' ? json.profile.nickname.trim() : trimmed
+      setNickname(savedNickname)
+      setNicknameDraft(savedNickname)
+      setNicknameEditing(false)
+    } catch {
+      setNicknameError('Nem sikerult menteni a felhasznalonevet.')
+    } finally {
+      setNicknameSaving(false)
+    }
+  }
 
   useEffect(() => {
     if (!spotsSheetOpen) return
@@ -136,13 +195,14 @@ export default function MatricaNav() {
     }
   }, [spotsSheetOpen])
 
-  function focusSpot(spot: StickerSpot) {
+  function startRouteToSpot(spot: StickerSpot) {
     window.dispatchEvent(
-      new CustomEvent(MATRICA_FOCUS_SPOT_EVENT, {
+      new CustomEvent(MATRICA_START_ROUTE_EVENT, {
         detail: {
           spotId: spot.id,
           lat: spot.lat,
           lng: spot.lng,
+          title: spot.title,
         },
       })
     )
@@ -338,12 +398,115 @@ export default function MatricaNav() {
                 {/* Identity */}
                 <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                   <p style={{ margin: 0, fontSize: 11, color: '#71717a', marginBottom: 3 }}>Bejelentkezve</p>
-                  <p style={{
-                    margin: 0, fontSize: 14, color: '#f4f4f5', fontWeight: 700,
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 188,
-                  }}>
-                    {nickname || 'nevtelen'}
-                  </p>
+                  {nicknameEditing ? (
+                    <>
+                      <input
+                        type="text"
+                        value={nicknameDraft}
+                        onChange={(e) => setNicknameDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            void handleSaveNickname()
+                          }
+                          if (e.key === 'Escape') {
+                            setNicknameEditing(false)
+                            setNicknameDraft(nickname || '')
+                            setNicknameError(null)
+                          }
+                        }}
+                        maxLength={20}
+                        autoFocus
+                        style={{
+                          width: '100%',
+                          margin: 0,
+                          fontSize: 14,
+                          color: '#f4f4f5',
+                          fontWeight: 700,
+                          borderRadius: 8,
+                          border: '1px solid rgba(232,121,249,0.3)',
+                          background: 'rgba(24,24,27,0.85)',
+                          padding: '7px 9px',
+                          outline: 'none',
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => void handleSaveNickname()}
+                          disabled={nicknameSaving}
+                          style={{
+                            border: '1px solid rgba(232,121,249,0.4)',
+                            background: 'rgba(232,121,249,0.18)',
+                            color: '#f5d0fe',
+                            borderRadius: 8,
+                            fontSize: 11,
+                            fontWeight: 700,
+                            padding: '5px 8px',
+                            cursor: nicknameSaving ? 'default' : 'pointer',
+                            opacity: nicknameSaving ? 0.7 : 1,
+                          }}
+                        >
+                          {nicknameSaving ? 'Mentes...' : 'Mentes'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNicknameEditing(false)
+                            setNicknameDraft(nickname || '')
+                            setNicknameError(null)
+                          }}
+                          disabled={nicknameSaving}
+                          style={{
+                            border: '1px solid rgba(255,255,255,0.14)',
+                            background: 'transparent',
+                            color: '#a1a1aa',
+                            borderRadius: 8,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            padding: '5px 8px',
+                            cursor: nicknameSaving ? 'default' : 'pointer',
+                          }}
+                        >
+                          Megse
+                        </button>
+                      </div>
+                      {nicknameError ? (
+                        <p style={{ margin: '8px 0 0 0', fontSize: 11, color: '#fda4af' }}>{nicknameError}</p>
+                      ) : (
+                        <p style={{ margin: '8px 0 0 0', fontSize: 11, color: '#71717a' }}>3-20 karakter, betu/szam/_/-</p>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <p style={{
+                        margin: 0, fontSize: 14, color: '#f4f4f5', fontWeight: 700,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 188,
+                      }}>
+                        {nickname || 'nevtelen'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNicknameEditing(true)
+                          setNicknameDraft(nickname || '')
+                          setNicknameError(null)
+                        }}
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          color: '#c084fc',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          padding: 0,
+                          flexShrink: 0,
+                        }}
+                      >
+                        Szerkesztes
+                      </button>
+                    </div>
+                  )}
                   <p style={{
                     margin: '2px 0 0 0', fontSize: 11, color: '#71717a', fontWeight: 500,
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 188,
@@ -522,7 +685,7 @@ export default function MatricaNav() {
 
                       <button
                         type="button"
-                        onClick={() => focusSpot(spot)}
+                        onClick={() => startRouteToSpot(spot)}
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -538,7 +701,7 @@ export default function MatricaNav() {
                           cursor: 'pointer',
                         }}
                       >
-                        Ugras a terkeprol ide
+                        Mutasd az utvonalat
                       </button>
                     </div>
                   </article>

@@ -28,6 +28,9 @@ import MatricaLivePanel from './MatricaLivePanel'
 // Token comes from env; set it once at module level
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
 const MATRICA_FOCUS_SPOT_EVENT = 'matrica:focus-spot'
+const MATRICA_START_ROUTE_EVENT = 'matrica:start-route'
+const ROUTE_SOURCE_ID = 'matrica-route-source'
+const ROUTE_LAYER_ID = 'matrica-route-layer'
 
 interface UserLocation {
   lat: number
@@ -43,6 +46,29 @@ interface FocusSpotDetail {
   spotId?: string
   lat?: number
   lng?: number
+  title?: string
+}
+
+interface RouteState {
+  spot: StickerSpot | null
+  origin: UserLocation | null
+  distanceMeters: number | null
+  durationSeconds: number | null
+}
+
+function formatRouteDistance(distanceMeters: number | null): string {
+  if (distanceMeters === null) return '--'
+  if (distanceMeters < 1000) return `${Math.round(distanceMeters)} m`
+  return `${(distanceMeters / 1000).toFixed(1)} km`
+}
+
+function formatRouteDuration(durationSeconds: number | null): string {
+  if (durationSeconds === null) return '--'
+  const totalMinutes = Math.max(1, Math.round(durationSeconds / 60))
+  if (totalMinutes < 60) return `${totalMinutes} perc`
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  return minutes > 0 ? `${hours} ora ${minutes} perc` : `${hours} ora`
 }
 
 
@@ -60,6 +86,14 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const [spots, setSpots] = useState<StickerSpot[]>([])
   const [selectedSpot, setSelectedSpot] = useState<StickerSpot | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const [routeState, setRouteState] = useState<RouteState>({
+    spot: null,
+    origin: null,
+    distanceMeters: null,
+    durationSeconds: null,
+  })
+  const [routeLoading, setRouteLoading] = useState(false)
+  const [routeError, setRouteError] = useState<string | null>(null)
 
   const { toasts, show: showToast, dismiss: dismissToast } = useToast()
 
@@ -200,6 +234,124 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   }, [])
 
   useEffect(() => {
+    function clearRouteFromMap() {
+      if (!mapRef.current) return
+      const map = mapRef.current
+      if (map.getLayer(ROUTE_LAYER_ID)) {
+        map.removeLayer(ROUTE_LAYER_ID)
+      }
+      if (map.getSource(ROUTE_SOURCE_ID)) {
+        map.removeSource(ROUTE_SOURCE_ID)
+      }
+    }
+
+    if (!mapLoaded || !mapRef.current || !routeState.spot || !routeState.origin) {
+      clearRouteFromMap()
+      return
+    }
+
+    let cancelled = false
+
+    const loadRoute = async () => {
+      const origin = routeState.origin
+      const target = routeState.spot
+
+      setRouteLoading(true)
+      setRouteError(null)
+
+      try {
+        const url = new URL(
+          `https://api.mapbox.com/directions/v5/mapbox/walking/${origin.lng},${origin.lat};${target.lng},${target.lat}`
+        )
+        url.searchParams.set('alternatives', 'false')
+        url.searchParams.set('geometries', 'geojson')
+        url.searchParams.set('overview', 'full')
+        url.searchParams.set('steps', 'false')
+        url.searchParams.set('access_token', MAPBOX_TOKEN)
+
+        const res = await fetch(url.toString())
+        const json = await res.json()
+
+        if (cancelled) return
+
+        const route = Array.isArray(json?.routes) ? json.routes[0] : null
+        const geometry = route?.geometry
+        if (!res.ok || !route || !geometry || geometry.type !== 'LineString') {
+          throw new Error('route_unavailable')
+        }
+
+        const feature: GeoJSON.Feature<GeoJSON.LineString> = {
+          type: 'Feature',
+          geometry,
+          properties: {},
+        }
+
+        const map = mapRef.current
+        if (!map) return
+
+        if (map.getSource(ROUTE_SOURCE_ID)) {
+          ;(map.getSource(ROUTE_SOURCE_ID) as mapboxgl.GeoJSONSource).setData(feature)
+        } else {
+          map.addSource(ROUTE_SOURCE_ID, {
+            type: 'geojson',
+            data: feature,
+          })
+        }
+
+        if (!map.getLayer(ROUTE_LAYER_ID)) {
+          map.addLayer({
+            id: ROUTE_LAYER_ID,
+            type: 'line',
+            source: ROUTE_SOURCE_ID,
+            layout: {
+              'line-cap': 'round',
+              'line-join': 'round',
+            },
+            paint: {
+              'line-color': '#f472b6',
+              'line-width': 5,
+              'line-opacity': 0.9,
+            },
+          })
+        }
+
+        const bounds = new mapboxgl.LngLatBounds([origin.lng, origin.lat], [origin.lng, origin.lat])
+        bounds.extend([target.lng, target.lat])
+        map.fitBounds(bounds, {
+          padding: { top: 90, right: 32, bottom: 210, left: 32 },
+          duration: 1200,
+          essential: true,
+        })
+
+        setRouteState((prev) => ({
+          ...prev,
+          distanceMeters: typeof route.distance === 'number' ? route.distance : null,
+          durationSeconds: typeof route.duration === 'number' ? route.duration : null,
+        }))
+      } catch (error) {
+        console.error('[MapView] route load failed', error)
+        clearRouteFromMap()
+        setRouteError('Nem sikerult utvonalat tervezni ehhez a szpothoz.')
+        setRouteState((prev) => ({
+          ...prev,
+          distanceMeters: null,
+          durationSeconds: null,
+        }))
+      } finally {
+        if (!cancelled) {
+          setRouteLoading(false)
+        }
+      }
+    }
+
+    void loadRoute()
+
+    return () => {
+      cancelled = true
+    }
+  }, [mapLoaded, routeState.origin, routeState.spot])
+
+  useEffect(() => {
     function handleFocusSpot(event: Event) {
       const customEvent = event as CustomEvent<FocusSpotDetail>
       const detail = customEvent.detail
@@ -231,6 +383,71 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       window.removeEventListener(MATRICA_FOCUS_SPOT_EVENT, handleFocusSpot as EventListener)
     }
   }, [spots])
+
+  useEffect(() => {
+    function handleStartRoute(event: Event) {
+      const customEvent = event as CustomEvent<FocusSpotDetail>
+      const detail = customEvent.detail
+      if (!detail) return
+
+      const targetSpot = typeof detail.spotId === 'string'
+        ? spots.find((spot) => spot.id === detail.spotId) ?? null
+        : null
+
+      const fallbackSpot = targetSpot ?? (Number.isFinite(detail.lat) && Number.isFinite(detail.lng)
+        ? {
+            id: detail.spotId ?? 'route-target',
+            title: detail.title ?? 'Szpot',
+            description: null,
+            image_url: null,
+            lat: detail.lat as number,
+            lng: detail.lng as number,
+            radius_visibility: 0,
+            radius_claim: 0,
+            total_quantity: 0,
+            remaining_quantity: 0,
+            status: 'active' as const,
+            created_at: new Date(0).toISOString(),
+          }
+        : null)
+
+      if (!fallbackSpot) return
+
+      if (mapRef.current) {
+        mapRef.current.flyTo({
+          center: [fallbackSpot.lng, fallbackSpot.lat],
+          zoom: 15.4,
+          duration: 900,
+          essential: true,
+        })
+      }
+
+      if (!userLocation) {
+        setRouteError('Kapcsold be a helymeghatarozast az utvonaltervezeshez.')
+        setRouteLoading(false)
+        setRouteState({
+          spot: fallbackSpot,
+          origin: null,
+          distanceMeters: null,
+          durationSeconds: null,
+        })
+        return
+      }
+
+      setRouteError(null)
+      setRouteState({
+        spot: fallbackSpot,
+        origin: userLocation,
+        distanceMeters: null,
+        durationSeconds: null,
+      })
+    }
+
+    window.addEventListener(MATRICA_START_ROUTE_EVENT, handleStartRoute as EventListener)
+    return () => {
+      window.removeEventListener(MATRICA_START_ROUTE_EVENT, handleStartRoute as EventListener)
+    }
+  }, [spots, userLocation])
 
   // ── Classify spots ──────────────────────────────────────────────────────────
   const clickableSpots: StickerSpot[] = []
@@ -284,6 +501,27 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   }, [])
 
   const handleClosePanel = useCallback(() => setSelectedSpot(null), [])
+
+  const handleCloseRoute = useCallback(() => {
+    if (mapRef.current) {
+      const map = mapRef.current
+      if (map.getLayer(ROUTE_LAYER_ID)) {
+        map.removeLayer(ROUTE_LAYER_ID)
+      }
+      if (map.getSource(ROUTE_SOURCE_ID)) {
+        map.removeSource(ROUTE_SOURCE_ID)
+      }
+    }
+
+    setRouteLoading(false)
+    setRouteError(null)
+    setRouteState({
+      spot: null,
+      origin: null,
+      distanceMeters: null,
+      durationSeconds: null,
+    })
+  }, [])
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
@@ -441,6 +679,105 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           onClaimSubmitted={handleClaimSubmitted}
           showToast={showToast}
         />
+      )}
+
+      {routeState.spot && !selectedSpot && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 12,
+            right: 12,
+            bottom: 16,
+            zIndex: 35,
+            borderRadius: 14,
+            border: '1px solid rgba(244,114,182,0.28)',
+            background: 'rgba(9,9,11,0.93)',
+            boxShadow: '0 18px 48px rgba(0,0,0,0.42)',
+            padding: 14,
+            color: '#f4f4f5',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'start' }}>
+            <div>
+              <div style={{ fontSize: 11, color: '#f9a8d4', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Utvonal aktiv
+              </div>
+              <div style={{ marginTop: 3, fontSize: 16, fontWeight: 700 }}>{routeState.spot.title}</div>
+              <div style={{ marginTop: 6, display: 'flex', gap: 10, flexWrap: 'wrap', color: '#d4d4d8', fontSize: 12 }}>
+                <span>Tav: {formatRouteDistance(routeState.distanceMeters)}</span>
+                <span>Ido: {formatRouteDuration(routeState.durationSeconds)}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleCloseRoute}
+              style={{
+                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'transparent',
+                color: '#a1a1aa',
+                borderRadius: 8,
+                padding: '4px 8px',
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              Bezár
+            </button>
+          </div>
+
+          {routeLoading ? (
+            <div style={{ marginTop: 10, fontSize: 12, color: '#a1a1aa' }}>Utvonal tervezese...</div>
+          ) : routeError ? (
+            <div style={{ marginTop: 10, fontSize: 12, color: '#fda4af' }}>{routeError}</div>
+          ) : (
+            <div style={{ marginTop: 10, fontSize: 12, color: '#a1a1aa' }}>
+              Kovessd a rozsaszin vonalat, aztan claimeld a szpotot a helyszinen.
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setSelectedSpot(routeState.spot)}
+              style={{
+                borderRadius: 10,
+                border: '1px solid rgba(132,204,22,0.35)',
+                background: 'rgba(132,204,22,0.18)',
+                color: '#d9f99d',
+                fontSize: 12,
+                fontWeight: 700,
+                padding: '8px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              Claim ehhez a szpothoz
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!mapRef.current || !routeState.spot) return
+                mapRef.current.flyTo({
+                  center: [routeState.spot.lng, routeState.spot.lat],
+                  zoom: 16.2,
+                  duration: 900,
+                  essential: true,
+                })
+              }}
+              style={{
+                borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.16)',
+                background: 'transparent',
+                color: '#d4d4d8',
+                fontSize: 12,
+                fontWeight: 600,
+                padding: '8px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              Ujraközépre
+            </button>
+          </div>
+        </div>
       )}
 
       <MatricaLivePanel displayName={chatDisplayName} authToken={chatAuthToken} />
