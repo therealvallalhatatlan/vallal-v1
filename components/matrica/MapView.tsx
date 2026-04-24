@@ -31,6 +31,8 @@ const MATRICA_FOCUS_SPOT_EVENT = 'matrica:focus-spot'
 const MATRICA_START_ROUTE_EVENT = 'matrica:start-route'
 const ROUTE_SOURCE_ID = 'matrica-route-source'
 const ROUTE_LAYER_ID = 'matrica-route-layer'
+const AUTO_REROUTE_MIN_DISTANCE_METERS = 35
+const AUTO_REROUTE_COOLDOWN_MS = 15000
 
 interface UserLocation {
   lat: number
@@ -81,6 +83,8 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null)
   const firstFixRef = useRef(false)
+  const lastAutoRerouteAtRef = useRef(0)
+  const pendingAutoRerouteStatusRef = useRef(false)
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
@@ -98,8 +102,21 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   })
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState<string | null>(null)
+  const [routeStatus, setRouteStatus] = useState<string | null>(null)
 
   const { toasts, show: showToast, dismiss: dismissToast } = useToast()
+
+  useEffect(() => {
+    if (!routeStatus) return
+
+    const timeoutId = window.setTimeout(() => {
+      setRouteStatus((current) => (current === routeStatus ? null : current))
+    }, 2200)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [routeStatus])
 
   const clearRouteFromMap = useCallback(() => {
     if (!mapRef.current) return
@@ -365,10 +382,16 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           distanceMeters: typeof route.distance === 'number' ? route.distance : null,
           durationSeconds: typeof route.duration === 'number' ? route.duration : null,
         }))
+        if (pendingAutoRerouteStatusRef.current) {
+          setRouteStatus('Utvonal frissitve')
+          pendingAutoRerouteStatusRef.current = false
+        }
       } catch (error) {
         console.error('[MapView] route load failed', error)
         clearRouteFromMap()
         setRouteError('Nem sikerult utvonalat tervezni ehhez a szpothoz.')
+        setRouteStatus(null)
+        pendingAutoRerouteStatusRef.current = false
         setRouteState((prev) => ({
           ...prev,
           distanceMeters: null,
@@ -459,6 +482,32 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     }
   }, [spots, startRouteForSpot])
 
+  useEffect(() => {
+    if (!routeState.spot || !routeState.origin || !userLocation || routeLoading) {
+      return
+    }
+
+    const movedDistance = getDistanceMeters(
+      routeState.origin.lat,
+      routeState.origin.lng,
+      userLocation.lat,
+      userLocation.lng,
+    )
+
+    if (movedDistance < AUTO_REROUTE_MIN_DISTANCE_METERS) {
+      return
+    }
+
+    const now = Date.now()
+    if (now - lastAutoRerouteAtRef.current < AUTO_REROUTE_COOLDOWN_MS) {
+      return
+    }
+
+    lastAutoRerouteAtRef.current = now
+    pendingAutoRerouteStatusRef.current = true
+    startRouteForSpot(routeState.spot, userLocation)
+  }, [routeLoading, routeState.origin, routeState.spot, startRouteForSpot, userLocation])
+
   // ── Classify spots ──────────────────────────────────────────────────────────
   const clickableSpots: StickerSpot[] = []
   const hintSpots: StickerSpot[] = []
@@ -512,10 +561,18 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
 
   const handleClosePanel = useCallback(() => setSelectedSpot(null), [])
 
+  const handleStartRouteFromModal = useCallback((spot: StickerSpot) => {
+    setSelectedSpot(null)
+    startRouteForSpot(spot)
+  }, [startRouteForSpot])
+
   const handleCloseRoute = useCallback(() => {
     clearRouteFromMap()
+    lastAutoRerouteAtRef.current = 0
+    pendingAutoRerouteStatusRef.current = false
     setRouteLoading(false)
     setRouteError(null)
+    setRouteStatus(null)
     setRouteState({
       spot: null,
       origin: null,
@@ -699,6 +756,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           spot={selectedSpot}
           userLocation={userLocation}
           onClose={handleClosePanel}
+          onStartRoute={handleStartRouteFromModal}
           onClaimSubmitted={handleClaimSubmitted}
           showToast={showToast}
         />
@@ -758,6 +816,28 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               Kovessd a rozsaszin vonalat, aztan claimeld a szpotot a helyszinen.
             </div>
           )}
+
+          {routeStatus ? (
+            <div
+              style={{
+                marginTop: 8,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                borderRadius: 999,
+                border: '1px solid rgba(244,114,182,0.24)',
+                background: 'rgba(244,114,182,0.12)',
+                color: '#fbcfe8',
+                padding: '5px 9px',
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {routeStatus}
+            </div>
+          ) : null}
 
           <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
             <button

@@ -29,6 +29,7 @@ interface Props {
   spot: StickerSpot
   userLocation: UserLocation | null
   onClose: () => void
+  onStartRoute?: (spot: StickerSpot) => void
   onClaimSubmitted?: (spotUpdate?: ClaimSubmitSpotUpdate) => void
   showToast?: ShowToast
 }
@@ -49,7 +50,7 @@ function Backdrop({ onClick }: { onClick: () => void }) {
   )
 }
 
-export default function SpotModal({ spot, userLocation, onClose, onClaimSubmitted, showToast }: Props) {
+export default function SpotModal({ spot, userLocation, onClose, onStartRoute, onClaimSubmitted, showToast }: Props) {
   const [view, setView] = useState<ModalView>('info')
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [authError, setAuthError] = useState(false)
@@ -84,6 +85,10 @@ export default function SpotModal({ spot, userLocation, onClose, onClaimSubmitte
     onClaimSubmitted?.(spotUpdate)
     setView('success')
   }, [onClaimSubmitted])
+
+  const handleStartRoute = useCallback(() => {
+    onStartRoute?.(spot)
+  }, [onStartRoute, spot])
 
   // Close on Escape
   useEffect(() => {
@@ -258,31 +263,58 @@ export default function SpotModal({ spot, userLocation, onClose, onClaimSubmitte
               else if (tooFar) label = `Túl messze (${distance} m)`
 
               return (
-                <button
-                  onClick={handleFoundIt}
-                  disabled={disabled}
-                  title={tooFar ? `Legalább ${spot.radius_claim} m-en belül kell lenned` : undefined}
-                  style={{
-                    width: '100%',
-                    padding: '14px 0',
-                    background: disabled ? 'rgba(255,255,255,0.05)' : '#e879f9',
-                    border: disabled ? '1px solid rgba(255,255,255,0.08)' : 'none',
-                    borderRadius: 12,
-                    color: disabled ? '#52525b' : '#fff',
-                    fontWeight: 700,
-                    fontSize: 15,
-                    cursor: disabled ? 'not-allowed' : 'pointer',
-                    letterSpacing: '0.02em',
-                    transition: 'background 0.2s ease, transform 0.1s ease',
-                    WebkitTapHighlightColor: 'transparent',
-                  }}
-                  onMouseDown={e => !disabled && ((e.currentTarget.style.transform = 'scale(0.98)'))}
-                  onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-                  onTouchStart={e => !disabled && ((e.currentTarget.style.transform = 'scale(0.97)'))}
-                  onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
-                >
-                  {label}
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <button
+                    onClick={handleFoundIt}
+                    disabled={disabled}
+                    title={tooFar ? `Legalább ${spot.radius_claim} m-en belül kell lenned` : undefined}
+                    style={{
+                      width: '100%',
+                      padding: '14px 0',
+                      background: disabled ? 'rgba(255,255,255,0.05)' : '#e879f9',
+                      border: disabled ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                      borderRadius: 12,
+                      color: disabled ? '#52525b' : '#fff',
+                      fontWeight: 700,
+                      fontSize: 15,
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                      letterSpacing: '0.02em',
+                      transition: 'background 0.2s ease, transform 0.1s ease',
+                      WebkitTapHighlightColor: 'transparent',
+                    }}
+                    onMouseDown={e => !disabled && ((e.currentTarget.style.transform = 'scale(0.98)'))}
+                    onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+                    onTouchStart={e => !disabled && ((e.currentTarget.style.transform = 'scale(0.97)'))}
+                    onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
+                  >
+                    {label}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleStartRoute}
+                    style={{
+                      width: '100%',
+                      padding: '13px 0',
+                      background: 'rgba(244,114,182,0.12)',
+                      border: '1px solid rgba(244,114,182,0.28)',
+                      borderRadius: 12,
+                      color: '#fbcfe8',
+                      fontWeight: 700,
+                      fontSize: 14,
+                      cursor: 'pointer',
+                      letterSpacing: '0.02em',
+                      transition: 'background 0.2s ease, transform 0.1s ease',
+                      WebkitTapHighlightColor: 'transparent',
+                    }}
+                    onMouseDown={e => ((e.currentTarget.style.transform = 'scale(0.98)'))}
+                    onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+                    onTouchStart={e => ((e.currentTarget.style.transform = 'scale(0.97)'))}
+                    onTouchEnd={e => (e.currentTarget.style.transform = 'scale(1)')}
+                  >
+                    Mutasd az utvonalat
+                  </button>
+                </div>
               )
             })()}
           </>
