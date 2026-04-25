@@ -13,7 +13,7 @@ export async function GET() {
   // Lekérjük azokat, akik az elmúlt 5 percben életjelet adtak
   const { data, error } = await supabase
     .from('reader_presence')
-    .select('user_id:id,email')
+    .select('user_id,email,last_heartbeat')
     .gte('last_heartbeat', since)
     .order('last_heartbeat', { ascending: false })
 
