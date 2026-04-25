@@ -211,76 +211,97 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   }, [])
 
   // ── Geolocation ─────────────────────────────────────────────────────────────
+  // Helper: find nearest spot to user
+  function getNearestSpot(userLoc: UserLocation | null, spots: StickerSpot[]): StickerSpot | null {
+    if (!userLoc || !spots.length) return null;
+    let minDist = Infinity;
+    let nearest: StickerSpot | null = null;
+    for (const spot of spots) {
+      if (typeof spot.lat !== 'number' || typeof spot.lng !== 'number') continue;
+      const dist = getDistanceMeters(userLoc.lat, userLoc.lng, spot.lat, spot.lng);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = spot;
+      }
+    }
+    return nearest;
+  }
+
   useEffect(() => {
     if (!navigator.geolocation) {
-      setGeoError('A böngésző nem támogatja a helymeghatározást.')
-      return
+      setGeoError('A böngésző nem támogatja a helymeghatározást.');
+      return;
     }
-    setGeoError(null)
+    setGeoError(null);
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-        setUserLocation(loc)
-        setGeoError(null)
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLocation(loc);
+        setGeoError(null);
 
-        // Fly to user on first fix
+        // Fly to nearest spot on first fix
         if (mapRef.current && !firstFixRef.current) {
-          firstFixRef.current = true
-          mapRef.current.flyTo({ center: [loc.lng, loc.lat], zoom: 15, duration: 1400, essential: true })
+          firstFixRef.current = true;
+          const nearest = getNearestSpot(loc, spots);
+          if (nearest && typeof nearest.lat === 'number' && typeof nearest.lng === 'number') {
+            mapRef.current.flyTo({ center: [nearest.lng, nearest.lat], zoom: 15, duration: 1400, essential: true });
+          } else {
+            mapRef.current.flyTo({ center: [loc.lng, loc.lat], zoom: 15, duration: 1400, essential: true });
+          }
         }
 
         // Update / create user marker
         if (mapRef.current) {
           if (userMarkerRef.current) {
-            userMarkerRef.current.setLngLat([loc.lng, loc.lat])
+            userMarkerRef.current.setLngLat([loc.lng, loc.lat]);
           } else {
-            const el = document.createElement('div')
-            el.className = 'matrica-user-marker'
+            const el = document.createElement('div');
+            el.className = 'matrica-user-marker';
 
-            const label = document.createElement('div')
-            label.className = 'matrica-user-tooltip'
-            label.textContent = 'sajat poziciod'
+            const label = document.createElement('div');
+            label.className = 'matrica-user-tooltip';
+            label.textContent = 'sajat poziciod';
 
-            const dot = document.createElement('div')
-            dot.className = 'matrica-user-dot'
+            const dot = document.createElement('div');
+            dot.className = 'matrica-user-dot';
             dot.style.cssText = `
               width: 18px; height: 18px; border-radius: 50%;
               background: #38bdf8;
               border: 3px solid #fff;
               box-shadow: 0 0 0 6px rgba(56,189,248,0.25);
               animation: userPulse 2.4s ease-in-out infinite;
-            `
+            `;
 
-            el.appendChild(label)
-            el.appendChild(dot)
+            el.appendChild(label);
+            el.appendChild(dot);
 
             userMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
               .setLngLat([loc.lng, loc.lat])
-              .addTo(mapRef.current)
+              .addTo(mapRef.current);
           }
         }
       },
       (err) => {
         if (err.code === 1) {
-          setGeoError('A helymeghatározás le van tiltva. Kattints a lakat ikonra a cím sávban, majd engedélyezd a helymeghatározást.')
+          setGeoError('A helymeghatározás le van tiltva. Kattints a lakat ikonra a cím sávban, majd engedélyezd a helymeghatározást.');
         } else if (err.code === 2) {
-          setGeoError('Nem sikerült meghatározni a helyzeted. Ellenőrizd, hogy be van-e kapcsolva a GPS.')
+          setGeoError('Nem sikerült meghatározni a helyzeted. Ellenőrizd, hogy be van-e kapcsolva a GPS.');
         } else {
-          setGeoError('Helymeghatározás időtúllépés. Próbáld meg újra.')
+          setGeoError('Helymeghatározás időtúllépés. Próbáld meg újra.');
         }
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
-    )
+    );
 
     return () => {
-      navigator.geolocation.clearWatch(watchId)
-      userMarkerRef.current?.remove()
-      userMarkerRef.current = null
-    }
-  // geoRetry changes when the user clicks Retry → re-runs the effect
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geoRetry])
+      navigator.geolocation.clearWatch(watchId);
+      userMarkerRef.current?.remove();
+      userMarkerRef.current = null;
+    };
+    // geoRetry and spots changes when the user clicks Retry or spots update
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoRetry, spots]);
 
   // ── Fetch spots ─────────────────────────────────────────────────────────────
   useEffect(() => {

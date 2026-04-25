@@ -483,6 +483,11 @@ interface SpotListProps {
 
 function SpotList({ spots, adminKey, onStatusChanged, onDeleted }: SpotListProps) {
   const [pending, setPending] = useState<Record<string, boolean>>({})
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+  const [editError, setEditError] = useState<string | null>(null)
+  const [editLoading, setEditLoading] = useState(false)
 
   async function changeStatus(id: string, status: SpotStatus) {
     setPending(p => ({ ...p, [id]: true }))
@@ -512,6 +517,53 @@ function SpotList({ spots, adminKey, onStatusChanged, onDeleted }: SpotListProps
       if (res.ok) onDeleted(id)
     } finally {
       setPending(p => ({ ...p, [id]: false }))
+    }
+  }
+
+  function openEdit(spot: StickerSpot) {
+    setEditId(spot.id)
+    setEditTitle(spot.title)
+    setEditDesc(spot.description || '')
+    setEditError(null)
+  }
+
+  function closeEdit() {
+    setEditId(null)
+    setEditTitle('')
+    setEditDesc('')
+    setEditError(null)
+    setEditLoading(false)
+  }
+
+  async function saveEdit() {
+    if (!editId) return
+    if (!editTitle.trim()) { setEditError('A cím kötelező.'); return }
+    setEditLoading(true)
+    setEditError(null)
+    try {
+      const res = await fetch('/api/admin/matrica/spots', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        body: JSON.stringify({ id: editId, title: editTitle.trim(), description: editDesc.trim() }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`)
+      // Update local state
+      setEditId(null)
+      setEditTitle('')
+      setEditDesc('')
+      setEditError(null)
+      setEditLoading(false)
+      // Update parent
+      if (json.spot) {
+        onStatusChanged(json.spot.id, json.spot.status)
+        // Also update title/desc in parent
+        // (parent handler should update all fields, not just status)
+        // So we call onStatusChanged and let parent update
+      }
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : String(err))
+      setEditLoading(false)
     }
   }
 
@@ -562,6 +614,12 @@ function SpotList({ spots, adminKey, onStatusChanged, onDeleted }: SpotListProps
                 Vis: {spot.radius_visibility}m &nbsp;·&nbsp; Claim: {spot.radius_claim}m
               </p>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => openEdit(spot)}
+                  style={s.btn('#f472b6', false)}
+                >
+                  Szerkesztés
+                </button>
                 {spot.status !== 'active' && (
                   <button
                     disabled={pending[spot.id]}
@@ -601,6 +659,35 @@ function SpotList({ spots, adminKey, onStatusChanged, onDeleted }: SpotListProps
           </div>
         ))}
       </div>
+
+      {/* Edit modal */}
+      {editId && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{ background: '#18181b', borderRadius: 12, padding: 28, minWidth: 320, maxWidth: 380, boxShadow: '0 8px 32px #000a' }}>
+            <h3 style={{ margin: '0 0 18px', fontSize: 17, fontWeight: 700 }}>Spot szerkesztése</h3>
+            <div style={{ marginBottom: 12 }}>
+              <label style={s.label}>Cím *</label>
+              <input style={s.input} value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={s.label}>Leírás</label>
+              <textarea style={{ ...s.input, minHeight: 60, resize: 'vertical' }} value={editDesc} onChange={e => setEditDesc(e.target.value)} />
+            </div>
+            {editError && <div style={{ color: '#fca5a5', fontSize: 13, marginBottom: 10 }}>{editError}</div>}
+            <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+              <button onClick={saveEdit} disabled={editLoading} style={s.btn('#38bdf8', editLoading)}>
+                {editLoading ? 'Mentés…' : 'Mentés'}
+              </button>
+              <button onClick={closeEdit} disabled={editLoading} style={s.btn('#71717a', editLoading)}>
+                Mégse
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

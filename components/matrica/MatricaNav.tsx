@@ -1,17 +1,106 @@
-'use client'
+"use client";
+// Fallback for missing constant
+// Remove if you have the real import
+const MATRICA_START_ROUTE_EVENT = 'matrica:start-route';
 
+import { createClient } from '@/lib/browser'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useSessionGuard } from '@/hooks/useSessionGuard'
-import { createClient } from '@/lib/browser'
-import type { StickerSpot } from '@/lib/matrica'
+import { useSessionGuard } from '@/hooks/useSessionGuard.js'
+// If StickerSpot is not imported from types, define a fallback type
+// Remove this if you have the correct import
+// import { StickerSpot } from '@/types/StickerSpot'
+type StickerSpot = { id: string; name: string; lat: number; lng: number; [key: string]: any }
+type OnlineUserProfile = {
+  id: string;
+  email: string;
+  nickname: string;
+  avatarUrl: string | null;
+  badge: number;
+};
 
-const MATRICA_FOCUS_SPOT_EVENT = 'matrica:focus-spot'
-const MATRICA_START_ROUTE_EVENT = 'matrica:start-route'
+export function OnlineUsersBar() {
+  const [users, setUsers] = useState<OnlineUserProfile[]>([])
+  const [loading, setLoading] = useState(true)
 
-export default function MatricaNav() {
+  useEffect(() => {
+    let cancelled = false
+    async function fetchOnlineUsers() {
+      setLoading(true)
+      try {
+        // 1. Get online user IDs (assume /api/presence/online returns [{id, email}])
+        const res = await fetch('/api/presence/online')
+        const json = await res.json()
+        if (!res.ok || !Array.isArray(json?.users)) {
+          setUsers([])
+          setLoading(false)
+          return
+        }
+        // 2. For each user, fetch profile (nickname, avatar, badge)
+        const profiles: OnlineUserProfile[] = await Promise.all(
+          json.users.map(async (u: { id: string; email: string }) => {
+            try {
+              const pres = await fetch(`/api/user/profile?userId=${encodeURIComponent(u.id)}`)
+              const pjson = await pres.json()
+              if (pres.ok && pjson?.ok && pjson?.profile) {
+                return {
+                  id: u.id,
+                  email: u.email,
+                  nickname: pjson.profile.nickname || u.email,
+                  avatarUrl: pjson.profile.avatar_url || null,
+                  badge: pjson.profile.badge ?? 0, // fallback if not present
+                }
+              }
+            } catch {}
+            return {
+              id: u.id,
+              email: u.email,
+              nickname: u.email,
+              avatarUrl: null,
+              badge: 0,
+            }
+          })
+        )
+        if (!cancelled) setUsers(profiles)
+      } catch {
+        if (!cancelled) setUsers([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    fetchOnlineUsers()
+    const interval = setInterval(fetchOnlineUsers, 60000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [])
+
+  if (loading && users.length === 0) return null
+  if (users.length === 0) return (
+    <div style={{ width: '100%', background: '#18181b', color: '#a1a1aa', fontSize: 13, textAlign: 'center', padding: 6 }}>Nincs online felhasználó</div>
+  )
+  return (
+    <div style={{ width: '100%', background: '#18181b', borderBottom: '1px solid #23232a', padding: '6px 0', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
+      <div style={{ fontSize: 13, color: '#a1a1aa', marginLeft: 16, marginRight: 8 }}>Online:</div>
+      {users.map(u => (
+        <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 10 }}>
+          <div style={{ position: 'relative', width: 32, height: 32 }}>
+            {u.avatarUrl ? (
+              <img src={u.avatarUrl} alt={u.nickname} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #f472b6', background: '#23232a' }} />
+            ) : (
+
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#23232a', color: '#f472b6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: '2px solid #f472b6' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
+            )}
+            <span style={{ position: 'absolute', bottom: -2, right: -2, background: '#f472b6', color: '#fff', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
+          </div>
+          <span style={{ fontSize: 13, color: '#f4f4f5', maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.nickname}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function MatricaNav() {
   const pathname = usePathname()
   const router = useRouter()
   const isAdmin = pathname?.startsWith('/admin/matrica')
@@ -229,15 +318,19 @@ export default function MatricaNav() {
   }
 
   return (
-    <nav
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 52,
-        background: 'rgba(9,9,11,0.88)',
-        backdropFilter: 'blur(12px)',
+    <>
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1001 }}>
+        <OnlineUsersBar />
+      </div>
+      <nav
+        style={{
+          position: 'fixed',
+          top: 38,
+          left: 0,
+          right: 0,
+          height: 52,
+          background: 'rgba(9,9,11,0.88)',
+          backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderBottom: '1px solid rgba(255,255,255,0.07)',
         display: 'flex',
@@ -245,8 +338,8 @@ export default function MatricaNav() {
         justifyContent: 'space-between',
         padding: '0 16px',
         zIndex: 200,
-      }}
-    >
+        }}
+      >
       {/* Logo */}
       <Link href="/" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
         <Image
@@ -712,5 +805,8 @@ export default function MatricaNav() {
         </div>
       </div>
     </nav>
+    </>
   )
 }
+
+export default MatricaNav

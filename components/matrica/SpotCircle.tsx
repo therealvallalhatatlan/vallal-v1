@@ -81,14 +81,20 @@ export default function SpotCircle({ map, spot, radiusMeters, onSelect }: Props)
     }
 
     return () => {
-      if (onSelect) {
-        map.off('click', fillId, onCircleClick)
-        map.off('mouseenter', fillId, onCircleMouseEnter)
-        map.off('mouseleave', fillId, onCircleMouseLeave)
+      if (map) {
+        if (onSelect) {
+          map.off('click', fillId, onCircleClick)
+          map.off('mouseenter', fillId, onCircleMouseEnter)
+          map.off('mouseleave', fillId, onCircleMouseLeave)
+        }
+        try {
+          if (map.getLayer(outlineId)) map.removeLayer(outlineId)
+          if (map.getLayer(fillId)) map.removeLayer(fillId)
+          if (map.getSource(sourceId)) map.removeSource(sourceId)
+        } catch (e) {
+          // ignore errors if map is in teardown
+        }
       }
-      if (map.getLayer(outlineId)) map.removeLayer(outlineId)
-      if (map.getLayer(fillId)) map.removeLayer(fillId)
-      if (map.getSource(sourceId)) map.removeSource(sourceId)
     }
   }, [map, spot, sourceId, fillId, outlineId, radiusMeters, onSelect])
 
