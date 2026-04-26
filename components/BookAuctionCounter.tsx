@@ -1,13 +1,13 @@
 
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 // Induló ár és időpont (UTC)
 const START_PRICE = 5000;
 const INCREMENT = 100; // Ft
-const INCREMENT_INTERVAL = 60; // másodperc (1 perc)
-// 2026-04-26 15:00:00 UTC
-const START_TIMESTAMP = new Date("2026-04-26T15:00:00Z").getTime(); // Induló időpont
+const INCREMENT_INTERVAL = 1800; // másodperc (30 perc)
+// 2026-04-26 15:00:00 CEST (UTC+2) => 2026-04-26T13:00:00Z
+const START_TIMESTAMP = new Date("2026-04-26T13:00:00Z").getTime(); // Induló időpont magyar idő szerint 15:00
 
 function getCurrentPrice() {
   const now = Date.now();
@@ -17,39 +17,69 @@ function getCurrentPrice() {
 }
 
 // Animált digitális számláló
-import { useRef } from "react";
 export default function BookAuctionCounter() {
   const [displayPrice, setDisplayPrice] = useState(START_PRICE);
-  const [targetPrice, setTargetPrice] = useState(getCurrentPrice());
-  const animating = useRef(false);
+  const [hasAnimatedInitial, setHasAnimatedInitial] = useState(false);
+  const targetPriceRef = useRef(getCurrentPrice());
+  const animFrame = useRef<number | null>(null);
 
   // Frissíti a célt (targetPrice) minden másodpercben
   useEffect(() => {
     const interval = setInterval(() => {
-      setTargetPrice(getCurrentPrice());
+      targetPriceRef.current = getCurrentPrice();
     }, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Animáció: ha változik a targetPrice, szépen animálva léptetjük a displayPrice-t
+  // Első betöltéskor animáljon 5000-től az aktuális értékig
   useEffect(() => {
-    if (displayPrice === targetPrice || animating.current) return;
-    animating.current = true;
-    const diff = targetPrice - displayPrice;
-    const step = diff > 0 ? 10 : -10;
-    const interval = setInterval(() => {
+    if (hasAnimatedInitial) return;
+    let running = true;
+    function animateInitial() {
       setDisplayPrice(prev => {
-        if ((step > 0 && prev + step >= targetPrice) || (step < 0 && prev + step <= targetPrice)) {
-          clearInterval(interval);
-          animating.current = false;
-          return targetPrice;
+        const target = getCurrentPrice();
+        if (prev === target) {
+          setHasAnimatedInitial(true);
+          return target;
         }
-        return prev + step;
+        const diff = target - prev;
+        const step = Math.sign(diff) * Math.max(10, Math.abs(diff) / 8);
+        let next = prev + step;
+        if ((step > 0 && next > target) || (step < 0 && next < target)) next = target;
+        return next;
       });
-    }, 18); // gyors, de nem azonnali
-    return () => clearInterval(interval);
+      if (running) animFrame.current = requestAnimationFrame(animateInitial);
+    }
+    animFrame.current = requestAnimationFrame(animateInitial);
+    return () => {
+      running = false;
+      if (animFrame.current) cancelAnimationFrame(animFrame.current);
+    };
     // eslint-disable-next-line
-  }, [targetPrice]);
+  }, [hasAnimatedInitial]);
+
+  // Utána mindig a legfrissebb targetPrice felé animál
+  useEffect(() => {
+    if (!hasAnimatedInitial) return;
+    let running = true;
+    function animate() {
+      setDisplayPrice(prev => {
+        const target = targetPriceRef.current;
+        if (prev === target) return prev;
+        const diff = target - prev;
+        const step = Math.sign(diff) * Math.max(10, Math.abs(diff) / 8);
+        let next = prev + step;
+        if ((step > 0 && next > target) || (step < 0 && next < target)) next = target;
+        return next;
+      });
+      if (running) animFrame.current = requestAnimationFrame(animate);
+    }
+    animFrame.current = requestAnimationFrame(animate);
+    return () => {
+      running = false;
+      if (animFrame.current) cancelAnimationFrame(animFrame.current);
+    };
+  }, [hasAnimatedInitial]);
 
   return (
     <div className="flex flex-col items-center gap-2 w-full">

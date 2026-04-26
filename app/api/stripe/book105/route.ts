@@ -8,9 +8,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // Induló ár és időpont (UTC)
 const START_PRICE = 5000;
 const INCREMENT = 100; // Ft
-const INCREMENT_INTERVAL = 60; // másodperc (1 perc)
-// 2026-04-26 15:00:00 UTC
-const START_TIMESTAMP = new Date("2026-04-26T15:00:00Z").getTime(); // Induló időpont
+const INCREMENT_INTERVAL = 1800; // másodperc (30 perc)
+// 2026-04-26 15:00:00 CEST (UTC+2) => 2026-04-26T13:00:00Z
+const START_TIMESTAMP = new Date("2026-04-26T13:00:00Z").getTime(); // Induló időpont magyar idő szerint 15:00
 
 function getCurrentPrice() {
   const now = Date.now();
