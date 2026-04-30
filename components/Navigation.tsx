@@ -86,12 +86,7 @@ export default function Navigation() {
                 >
                   Maps
                 </Link>
-                <Link
-                  href="/v3"
-                  className="rounded-lg bg-white px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-neutral-100"
-                >
-                  v3 AI
-                </Link>
+                
                 <button
                   onClick={handleLogout}
                   disabled={isLoggingOut}
@@ -154,12 +149,6 @@ export default function Navigation() {
                 className="rounded-lg bg-purple-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-purple-400"
               >
                 Maps
-              </Link>
-              <Link
-                href="/v3"
-                className="rounded-lg bg-white px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-neutral-100"
-              >
-                v3 AI
               </Link>
               <button
                 onClick={handleLogout}
