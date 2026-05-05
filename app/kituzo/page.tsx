@@ -16,28 +16,37 @@ export default function KituzokPage() {
 
   return (
     <>
-      <div className="w-screen max-w-none h-[61.8vh] min-h-[180px] overflow-hidden">
-        <video
-          src="/videos/kituzo.mp4"
-          className="w-full h-full object-cover"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-label="Kitűzők videó háttér"
-        />
-        <div className="absolute inset-0 bg-black/30 pointer-events-none" />
+
+      {/* Bal felső sarokban a logó */}
+      <div style={{ position: "fixed", top: 16, left: 16, zIndex: 50 }}>
+        <Link href="/">
+          <Image
+            src="/img/logo.png"
+            alt="Vállalhatatlan logó"
+            width={64}
+            height={64}
+            priority
+            style={{ objectFit: "contain" }}
+          />
+        </Link>
       </div>
+
       <main className="bg-black flex flex-col items-center justify-center min-h-screen py-12 px-4">
         <Image
-          src="/1.png"
+          src="/11.png"
+          alt="Vállalhatatlan kitűző"
+          width={322}
+          height={259}
+          className="mb-4 rounded-lg shadow-lg object-contain"
+        />
+        <h1 className="text-white text-4xl font-bold mb-4">Vállalhatatlan kitűző</h1>
+        <Image
+          src="/12.png"
           alt="Vállalhatatlan kitűző"
           width={300}
           height={300}
           className="mb-4 rounded-lg shadow-lg object-contain"
         />
-        <h1 className="text-white text-4xl font-bold mb-4">Vállalhatatlan kitűző</h1>
         <div className="mb-2 text-3xl font-medium text-green-600/50">Ár: <span className="text-green-600 font-bold">1000 Ft</span></div>
         <p className="text-center max-w-xl text-2xl mb-6 text-gray-400">
           Bán Viki-féle Vállalhatatlan kitűzők basszátok meg!
@@ -51,6 +60,20 @@ export default function KituzokPage() {
           Kitűzőt kérek!
         </Link>
       </main>
+
+      <div className="w-screen max-w-none h-[61.8vh] min-h-[180px] overflow-hidden">
+        <video
+          src="/videos/kituzo.mp4"
+          className="w-full h-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-label="Kitűzők videó háttér"
+        />
+        <div className="absolute inset-0 bg-black/30 pointer-events-none" />
+      </div>
     </>
   );
 }
