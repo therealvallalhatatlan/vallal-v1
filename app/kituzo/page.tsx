@@ -48,7 +48,7 @@ export default function KituzokPage() {
           className="mb-4 rounded-lg shadow-lg object-contain"
         />
         <div className="mb-2 text-3xl font-medium text-green-600/50">Ár: <span className="text-green-600 font-bold">1000 Ft</span></div>
-        <p className="text-center max-w-xl text-2xl mb-6 text-gray-400">
+        <p className="text-center max-w-xl text-2xl mb-6 text-gray-300">
           Bán Viki-féle Vállalhatatlan kitűzők basszátok meg!
         </p>
         <Link
@@ -59,6 +59,13 @@ export default function KituzokPage() {
         >
           Ide vele!
         </Link>
+        <div className="text-center max-w-[900px] text-lg mt-4 text-gray-300">
+          <ul className="list-disc list-inside mt-2 text-left mx-auto max-w-xs">
+            <li>Csomagautomata – <span className="font-semibold">1200 Ft</span></li>
+            <li>Dead drop – Budapesten belül</li>
+            <li>Petitől átvehető személyesen a Margit-híd budai hídfőnél</li>
+          </ul>
+        </div>
       </main>
 
       <div className="w-screen max-w-none h-[61.8vh] min-h-[180px] overflow-hidden">
