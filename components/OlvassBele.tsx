@@ -19,7 +19,7 @@ export default function OlvassBele() {
 
   return (
     <section className="px-6 py-20 max-w-3xl mx-auto">
-      <header className="mb-8">
+      <header className="mb-8 text-center">
         <h2 className="text-2xl md:text-3xl font-semibold text-neutral-100">
           Olvass bele
         </h2>

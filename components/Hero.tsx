@@ -89,13 +89,13 @@ export default function Hero() {
 
             {/* Első Könyv */}
             <div className="flex flex-col justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <p className="font-mono text-xs uppercase tracking-widest text-zinc-600">Első könyv</p>
                 <h2 className="text-xl font-black uppercase tracking-tight text-white">
                   Vállalhatatlan v1.0
                 </h2>
-                <p className="text-sm leading-relaxed text-zinc-500">
-                  100 sorszámozott, fizikai példány. Egy koordináta, egy rejtekhelyre vezető fotó, 24 óra. Nem szállítás — kaland.
+                <p className="text-lg leading-relaxed text-zinc-400">
+                  Az eredeti, első kiadás. Még senki sem számolta meg hány oldal.  
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-4">
@@ -133,7 +133,7 @@ export default function Hero() {
 
           </div>
 
-          <div className={`mt-16 rounded-2xl border border-lime-400/20 bg-black/60 p-6 md:p-9 ${showSection ? 'fade-in' : 'opacity-0'}`}>
+          <div className={`mb-16 mt-16 rounded-2xl border border-lime-400/20 bg-black/60 p-6 md:p-9 ${showSection ? 'fade-in' : 'opacity-0'}`}>
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="flex-1 space-y-3">
                 <h2 className="text-2xl font-semibold text-white md:text-3xl">

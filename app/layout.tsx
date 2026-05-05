@@ -92,6 +92,7 @@ export const metadata: Metadata = {
       },
     ],
     locale: "hu_HU",
+
     alternateLocale: ["en_US"],
   },
   twitter: {

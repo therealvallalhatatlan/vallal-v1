@@ -80,12 +80,14 @@ export default function Navigation() {
                 >
                   Reader
                 </Link>
+                {/*
                 <Link
                   href="/matrica"
                   className="rounded-lg bg-purple-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-purple-400"
                 >
                   Maps
                 </Link>
+                */}
                 
                 <button
                   onClick={handleLogout}
@@ -144,12 +146,14 @@ export default function Navigation() {
               >
                 Reader
               </Link>
+              {/*
               <Link
                 href="/matrica"
                 className="rounded-lg bg-purple-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-purple-400"
               >
                 Maps
               </Link>
+              */}
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
