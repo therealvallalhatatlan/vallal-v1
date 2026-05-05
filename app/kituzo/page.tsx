@@ -57,7 +57,7 @@ export default function KituzokPage() {
           rel="noopener noreferrer"
           className="bg-lime-400 hover:bg-lime-500 text-black uppercase font-semibold py-3 px-8 rounded-lg text-xl transition-colors shadow"
         >
-          Kitűzőt kérek!
+          Ide vele!
         </Link>
       </main>
 
