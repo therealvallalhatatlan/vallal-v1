@@ -110,7 +110,19 @@ export default function Navigation() {
               />
             </Link>
 
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end gap-2">
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-cyan-100 transition-colors hover:bg-cyan-300 hover:text-black"
+              >
+                Shop
+              </Link>
+              <Link
+                href="/matrica"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-purple-500/50 bg-purple-500/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-white hover:text-black transition-colors hover:bg-purple-400"
+              >
+                Matrica
+              </Link>
               <Link
                 href="/auth?from=/reader"
                 className="inline-flex items-center gap-1.5 rounded-lg border border-white/50 bg-black/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-white hover:text-black transition-colors hover:bg-lime-400"
@@ -164,7 +176,13 @@ export default function Navigation() {
               </button>
             </div>
           ) : (
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end gap-2">
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-lime-400 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-300 hover:text-black"
+              >
+                Shop
+              </Link>
               <Link
                 href="/auth?from=/reader"
                 className="inline-flex items-center gap-1.5 rounded-lg border border-white/50 bg-black/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-white hover:text-black transition-colors hover:bg-lime-400"

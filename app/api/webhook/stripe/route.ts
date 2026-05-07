@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { DEFAULT_PREORDER_CAMPAIGN_SLUG } from '@/lib/shop/preorder';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',
@@ -29,7 +31,7 @@ export async function POST(request: NextRequest) {
     case 'checkout.session.completed':
       console.log('🎯 Processing checkout.session.completed event');
       const session = event.data.object as Stripe.Checkout.Session;
-      await handleCheckoutCompleted(session);
+      await handleCheckoutCompleted(session, event.id);
       break;
     default:
       console.log(`ℹ️ Unhandled event type ${event.type}`);
@@ -76,10 +78,17 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeEventId: string) {
   console.log(`💳 Processing checkout completion for session: ${session.id}`);
 
   const metadata = session.metadata;
+  const orderType = metadata?.orderType ?? metadata?.type;
+
+  if (orderType === 'merch') {
+    await handleMerchCheckoutCompleted(session, stripeEventId);
+    return;
+  }
+
   if (!metadata || metadata.type !== 'numbered_copy' || !metadata.copy_number) {
     console.log('ℹ️ Not a numbered copy checkout, skipping');
     return;
@@ -142,4 +151,64 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   } else {
     console.log(`✅ Copy ${copyNumber} marked as sold for session ${stripeSessionId}`);
   }
+}
+
+async function handleMerchCheckoutCompleted(session: Stripe.Checkout.Session, stripeEventId: string) {
+  if (session.payment_status !== 'paid') {
+    console.log(`ℹ️ Merch session ${session.id} is not paid yet, skipping`);
+    return;
+  }
+
+  const metadata = session.metadata ?? {};
+  const orderId = await resolveMerchOrderId(session, metadata.orderId ?? null);
+
+  if (!orderId) {
+    console.error(`❌ Unable to resolve merch order for Stripe session ${session.id}`);
+    return;
+  }
+
+  const paymentIntentId = typeof session.payment_intent === 'string'
+    ? session.payment_intent
+    : session.payment_intent?.id ?? null;
+
+  const { data, error } = await supabaseAdmin().rpc('apply_shop_order_payment', {
+    p_order_id: orderId,
+    p_stripe_event_id: stripeEventId,
+    p_event_type: 'checkout.session.completed',
+    p_stripe_object_id: session.id,
+    p_stripe_session_id: session.id,
+    p_customer_email: session.customer_details?.email ?? null,
+    p_payment_intent_id: paymentIntentId,
+  });
+
+  if (error) {
+    console.error('❌ Failed to finalize merch order payment:', error);
+    return;
+  }
+
+  console.log('✅ Merch order payment finalized', data);
+  revalidatePath('/shop');
+  revalidatePath(`/api/shop/preorder-campaign/${DEFAULT_PREORDER_CAMPAIGN_SLUG}`);
+}
+
+async function resolveMerchOrderId(
+  session: Stripe.Checkout.Session,
+  metadataOrderId: string | null,
+) {
+  if (metadataOrderId) {
+    return metadataOrderId;
+  }
+
+  const { data, error } = await supabaseAdmin()
+    .from('shop_orders')
+    .select('id')
+    .eq('stripe_checkout_session_id', session.id)
+    .maybeSingle<{ id: string }>();
+
+  if (error) {
+    console.error('❌ Failed to resolve merch order by session id:', error);
+    return null;
+  }
+
+  return data?.id ?? null;
 }
