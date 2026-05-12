@@ -27,6 +27,9 @@ type OnlineUserProfile = {
 export function OnlineUsersBar() {
   usePresence()
 
+  const { session } = useSessionGuard()
+  const currentUserId = (session as any)?.user?.id
+
   const [users, setUsers] = useState<OnlineUserProfile[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -51,7 +54,8 @@ export function OnlineUsersBar() {
             lat: u.lat,
             lng: u.lng,
           }))
-          .filter((u: { id?: string; email?: string }) => !!u.id && !!u.email) as Array<{ id: string; email: string; lat?: number; lng?: number }>
+          .filter((u: { id?: string; email?: string }) => !!u.id && !!u.email)
+          .filter((u: { id: string; email: string }) => u.id !== currentUserId) as Array<{ id: string; email: string; lat?: number; lng?: number }>
 
         if (onlineUsers.length === 0) {
           setUsers([])
@@ -99,7 +103,7 @@ export function OnlineUsersBar() {
     fetchOnlineUsers()
     const interval = setInterval(fetchOnlineUsers, 60000)
     return () => { cancelled = true; clearInterval(interval) }
-  }, [])
+  }, [currentUserId])
 
   if (loading && users.length === 0) return null
   if (users.length === 0) return (
@@ -108,7 +112,7 @@ export function OnlineUsersBar() {
   return (
     <div style={{ width: '100%', background: '#18181b', borderBottom: '1px solid #23232a', padding: '6px 0', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
       <div style={{ fontSize: 13, color: '#a1a1aa', marginLeft: 16, marginRight: 8 }}>Online:</div>
-      {users.map(u => (
+      {users.filter(u => u.id !== currentUserId).map(u => (
         <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 10 }}>
           <div 
             style={{ position: 'relative', width: 32, height: 32, cursor: 'pointer' }}
