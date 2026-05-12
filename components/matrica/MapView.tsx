@@ -332,6 +332,31 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
 
   // ── Handle online user focus events ─────────────────────────────────────────
   useEffect(() => {
+    const handleChatButtonClick = (e: Event) => {
+      const btn = (e.target as HTMLElement).closest('.matrica-chat-user-btn') as HTMLElement
+      if (!btn) return
+
+      const userId = btn.dataset.userId
+      const nickname = btn.dataset.nickname
+      const avatarUrl = btn.dataset.avatarUrl
+
+      if (!userId || !nickname) return
+
+      // Dispatch event so MatricaNav can open PM panel
+      window.dispatchEvent(new CustomEvent('matrica:open-pm', {
+        detail: {
+          userId,
+          nickname,
+          avatarUrl: avatarUrl || null,
+        },
+      }))
+    }
+
+    document.addEventListener('click', handleChatButtonClick)
+    return () => document.removeEventListener('click', handleChatButtonClick)
+  }, [])
+
+  useEffect(() => {
     if (!mapLoaded || !mapRef.current) return
 
     const handleFocusOnlineUser = (event: Event) => {
@@ -342,8 +367,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         avatarUrl?: string | null
         score?: number
         accepted?: number
+        userId?: string
       }>
-      const { lat, lng, nickname, avatarUrl, score = 0, accepted = 0 } = customEvent.detail
+      const { lat, lng, nickname, avatarUrl, score = 0, accepted = 0, userId } = customEvent.detail
 
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
 
@@ -399,6 +425,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               <span style="color:#d4d4d8;font-weight:700;">${Number.isFinite(accepted) ? accepted : 0} db</span>
             </div>
           </div>
+          ${userId ? `<button class="matrica-chat-user-btn" data-user-id="${escapeHtml(userId)}" data-nickname="${safeNickname}" data-avatar-url="${safeAvatar || ''}" style="width:100%;margin-top:10px;padding:8px 12px;background:linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1));border:1px solid rgba(34,197,94,0.4);border-radius:8px;color:#86efac;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease;">CHAT</button><div style="font-size:10px;color:#a1a1aa;text-align:center;margin-top:4px;">ideiglenes privat chat,<br/>amig online vagytok</div>` : ''}
         </div>
       `)
       marker.togglePopup()

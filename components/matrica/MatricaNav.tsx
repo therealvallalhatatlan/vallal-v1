@@ -164,6 +164,7 @@ export function OnlineUsersBar({ onMessageUser }: { onMessageUser?: (user: Onlin
                     avatarUrl: u.avatarUrl,
                     score: u.score,
                     accepted: u.accepted,
+                    userId: u.id,
                   },
                 }))
               } else {
@@ -178,6 +179,7 @@ export function OnlineUsersBar({ onMessageUser }: { onMessageUser?: (user: Onlin
                       avatarUrl: u.avatarUrl,
                       score: u.score,
                       accepted: u.accepted,
+                      userId: u.id,
                     },
                   }))
                 } else {
@@ -299,6 +301,30 @@ function MatricaNav() {
   const [onlineBarHeight, setOnlineBarHeight] = useState(38)
   const [pmRecipient, setPmRecipient] = useState<OnlineUserProfile | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleOpenPM = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        userId: string
+        nickname: string
+        avatarUrl?: string | null
+      }>
+      const { userId, nickname, avatarUrl = null } = customEvent.detail
+      
+      setPmRecipient({
+        id: userId,
+        email: '',
+        nickname: nickname,
+        avatarUrl: avatarUrl,
+        badge: 0,
+        score: 0,
+        accepted: 0,
+      })
+    }
+
+    window.addEventListener('matrica:open-pm', handleOpenPM)
+    return () => window.removeEventListener('matrica:open-pm', handleOpenPM)
+  }, [])
 
   useEffect(() => {
     const measureOnlineBar = () => {
