@@ -35,6 +35,14 @@ export function OnlineUsersBar() {
 
   const [users, setUsers] = useState<OnlineUserProfile[]>([])
   const [loading, setLoading] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const updateIsMobile = () => setIsMobile(window.innerWidth < 768)
+    updateIsMobile()
+    window.addEventListener('resize', updateIsMobile)
+    return () => window.removeEventListener('resize', updateIsMobile)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -123,43 +131,25 @@ export function OnlineUsersBar() {
   )
   return (
     <div style={{ width: '100%', background: 'rgba(10,12,16,0.94)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '6px 0', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
-      <div
-        style={{
-          fontSize: 14,
-          color: currentUserAccent,
-          marginLeft: 16,
-          marginRight: 8,
-          lineHeight: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        title="Online felhasználók"
-        aria-label="Online felhasználók"
-      >
-        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false" style={{ display: 'block' }}>
-          <path
-            d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"
-            fill="currentColor"
-          />
-        </svg>
-      </div>
       {users.map(u => (
         <div
           key={u.id}
           style={{
             display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
             alignItems: 'center',
-            gap: 6,
+            justifyContent: 'center',
+            gap: isMobile ? 4 : 6,
             marginRight: 10,
-            padding: u.id === currentUserId ? '2px 6px' : 0,
-            borderRadius: 999,
-            background: u.id === currentUserId ? 'rgba(148,163,184,0.14)' : 'transparent',
-            border: u.id === currentUserId ? '1px solid rgba(148,163,184,0.35)' : '1px solid transparent',
+            padding: u.id === currentUserId ? (isMobile ? '6px 8px' : '4px 8px') : 0,
+            borderRadius: u.id === currentUserId ? (isMobile ? 14 : 999) : 999,
+            background: u.id === currentUserId ? 'rgba(148,163,184,0.2)' : 'transparent',
+            border: u.id === currentUserId ? '1px solid rgba(148,163,184,0.65)' : '1px solid transparent',
+            boxShadow: u.id === currentUserId ? '0 0 0 1px rgba(148,163,184,0.2), 0 4px 12px rgba(15,23,42,0.45)' : 'none',
           }}
         >
           <div 
-            style={{ position: 'relative', width: 32, height: 32, cursor: 'pointer' }}
+            style={{ position: 'relative', width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, cursor: 'pointer' }}
             onClick={(e) => {
               e.stopPropagation()
               
@@ -201,21 +191,52 @@ export function OnlineUsersBar() {
                 src={u.avatarUrl}
                 alt={u.nickname}
                 style={{
-                  width: 32,
-                  height: 32,
+                  width: isMobile ? 44 : 32,
+                  height: isMobile ? 44 : 32,
                   borderRadius: '50%',
                   objectFit: 'cover',
-                  border: u.id === currentUserId ? `2px solid ${currentUserAccent}` : '2px solid #52525b',
+                  border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #52525b',
                   background: '#23232a',
                 }}
               />
             ) : (
 
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#cbd5e1' : '#a1a1aa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: u.id === currentUserId ? `2px solid ${currentUserAccent}` : '2px solid #52525b' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
+              <div style={{ width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#cbd5e1' : '#a1a1aa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: isMobile ? 17 : 15, border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #52525b' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
             )}
-            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#94a3b8' : '#52525b', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
+            {u.id === currentUserId ? (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: -11,
+                  transform: 'translateY(-50%)',
+                  color: '#0f172a',
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: '#94a3b8',
+                  border: '2px solid #0b1020',
+                  lineHeight: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                title="Te vagy"
+                aria-label="Te vagy"
+              >
+                <svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true" focusable="false" style={{ display: 'block' }}>
+                  <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" />
+                </svg>
+              </span>
+            ) : null}
+            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#94a3b8' : '#52525b', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
           </div>
-          <span style={{ fontSize: 13, color: u.id === currentUserId ? '#e5e7eb' : '#d4d4d8', fontWeight: u.id === currentUserId ? 700 : 500, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.nickname}</span>
+          <span style={{ fontSize: isMobile ? 12 : 13, color: u.id === currentUserId ? '#e5e7eb' : '#d4d4d8', fontWeight: u.id === currentUserId ? 700 : 500, maxWidth: isMobile ? 56 : 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>{u.nickname}</span>
+          {u.id === currentUserId ? (
+            <span style={{ fontSize: 10, color: '#0f172a', fontWeight: 800, letterSpacing: '0.08em', background: '#94a3b8', borderRadius: 999, padding: '1px 6px', lineHeight: 1.4 }}>
+              TE
+            </span>
+          ) : null}
         </div>
       ))}
     </div>
