@@ -63,6 +63,7 @@ export default function LiveChat({
   const [unread, setUnread] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const knownMessageIdsRef = useRef<Set<string>>(new Set());
 
   const resolvedTitle = useMemo(() => title || (compact ? 'Live chat' : 'Live feed'), [compact, title]);
 
@@ -72,6 +73,7 @@ export default function LiveChat({
 
   useEffect(() => {
     let mounted = true;
+    knownMessageIdsRef.current = new Set();
 
     const loadInitial = async (silent = false) => {
       if (requireAuth && !authToken) {
@@ -109,7 +111,24 @@ export default function LiveChat({
           return;
         }
         setError(null);
-        setMessages(json.messages || []);
+        const nextMessages: ChatMessage[] = json.messages || [];
+        const nextIds = new Set(nextMessages.map((message) => message.id));
+        const knownIds = knownMessageIdsRef.current;
+
+        if (!active && knownIds.size > 0) {
+          let incomingCount = 0;
+          for (const message of nextMessages) {
+            if (!knownIds.has(message.id)) {
+              incomingCount += 1;
+            }
+          }
+          if (incomingCount > 0) {
+            setUnread((count) => count + incomingCount);
+          }
+        }
+
+        knownMessageIdsRef.current = nextIds;
+        setMessages(nextMessages);
       } catch {
         if (mounted) {
           setError('Nem sikerult betolteni a chatet.');
