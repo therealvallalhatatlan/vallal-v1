@@ -28,6 +28,8 @@ type OnlineUserProfile = {
 export function OnlineUsersBar() {
   usePresence()
 
+  const currentUserAccent = '#94a3b8'
+
   const { session } = useSessionGuard()
   const currentUserId = (session as any)?.user?.id
 
@@ -124,7 +126,7 @@ export function OnlineUsersBar() {
       <div
         style={{
           fontSize: 14,
-          color: '#94a3b8',
+          color: currentUserAccent,
           marginLeft: 16,
           marginRight: 8,
           lineHeight: 1,
@@ -135,7 +137,12 @@ export function OnlineUsersBar() {
         title="Online felhasználók"
         aria-label="Online felhasználók"
       >
-        ⚡
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false" style={{ display: 'block' }}>
+          <path
+            d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"
+            fill="currentColor"
+          />
+        </svg>
       </div>
       {users.map(u => (
         <div
@@ -198,13 +205,13 @@ export function OnlineUsersBar() {
                   height: 32,
                   borderRadius: '50%',
                   objectFit: 'cover',
-                  border: u.id === currentUserId ? '2px solid #94a3b8' : '2px solid #52525b',
+                  border: u.id === currentUserId ? `2px solid ${currentUserAccent}` : '2px solid #52525b',
                   background: '#23232a',
                 }}
               />
             ) : (
 
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#cbd5e1' : '#a1a1aa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: u.id === currentUserId ? '2px solid #94a3b8' : '2px solid #52525b' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#cbd5e1' : '#a1a1aa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: u.id === currentUserId ? `2px solid ${currentUserAccent}` : '2px solid #52525b' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
             )}
             <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#94a3b8' : '#52525b', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
           </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import LiveChat from '@/components/live/LiveChat'
 import { createClient } from '@/lib/browser'
 
@@ -106,11 +106,6 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
     }
   }, [open, activeTab, authToken, loadActivity])
 
-  const panelTitle = useMemo(
-    () => (activeTab === 'chat' ? 'Matrica chat' : 'Matrica esemenyek'),
-    [activeTab]
-  )
-
   return (
     <>
       <button
@@ -123,8 +118,8 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
           bottom: 14,
           zIndex: 210,
           borderRadius: 999,
-          border: '1px solid rgba(232,121,249,0.5)',
-          background: 'rgba(9,9,11,0.88)',
+          border: '1px solid rgba(148,163,184,0.4)',
+          background: 'rgba(9,12,18,0.9)',
           color: '#f4f4f5',
           minWidth: 56,
           height: 56,
@@ -147,8 +142,8 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
               minWidth: 20,
               height: 20,
               borderRadius: 999,
-              background: '#e879f9',
-              color: '#111827',
+              background: '#94a3b8',
+              color: '#0f172a',
               fontSize: 11,
               fontWeight: 700,
               display: 'inline-flex',
@@ -175,8 +170,8 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
             flexDirection: 'column',
             borderRadius: 16,
             overflow: 'hidden',
-            border: '1px solid rgba(232,121,249,0.2)',
-            background: 'rgba(2,6,23,0.92)',
+            border: '1px solid rgba(148,163,184,0.24)',
+            background: 'linear-gradient(180deg, rgba(7,10,16,0.95), rgba(11,18,32,0.94))',
             backdropFilter: 'blur(12px)',
             boxShadow: '0 20px 48px rgba(0,0,0,0.55)',
           }}
@@ -185,12 +180,11 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              justifyContent: 'flex-end',
               padding: '10px 12px',
               borderBottom: '1px solid rgba(255,255,255,0.08)',
             }}
           >
-            <strong style={{ fontSize: 13, color: '#f4f4f5' }}>{panelTitle}</strong>
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -221,9 +215,9 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
               onClick={() => setActiveTab('chat')}
               style={{
                 borderRadius: 999,
-                border: activeTab === 'chat' ? '1px solid rgba(132,204,22,0.45)' : '1px solid rgba(255,255,255,0.15)',
-                background: activeTab === 'chat' ? 'rgba(132,204,22,0.16)' : 'transparent',
-                color: activeTab === 'chat' ? '#d9f99d' : '#d4d4d8',
+                border: activeTab === 'chat' ? '1px solid rgba(148,163,184,0.45)' : '1px solid rgba(255,255,255,0.15)',
+                background: activeTab === 'chat' ? 'rgba(148,163,184,0.16)' : 'transparent',
+                color: activeTab === 'chat' ? '#e2e8f0' : '#d4d4d8',
                 fontSize: 12,
                 fontWeight: 700,
                 padding: '5px 12px',
@@ -237,9 +231,9 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
               onClick={() => setActiveTab('activity')}
               style={{
                 borderRadius: 999,
-                border: activeTab === 'activity' ? '1px solid rgba(244,114,182,0.45)' : '1px solid rgba(255,255,255,0.15)',
-                background: activeTab === 'activity' ? 'rgba(244,114,182,0.16)' : 'transparent',
-                color: activeTab === 'activity' ? '#fbcfe8' : '#d4d4d8',
+                border: activeTab === 'activity' ? '1px solid rgba(148,163,184,0.45)' : '1px solid rgba(255,255,255,0.15)',
+                background: activeTab === 'activity' ? 'rgba(148,163,184,0.16)' : 'transparent',
+                color: activeTab === 'activity' ? '#e2e8f0' : '#d4d4d8',
                 fontSize: 12,
                 fontWeight: 700,
                 padding: '5px 12px',
