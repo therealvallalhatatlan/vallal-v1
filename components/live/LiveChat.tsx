@@ -13,6 +13,7 @@ type Props = {
   placeholder?: string;
   hideHeader?: boolean;
   onUnreadChange?: (count: number) => void;
+  onUserNameClick?: (username: string) => void;
   active?: boolean;
   authToken?: string | null;
   requireAuth?: boolean;
@@ -46,6 +47,7 @@ export default function LiveChat({
   placeholder = 'Irj egy rovid uzenetet...',
   hideHeader = false,
   onUnreadChange,
+  onUserNameClick,
   active = true,
   authToken = null,
   requireAuth = false,
@@ -256,7 +258,20 @@ export default function LiveChat({
                 }`}
               >
                 <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-gray-400">
-                  <span>{message.display_name}</span>
+                  <span
+                    onClick={() => {
+                      if (message.display_name.toLowerCase() !== displayName.toLowerCase() && onUserNameClick) {
+                        onUserNameClick(message.display_name)
+                      }
+                    }}
+                    style={{
+                      cursor: message.display_name.toLowerCase() === displayName.toLowerCase() ? 'default' : 'pointer',
+                      color: message.display_name.toLowerCase() === displayName.toLowerCase() ? 'inherit' : '#94a3b8',
+                    }}
+                    className={message.display_name.toLowerCase() === displayName.toLowerCase() ? '' : 'hover:text-slate-200'}
+                  >
+                    {message.display_name}
+                  </span>
                   <span>{new Date(message.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <p className="mt-1 whitespace-pre-wrap break-words text-gray-100">{message.body}</p>

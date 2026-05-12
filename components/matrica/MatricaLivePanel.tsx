@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import LiveChat from '@/components/live/LiveChat'
+import MatricaPrivateMessagePanel from '@/components/matrica/MatricaPrivateMessagePanel'
+import { useSessionGuard } from '@/hooks/useSessionGuard.js'
 import { createClient } from '@/lib/browser'
 
 type TabKey = 'chat' | 'activity'
@@ -41,6 +43,9 @@ function statusLabel(status: string): string {
 }
 
 export default function MatricaLivePanel({ displayName, authToken }: Props) {
+    const { session } = useSessionGuard()
+    const currentUserId = (session as any)?.user?.id
+  
   const [open, setOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>('chat')
@@ -48,6 +53,8 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [activityLoading, setActivityLoading] = useState(false)
   const [activityError, setActivityError] = useState<string | null>(null)
+  const [pmRecipientName, setPmRecipientName] = useState<string | null>(null)
+  const [pmRecipientData, setPmRecipientData] = useState<{ id: string; nickname: string; avatarUrl: string | null } | null>(null)
 
   useEffect(() => {
     const updateMobileState = () => setIsMobile(window.innerWidth < 768)
@@ -55,6 +62,41 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
     window.addEventListener('resize', updateMobileState)
     return () => window.removeEventListener('resize', updateMobileState)
   }, [])
+
+  useEffect(() => {
+    if (!pmRecipientName || !authToken) return
+
+    let cancelled = false
+
+    const fetchUserData = async () => {
+      try {
+        const res = await fetch('/api/matrica/online-users', {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        })
+        const json = await res.json()
+        if (!cancelled && json.ok && Array.isArray(json.users)) {
+          const user = json.users.find((u: any) => u.nickname === pmRecipientName)
+          if (user) {
+            setPmRecipientData({
+              id: user.id,
+              nickname: user.nickname,
+              avatarUrl: user.avatarUrl || null,
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error)
+      }
+    }
+
+    void fetchUserData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [pmRecipientName, authToken])
 
   const unreadTotal = chatUnread
 
@@ -268,6 +310,7 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
                 compact
                 active={open && activeTab === 'chat'}
                 onUnreadChange={setChatUnread}
+                onUserNameClick={(username) => setPmRecipientName(username)}
                 authToken={authToken}
                 requireAuth
               />
@@ -331,6 +374,19 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
           </div>
         </section>
       ) : null}
+      
+      {pmRecipientData && (
+        <MatricaPrivateMessagePanel
+          recipient={pmRecipientData}
+            currentUserId={currentUserId || ''}
+          displayName={displayName}
+          authToken={authToken}
+          onClose={() => {
+            setPmRecipientName(null)
+            setPmRecipientData(null)
+          }}
+        />
+      )}
     </>
   )
 }
