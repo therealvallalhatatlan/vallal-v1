@@ -71,15 +71,36 @@ export default function LiveChat({
     let mounted = true;
 
     const loadInitial = async () => {
+      if (requireAuth && !authToken) {
+        if (mounted) {
+          setMessages([]);
+          setError('Bejelentkezes szukseges a beszelgetes betoltesehez.');
+          setLoading(false);
+        }
+        return;
+      }
+
       setLoading(true);
       try {
-        const res = await fetch(`/api/live-chat?room_id=${encodeURIComponent(roomId)}&limit=100`);
+        const headers: Record<string, string> = {};
+        if (authToken) {
+          headers.Authorization = `Bearer ${authToken}`;
+        }
+
+        const res = await fetch(`/api/live-chat?room_id=${encodeURIComponent(roomId)}&limit=100`, {
+          headers,
+        });
         const json = await res.json();
         if (!mounted) return;
         if (!res.ok || !json.ok) {
-          setError('Nem sikerult betolteni a chatet.');
+          if (json?.error === 'auth_required' || json?.error === 'unauthenticated') {
+            setError('Bejelentkezes szukseges a beszelgetes betoltesehez.');
+          } else {
+            setError('Nem sikerult betolteni a chatet.');
+          }
           return;
         }
+        setError(null);
         setMessages(json.messages || []);
       } catch {
         if (mounted) {
@@ -133,7 +154,7 @@ export default function LiveChat({
         clearInterval(pollTimer);
       }
     };
-  }, [roomId, active, enableRealtime, pollIntervalMs]);
+  }, [roomId, active, enableRealtime, pollIntervalMs, authToken, requireAuth]);
 
   useEffect(() => {
     if (active) {
