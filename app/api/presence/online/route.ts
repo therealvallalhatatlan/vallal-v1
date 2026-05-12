@@ -21,5 +21,12 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch online users' }, { status: 500 })
   }
 
-  return NextResponse.json({ users: data || [] })
+  const users = (data || []).map((entry) => ({
+    id: entry.user_id,
+    user_id: entry.user_id,
+    email: entry.email,
+    last_heartbeat: entry.last_heartbeat,
+  }))
+
+  return NextResponse.json({ users })
 }

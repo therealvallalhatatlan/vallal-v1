@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { useEffect, useState, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSessionGuard } from '@/hooks/useSessionGuard.js'
+import { usePresence } from '@/hooks/usePresence'
 // If StickerSpot is not imported from types, define a fallback type
 // Remove this if you have the correct import
 // import { StickerSpot } from '@/types/StickerSpot'
@@ -22,6 +23,8 @@ type OnlineUserProfile = {
 };
 
 export function OnlineUsersBar() {
+  usePresence()
+
   const [users, setUsers] = useState<OnlineUserProfile[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -38,9 +41,23 @@ export function OnlineUsersBar() {
           setLoading(false)
           return
         }
+
+        const onlineUsers = json.users
+          .map((u: { id?: string; user_id?: string; email?: string }) => ({
+            id: u.id ?? u.user_id,
+            email: u.email,
+          }))
+          .filter((u: { id?: string; email?: string }) => !!u.id && !!u.email) as Array<{ id: string; email: string }>
+
+        if (onlineUsers.length === 0) {
+          setUsers([])
+          setLoading(false)
+          return
+        }
+
         // 2. For each user, fetch profile (nickname, avatar, badge)
         const profiles: OnlineUserProfile[] = await Promise.all(
-          json.users.map(async (u: { id: string; email: string }) => {
+          onlineUsers.map(async (u: { id: string; email: string }) => {
             try {
               const pres = await fetch(`/api/user/profile?userId=${encodeURIComponent(u.id)}`)
               const pjson = await pres.json()
@@ -64,7 +81,8 @@ export function OnlineUsersBar() {
           })
         )
         if (!cancelled) setUsers(profiles)
-      } catch {
+      } catch (error) {
+        console.error('Online users fetch failed:', error)
         if (!cancelled) setUsers([])
       } finally {
         if (!cancelled) setLoading(false)

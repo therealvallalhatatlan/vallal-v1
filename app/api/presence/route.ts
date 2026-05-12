@@ -57,9 +57,9 @@ export async function GET() {
     const supabase = supabaseAdmin()
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 
-    const { data, error } = await supabase
+    const { count, error } = await supabase
       .from('reader_presence')
-      .select('count(*)', { count: 'exact' })
+      .select('user_id', { count: 'exact', head: true })
       .gte('last_heartbeat', fiveMinutesAgo)
 
     if (error) {
@@ -70,7 +70,7 @@ export async function GET() {
       )
     }
 
-    return NextResponse.json({ count: data?.length || 0 })
+    return NextResponse.json({ count: count || 0 })
   } catch (error) {
     console.error('Presence GET error:', error)
     return NextResponse.json(
