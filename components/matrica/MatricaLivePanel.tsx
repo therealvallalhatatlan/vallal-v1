@@ -20,6 +20,7 @@ type ActivityItem = {
 interface Props {
   displayName: string
   authToken: string | null
+  onOpenChange?: (open: boolean) => void
 }
 
 const supabase = createClient()
@@ -42,7 +43,7 @@ function statusLabel(status: string): string {
   return 'fuggoben'
 }
 
-export default function MatricaLivePanel({ displayName, authToken }: Props) {
+export default function MatricaLivePanel({ displayName, authToken, onOpenChange }: Props) {
     const { session } = useSessionGuard()
     const currentUserId = (session as any)?.user?.id
   
@@ -156,6 +157,10 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
     }
   }, [open, activeTab, authToken, loadActivity])
 
+  useEffect(() => {
+    onOpenChange?.(open)
+  }, [onOpenChange, open])
+
   return (
     <>
       <button
@@ -163,17 +168,18 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
         onClick={() => setOpen((prev) => !prev)}
         aria-label="Matrica live panel"
         style={{
-          position: isMobile ? 'fixed' : 'absolute',
-          right: 14,
-          bottom: 14,
-          zIndex: 210,
-          borderRadius: 999,
+          position: 'fixed',
+          right: 0,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 220,
+          borderRadius: '14px 0 0 14px',
           border: '1px solid rgba(148,163,184,0.4)',
           background: 'rgba(9,12,18,0.9)',
           color: '#f4f4f5',
-          minWidth: 56,
-          height: 56,
-          padding: '0 16px',
+          minWidth: 60,
+          height: 74,
+          padding: '0 14px',
           fontSize: 13,
           fontWeight: 700,
           letterSpacing: '0.02em',
@@ -207,173 +213,193 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
         ) : null}
       </button>
 
-      {open ? (
-        <section
+      <div
+        onClick={() => setOpen(false)}
+        style={{
+          position: 'fixed',
+          top: 'var(--matrica-header-offset, 90px)',
+          right: 0,
+          bottom: 0,
+          left: 0,
+          background: 'rgba(2, 6, 23, 0.45)',
+          backdropFilter: 'blur(1px)',
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? 'auto' : 'none',
+          transition: 'opacity 260ms ease',
+          zIndex: 211,
+        }}
+        aria-hidden={!open}
+      />
+
+      <section
+        style={{
+          position: 'fixed',
+          right: 0,
+          top: 'var(--matrica-header-offset, 90px)',
+          bottom: 0,
+          zIndex: 212,
+          width: isMobile ? '100vw' : 'min(460px, 92vw)',
+          height: 'calc(100dvh - var(--matrica-header-offset, 90px))',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: 0,
+          overflow: 'hidden',
+          borderLeft: '1px solid rgba(148,163,184,0.24)',
+          background: 'linear-gradient(180deg, rgba(7,10,16,0.95), rgba(11,18,32,0.94))',
+          backdropFilter: 'blur(12px)',
+          boxShadow: '0 20px 48px rgba(0,0,0,0.55)',
+          transform: open ? 'translateX(0)' : 'translateX(105%)',
+          transition: 'transform 320ms cubic-bezier(.2,.9,.2,1)',
+          pointerEvents: open ? 'auto' : 'none',
+        }}
+        aria-hidden={!open}
+      >
+        <header
           style={{
-            position: isMobile ? 'fixed' : 'absolute',
-            right: isMobile ? 0 : 14,
-            left: isMobile ? 0 : 'auto',
-            bottom: isMobile ? 0 : 80,
-            top: isMobile ? 'var(--matrica-header-offset, 90px)' : 'auto',
-            zIndex: 210,
-            width: isMobile ? '100vw' : 'min(420px, calc(100vw - 28px))',
-            height: isMobile ? 'calc(100dvh - var(--matrica-header-offset, 90px))' : 'min(68vh, 560px)',
             display: 'flex',
-            flexDirection: 'column',
-            borderRadius: isMobile ? 0 : 16,
-            overflow: 'hidden',
-            border: isMobile ? 'none' : '1px solid rgba(148,163,184,0.24)',
-            background: 'linear-gradient(180deg, rgba(7,10,16,0.95), rgba(11,18,32,0.94))',
-            backdropFilter: 'blur(12px)',
-            boxShadow: isMobile ? 'none' : '0 20px 48px rgba(0,0,0,0.55)',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '10px 12px',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
           }}
         >
-          <header
+          <strong style={{ color: '#e2e8f0', fontSize: 12, letterSpacing: '0.08em' }}>KOZOS CHAT</strong>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
             style={{
+              border: 'none',
+              background: 'transparent',
+              color: '#a1a1aa',
+              borderRadius: 4,
+              padding: '2px 6px',
+              cursor: 'pointer',
+              fontSize: 16,
+              lineHeight: 1,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'flex-end',
-              padding: isMobile ? '12px 14px' : '10px 12px',
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              justifyContent: 'center',
             }}
+            aria-label="Bezárás"
           >
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                color: '#a1a1aa',
-                borderRadius: 4,
-                padding: '2px 6px',
-                cursor: 'pointer',
-                fontSize: 16,
-                lineHeight: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              aria-label="Bezárás"
-            >
-              ×
-            </button>
-          </header>
+            ×
+          </button>
+        </header>
 
-          <div
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            padding: isMobile ? '10px 12px' : '8px 10px',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveTab('chat')}
             style={{
-              display: 'flex',
-              gap: 8,
-              padding: isMobile ? '10px 12px' : '8px 10px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 999,
+              border: activeTab === 'chat' ? '1px solid rgba(148,163,184,0.45)' : '1px solid rgba(255,255,255,0.15)',
+              background: activeTab === 'chat' ? 'rgba(148,163,184,0.16)' : 'transparent',
+              color: activeTab === 'chat' ? '#e2e8f0' : '#d4d4d8',
+              fontSize: 12,
+              fontWeight: 700,
+              padding: '5px 12px',
+              cursor: 'pointer',
             }}
           >
-            <button
-              type="button"
-              onClick={() => setActiveTab('chat')}
-              style={{
-                borderRadius: 999,
-                border: activeTab === 'chat' ? '1px solid rgba(148,163,184,0.45)' : '1px solid rgba(255,255,255,0.15)',
-                background: activeTab === 'chat' ? 'rgba(148,163,184,0.16)' : 'transparent',
-                color: activeTab === 'chat' ? '#e2e8f0' : '#d4d4d8',
-                fontSize: 12,
-                fontWeight: 700,
-                padding: '5px 12px',
-                cursor: 'pointer',
-              }}
-            >
-              Chat
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('activity')}
-              style={{
-                borderRadius: 999,
-                border: activeTab === 'activity' ? '1px solid rgba(148,163,184,0.45)' : '1px solid rgba(255,255,255,0.15)',
-                background: activeTab === 'activity' ? 'rgba(148,163,184,0.16)' : 'transparent',
-                color: activeTab === 'activity' ? '#e2e8f0' : '#d4d4d8',
-                fontSize: 12,
-                fontWeight: 700,
-                padding: '5px 12px',
-                cursor: 'pointer',
-              }}
-            >
-              Események
-            </button>
-          </div>
+            Chat
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('activity')}
+            style={{
+              borderRadius: 999,
+              border: activeTab === 'activity' ? '1px solid rgba(148,163,184,0.45)' : '1px solid rgba(255,255,255,0.15)',
+              background: activeTab === 'activity' ? 'rgba(148,163,184,0.16)' : 'transparent',
+              color: activeTab === 'activity' ? '#e2e8f0' : '#d4d4d8',
+              fontSize: 12,
+              fontWeight: 700,
+              padding: '5px 12px',
+              cursor: 'pointer',
+            }}
+          >
+            Események
+          </button>
+        </div>
 
-          <div style={{ flex: 1, minHeight: 0, padding: activeTab === 'chat' ? (isMobile ? 10 : 8) : 0 }}>
-            {activeTab === 'chat' ? (
-              <LiveChat
-                roomId={MATRICA_CHAT_ROOM_ID}
-                displayName={displayName}
-                role="viewer"
-                compact
-                active={open && activeTab === 'chat'}
-                onUnreadChange={setChatUnread}
-                onUserNameClick={(username) => setPmRecipientName(username)}
-                authToken={authToken}
-                requireAuth
-              />
-            ) : (
-              <div style={{ height: '100%', overflowY: 'auto', padding: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                  <span style={{ fontSize: 12, color: '#a1a1aa' }}>Legutobbi claim aktivitás</span>
-                  <button
-                    type="button"
-                    onClick={() => void loadActivity()}
-                    disabled={activityLoading}
-                    style={{
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      background: 'transparent',
-                      color: '#d4d4d8',
-                      borderRadius: 8,
-                      fontSize: 12,
-                      padding: '4px 8px',
-                      cursor: activityLoading ? 'default' : 'pointer',
-                      opacity: activityLoading ? 0.6 : 1,
-                    }}
-                  >
-                    Frissit
-                  </button>
-                </div>
-
-                {activityLoading ? (
-                  <p style={{ margin: 0, color: '#71717a', fontSize: 13 }}>Betoltes...</p>
-                ) : activityError ? (
-                  <p style={{ margin: 0, color: '#fda4af', fontSize: 13 }}>{activityError}</p>
-                ) : activity.length === 0 ? (
-                  <p style={{ margin: 0, color: '#71717a', fontSize: 13 }}>Meg nincs activity bejegyzes.</p>
-                ) : (
-                  <div style={{ display: 'grid', gap: 8 }}>
-                    {activity.map((item) => (
-                      <article
-                        key={item.id}
-                        style={{
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: 10,
-                          padding: '9px 10px',
-                          background: 'rgba(15,23,42,0.45)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
-                          <strong style={{ color: '#f4f4f5', fontSize: 12 }}>{item.user_alias}</strong>
-                          <span style={{ color: '#71717a', fontSize: 11 }}>{formatTime(item.created_at)}</span>
-                        </div>
-                        <p style={{ margin: '4px 0 0 0', color: '#cbd5e1', fontSize: 12 }}>
-                          claim: {item.spot_title} ({statusLabel(item.status)})
-                        </p>
-                        {item.comment ? (
-                          <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12 }}>{item.comment}</p>
-                        ) : null}
-                      </article>
-                    ))}
-                  </div>
-                )}
+        <div style={{ flex: 1, minHeight: 0, padding: activeTab === 'chat' ? (isMobile ? 10 : 8) : 0 }}>
+          {activeTab === 'chat' ? (
+            <LiveChat
+              roomId={MATRICA_CHAT_ROOM_ID}
+              displayName={displayName}
+              role="viewer"
+              compact
+              active={open && activeTab === 'chat'}
+              onUnreadChange={setChatUnread}
+              onUserNameClick={(username) => setPmRecipientName(username)}
+              authToken={authToken}
+              requireAuth
+            />
+          ) : (
+            <div style={{ height: '100%', overflowY: 'auto', padding: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <span style={{ fontSize: 12, color: '#a1a1aa' }}>Legutobbi claim aktivitás</span>
+                <button
+                  type="button"
+                  onClick={() => void loadActivity()}
+                  disabled={activityLoading}
+                  style={{
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'transparent',
+                    color: '#d4d4d8',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    padding: '4px 8px',
+                    cursor: activityLoading ? 'default' : 'pointer',
+                    opacity: activityLoading ? 0.6 : 1,
+                  }}
+                >
+                  Frissit
+                </button>
               </div>
-            )}
-          </div>
-        </section>
-      ) : null}
+
+              {activityLoading ? (
+                <p style={{ margin: 0, color: '#71717a', fontSize: 13 }}>Betoltes...</p>
+              ) : activityError ? (
+                <p style={{ margin: 0, color: '#fda4af', fontSize: 13 }}>{activityError}</p>
+              ) : activity.length === 0 ? (
+                <p style={{ margin: 0, color: '#71717a', fontSize: 13 }}>Meg nincs activity bejegyzes.</p>
+              ) : (
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {activity.map((item) => (
+                    <article
+                      key={item.id}
+                      style={{
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: 10,
+                        padding: '9px 10px',
+                        background: 'rgba(15,23,42,0.45)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
+                        <strong style={{ color: '#f4f4f5', fontSize: 12 }}>{item.user_alias}</strong>
+                        <span style={{ color: '#71717a', fontSize: 11 }}>{formatTime(item.created_at)}</span>
+                      </div>
+                      <p style={{ margin: '4px 0 0 0', color: '#cbd5e1', fontSize: 12 }}>
+                        claim: {item.spot_title} ({statusLabel(item.status)})
+                      </p>
+                      {item.comment ? (
+                        <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: 12 }}>{item.comment}</p>
+                      ) : null}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
       
       {pmRecipientData && (
         <MatricaPrivateMessagePanel

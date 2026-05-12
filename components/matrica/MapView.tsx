@@ -113,6 +113,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const [routeError, setRouteError] = useState<string | null>(null)
   const [routeStatus, setRouteStatus] = useState<string | null>(null)
   const [positionHudVisible, setPositionHudVisible] = useState(true)
+  const [livePanelOpen, setLivePanelOpen] = useState(false)
 
   const { toasts, show: showToast, dismiss: dismissToast } = useToast()
 
@@ -765,6 +766,15 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          transform: livePanelOpen ? 'translateX(calc(-1 * min(460px, 42vw)))' : 'translateX(0)',
+          transition: 'transform 320ms cubic-bezier(.2,.9,.2,1)',
+          willChange: 'transform',
+        }}
+      >
       {/* Global CSS for marker animations */}
       <style>{`
         .matrica-online-popup .mapboxgl-popup-content {
@@ -1242,10 +1252,15 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         </div>
       )}
 
-      <MatricaLivePanel displayName={chatDisplayName} authToken={chatAuthToken} />
-
       {/* Toasts */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      </div>
+
+      <MatricaLivePanel
+        displayName={chatDisplayName}
+        authToken={chatAuthToken}
+        onOpenChange={setLivePanelOpen}
+      />
     </div>
   )
 }
