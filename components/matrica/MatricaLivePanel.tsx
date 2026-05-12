@@ -190,26 +190,30 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              justifyContent: 'flex-end',
               padding: isMobile ? '12px 14px' : '10px 12px',
               borderBottom: '1px solid rgba(255,255,255,0.08)',
             }}
           >
-            <strong style={{ fontSize: 13, color: '#e2e8f0', letterSpacing: '0.04em' }}>MATRICA LIVE</strong>
             <button
               type="button"
               onClick={() => setOpen(false)}
               style={{
-                border: '1px solid rgba(255,255,255,0.15)',
+                border: 'none',
                 background: 'transparent',
                 color: '#a1a1aa',
-                borderRadius: 8,
-                padding: '3px 8px',
+                borderRadius: 4,
+                padding: '2px 6px',
                 cursor: 'pointer',
-                fontSize: 12,
+                fontSize: 16,
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
+              aria-label="Bezárás"
             >
-              Bezár
+              ×
             </button>
           </header>
 
