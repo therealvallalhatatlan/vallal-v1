@@ -117,14 +117,14 @@ export function OnlineUsersBar() {
 
   if (loading && users.length === 0) return null
   if (users.length === 0) return (
-    <div style={{ width: '100%', background: '#18181b', color: '#a1a1aa', fontSize: 13, textAlign: 'center', padding: 6 }}>Nincs online felhasználó</div>
+    <div style={{ width: '100%', background: 'rgba(10,12,16,0.94)', color: '#9ca3af', fontSize: 13, textAlign: 'center', padding: 6, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>Nincs online felhasználó</div>
   )
   return (
-    <div style={{ width: '100%', background: '#18181b', borderBottom: '1px solid #23232a', padding: '6px 0', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
+    <div style={{ width: '100%', background: 'rgba(10,12,16,0.94)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '6px 0', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
       <div
         style={{
           fontSize: 14,
-          color: '#84cc16',
+          color: '#94a3b8',
           marginLeft: 16,
           marginRight: 8,
           lineHeight: 1,
@@ -147,8 +147,8 @@ export function OnlineUsersBar() {
             marginRight: 10,
             padding: u.id === currentUserId ? '2px 6px' : 0,
             borderRadius: 999,
-            background: u.id === currentUserId ? 'rgba(132,204,22,0.16)' : 'transparent',
-            border: u.id === currentUserId ? '1px solid rgba(132,204,22,0.42)' : '1px solid transparent',
+            background: u.id === currentUserId ? 'rgba(148,163,184,0.14)' : 'transparent',
+            border: u.id === currentUserId ? '1px solid rgba(148,163,184,0.35)' : '1px solid transparent',
           }}
         >
           <div 
@@ -198,17 +198,17 @@ export function OnlineUsersBar() {
                   height: 32,
                   borderRadius: '50%',
                   objectFit: 'cover',
-                  border: u.id === currentUserId ? '2px solid #84cc16' : '2px solid #f472b6',
+                  border: u.id === currentUserId ? '2px solid #94a3b8' : '2px solid #52525b',
                   background: '#23232a',
                 }}
               />
             ) : (
 
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#84cc16' : '#f472b6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: u.id === currentUserId ? '2px solid #84cc16' : '2px solid #f472b6' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#cbd5e1' : '#a1a1aa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: u.id === currentUserId ? '2px solid #94a3b8' : '2px solid #52525b' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
             )}
-            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#84cc16' : '#f472b6', color: u.id === currentUserId ? '#10220a' : '#fff', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
+            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#94a3b8' : '#52525b', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
           </div>
-          <span style={{ fontSize: 13, color: u.id === currentUserId ? '#bef264' : '#f4f4f5', fontWeight: u.id === currentUserId ? 700 : 500, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.nickname}</span>
+          <span style={{ fontSize: 13, color: u.id === currentUserId ? '#e5e7eb' : '#d4d4d8', fontWeight: u.id === currentUserId ? 700 : 500, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.nickname}</span>
         </div>
       ))}
     </div>
@@ -460,11 +460,11 @@ function MatricaNav() {
           alignItems: 'center',
           flexShrink: 0,
           textDecoration: 'none',
-          color: '#f4f4f5',
+          color: '#d4d4d8',
           fontSize: 11,
-          letterSpacing: '0.42em',
+          letterSpacing: '0.36em',
           textTransform: 'uppercase',
-          fontWeight: 500,
+          fontWeight: 400,
           lineHeight: 1,
         }}
         aria-label="HÁLÓZAT"
@@ -484,8 +484,8 @@ function MatricaNav() {
             borderRadius: 8,
             textDecoration: 'none',
             color: isAdmin ? '#f4f4f5' : '#a1a1aa',
-            background: isAdmin ? 'rgba(232,121,249,0.15)' : 'transparent',
-            border: isAdmin ? '1px solid rgba(232,121,249,0.3)' : '1px solid transparent',
+            background: isAdmin ? 'rgba(148,163,184,0.14)' : 'transparent',
+            border: isAdmin ? '1px solid rgba(148,163,184,0.35)' : '1px solid rgba(255,255,255,0.08)',
             transition: 'background 0.15s, color 0.15s',
             display: 'inline-flex',
             alignItems: 'center',
@@ -507,8 +507,8 @@ function MatricaNav() {
             height: 32,
             borderRadius: 8,
             color: spotsSheetOpen ? '#f4f4f5' : '#a1a1aa',
-            background: spotsSheetOpen ? 'rgba(236,72,153,0.18)' : 'transparent',
-            border: spotsSheetOpen ? '1px solid rgba(236,72,153,0.35)' : '1px solid transparent',
+            background: spotsSheetOpen ? 'rgba(148,163,184,0.14)' : 'transparent',
+            border: spotsSheetOpen ? '1px solid rgba(148,163,184,0.35)' : '1px solid rgba(255,255,255,0.08)',
             transition: 'background 0.15s, color 0.15s',
             cursor: 'pointer',
             padding: 0,
@@ -537,16 +537,16 @@ function MatricaNav() {
                 height: 32,
                 borderRadius: 8,
                 border: menuOpen
-                  ? '1px solid rgba(232,121,249,0.9)'
-                  : '1px solid rgba(232,121,249,0.35)',
-                background: menuOpen ? 'rgba(232,121,249,0.18)' : 'rgba(232,121,249,0.1)',
+                  ? '1px solid rgba(148,163,184,0.7)'
+                  : '1px solid rgba(255,255,255,0.12)',
+                background: menuOpen ? 'rgba(148,163,184,0.18)' : 'rgba(148,163,184,0.1)',
                 cursor: 'pointer',
                 padding: 0,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                color: menuOpen ? '#f5d0fe' : '#f4f4f5',
+                color: menuOpen ? '#e2e8f0' : '#f4f4f5',
               }}
             >
               <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
@@ -563,7 +563,7 @@ function MatricaNav() {
                   right: 0,
                   minWidth: 220,
                   background: 'rgba(15,15,20,0.97)',
-                  border: '1px solid rgba(232,121,249,0.2)',
+                  border: '1px solid rgba(148,163,184,0.25)',
                   borderRadius: 12,
                   boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
                   backdropFilter: 'blur(16px)',
@@ -601,7 +601,7 @@ function MatricaNav() {
                           color: '#f4f4f5',
                           fontWeight: 700,
                           borderRadius: 8,
-                          border: '1px solid rgba(232,121,249,0.3)',
+                          border: '1px solid rgba(148,163,184,0.35)',
                           background: 'rgba(24,24,27,0.85)',
                           padding: '7px 9px',
                           outline: 'none',
@@ -613,9 +613,9 @@ function MatricaNav() {
                           onClick={() => void handleSaveNickname()}
                           disabled={nicknameSaving}
                           style={{
-                            border: '1px solid rgba(232,121,249,0.4)',
-                            background: 'rgba(232,121,249,0.18)',
-                            color: '#f5d0fe',
+                            border: '1px solid rgba(148,163,184,0.45)',
+                            background: 'rgba(148,163,184,0.18)',
+                            color: '#e2e8f0',
                             borderRadius: 8,
                             fontSize: 11,
                             fontWeight: 700,
@@ -672,7 +672,7 @@ function MatricaNav() {
                         style={{
                           border: 'none',
                           background: 'transparent',
-                          color: '#c084fc',
+                          color: '#94a3b8',
                           fontSize: 11,
                           fontWeight: 700,
                           cursor: 'pointer',
@@ -699,7 +699,7 @@ function MatricaNav() {
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
                   <span style={{ fontSize: 13, color: '#a1a1aa' }}>Pontszám</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#e879f9', fontWeight: 700, fontSize: 14 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#cbd5e1', fontWeight: 700, fontSize: 14 }}>
                     <span style={{ fontSize: 15 }}>★</span>
                     {score !== null ? `${score} pont` : '…'}
                   </span>
@@ -713,7 +713,7 @@ function MatricaNav() {
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
                     <span style={{ fontSize: 13, color: '#a1a1aa' }}>Elfogadott matricák</span>
-                    <span style={{ fontSize: 13, color: '#86efac', fontWeight: 600 }}>{accepted} db</span>
+                    <span style={{ fontSize: 13, color: '#d4d4d8', fontWeight: 600 }}>{accepted} db</span>
                   </div>
                 )}
 
@@ -755,7 +755,7 @@ function MatricaNav() {
             width: 'min(1200px, calc(100vw - 20px))',
             borderBottomLeftRadius: 14,
             borderBottomRightRadius: 14,
-            border: '1px solid rgba(236,72,153,0.25)',
+            border: '1px solid rgba(148,163,184,0.25)',
             borderTop: 'none',
             background: 'linear-gradient(180deg, rgba(10,10,14,0.97), rgba(17,24,39,0.94))',
             boxShadow: '0 22px 50px rgba(0,0,0,0.45)',
@@ -772,7 +772,7 @@ function MatricaNav() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <strong style={{ fontSize: 14, color: '#fbcfe8' }}>Aktív szpotok</strong>
+              <strong style={{ fontSize: 14, color: '#e5e7eb' }}>Aktív szpotok</strong>
               <span style={{ fontSize: 12, color: '#a1a1aa' }}>{spots.length} db</span>
             </div>
             <button
@@ -851,7 +851,7 @@ function MatricaNav() {
                     <div style={{ padding: 11, display: 'grid', gap: 8 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                         <strong style={{ color: '#f4f4f5', fontSize: 14, lineHeight: 1.25 }}>{spot.title}</strong>
-                        <span style={{ color: '#86efac', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        <span style={{ color: '#d4d4d8', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
                           {spot.remaining_quantity} maradt
                         </span>
                       </div>
@@ -869,9 +869,9 @@ function MatricaNav() {
                           justifyContent: 'center',
                           gap: 6,
                           borderRadius: 9,
-                          border: '1px solid rgba(244,114,182,0.45)',
-                          background: 'rgba(244,114,182,0.16)',
-                          color: '#fbcfe8',
+                          border: '1px solid rgba(148,163,184,0.45)',
+                          background: 'rgba(148,163,184,0.16)',
+                          color: '#e5e7eb',
                           fontSize: 12,
                           fontWeight: 700,
                           padding: '7px 10px',

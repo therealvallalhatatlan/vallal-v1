@@ -200,7 +200,6 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     }
 
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right')
-    map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right')
 
     map.on('load', () => {
       map.resize()
@@ -379,11 +378,11 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       const initial = safeNickname.charAt(0).toUpperCase() || '?'
 
       marker.getPopup().setHTML(`
-        <div style="min-width:220px;padding:11px 12px;background:linear-gradient(180deg, rgba(10,10,14,0.96), rgba(17,24,39,0.92));color:#f4f4f5;border:1px solid rgba(244,114,182,0.18);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05);backdrop-filter: blur(8px);">
+        <div style="min-width:220px;padding:11px 12px;background:linear-gradient(180deg, rgba(10,12,16,0.96), rgba(15,23,42,0.9));color:#f4f4f5;border:1px solid rgba(148,163,184,0.24);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);backdrop-filter: blur(8px);">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
             ${safeAvatar
-              ? `<img src="${safeAvatar}" alt="${safeNickname}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #f472b6;" />`
-              : `<div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#23232a;color:#f472b6;font-weight:700;border:2px solid #f472b6;">${initial}</div>`}
+              ? `<img src="${safeAvatar}" alt="${safeNickname}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #94a3b8;" />`
+              : `<div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#23232a;color:#cbd5e1;font-weight:700;border:2px solid #94a3b8;">${initial}</div>`}
             <div style="min-width:0;">
               <div style="font-weight:700;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">${safeNickname}</div>
               <div style="font-size:12px;color:#a1a1aa;">Online most</div>
@@ -392,11 +391,11 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           <div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;">
             <div style="display:flex;flex-direction:column;">
               <span style="color:#a1a1aa;">Pontszam</span>
-              <span style="color:#e879f9;font-weight:700;">${Number.isFinite(score) ? score : 0}</span>
+              <span style="color:#cbd5e1;font-weight:700;">${Number.isFinite(score) ? score : 0}</span>
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;">
               <span style="color:#a1a1aa;">Elfogadott</span>
-              <span style="color:#34d399;font-weight:700;">${Number.isFinite(accepted) ? accepted : 0} db</span>
+              <span style="color:#d4d4d8;font-weight:700;">${Number.isFinite(accepted) ? accepted : 0} db</span>
             </div>
           </div>
         </div>
