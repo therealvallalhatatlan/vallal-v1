@@ -324,7 +324,7 @@ export default function SpotModal({ spot, userLocation, onClose, onStartRoute, o
         {view === 'claim' && accessToken && userLocation && (
           <>
             <h2 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700 }}>
-              Matrica igénylése
+              Visszajelzés a helyről
             </h2>
 
             {/* Front-end distance gate */}

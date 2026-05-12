@@ -118,7 +118,7 @@ export default function Navigation() {
                 Shop
               </Link>
               <Link
-                href="/matrica"
+                href="/halozat"
                 className="inline-flex items-center gap-1.5 rounded-lg border border-purple-500/50 bg-purple-500/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-white hover:text-black transition-colors hover:bg-purple-400"
               >
                 Matrica

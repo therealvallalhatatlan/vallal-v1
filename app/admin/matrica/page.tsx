@@ -784,7 +784,7 @@ export default function MatricaAdminPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
               type="button"
-              onClick={() => router.push('/matrica')}
+              onClick={() => router.push('/halozat')}
               style={{ ...s.btn('rgba(255,255,255,0.08)', false), color: '#d4d4d8' }}
             >
               ✕ Bezár

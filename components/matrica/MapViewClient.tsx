@@ -133,7 +133,7 @@ export default function MapViewClient() {
 
   useEffect(() => {
     if (!loading && !session) {
-      router.replace('/auth?from=/matrica')
+      router.replace('/auth?from=/halozat')
     }
   }, [loading, session, router])
 

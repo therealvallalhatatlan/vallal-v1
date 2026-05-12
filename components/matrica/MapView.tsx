@@ -13,7 +13,7 @@
  * - Show selected spot info panel
  */
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { getDistanceMeters } from '@/lib/matrica'
@@ -112,6 +112,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState<string | null>(null)
   const [routeStatus, setRouteStatus] = useState<string | null>(null)
+  const [positionHudVisible, setPositionHudVisible] = useState(true)
 
   const { toasts, show: showToast, dismiss: dismissToast } = useToast()
 
@@ -271,15 +272,15 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
 
             const label = document.createElement('div');
             label.className = 'matrica-user-tooltip';
-            label.textContent = 'sajat poziciod';
+            label.textContent = 'SAJAT POZICIOD';
 
             const dot = document.createElement('div');
             dot.className = 'matrica-user-dot';
             dot.style.cssText = `
               width: 18px; height: 18px; border-radius: 50%;
-              background: #38bdf8;
-              border: 3px solid #fff;
-              box-shadow: 0 0 0 6px rgba(56,189,248,0.25);
+              background: radial-gradient(circle at 30% 30%, #e0f2fe 0%, #7dd3fc 40%, #0ea5e9 100%);
+              border: 2px solid rgba(255,255,255,0.92);
+              box-shadow: 0 0 0 6px rgba(56,189,248,0.2), 0 0 24px rgba(56,189,248,0.25);
               animation: userPulse 2.4s ease-in-out infinite;
             `;
 
@@ -648,6 +649,15 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     }
   }
 
+  const nearestSpot = useMemo(() => getNearestSpot(userLocation, spots), [userLocation, spots])
+  const nearestDistanceMeters = nearestSpot && userLocation
+    ? getDistanceMeters(userLocation.lat, userLocation.lng, nearestSpot.lat, nearestSpot.lng)
+    : null
+  const radarProgress = nearestDistanceMeters === null
+    ? 0
+    : Math.max(0, Math.min(1, 1 - (nearestDistanceMeters / 1600)))
+  const radarProgressPercent = Math.round(radarProgress * 100)
+
   const handleSelect = useCallback((spot: StickerSpot) => {
     setSelectedSpot(spot)
   }, [])
@@ -763,12 +773,12 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           padding: 5px 8px;
           border-radius: 999px;
           background: rgba(9, 9, 11, 0.92);
-          border: 1px solid rgba(56, 189, 248, 0.35);
-          color: #e0f2fe;
+          border: 1px solid rgba(148, 163, 184, 0.38);
+          color: #e2e8f0;
           font-size: 11px;
-          font-weight: 600;
+          font-weight: 700;
           line-height: 1;
-          letter-spacing: 0.02em;
+          letter-spacing: 0.08em;
           box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
           pointer-events: none;
         }
@@ -787,6 +797,12 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         @keyframes userPulse {
           0%, 100% { box-shadow: 0 0 0 4px rgba(56,189,248,0.3); }
           50%       { box-shadow: 0 0 0 10px rgba(56,189,248,0.08); }
+        }
+
+        @keyframes hudSweep {
+          0% { transform: translateX(-130%); opacity: 0; }
+          35% { opacity: 0.5; }
+          100% { transform: translateX(130%); opacity: 0; }
         }
       `}</style>
 
@@ -898,6 +914,148 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           onClaimSubmitted={handleClaimSubmitted}
           showToast={showToast}
         />
+      )}
+
+      {userLocation && !routeState.spot && positionHudVisible && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 70,
+            left: 12,
+            right: 12,
+            zIndex: 34,
+            borderRadius: 16,
+            border: '1px solid rgba(148,163,184,0.28)',
+            background: 'linear-gradient(160deg, rgba(8,10,14,0.94), rgba(15,23,42,0.86))',
+            boxShadow: '0 16px 42px rgba(0,0,0,0.45)',
+            padding: 14,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              background: 'linear-gradient(90deg, transparent, rgba(125,211,252,0.14), transparent)',
+              animation: 'hudSweep 3.6s ease-in-out infinite',
+            }}
+          />
+
+          <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.08em', fontWeight: 700 }}>SAJAT POZICIOD</div>
+              <div style={{ marginTop: 4, color: '#f4f4f5', fontSize: 15, fontWeight: 700 }}>
+                {nearestSpot ? 'Kovetkezo kuldetes elerheto' : 'GPS aktiv'}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div
+                style={{
+                  borderRadius: 999,
+                  border: '1px solid rgba(148,163,184,0.34)',
+                  background: 'rgba(148,163,184,0.14)',
+                  color: '#e2e8f0',
+                  padding: '6px 10px',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Radar {clickableSpots.length}/{spots.length}
+              </div>
+              <button
+                type="button"
+                onClick={() => setPositionHudVisible(false)}
+                aria-label="HUD bezarasa"
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 999,
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  background: 'rgba(255,255,255,0.06)',
+                  color: '#cbd5e1',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  lineHeight: 1,
+                  cursor: 'pointer',
+                }}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', gap: 8, color: '#cbd5e1', fontSize: 12 }}>
+            <span>{nearestSpot ? `Legkozelebbi: ${nearestSpot.title}` : 'Nincs aktiv szpot a kozelben'}</span>
+            <span style={{ color: '#e5e7eb', fontWeight: 700 }}>{formatRouteDistance(nearestDistanceMeters)}</span>
+          </div>
+
+          <div style={{ marginTop: 10 }}>
+            <div style={{ height: 8, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div
+                style={{
+                  width: `${radarProgressPercent}%`,
+                  height: '100%',
+                  borderRadius: 999,
+                  background: 'linear-gradient(90deg, #38bdf8, #7dd3fc)',
+                  boxShadow: '0 0 14px rgba(56,189,248,0.35)',
+                  transition: 'width 320ms ease',
+                }}
+              />
+            </div>
+            <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', color: '#a1a1aa', fontSize: 11 }}>
+              <span>Jelero</span>
+              <span>{radarProgressPercent}%</span>
+            </div>
+          </div>
+
+          {nearestSpot ? (
+            <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => startRouteForSpot(nearestSpot)}
+                style={{
+                  borderRadius: 10,
+                  border: '1px solid rgba(148,163,184,0.48)',
+                  background: 'rgba(148,163,184,0.2)',
+                  color: '#f8fafc',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Kuldetes inditasa
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!mapRef.current) return
+                  mapRef.current.flyTo({
+                    center: [nearestSpot.lng, nearestSpot.lat],
+                    zoom: 16,
+                    duration: 900,
+                    essential: true,
+                  })
+                }}
+                style={{
+                  borderRadius: 10,
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  background: 'rgba(255,255,255,0.06)',
+                  color: '#d4d4d8',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Celpont felfedes
+              </button>
+            </div>
+          ) : null}
+        </div>
       )}
 
       {routeState.spot && !selectedSpot && (
