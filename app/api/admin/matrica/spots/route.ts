@@ -4,16 +4,23 @@ import type { SpotStatus } from '@/lib/matrica'
 
 export const dynamic = 'force-dynamic'
 
-const ADMIN_KEY = process.env.DEMO_ADMIN_KEY ?? 'letmein'
+async function requireAuthenticatedUser(req: NextRequest): Promise<boolean> {
+  const authHeader = req.headers.get('authorization') ?? ''
+  const token = authHeader.replace(/^Bearer\s+/i, '').trim()
+  if (!token) return false
 
-function authorize(req: NextRequest): boolean {
-  const key = req.headers.get('x-admin-key')
-  return key === ADMIN_KEY
+  const db = supabaseAdmin()
+  const {
+    data: { user },
+    error,
+  } = await db.auth.getUser(token)
+
+  return !error && !!user
 }
 
 // ── GET /api/admin/matrica/spots  (all spots, any status) ─────────────────────
 export async function GET(req: NextRequest) {
-  if (!authorize(req)) {
+  if (!(await requireAuthenticatedUser(req))) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
@@ -33,7 +40,7 @@ export async function GET(req: NextRequest) {
 
 // ── POST /api/admin/matrica/spots  (create a new spot) ────────────────────────
 export async function POST(req: NextRequest) {
-  if (!authorize(req)) {
+  if (!(await requireAuthenticatedUser(req))) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
@@ -44,7 +51,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
   }
 
-  const { title, description, image_url, lat, lng, radius_visibility, radius_claim, total_quantity } = body
+  const { title, description, image_url, image_urls, lat, lng, radius_visibility, radius_claim, total_quantity } = body
 
   if (typeof title !== 'string' || !title.trim()) {
     return NextResponse.json({ error: 'title_required' }, { status: 400 })
@@ -57,23 +64,66 @@ export async function POST(req: NextRequest) {
 
   const qty = Math.max(1, Number(total_quantity) || 1)
 
+  const normalizedImageUrls = Array.isArray(image_urls)
+    ? image_urls.filter((url): url is string => typeof url === 'string' && !!url.trim()).slice(0, 3)
+    : []
+
+  const primaryImageUrl =
+    (typeof image_url === 'string' && image_url.trim())
+      ? image_url.trim()
+      : normalizedImageUrls[0] ?? null
+
   const db = supabaseAdmin()
-  const { data, error } = await db
-    .from('sticker_spots')
-    .insert({
-      title: title.trim(),
-      description: typeof description === 'string' ? description.trim() || null : null,
-      image_url: typeof image_url === 'string' && image_url.trim() ? image_url.trim() : null,
-      lat: latN,
-      lng: lngN,
-      radius_visibility: Math.max(1, Number(radius_visibility) || 500),
-      radius_claim: Math.max(1, Number(radius_claim) || 50),
-      total_quantity: qty,
-      remaining_quantity: qty,
-      status: 'active',
-    })
-    .select()
-    .single()
+  const basePayload = {
+    title: title.trim(),
+    description: typeof description === 'string' ? description.trim() || null : null,
+    image_url: primaryImageUrl,
+    lat: latN,
+    lng: lngN,
+    radius_visibility: Math.max(1, Number(radius_visibility) || 500),
+    radius_claim: Math.max(1, Number(radius_claim) || 50),
+    total_quantity: qty,
+    remaining_quantity: qty,
+    status: 'active',
+  }
+
+  let data: any = null
+  let error: any = null
+
+  if (normalizedImageUrls.length > 0) {
+    const resultWithGallery = await db
+      .from('sticker_spots')
+      .insert({
+        ...basePayload,
+        image_urls: normalizedImageUrls,
+      })
+      .select()
+      .single()
+
+    data = resultWithGallery.data
+    error = resultWithGallery.error
+
+    // Backward compatibility if the image_urls column is not yet migrated.
+    if (error && typeof error.message === 'string' && error.message.toLowerCase().includes('image_urls')) {
+      const fallbackResult = await db
+        .from('sticker_spots')
+        .insert(basePayload)
+        .select()
+        .single()
+
+      data = fallbackResult.data
+      error = fallbackResult.error
+    }
+  } else {
+    const result = await db
+      .from('sticker_spots')
+      .insert(basePayload)
+      .select()
+      .single()
+
+    data = result.data
+    error = result.error
+  }
 
   if (error) {
     console.error('[admin/matrica/spots] POST error', error)
@@ -85,7 +135,7 @@ export async function POST(req: NextRequest) {
 
 // ── PATCH /api/admin/matrica/spots  (update status) ───────────────────────────
 export async function PATCH(req: NextRequest) {
-  if (!authorize(req)) {
+  if (!(await requireAuthenticatedUser(req))) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
@@ -123,7 +173,7 @@ export async function PATCH(req: NextRequest) {
 
 // ── DELETE /api/admin/matrica/spots  (delete a spot) ─────────────────────────
 export async function DELETE(req: NextRequest) {
-  if (!authorize(req)) {
+  if (!(await requireAuthenticatedUser(req))) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

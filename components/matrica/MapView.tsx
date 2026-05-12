@@ -371,7 +371,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
 
       const marker = new mapboxgl.Marker({ element: el })
         .setLngLat([lng, lat])
-        .setPopup(new mapboxgl.Popup({ offset: 25, closeButton: false }))
+        .setPopup(new mapboxgl.Popup({ offset: 25, closeButton: false, className: 'matrica-online-popup' }))
         .addTo(map)
 
       const safeNickname = escapeHtml(nickname)
@@ -379,7 +379,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       const initial = safeNickname.charAt(0).toUpperCase() || '?'
 
       marker.getPopup().setHTML(`
-        <div style="min-width:220px;padding:10px 12px;background:#0f0f13;color:#f4f4f5;border:1px solid #27272a;border-radius:12px;">
+        <div style="min-width:220px;padding:11px 12px;background:linear-gradient(180deg, rgba(10,10,14,0.96), rgba(17,24,39,0.92));color:#f4f4f5;border:1px solid rgba(244,114,182,0.18);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05);backdrop-filter: blur(8px);">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
             ${safeAvatar
               ? `<img src="${safeAvatar}" alt="${safeNickname}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #f472b6;" />`
@@ -730,6 +730,22 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     <div style={{ position: 'absolute', inset: 0 }}>
       {/* Global CSS for marker animations */}
       <style>{`
+        .matrica-online-popup .mapboxgl-popup-content {
+          background: transparent;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+          padding: 0;
+        }
+
+        .matrica-online-popup .mapboxgl-popup-tip {
+          border-top-color: rgba(17, 24, 39, 0.95) !important;
+          border-bottom-color: rgba(17, 24, 39, 0.95) !important;
+          border-left-color: rgba(17, 24, 39, 0.95) !important;
+          border-right-color: rgba(17, 24, 39, 0.95) !important;
+          filter: drop-shadow(0 6px 12px rgba(0,0,0,0.35));
+        }
+
         .matrica-user-marker {
           position: relative;
           display: flex;

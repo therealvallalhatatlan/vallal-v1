@@ -13,6 +13,7 @@ export interface StickerSpot {
   title: string
   description: string | null
   image_url: string | null
+  image_urls?: string[] | null
   lat: number
   lng: number
   radius_visibility: number

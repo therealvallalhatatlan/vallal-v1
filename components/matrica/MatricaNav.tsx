@@ -4,7 +4,6 @@
 const MATRICA_START_ROUTE_EVENT = 'matrica:start-route';
 
 import { createClient } from '@/lib/browser'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
@@ -57,7 +56,12 @@ export function OnlineUsersBar() {
             lng: u.lng,
           }))
           .filter((u: { id?: string; email?: string }) => !!u.id && !!u.email)
-          .filter((u: { id: string; email: string }) => u.id !== currentUserId) as Array<{ id: string; email: string; lat?: number; lng?: number }>
+          .sort((a: { id: string }, b: { id: string }) => {
+            if (!currentUserId) return 0
+            if (a.id === currentUserId) return -1
+            if (b.id === currentUserId) return 1
+            return 0
+          }) as Array<{ id: string; email: string; lat?: number; lng?: number }>
 
         if (onlineUsers.length === 0) {
           setUsers([])
@@ -117,9 +121,36 @@ export function OnlineUsersBar() {
   )
   return (
     <div style={{ width: '100%', background: '#18181b', borderBottom: '1px solid #23232a', padding: '6px 0', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
-      <div style={{ fontSize: 13, color: '#a1a1aa', marginLeft: 16, marginRight: 8 }}>Online:</div>
-      {users.filter(u => u.id !== currentUserId).map(u => (
-        <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 10 }}>
+      <div
+        style={{
+          fontSize: 14,
+          color: '#84cc16',
+          marginLeft: 16,
+          marginRight: 8,
+          lineHeight: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+        title="Online felhasználók"
+        aria-label="Online felhasználók"
+      >
+        ⚡
+      </div>
+      {users.map(u => (
+        <div
+          key={u.id}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            marginRight: 10,
+            padding: u.id === currentUserId ? '2px 6px' : 0,
+            borderRadius: 999,
+            background: u.id === currentUserId ? 'rgba(132,204,22,0.16)' : 'transparent',
+            border: u.id === currentUserId ? '1px solid rgba(132,204,22,0.42)' : '1px solid transparent',
+          }}
+        >
           <div 
             style={{ position: 'relative', width: 32, height: 32, cursor: 'pointer' }}
             onClick={(e) => {
@@ -159,14 +190,25 @@ export function OnlineUsersBar() {
             title={`${u.nickname} - ${u.lat && u.lng ? 'Kattints a térképen való megjelenítéshez' : 'Nincs pozíció adat'}`}
           >
             {u.avatarUrl ? (
-              <img src={u.avatarUrl} alt={u.nickname} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #f472b6', background: '#23232a' }} />
+              <img
+                src={u.avatarUrl}
+                alt={u.nickname}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: u.id === currentUserId ? '2px solid #84cc16' : '2px solid #f472b6',
+                  background: '#23232a',
+                }}
+              />
             ) : (
 
-              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#23232a', color: '#f472b6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: '2px solid #f472b6' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#84cc16' : '#f472b6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 15, border: u.id === currentUserId ? '2px solid #84cc16' : '2px solid #f472b6' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
             )}
-            <span style={{ position: 'absolute', bottom: -2, right: -2, background: '#f472b6', color: '#fff', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
+            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#84cc16' : '#f472b6', color: u.id === currentUserId ? '#10220a' : '#fff', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
           </div>
-          <span style={{ fontSize: 13, color: '#f4f4f5', maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.nickname}</span>
+          <span style={{ fontSize: 13, color: u.id === currentUserId ? '#bef264' : '#f4f4f5', fontWeight: u.id === currentUserId ? 700 : 500, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.nickname}</span>
         </div>
       ))}
     </div>
@@ -180,10 +222,7 @@ function MatricaNav() {
   const { session } = useSessionGuard()
   const user = (session as any)?.user ?? null
   const email: string = user?.email ?? ''
-  const avatarUrl: string | null = user?.user_metadata?.avatar_url ?? null
-  const initial = email ? email[0].toUpperCase() : '?'
 
-  const [avatarBroken, setAvatarBroken] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [score, setScore] = useState<number | null>(null)
   const [accepted, setAccepted] = useState<number | null>(null)
@@ -413,136 +452,108 @@ function MatricaNav() {
         zIndex: 200,
         }}
       >
-      {/* Logo */}
-      <Link href="/" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-        <Image
-          src="/img/logo.png"
-          alt="Vállalhatatlan"
-          width={120}
-          height={32}
-          style={{ objectFit: 'contain', height: 32, width: 'auto' }}
-          priority
-        />
+      {/* Wordmark */}
+      <Link
+        href="/"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          flexShrink: 0,
+          textDecoration: 'none',
+          color: '#f4f4f5',
+          fontSize: 11,
+          letterSpacing: '0.42em',
+          textTransform: 'uppercase',
+          fontWeight: 500,
+          lineHeight: 1,
+        }}
+        aria-label="HÁLÓZAT"
+      >
+        HÁLÓZAT
       </Link>
 
-      {/* Right side: links + avatar */}
+      {/* Right side: links + profile */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <Link
-          href="/matrica"
-          style={{
-            padding: '6px 13px',
-            borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 600,
-            textDecoration: 'none',
-            color: !isAdmin ? '#f4f4f5' : '#a1a1aa',
-            background: !isAdmin ? 'rgba(232,121,249,0.15)' : 'transparent',
-            border: !isAdmin ? '1px solid rgba(232,121,249,0.3)' : '1px solid transparent',
-            transition: 'background 0.15s, color 0.15s',
-          }}
-        >
-          Térkép
-        </Link>
-        <Link
           href="/admin/matrica"
+          aria-label="Szpot hozzáadása"
+          title="Szpot hozzáadása"
           style={{
-            padding: '6px 13px',
+            width: 32,
+            height: 32,
             borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 600,
             textDecoration: 'none',
             color: isAdmin ? '#f4f4f5' : '#a1a1aa',
             background: isAdmin ? 'rgba(232,121,249,0.15)' : 'transparent',
             border: isAdmin ? '1px solid rgba(232,121,249,0.3)' : '1px solid transparent',
             transition: 'background 0.15s, color 0.15s',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          Szpot hozzáadása
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+            <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
         </Link>
 
         <button
           type="button"
           onClick={() => setSpotsSheetOpen((prev) => !prev)}
+          aria-label="Szpotok"
+          title="Szpotok"
           style={{
-            padding: '6px 13px',
+            width: 32,
+            height: 32,
             borderRadius: 8,
-            fontSize: 13,
-            fontWeight: 600,
-            textDecoration: 'none',
             color: spotsSheetOpen ? '#f4f4f5' : '#a1a1aa',
             background: spotsSheetOpen ? 'rgba(236,72,153,0.18)' : 'transparent',
             border: spotsSheetOpen ? '1px solid rgba(236,72,153,0.35)' : '1px solid transparent',
             transition: 'background 0.15s, color 0.15s',
             cursor: 'pointer',
+            padding: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
-          Szpotok
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+            <path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <circle cx="4" cy="5" r="1" fill="currentColor" />
+            <circle cx="4" cy="10" r="1" fill="currentColor" />
+            <circle cx="4" cy="15" r="1" fill="currentColor" />
+          </svg>
         </button>
 
-        {/* Avatar + dropdown */}
+        {/* Profile menu trigger + dropdown */}
         {user && (
           <div ref={menuRef} style={{ position: 'relative', marginLeft: 4 }}>
             <button
               onClick={() => setMenuOpen(o => !o)}
               aria-label="Felhasználói menü"
+              title="Profil beállítások"
               style={{
                 width: 32,
                 height: 32,
-                borderRadius: '50%',
+                borderRadius: 8,
                 border: menuOpen
-                  ? '2px solid rgba(232,121,249,0.9)'
-                  : '2px solid rgba(232,121,249,0.5)',
-                background: (avatarUrl && !avatarBroken) ? 'transparent' : 'rgba(232,121,249,0.18)',
+                  ? '1px solid rgba(232,121,249,0.9)'
+                  : '1px solid rgba(232,121,249,0.35)',
+                background: menuOpen ? 'rgba(232,121,249,0.18)' : 'rgba(232,121,249,0.1)',
                 cursor: 'pointer',
                 padding: 0,
-                overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
-                color: '#f4f4f5',
-                fontSize: 13,
-                fontWeight: 700,
+                color: menuOpen ? '#f5d0fe' : '#f4f4f5',
               }}
             >
-              {avatarUrl && !avatarBroken ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={avatarUrl}
-                  alt={email}
-                  referrerPolicy="no-referrer"
-                  onError={() => setAvatarBroken(true)}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                initial
-              )}
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+                <path d="M10 3.5l1.2 1.2 1.7-.4.7 1.6 1.8.5-.2 1.8 1.2 1.2-1.2 1.2.2 1.8-1.8.5-.7 1.6-1.7-.4L10 16.5l-1.2-1.2-1.7.4-.7-1.6-1.8-.5.2-1.8L3.6 10l1.2-1.2-.2-1.8 1.8-.5.7-1.6 1.7.4L10 3.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
             </button>
-
-            <span
-              style={{
-                position: 'absolute',
-                top: -5,
-                right: -5,
-                minWidth: 18,
-                height: 18,
-                borderRadius: 999,
-                background: 'linear-gradient(135deg, #f0abfc, #e879f9)',
-                border: '1px solid rgba(24,24,27,0.85)',
-                color: '#18181b',
-                fontSize: 10,
-                fontWeight: 800,
-                lineHeight: '18px',
-                textAlign: 'center',
-                padding: '0 4px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.35)',
-                pointerEvents: 'none',
-                zIndex: 2,
-              }}
-              aria-hidden="true"
-            >
-              {score !== null ? Math.min(score, 999) : '…'}
-            </span>
 
             {menuOpen && (
               <div
