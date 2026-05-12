@@ -166,6 +166,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {} }: { onMessa
                     score: u.score,
                     accepted: u.accepted,
                     userId: u.id,
+                    canChat: u.id !== currentUserId,
                   },
                 }))
               } else {
@@ -181,6 +182,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {} }: { onMessa
                       score: u.score,
                       accepted: u.accepted,
                       userId: u.id,
+                      canChat: u.id !== currentUserId,
                     },
                   }))
                 } else {
@@ -274,7 +276,30 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {} }: { onMessa
             ) : null}
             <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#94a3b8' : '#52525b', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
           </div>
-          <span style={{ fontSize: isMobile ? 12 : 13, color: u.id === currentUserId ? '#e5e7eb' : '#d4d4d8', fontWeight: u.id === currentUserId ? 700 : 500, maxWidth: isMobile ? 56 : 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>{u.nickname}</span>
+          <span
+            onClick={(e) => {
+              if (u.id === currentUserId || !onMessageUser) return
+              e.stopPropagation()
+              onMessageUser(u)
+            }}
+            title={u.id === currentUserId ? u.nickname : `${u.nickname} privat uzenet`}
+            style={{
+              fontSize: isMobile ? 12 : 13,
+              color: u.id === currentUserId ? '#e5e7eb' : '#d4d4d8',
+              fontWeight: u.id === currentUserId ? 700 : 500,
+              maxWidth: isMobile ? 56 : 70,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              textAlign: 'center',
+              cursor: u.id === currentUserId || !onMessageUser ? 'default' : 'pointer',
+              textDecoration: u.id === currentUserId || !onMessageUser ? 'none' : 'underline',
+              textDecorationColor: 'rgba(148,163,184,0.45)',
+              textUnderlineOffset: 2,
+            }}
+          >
+            {u.nickname}
+          </span>
         </div>
       ))}
     </div>
@@ -304,6 +329,11 @@ function MatricaNav() {
   const [spots, setSpots] = useState<StickerSpot[]>([])
   const [spotsLoading, setSpotsLoading] = useState(false)
   const [spotsError, setSpotsError] = useState<string | null>(null)
+  const [myClaimsSheetOpen, setMyClaimsSheetOpen] = useState(false)
+  const [myClaims, setMyClaims] = useState<any[]>([])
+  const [myClaimsLoading, setMyClaimsLoading] = useState(false)
+  const [myClaimsError, setMyClaimsError] = useState<string | null>(null)
+  const [myClaimsDeletingIds, setMyClaimsDeletingIds] = useState<Set<string>>(new Set())
   const [onlineBarHeight, setOnlineBarHeight] = useState(38)
   const [pmRecipient, setPmRecipient] = useState<OnlineUserProfile | null>(null)
   const [pmUnreadCounts, setPmUnreadCounts] = useState<Record<string, number | undefined>>({})
@@ -654,6 +684,83 @@ function MatricaNav() {
     setSpotsSheetOpen(false)
   }
 
+  // Fetch user's claimed spots
+  useEffect(() => {
+    if (!myClaimsSheetOpen || !authToken || !user?.id) return
+
+    let cancelled = false
+    const loadMyClaims = async () => {
+      setMyClaimsLoading(true)
+      setMyClaimsError(null)
+      try {
+        const res = await fetch('/api/matrica/my-spots', {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        })
+        const json = await res.json()
+
+        if (cancelled) return
+
+        if (!res.ok) {
+          setMyClaimsError('Nem sikerult betolteni a szpotjaidat.')
+          setMyClaims([])
+          return
+        }
+
+        setMyClaims(Array.isArray(json?.claims) ? json.claims : [])
+      } catch {
+        if (!cancelled) {
+          setMyClaimsError('Nem sikerult betolteni a szpotjaidat.')
+          setMyClaims([])
+        }
+      } finally {
+        if (!cancelled) setMyClaimsLoading(false)
+      }
+    }
+
+    void loadMyClaims()
+
+    return () => {
+      cancelled = true
+    }
+  }, [myClaimsSheetOpen, authToken, user?.id])
+
+  // Delete user's claim
+  async function handleDeleteClaim(claimId: string) {
+    if (!authToken) return
+
+    const confirmed = window.confirm('Biztosan torlesz ezt a szpot-igenylesed?')
+    if (!confirmed) return
+
+    setMyClaimsDeletingIds((prev) => new Set([...prev, claimId]))
+
+    try {
+      const res = await fetch(`/api/matrica/claims/${claimId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      })
+
+      if (!res.ok) {
+        alert('Nem sikerult torlesni az igenylesed.')
+        return
+      }
+
+      // Remove from list
+      setMyClaims((prev) => prev.filter((c) => c.id !== claimId))
+    } catch {
+      alert('Nem sikerult torlesni az igenylesed.')
+    } finally {
+      setMyClaimsDeletingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(claimId)
+        return next
+      })
+    }
+  }
+
   // Close dropdown on outside click
   useEffect(() => {
     if (!menuOpen) return
@@ -1000,6 +1107,22 @@ function MatricaNav() {
                   </div>
                 )}
 
+                {/* My Spots button */}
+                <button
+                  onClick={() => {
+                    setMyClaimsSheetOpen(true)
+                    setMenuOpen(false)
+                  }}
+                  style={{
+                    width: '100%', padding: '12px 16px',
+                    background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer',
+                    textAlign: 'left', fontSize: 13, color: '#e2e8f0',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                  }}
+                >
+                  <span>📍</span> A szpotjaim
+                </button>
+
                 {/* Sign out */}
                 <button
                   onClick={handleSignOut}
@@ -1169,6 +1292,178 @@ function MatricaNav() {
           </div>
         </div>
       </div>
+
+      {/* My Claims Sheet */}
+      <div
+        style={{
+          position: 'fixed',
+          top: onlineBarHeight + 52 + SECONDARY_NAV_EXTRA_OFFSET,
+          left: 0,
+          right: 0,
+          zIndex: 190,
+          transform: myClaimsSheetOpen ? 'translateY(0)' : 'translateY(-110%)',
+          opacity: myClaimsSheetOpen ? 1 : 0,
+          pointerEvents: myClaimsSheetOpen ? 'auto' : 'none',
+          transition: 'transform 240ms ease, opacity 200ms ease',
+        }}
+        aria-hidden={!myClaimsSheetOpen}
+      >
+        <div
+          style={{
+            margin: 0,
+            width: '100vw',
+            borderRadius: 0,
+            border: 'none',
+            background: 'rgba(0, 0, 0, 0.6)',
+            boxShadow: 'none',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '14px 16px',
+              borderBottom: 'none',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <strong style={{ fontSize: 14, color: '#e5e7eb' }}>A szpotjaim</strong>
+              <span style={{ fontSize: 12, color: '#a1a1aa' }}>{myClaims.length} db</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMyClaimsSheetOpen(false)}
+              style={{
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'transparent',
+                color: '#d4d4d8',
+                borderRadius: 8,
+                padding: '4px 8px',
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              Bezár
+            </button>
+          </div>
+
+          <div style={{ padding: '12px 16px' }}>
+            {myClaimsLoading ? (
+              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Szpotjaid betöltése...</div>
+            ) : myClaimsError ? (
+              <div style={{ color: '#fda4af', fontSize: 13 }}>{myClaimsError}</div>
+            ) : myClaims.length === 0 ? (
+              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Meg nem talaltad meg az elso szpotot!</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {myClaims.map((claim: any) => {
+                  const spot = claim.sticker_spots
+                  const isDeleting = myClaimsDeletingIds.has(claim.id)
+
+                  return (
+                    <article
+                      key={claim.id}
+                      style={{
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        background: 'rgba(2,6,23,0.7)',
+                        overflow: 'hidden',
+                        opacity: isDeleting ? 0.5 : 1,
+                        transition: 'opacity 200ms ease',
+                      }}
+                    >
+                      <div style={{ height: 96, background: 'rgba(148,163,184,0.12)' }}>
+                        {spot?.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={spot.image_url}
+                            alt={spot?.title}
+                            loading="lazy"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#94a3b8',
+                              fontSize: 12,
+                            }}
+                          >
+                            Nincs kep
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ padding: 11, display: 'grid', gap: 8 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
+                          <div style={{ flex: 1 }}>
+                            <strong style={{ color: '#f4f4f5', fontSize: 13, lineHeight: 1.25 }}>
+                              {spot?.title || 'Ismeretlen szpot'}
+                            </strong>
+                            <p style={{
+                              margin: '4px 0 0 0',
+                              color: '#cbd5e1',
+                              fontSize: 11,
+                              lineHeight: 1.3,
+                            }}>
+                              {spot?.description || 'Nincs leiras ehhez a szpothoz.'}
+                            </p>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 700,
+                              color: claim.status === 'accepted' ? '#86efac' : claim.status === 'pending' ? '#fbbf24' : '#71717a',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.05em',
+                              padding: '2px 6px',
+                              background: 'rgba(255,255,255,0.05)',
+                              borderRadius: 4,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {claim.status === 'accepted' ? 'Elfogadva' : claim.status === 'pending' ? 'Varakozas' : 'Elutasitva'}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteClaim(claim.id)}
+                          disabled={isDeleting}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                            borderRadius: 9,
+                            border: '1px solid rgba(252,105,105,0.35)',
+                            background: 'rgba(252,105,105,0.1)',
+                            color: isDeleting ? '#a1a1aa' : '#fda4af',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            padding: '7px 10px',
+                            cursor: isDeleting ? 'not-allowed' : 'pointer',
+                            opacity: isDeleting ? 0.6 : 1,
+                          }}
+                        >
+                          {isDeleting ? 'Torlodes...' : '🗑 Torles'}
+                        </button>
+                      </div>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {pmRecipient && user?.id && nickname ? (
         <MatricaPrivateMessagePanel
           recipient={{ id: pmRecipient.id, nickname: pmRecipient.nickname, avatarUrl: pmRecipient.avatarUrl }}

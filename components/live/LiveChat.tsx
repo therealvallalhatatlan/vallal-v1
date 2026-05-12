@@ -286,6 +286,11 @@ export default function LiveChat({
                     style={{
                       cursor: message.display_name.toLowerCase() === displayName.toLowerCase() ? 'default' : 'pointer',
                       color: message.display_name.toLowerCase() === displayName.toLowerCase() ? 'inherit' : '#94a3b8',
+                      textDecoration:
+                        message.display_name.toLowerCase() === displayName.toLowerCase() ? 'none' : 'underline',
+                      textDecorationColor:
+                        message.display_name.toLowerCase() === displayName.toLowerCase() ? 'transparent' : 'rgba(148,163,184,0.5)',
+                      textUnderlineOffset: 2,
                     }}
                     className={message.display_name.toLowerCase() === displayName.toLowerCase() ? '' : 'hover:text-slate-200'}
                   >
@@ -301,6 +306,9 @@ export default function LiveChat({
       </div>
 
       <div className="border-t border-gray-800 px-3 py-3 space-y-2">
+        {onUserNameClick ? (
+          <div className="text-[11px] text-gray-500">Tipp: koppints egy nevre privat uzenethez.</div>
+        ) : null}
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}

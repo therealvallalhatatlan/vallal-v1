@@ -368,8 +368,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         score?: number
         accepted?: number
         userId?: string
+        canChat?: boolean
       }>
-      const { lat, lng, nickname, avatarUrl, score = 0, accepted = 0, userId } = customEvent.detail
+      const { lat, lng, nickname, avatarUrl, score = 0, accepted = 0, userId, canChat = true } = customEvent.detail
 
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
 
@@ -425,7 +426,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               <span style="color:#d4d4d8;font-weight:700;">${Number.isFinite(accepted) ? accepted : 0} db</span>
             </div>
           </div>
-          ${userId ? `<button class="matrica-chat-user-btn" data-user-id="${escapeHtml(userId)}" data-nickname="${safeNickname}" data-avatar-url="${safeAvatar || ''}" style="width:100%;margin-top:10px;padding:8px 12px;background:linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1));border:1px solid rgba(34,197,94,0.4);border-radius:8px;color:#86efac;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease;">CHAT</button><div style="font-size:10px;color:#a1a1aa;text-align:center;margin-top:4px;">ideiglenes privat chat,<br/>amig online vagytok</div>` : ''}
+          ${userId && canChat ? `<button class="matrica-chat-user-btn" data-user-id="${escapeHtml(userId)}" data-nickname="${safeNickname}" data-avatar-url="${safeAvatar || ''}" style="width:100%;margin-top:10px;padding:8px 12px;background:linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1));border:1px solid rgba(34,197,94,0.4);border-radius:8px;color:#86efac;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease;">CHAT</button><div style="font-size:10px;color:#a1a1aa;text-align:center;margin-top:4px;">ideiglenes privat chat,<br/>amig online vagytok</div>` : ''}
         </div>
       `)
       marker.togglePopup()
@@ -946,8 +947,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       {userLocation && !routeState.spot && positionHudVisible && (
         <div
           style={{
-            position: 'absolute',
-            top: 70,
+            position: 'fixed',
+            top: 'auto',
+            bottom: 0,
             left: 0,
             right: 0,
             zIndex: 34,
@@ -955,7 +957,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             border: 'none',
             background: 'rgba(0, 0, 0, 0.6)',
             boxShadow: 'none',
-            padding: '14px 16px',
+            padding: '14px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px',
             overflow: 'hidden',
           }}
         >
