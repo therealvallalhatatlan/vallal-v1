@@ -24,6 +24,8 @@ export default function BgVideoGate() {
       pathname.startsWith("/reader/") || 
       pathname === "/ar" || 
       pathname.startsWith("/ar/") ||
+      pathname === "/halozat" ||
+      pathname.startsWith("/halozat/") ||
       pathname.startsWith("/admin") ||
       pathname.startsWith("/public-story/")
     );
