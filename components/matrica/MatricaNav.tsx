@@ -20,6 +20,8 @@ type OnlineUserProfile = {
   nickname: string;
   avatarUrl: string | null;
   badge: number;
+  lat?: number;
+  lng?: number;
 };
 
 export function OnlineUsersBar() {
@@ -33,7 +35,7 @@ export function OnlineUsersBar() {
     async function fetchOnlineUsers() {
       setLoading(true)
       try {
-        // 1. Get online user IDs (assume /api/presence/online returns [{id, email}])
+        // 1. Get online user IDs
         const res = await fetch('/api/presence/online')
         const json = await res.json()
         if (!res.ok || !Array.isArray(json?.users)) {
@@ -43,11 +45,13 @@ export function OnlineUsersBar() {
         }
 
         const onlineUsers = json.users
-          .map((u: { id?: string; user_id?: string; email?: string }) => ({
+          .map((u: { id?: string; user_id?: string; email?: string; lat?: number; lng?: number }) => ({
             id: u.id ?? u.user_id,
             email: u.email,
+            lat: u.lat,
+            lng: u.lng,
           }))
-          .filter((u: { id?: string; email?: string }) => !!u.id && !!u.email) as Array<{ id: string; email: string }>
+          .filter((u: { id?: string; email?: string }) => !!u.id && !!u.email) as Array<{ id: string; email: string; lat?: number; lng?: number }>
 
         if (onlineUsers.length === 0) {
           setUsers([])
@@ -57,7 +61,7 @@ export function OnlineUsersBar() {
 
         // 2. For each user, fetch profile (nickname, avatar, badge)
         const profiles: OnlineUserProfile[] = await Promise.all(
-          onlineUsers.map(async (u: { id: string; email: string }) => {
+          onlineUsers.map(async (u: { id: string; email: string; lat?: number; lng?: number }) => {
             try {
               const pres = await fetch(`/api/user/profile?userId=${encodeURIComponent(u.id)}`)
               const pjson = await pres.json()
@@ -67,7 +71,9 @@ export function OnlineUsersBar() {
                   email: u.email,
                   nickname: pjson.profile.nickname || u.email,
                   avatarUrl: pjson.profile.avatar_url || null,
-                  badge: pjson.profile.badge ?? 0, // fallback if not present
+                  badge: pjson.profile.badge ?? 0,
+                  lat: u.lat,
+                  lng: u.lng,
                 }
               }
             } catch {}
@@ -77,6 +83,8 @@ export function OnlineUsersBar() {
               nickname: u.email,
               avatarUrl: null,
               badge: 0,
+              lat: u.lat,
+              lng: u.lng,
             }
           })
         )
@@ -102,7 +110,30 @@ export function OnlineUsersBar() {
       <div style={{ fontSize: 13, color: '#a1a1aa', marginLeft: 16, marginRight: 8 }}>Online:</div>
       {users.map(u => (
         <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 10 }}>
-          <div style={{ position: 'relative', width: 32, height: 32 }}>
+          <div 
+            style={{ position: 'relative', width: 32, height: 32, cursor: 'pointer' }}
+            onClick={(e) => {
+              e.stopPropagation()
+              console.log(`[OnlineUsersBar] Clicked on ${u.nickname}, lat=${u.lat}, lng=${u.lng}`)
+              
+              // If location data exists, use it
+              if (u.lat && u.lng && Number.isFinite(u.lat) && Number.isFinite(u.lng)) {
+                console.log(`[OnlineUsersBar] Emitting event for ${u.nickname}`)
+                window.dispatchEvent(new CustomEvent('matrica:focus-online-user', { detail: { lat: u.lat, lng: u.lng, nickname: u.nickname } }))
+              } else {
+                // Fallback: try to get current user location from window or show message
+                const userLoc = (window as any).vallalhatatlan_userLocation
+                if (userLoc?.lat && userLoc?.lng) {
+                  console.log(`[OnlineUsersBar] Using fallback location: ${u.nickname} near you`)
+                  window.dispatchEvent(new CustomEvent('matrica:focus-online-user', { detail: { lat: userLoc.lat, lng: userLoc.lng, nickname: `${u.nickname} (kb. pozíció)` } }))
+                } else {
+                  console.warn(`[OnlineUsersBar] No location data available for ${u.nickname}`)
+                  alert(`${u.nickname} pozíciója nem elérhető.\n\nBiztos, hogy engedélyezted a helymeghatározást?`)
+                }
+              }
+            }}
+            title={`${u.nickname} - ${u.lat && u.lng ? 'Kattints a térképen való megjelenítéshez' : 'Nincs pozíció adat'}`}
+          >
             {u.avatarUrl ? (
               <img src={u.avatarUrl} alt={u.nickname} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #f472b6', background: '#23232a' }} />
             ) : (

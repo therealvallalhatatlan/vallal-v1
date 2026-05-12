@@ -10,10 +10,10 @@ export async function GET() {
   const supabase = supabaseAdmin()
   const since = new Date(Date.now() - ONLINE_WINDOW_MS).toISOString()
 
-  // Lekérjük azokat, akik az elmúlt 5 percben életjelet adtak
+  // Lekérjük azokat, akik az elmúlt 5 percben életjelet adtak (optionális helyadatokkal)
   const { data, error } = await supabase
     .from('reader_presence')
-    .select('user_id,email,last_heartbeat')
+    .select('user_id,email,last_heartbeat,lat,lng')
     .gte('last_heartbeat', since)
     .order('last_heartbeat', { ascending: false })
 
@@ -26,6 +26,8 @@ export async function GET() {
     user_id: entry.user_id,
     email: entry.email,
     last_heartbeat: entry.last_heartbeat,
+    lat: entry.lat || undefined,
+    lng: entry.lng || undefined,
   }))
 
   return NextResponse.json({ users })

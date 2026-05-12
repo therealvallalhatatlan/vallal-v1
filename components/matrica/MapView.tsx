@@ -238,6 +238,8 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       (pos) => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setUserLocation(loc);
+        // Share location with presence hook
+        (window as any).vallalhatatlan_userLocation = loc;
         setGeoError(null);
 
         // Fly to nearest spot on first fix
@@ -318,6 +320,63 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     }
     loadSpots()
   }, [])
+
+  // ── Handle online user focus events ─────────────────────────────────────────
+  useEffect(() => {
+    if (!mapLoaded || !mapRef.current) return
+
+    const handleFocusOnlineUser = (event: Event) => {
+      const customEvent = event as CustomEvent<{ lat: number; lng: number; nickname: string }>
+      const { lat, lng, nickname } = customEvent.detail
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
+
+      const map = mapRef.current
+      if (!map) return
+
+      // Fly to the user's location
+      map.flyTo({
+        center: [lng, lat],
+        zoom: 16,
+        duration: 1000,
+        essential: true,
+      })
+
+      // Show a temporary marker at that location
+      const el = document.createElement('div')
+      el.style.cssText = `
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #06b6d4;
+        border: 3px solid #fff;
+        box-shadow: 0 0 12px rgba(6, 182, 212, 0.6), inset 0 0 6px rgba(6, 182, 212, 0.3);
+      `
+
+      const marker = new mapboxgl.Marker({ element: el })
+        .setLngLat([lng, lat])
+        .setPopup(
+          new mapboxgl.Popup({ offset: 25 }).setText(`${nickname} itt van`)
+        )
+        .addTo(map)
+
+      // Remove marker after 5 seconds
+      const timeoutId = setTimeout(() => {
+        marker.remove()
+      }, 5000)
+
+      return () => {
+        clearTimeout(timeoutId)
+        marker.remove()
+      }
+    }
+
+    window.addEventListener('matrica:focus-online-user', handleFocusOnlineUser)
+
+    return () => {
+      window.removeEventListener('matrica:focus-online-user', handleFocusOnlineUser)
+    }
+  }, [mapLoaded])
 
   useEffect(() => {
     if (!mapLoaded || !mapRef.current || !routeState.spot || !routeState.origin) {

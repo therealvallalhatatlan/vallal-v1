@@ -22,7 +22,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    // Upsert presence record with current timestamp
+    // Parse optional location data from request body
+    let lat: number | null = null
+    let lng: number | null = null
+    try {
+      const body = await request.json()
+      if (typeof body.lat === 'number' && Number.isFinite(body.lat)) {
+        lat = body.lat
+      }
+      if (typeof body.lng === 'number' && Number.isFinite(body.lng)) {
+        lng = body.lng
+      }
+    } catch {
+      // No body or invalid JSON; lat/lng remain null
+    }
+
+    // Upsert presence record with current timestamp and optional location
     const { error } = await supabase
       .from('reader_presence')
       .upsert(
@@ -30,16 +45,40 @@ export async function POST(request: NextRequest) {
           user_id: user.id,
           email: user.email,
           last_heartbeat: new Date().toISOString(),
+          lat,
+          lng,
         },
         { onConflict: 'user_id' }
       )
 
     if (error) {
       console.error('Presence upsert error:', error)
-      return NextResponse.json(
-        { error: 'Failed to update presence' },
-        { status: 500 }
-      )
+      // If upsert with lat/lng fails, try without location (backward compatibility)
+      if (lat !== null || lng !== null) {
+        console.warn('Retrying upsert without location data')
+        const { error: retryError } = await supabase
+          .from('reader_presence')
+          .upsert(
+            {
+              user_id: user.id,
+              email: user.email,
+              last_heartbeat: new Date().toISOString(),
+            },
+            { onConflict: 'user_id' }
+          )
+        if (retryError) {
+          console.error('Presence upsert retry failed:', retryError)
+          return NextResponse.json(
+            { error: 'Failed to update presence' },
+            { status: 500 }
+          )
+        }
+      } else {
+        return NextResponse.json(
+          { error: 'Failed to update presence' },
+          { status: 500 }
+        )
+      }
     }
 
     return NextResponse.json({ success: true })

@@ -5,6 +5,64 @@ export function usePresence() {
   const [activeCount, setActiveCount] = useState(0)
   const supabaseRef = useRef(createClient())
 
+  // Helper to get current location if available
+  const getCurrentPosition = (): Promise<{ lat: number; lng: number } | null> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve(null)
+        return
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          resolve({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          })
+        },
+        () => {
+          resolve(null)
+        },
+        { enableHighAccuracy: false, timeout: 3000, maximumAge: 5000 }
+      )
+    })
+  }
+
+  // Helper to send heartbeat with optional location
+  const sendHeartbeat = async (accessToken: string) => {
+    try {
+      // Try to get location from multiple sources
+      let location: { lat: number; lng: number } | null = null
+
+      // First, check if MapView has shared the user location
+      const sharedLocation = (window as any).vallalhatatlan_userLocation
+      if (sharedLocation?.lat && sharedLocation?.lng && Number.isFinite(sharedLocation.lat) && Number.isFinite(sharedLocation.lng)) {
+        location = sharedLocation
+      } else {
+        // Fall back to geolocation API
+        location = await getCurrentPosition()
+      }
+
+      const body: Record<string, unknown> = {}
+      if (location?.lat && location?.lng) {
+        body.lat = location.lat
+        body.lng = location.lng
+      }
+
+      await fetch('/api/presence', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
+        signal: AbortSignal.timeout(5000),
+      })
+    } catch (error) {
+      console.error('[usePresence] Heartbeat failed:', error)
+    }
+  }
+
   useEffect(() => {
     let mounted = true
     let heartbeatInterval: NodeJS.Timeout
@@ -22,18 +80,7 @@ export function usePresence() {
       // Send heartbeat every 3 minutes
       heartbeatInterval = setInterval(async () => {
         if (!mounted) return
-        try {
-          await fetch('/api/presence', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            signal: AbortSignal.timeout(5000),
-          })
-        } catch (error) {
-          // Silent fail - reduces console spam
-        }
+        await sendHeartbeat(session.access_token)
       }, 180000)
 
       // Poll active count every 3 minutes
@@ -53,18 +100,7 @@ export function usePresence() {
       }, 180000)
 
       // Send initial heartbeat immediately
-      try {
-        await fetch('/api/presence', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          signal: AbortSignal.timeout(5000),
-        })
-      } catch (error) {
-        // Silent fail
-      }
+      await sendHeartbeat(session.access_token)
 
       // Poll active count immediately
       try {
