@@ -59,6 +59,7 @@ export default function LiveChat({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unread, setUnread] = useState(0);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const listRef = useRef<HTMLDivElement | null>(null);
 
   const resolvedTitle = useMemo(() => title || (compact ? 'Live chat' : 'Live feed'), [compact, title]);
@@ -70,17 +71,22 @@ export default function LiveChat({
   useEffect(() => {
     let mounted = true;
 
-    const loadInitial = async () => {
+    const loadInitial = async (silent = false) => {
       if (requireAuth && !authToken) {
         if (mounted) {
           setMessages([]);
           setError('Bejelentkezes szukseges a beszelgetes betoltesehez.');
-          setLoading(false);
+          if (!silent) setLoading(false);
+          setIsInitialLoad(false);
         }
         return;
       }
 
-      setLoading(true);
+      // Only show loading indicator on initial load, not during polling
+      if (!silent) {
+        setLoading(true);
+      }
+
       try {
         const headers: Record<string, string> = {};
         if (authToken) {
@@ -108,12 +114,13 @@ export default function LiveChat({
         }
       } finally {
         if (mounted) {
-          setLoading(false);
+          if (!silent) setLoading(false);
+          if (isInitialLoad) setIsInitialLoad(false);
         }
       }
     };
 
-    loadInitial();
+    loadInitial(false); // Initial load is not silent
 
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -141,7 +148,7 @@ export default function LiveChat({
         .subscribe();
     } else if (pollIntervalMs > 0) {
       pollTimer = setInterval(() => {
-        void loadInitial();
+        void loadInitial(true); // Polling refreshes are silent
       }, pollIntervalMs);
     }
 
@@ -226,7 +233,7 @@ export default function LiveChat({
       ) : null}
 
       <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
-        {loading ? (
+        {isInitialLoad && loading ? (
           <div className="text-sm text-gray-500">Betoltes...</div>
         ) : messages.length === 0 ? (
           <div className="text-sm text-gray-500">Meg nincs uzenet. Legyel te az elso.</div>
