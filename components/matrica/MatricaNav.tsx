@@ -26,7 +26,7 @@ type OnlineUserProfile = {
   lng?: number;
 };
 
-export function OnlineUsersBar({ onMessageUser }: { onMessageUser?: (user: OnlineUserProfile) => void }) {
+export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {} }: { onMessageUser?: (user: OnlineUserProfile) => void; pmUnreadCounts?: Record<string, number | undefined> }) {
   usePresence()
 
   const currentUserAccent = '#94a3b8'
@@ -264,6 +264,11 @@ export function OnlineUsersBar({ onMessageUser }: { onMessageUser?: (user: Onlin
                     strokeLinejoin="round"
                   />
                 </svg>
+                {pmUnreadCounts[u.id] ? (
+                  <span style={{ position: 'absolute', top: -2, right: -2, background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 8, fontWeight: 700, minWidth: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #1f2937' }}>
+                    {pmUnreadCounts[u.id]! > 99 ? '99' : pmUnreadCounts[u.id]}
+                  </span>
+                ) : null}
               </button>
             ) : null}
             <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#94a3b8' : '#52525b', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
@@ -300,6 +305,8 @@ function MatricaNav() {
   const [spotsError, setSpotsError] = useState<string | null>(null)
   const [onlineBarHeight, setOnlineBarHeight] = useState(38)
   const [pmRecipient, setPmRecipient] = useState<OnlineUserProfile | null>(null)
+  const [pmUnreadCounts, setPmUnreadCounts] = useState<Record<string, number | undefined>>({})
+  const [pmToasts, setPmToasts] = useState<Array<{ id: string; userId: string; nickname: string }>>([])
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -556,7 +563,7 @@ function MatricaNav() {
   return (
     <>
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1001 }}>
-        <OnlineUsersBar onMessageUser={setPmRecipient} />
+        <OnlineUsersBar onMessageUser={setPmRecipient} pmUnreadCounts={pmUnreadCounts} />
       </div>
       <nav
         style={{
@@ -1050,8 +1057,63 @@ function MatricaNav() {
           displayName={nickname}
           authToken={authToken}
           onClose={() => setPmRecipient(null)}
+          onUnreadChange={(count, userId) => {
+            const prevCount = pmUnreadCounts[userId] || 0
+            setPmUnreadCounts((prev) => ({
+              ...prev,
+              [userId]: count > 0 ? count : undefined,
+            }))
+            
+            // Show toast when new message arrives
+            if (count > prevCount && count > 0 && pmRecipient) {
+              const toastId = `${Date.now()}-${userId}`
+              setPmToasts((prev) => [...prev, { id: toastId, userId, nickname: pmRecipient.nickname }])
+              setTimeout(() => {
+                setPmToasts((prev) => prev.filter(t => t.id !== toastId))
+              }, 4000)
+            }
+          }}
         />
       ) : null}
+      
+      {/* Toast notifications */}
+      <div style={{ position: 'fixed', top: 12, right: 12, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {pmToasts.map(toast => (
+          <div
+            key={toast.id}
+            style={{
+              animation: 'slideInRight 0.3s ease-out',
+              background: 'linear-gradient(135deg, rgba(34,197,94,0.95), rgba(22,163,74,0.95))',
+              border: '1px solid rgba(34,197,94,0.4)',
+              borderRadius: 12,
+              padding: '12px 14px',
+              color: '#ecfdf5',
+              fontSize: 13,
+              fontWeight: 600,
+              boxShadow: '0 12px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(8px)',
+              minWidth: 240,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16 }}>💬</span>
+              <span><strong>{toast.nickname}</strong> üzenetet küldött</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <style jsx>{`
+        @keyframes slideInRight {
+          from {
+            transform: translateX(400px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </nav>
     </>
   )

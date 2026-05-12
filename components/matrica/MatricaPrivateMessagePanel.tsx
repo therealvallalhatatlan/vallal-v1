@@ -16,6 +16,7 @@ interface Props {
   displayName: string
   authToken: string | null
   onClose: () => void
+  onUnreadChange?: (unreadCount: number, userId: string) => void
 }
 
 export default function MatricaPrivateMessagePanel({
@@ -24,8 +25,10 @@ export default function MatricaPrivateMessagePanel({
   displayName,
   authToken,
   onClose,
+  onUnreadChange,
 }: Props) {
   const [isMobile, setIsMobile] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     const updateMobileState = () => setIsMobile(window.innerWidth < 768)
@@ -36,6 +39,10 @@ export default function MatricaPrivateMessagePanel({
 
   const roomId = useMemo(() => buildPrivateRoomId(currentUserId, recipient.id), [currentUserId, recipient.id])
   const selfRole = useMemo(() => getPrivateRoomSenderRole(roomId, currentUserId) || 'viewer', [roomId, currentUserId])
+
+  useEffect(() => {
+    onUnreadChange?.(unreadCount, recipient.id)
+  }, [unreadCount, recipient.id, onUnreadChange])
 
   return (
     <section
@@ -135,6 +142,7 @@ export default function MatricaPrivateMessagePanel({
           pollIntervalMs={2500}
           hideHeader
           placeholder={`${recipient.nickname} üzenete...`}
+          onUnreadChange={(count) => setUnreadCount(count)}
         />
       </div>
     </section>
