@@ -684,7 +684,7 @@ function MatricaNav() {
     setSpotsSheetOpen(false)
   }
 
-  // Fetch user's claimed spots
+  // Fetch user's hidden spots
   useEffect(() => {
     if (!myClaimsSheetOpen || !authToken || !user?.id) return
 
@@ -693,7 +693,7 @@ function MatricaNav() {
       setMyClaimsLoading(true)
       setMyClaimsError(null)
       try {
-        const res = await fetch('/api/matrica/my-spots', {
+        const res = await fetch('/api/matrica/my-spots?type=hidden', {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
@@ -708,7 +708,7 @@ function MatricaNav() {
           return
         }
 
-        setMyClaims(Array.isArray(json?.claims) ? json.claims : [])
+        setMyClaims(Array.isArray(json?.spots) ? json.spots : [])
       } catch {
         if (!cancelled) {
           setMyClaimsError('Nem sikerult betolteni a szpotjaidat.')
@@ -726,17 +726,17 @@ function MatricaNav() {
     }
   }, [myClaimsSheetOpen, authToken, user?.id])
 
-  // Delete user's claim
-  async function handleDeleteClaim(claimId: string) {
+  // Delete user's hidden spot
+  async function handleDeleteClaim(spotId: string) {
     if (!authToken) return
 
-    const confirmed = window.confirm('Biztosan torlesz ezt a szpot-igenylesed?')
+    const confirmed = window.confirm('Biztosan torlesz ezt az elrejtett szpotot?')
     if (!confirmed) return
 
-    setMyClaimsDeletingIds((prev) => new Set([...prev, claimId]))
+    setMyClaimsDeletingIds((prev) => new Set([...prev, spotId]))
 
     try {
-      const res = await fetch(`/api/matrica/claims/${claimId}`, {
+      const res = await fetch(`/api/matrica/hidden-spots/${spotId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -744,18 +744,18 @@ function MatricaNav() {
       })
 
       if (!res.ok) {
-        alert('Nem sikerult torlesni az igenylesed.')
+        alert('Nem sikerult torlesni az elrejtett szpotot.')
         return
       }
 
       // Remove from list
-      setMyClaims((prev) => prev.filter((c) => c.id !== claimId))
+      setMyClaims((prev) => prev.filter((s) => s.id !== spotId))
     } catch {
-      alert('Nem sikerult torlesni az igenylesed.')
+      alert('Nem sikerult torlesni az elrejtett szpotot.')
     } finally {
       setMyClaimsDeletingIds((prev) => {
         const next = new Set(prev)
-        next.delete(claimId)
+        next.delete(spotId)
         return next
       })
     }
@@ -1353,18 +1353,22 @@ function MatricaNav() {
             {myClaimsLoading ? (
               <div style={{ color: '#a1a1aa', fontSize: 13 }}>Szpotjaid betöltése...</div>
             ) : myClaimsError ? (
-              <div style={{ color: '#fda4af', fontSize: 13 }}>{myClaimsError}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ color: '#fda4af', fontSize: 13 }}>Hiba: {myClaimsError}</div>
+                <p style={{ color: '#71717a', fontSize: 11, margin: 0 }}>
+                  A szpot-kezeléshez szükség van az adatbázis frissítésre. Kérjük, frissítsd a szervert!
+                </p>
+              </div>
             ) : myClaims.length === 0 ? (
-              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Meg nem talaltad meg az elso szpotot!</div>
+              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Meg nem rejtettel el szpotot!</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {myClaims.map((claim: any) => {
-                  const spot = claim.sticker_spots
-                  const isDeleting = myClaimsDeletingIds.has(claim.id)
+                {myClaims.map((spot: any) => {
+                  const isDeleting = myClaimsDeletingIds.has(spot.id || spot.hidden_spot_id)
 
                   return (
                     <article
-                      key={claim.id}
+                      key={spot.id}
                       style={{
                         borderRadius: 12,
                         border: '1px solid rgba(255,255,255,0.12)',
@@ -1419,7 +1423,7 @@ function MatricaNav() {
                             style={{
                               fontSize: 10,
                               fontWeight: 700,
-                              color: claim.status === 'accepted' ? '#86efac' : claim.status === 'pending' ? '#fbbf24' : '#71717a',
+                              color: spot.status === 'active' ? '#86efac' : spot.status === 'empty' ? '#fbbf24' : '#71717a',
                               textTransform: 'uppercase',
                               letterSpacing: '0.05em',
                               padding: '2px 6px',
@@ -1428,13 +1432,13 @@ function MatricaNav() {
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            {claim.status === 'accepted' ? 'Elfogadva' : claim.status === 'pending' ? 'Varakozas' : 'Elutasitva'}
+                            {spot.status === 'active' ? 'Aktív' : spot.status === 'empty' ? 'Elfogyott' : 'Archivált'}
                           </span>
                         </div>
 
                         <button
                           type="button"
-                          onClick={() => void handleDeleteClaim(claim.id)}
+                          onClick={() => void handleDeleteClaim(spot.id)}
                           disabled={isDeleting}
                           style={{
                             display: 'inline-flex',
