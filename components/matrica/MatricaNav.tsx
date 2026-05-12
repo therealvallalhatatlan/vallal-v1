@@ -130,18 +130,18 @@ export function OnlineUsersBar() {
     <div style={{ width: '100%', background: 'rgba(10,12,16,0.94)', color: '#9ca3af', fontSize: 13, textAlign: 'center', padding: 6, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>Nincs online felhasználó</div>
   )
   return (
-    <div style={{ width: '100%', background: 'rgba(10,12,16,0.94)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '6px 0', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
+    <div id="matrica-online-users-bar" style={{ width: '100%', background: 'rgba(10,12,16,0.94)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: isMobile ? '4px 0' : '6px 0', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
       {users.map(u => (
         <div
           key={u.id}
           style={{
             display: 'flex',
-            flexDirection: isMobile ? 'column' : 'row',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: isMobile ? 4 : 6,
+            gap: 4,
             marginRight: 10,
-            padding: u.id === currentUserId ? (isMobile ? '6px 8px' : '4px 8px') : 0,
+            padding: u.id === currentUserId ? (isMobile ? '3px 6px' : '4px 8px') : 0,
             borderRadius: u.id === currentUserId ? (isMobile ? 14 : 999) : 999,
             background: u.id === currentUserId ? 'rgba(148,163,184,0.2)' : 'transparent',
             border: u.id === currentUserId ? '1px solid rgba(148,163,184,0.65)' : '1px solid transparent',
@@ -207,13 +207,13 @@ export function OnlineUsersBar() {
               <span
                 style={{
                   position: 'absolute',
-                  top: '50%',
-                  right: -11,
-                  transform: 'translateY(-50%)',
+                  top: -8,
+                  left: -6,
+                  transform: 'none',
                   color: '#0f172a',
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
+                  width: isMobile ? 22 : 20,
+                  height: isMobile ? 14 : 16,
+                  borderRadius: 999,
                   background: '#94a3b8',
                   border: '2px solid #0b1020',
                   lineHeight: 1,
@@ -224,19 +224,12 @@ export function OnlineUsersBar() {
                 title="Te vagy"
                 aria-label="Te vagy"
               >
-                <svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true" focusable="false" style={{ display: 'block' }}>
-                  <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" />
-                </svg>
+                <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.06em' }}>TE</span>
               </span>
             ) : null}
             <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#94a3b8' : '#52525b', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
           </div>
           <span style={{ fontSize: isMobile ? 12 : 13, color: u.id === currentUserId ? '#e5e7eb' : '#d4d4d8', fontWeight: u.id === currentUserId ? 700 : 500, maxWidth: isMobile ? 56 : 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>{u.nickname}</span>
-          {u.id === currentUserId ? (
-            <span style={{ fontSize: 10, color: '#0f172a', fontWeight: 800, letterSpacing: '0.08em', background: '#94a3b8', borderRadius: 999, padding: '1px 6px', lineHeight: 1.4 }}>
-              TE
-            </span>
-          ) : null}
         </div>
       ))}
     </div>
@@ -244,6 +237,7 @@ export function OnlineUsersBar() {
 }
 
 function MatricaNav() {
+  const SECONDARY_NAV_EXTRA_OFFSET = 36
   const pathname = usePathname()
   const router = useRouter()
   const isAdmin = pathname?.startsWith('/admin/matrica')
@@ -263,7 +257,39 @@ function MatricaNav() {
   const [spots, setSpots] = useState<StickerSpot[]>([])
   const [spotsLoading, setSpotsLoading] = useState(false)
   const [spotsError, setSpotsError] = useState<string | null>(null)
+  const [onlineBarHeight, setOnlineBarHeight] = useState(38)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const measureOnlineBar = () => {
+      const bar = document.getElementById('matrica-online-users-bar')
+      const nextHeight = bar?.getBoundingClientRect().height
+      setOnlineBarHeight(nextHeight && nextHeight > 0 ? Math.round(nextHeight) : 38)
+    }
+
+    measureOnlineBar()
+    window.addEventListener('resize', measureOnlineBar)
+
+    let resizeObserver: ResizeObserver | null = null
+    const bar = document.getElementById('matrica-online-users-bar')
+    if (bar && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        measureOnlineBar()
+      })
+      resizeObserver.observe(bar)
+    }
+
+    return () => {
+      window.removeEventListener('resize', measureOnlineBar)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--matrica-header-offset', `${onlineBarHeight + 52 + SECONDARY_NAV_EXTRA_OFFSET}px`)
+  }, [onlineBarHeight])
 
   // Fetch score when session is available and after successful claims.
   useEffect(() => {
@@ -465,7 +491,7 @@ function MatricaNav() {
       <nav
         style={{
           position: 'fixed',
-          top: 38,
+          top: onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET,
           left: 0,
           right: 0,
           height: 52,
@@ -766,7 +792,7 @@ function MatricaNav() {
       <div
         style={{
           position: 'fixed',
-          top: 52,
+          top: onlineBarHeight + 52 + SECONDARY_NAV_EXTRA_OFFSET,
           left: 0,
           right: 0,
           zIndex: 190,

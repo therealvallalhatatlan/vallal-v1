@@ -15,7 +15,7 @@ const s = {
     minHeight: '100vh',
     background: '#09090b',
     color: '#f4f4f5',
-    padding: '84px 20px 32px',
+    padding: 'calc(var(--matrica-header-offset, 90px) + 12px) 20px 32px',
     fontFamily: 'inherit',
   } as React.CSSProperties,
   card: {

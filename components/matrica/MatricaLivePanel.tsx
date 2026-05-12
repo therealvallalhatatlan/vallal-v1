@@ -42,11 +42,19 @@ function statusLabel(status: string): string {
 
 export default function MatricaLivePanel({ displayName, authToken }: Props) {
   const [open, setOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>('chat')
   const [chatUnread, setChatUnread] = useState(0)
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [activityLoading, setActivityLoading] = useState(false)
   const [activityError, setActivityError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const updateMobileState = () => setIsMobile(window.innerWidth < 768)
+    updateMobileState()
+    window.addEventListener('resize', updateMobileState)
+    return () => window.removeEventListener('resize', updateMobileState)
+  }, [])
 
   const unreadTotal = chatUnread
 
@@ -113,7 +121,7 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
         onClick={() => setOpen((prev) => !prev)}
         aria-label="Matrica live panel"
         style={{
-          position: 'absolute',
+          position: isMobile ? 'fixed' : 'absolute',
           right: 14,
           bottom: 14,
           zIndex: 210,
@@ -160,31 +168,34 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
       {open ? (
         <section
           style={{
-            position: 'absolute',
-            right: 14,
-            bottom: 80,
+            position: isMobile ? 'fixed' : 'absolute',
+            right: isMobile ? 0 : 14,
+            left: isMobile ? 0 : 'auto',
+            bottom: isMobile ? 0 : 80,
+            top: isMobile ? 'var(--matrica-header-offset, 90px)' : 'auto',
             zIndex: 210,
-            width: 'min(420px, calc(100vw - 28px))',
-            height: 'min(68vh, 560px)',
+            width: isMobile ? '100vw' : 'min(420px, calc(100vw - 28px))',
+            height: isMobile ? 'calc(100dvh - var(--matrica-header-offset, 90px))' : 'min(68vh, 560px)',
             display: 'flex',
             flexDirection: 'column',
-            borderRadius: 16,
+            borderRadius: isMobile ? 0 : 16,
             overflow: 'hidden',
-            border: '1px solid rgba(148,163,184,0.24)',
+            border: isMobile ? 'none' : '1px solid rgba(148,163,184,0.24)',
             background: 'linear-gradient(180deg, rgba(7,10,16,0.95), rgba(11,18,32,0.94))',
             backdropFilter: 'blur(12px)',
-            boxShadow: '0 20px 48px rgba(0,0,0,0.55)',
+            boxShadow: isMobile ? 'none' : '0 20px 48px rgba(0,0,0,0.55)',
           }}
         >
           <header
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'flex-end',
-              padding: '10px 12px',
+              justifyContent: 'space-between',
+              padding: isMobile ? '12px 14px' : '10px 12px',
               borderBottom: '1px solid rgba(255,255,255,0.08)',
             }}
           >
+            <strong style={{ fontSize: 13, color: '#e2e8f0', letterSpacing: '0.04em' }}>MATRICA LIVE</strong>
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -206,7 +217,7 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
             style={{
               display: 'flex',
               gap: 8,
-              padding: '8px 10px',
+              padding: isMobile ? '10px 12px' : '8px 10px',
               borderBottom: '1px solid rgba(255,255,255,0.06)',
             }}
           >
@@ -244,7 +255,7 @@ export default function MatricaLivePanel({ displayName, authToken }: Props) {
             </button>
           </div>
 
-          <div style={{ flex: 1, minHeight: 0, padding: activeTab === 'chat' ? 8 : 0 }}>
+          <div style={{ flex: 1, minHeight: 0, padding: activeTab === 'chat' ? (isMobile ? 10 : 8) : 0 }}>
             {activeTab === 'chat' ? (
               <LiveChat
                 roomId={MATRICA_CHAT_ROOM_ID}
