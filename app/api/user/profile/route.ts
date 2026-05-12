@@ -1,11 +1,13 @@
 // app/api/user/profile/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+const adminClient = supabaseAdmin();
 
 const NICKNAME_MIN = 3;
 const NICKNAME_MAX = 20;
@@ -171,12 +173,12 @@ export async function GET(req: Request) {
       );
     }
 
-    // Fetch user's public profile (only nickname)
+    // Fetch user's public profile (nickname from DB)
     const { data, error } = await supabase
       .from("users")
       .select("id, nickname")
       .eq("id", userId)
-      .maybeSingle(); // Use maybeSingle instead of single
+      .maybeSingle();
 
     if (error) {
       console.error("Supabase select error", error);
@@ -187,7 +189,48 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: false, error: "user_not_found" }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, profile: data });
+    const { count: foundCount, error: foundError } = await supabase
+      .from("claims")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .in("status", ["pending", "accepted"]);
+
+    if (foundError) {
+      console.error("Supabase foundCount error", foundError);
+      return NextResponse.json({ ok: false, error: "db_error", details: foundError.message }, { status: 500 });
+    }
+
+    const { count: acceptedCount, error: acceptedError } = await supabase
+      .from("claims")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "accepted");
+
+    if (acceptedError) {
+      console.error("Supabase acceptedCount error", acceptedError);
+      return NextResponse.json({ ok: false, error: "db_error", details: acceptedError.message }, { status: 500 });
+    }
+
+    // Fetch avatar from Auth user metadata
+    let avatar_url: string | null = null;
+    try {
+      const { data: authUser, error: authError } = await adminClient.auth.admin.getUserById(userId);
+      if (!authError && authUser?.user?.user_metadata?.avatar_url) {
+        avatar_url = authUser.user.user_metadata.avatar_url;
+      }
+    } catch (err) {
+      console.warn('Failed to fetch avatar from auth:', err);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      profile: {
+        ...data,
+        avatar_url,
+        score: foundCount ?? 0,
+        accepted: acceptedCount ?? 0,
+      },
+    });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ ok: false, error: "server_error" }, { status: 500 });

@@ -20,6 +20,8 @@ type OnlineUserProfile = {
   nickname: string;
   avatarUrl: string | null;
   badge: number;
+  score: number;
+  accepted: number;
   lat?: number;
   lng?: number;
 };
@@ -75,7 +77,9 @@ export function OnlineUsersBar() {
                   email: u.email,
                   nickname: pjson.profile.nickname || u.email,
                   avatarUrl: pjson.profile.avatar_url || null,
-                  badge: pjson.profile.badge ?? 0,
+                  badge: pjson.profile.accepted ?? pjson.profile.badge ?? 0,
+                  score: pjson.profile.score ?? 0,
+                  accepted: pjson.profile.accepted ?? 0,
                   lat: u.lat,
                   lng: u.lng,
                 }
@@ -87,6 +91,8 @@ export function OnlineUsersBar() {
               nickname: u.email,
               avatarUrl: null,
               badge: 0,
+              score: 0,
+              accepted: 0,
               lat: u.lat,
               lng: u.lng,
             }
@@ -118,20 +124,34 @@ export function OnlineUsersBar() {
             style={{ position: 'relative', width: 32, height: 32, cursor: 'pointer' }}
             onClick={(e) => {
               e.stopPropagation()
-              console.log(`[OnlineUsersBar] Clicked on ${u.nickname}, lat=${u.lat}, lng=${u.lng}`)
               
               // If location data exists, use it
               if (u.lat && u.lng && Number.isFinite(u.lat) && Number.isFinite(u.lng)) {
-                console.log(`[OnlineUsersBar] Emitting event for ${u.nickname}`)
-                window.dispatchEvent(new CustomEvent('matrica:focus-online-user', { detail: { lat: u.lat, lng: u.lng, nickname: u.nickname } }))
+                window.dispatchEvent(new CustomEvent('matrica:focus-online-user', {
+                  detail: {
+                    lat: u.lat,
+                    lng: u.lng,
+                    nickname: u.nickname,
+                    avatarUrl: u.avatarUrl,
+                    score: u.score,
+                    accepted: u.accepted,
+                  },
+                }))
               } else {
                 // Fallback: try to get current user location from window or show message
                 const userLoc = (window as any).vallalhatatlan_userLocation
                 if (userLoc?.lat && userLoc?.lng) {
-                  console.log(`[OnlineUsersBar] Using fallback location: ${u.nickname} near you`)
-                  window.dispatchEvent(new CustomEvent('matrica:focus-online-user', { detail: { lat: userLoc.lat, lng: userLoc.lng, nickname: `${u.nickname} (kb. pozíció)` } }))
+                  window.dispatchEvent(new CustomEvent('matrica:focus-online-user', {
+                    detail: {
+                      lat: userLoc.lat,
+                      lng: userLoc.lng,
+                      nickname: `${u.nickname} (kb. pozicio)`,
+                      avatarUrl: u.avatarUrl,
+                      score: u.score,
+                      accepted: u.accepted,
+                    },
+                  }))
                 } else {
-                  console.warn(`[OnlineUsersBar] No location data available for ${u.nickname}`)
                   alert(`${u.nickname} pozíciója nem elérhető.\n\nBiztos, hogy engedélyezted a helymeghatározást?`)
                 }
               }

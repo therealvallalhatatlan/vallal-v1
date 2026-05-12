@@ -77,6 +77,15 @@ function formatRouteDuration(durationSeconds: number | null): string {
   return minutes > 0 ? `${hours} ora ${minutes} perc` : `${hours} ora`
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 
 export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -326,8 +335,15 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     if (!mapLoaded || !mapRef.current) return
 
     const handleFocusOnlineUser = (event: Event) => {
-      const customEvent = event as CustomEvent<{ lat: number; lng: number; nickname: string }>
-      const { lat, lng, nickname } = customEvent.detail
+      const customEvent = event as CustomEvent<{
+        lat: number
+        lng: number
+        nickname: string
+        avatarUrl?: string | null
+        score?: number
+        accepted?: number
+      }>
+      const { lat, lng, nickname, avatarUrl, score = 0, accepted = 0 } = customEvent.detail
 
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
 
@@ -355,10 +371,37 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
 
       const marker = new mapboxgl.Marker({ element: el })
         .setLngLat([lng, lat])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 25 }).setText(`${nickname} itt van`)
-        )
+        .setPopup(new mapboxgl.Popup({ offset: 25, closeButton: false }))
         .addTo(map)
+
+      const safeNickname = escapeHtml(nickname)
+      const safeAvatar = avatarUrl ? escapeHtml(avatarUrl) : null
+      const initial = safeNickname.charAt(0).toUpperCase() || '?'
+
+      marker.getPopup().setHTML(`
+        <div style="min-width:220px;padding:10px 12px;background:#0f0f13;color:#f4f4f5;border:1px solid #27272a;border-radius:12px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            ${safeAvatar
+              ? `<img src="${safeAvatar}" alt="${safeNickname}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #f472b6;" />`
+              : `<div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#23232a;color:#f472b6;font-weight:700;border:2px solid #f472b6;">${initial}</div>`}
+            <div style="min-width:0;">
+              <div style="font-weight:700;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">${safeNickname}</div>
+              <div style="font-size:12px;color:#a1a1aa;">Online most</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;">
+            <div style="display:flex;flex-direction:column;">
+              <span style="color:#a1a1aa;">Pontszam</span>
+              <span style="color:#e879f9;font-weight:700;">${Number.isFinite(score) ? score : 0}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;">
+              <span style="color:#a1a1aa;">Elfogadott</span>
+              <span style="color:#34d399;font-weight:700;">${Number.isFinite(accepted) ? accepted : 0} db</span>
+            </div>
+          </div>
+        </div>
+      `)
+      marker.togglePopup()
 
       // Remove marker after 5 seconds
       const timeoutId = setTimeout(() => {
