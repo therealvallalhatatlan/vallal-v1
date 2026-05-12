@@ -9,6 +9,7 @@ import { useEffect, useState, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSessionGuard } from '@/hooks/useSessionGuard.js'
 import { usePresence } from '@/hooks/usePresence'
+import MatricaPrivateMessagePanel from '@/components/matrica/MatricaPrivateMessagePanel'
 // If StickerSpot is not imported from types, define a fallback type
 // Remove this if you have the correct import
 // import { StickerSpot } from '@/types/StickerSpot'
@@ -25,7 +26,7 @@ type OnlineUserProfile = {
   lng?: number;
 };
 
-export function OnlineUsersBar() {
+export function OnlineUsersBar({ onMessageUser }: { onMessageUser?: (user: OnlineUserProfile) => void }) {
   usePresence()
 
   const currentUserAccent = '#94a3b8'
@@ -227,6 +228,42 @@ export function OnlineUsersBar() {
                 <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.06em' }}>TE</span>
               </span>
             ) : null}
+            {u.id !== currentUserId && onMessageUser ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onMessageUser(u)
+                }}
+                aria-label={`${u.nickname} üzenete`}
+                title={`${u.nickname} üzenete`}
+                style={{
+                  position: 'absolute',
+                  top: -6,
+                  right: -8,
+                  width: isMobile ? 18 : 16,
+                  height: isMobile ? 18 : 16,
+                  borderRadius: '50%',
+                  border: '1px solid rgba(255,255,255,0.16)',
+                  background: 'rgba(9,9,11,0.92)',
+                  color: '#d4d4d8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                  cursor: 'pointer',
+                }}
+              >
+                <svg viewBox="0 0 20 20" width="10" height="10" fill="none" aria-hidden="true">
+                  <path
+                    d="M4 5.5h12v7H8.8L5 15.5v-3H4v-7Z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            ) : null}
             <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#94a3b8' : '#52525b', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
           </div>
           <span style={{ fontSize: isMobile ? 12 : 13, color: u.id === currentUserId ? '#e5e7eb' : '#d4d4d8', fontWeight: u.id === currentUserId ? 700 : 500, maxWidth: isMobile ? 56 : 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>{u.nickname}</span>
@@ -244,6 +281,7 @@ function MatricaNav() {
   const { session } = useSessionGuard()
   const user = (session as any)?.user ?? null
   const email: string = user?.email ?? ''
+  const authToken: string | null = (session as any)?.access_token ?? null
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [score, setScore] = useState<number | null>(null)
@@ -259,6 +297,7 @@ function MatricaNav() {
   const [spotsLoading, setSpotsLoading] = useState(false)
   const [spotsError, setSpotsError] = useState<string | null>(null)
   const [onlineBarHeight, setOnlineBarHeight] = useState(38)
+  const [pmRecipient, setPmRecipient] = useState<OnlineUserProfile | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -491,7 +530,7 @@ function MatricaNav() {
   return (
     <>
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1001 }}>
-        <OnlineUsersBar />
+        <OnlineUsersBar onMessageUser={setPmRecipient} />
       </div>
       <nav
         style={{
@@ -978,6 +1017,15 @@ function MatricaNav() {
           </div>
         </div>
       </div>
+      {pmRecipient && user?.id && nickname ? (
+        <MatricaPrivateMessagePanel
+          recipient={{ id: pmRecipient.id, nickname: pmRecipient.nickname, avatarUrl: pmRecipient.avatarUrl }}
+          currentUserId={user.id}
+          displayName={nickname}
+          authToken={authToken}
+          onClose={() => setPmRecipient(null)}
+        />
+      ) : null}
     </nav>
     </>
   )

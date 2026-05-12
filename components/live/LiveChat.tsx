@@ -9,10 +9,16 @@ type Props = {
   role: Role;
   roomId?: string;
   compact?: boolean;
+  title?: string;
+  placeholder?: string;
+  hideHeader?: boolean;
   onUnreadChange?: (count: number) => void;
   active?: boolean;
   authToken?: string | null;
   requireAuth?: boolean;
+  enableRealtime?: boolean;
+  pollIntervalMs?: number;
+  selfRole?: Role;
 };
 
 type ChatMessage = {
@@ -36,10 +42,16 @@ export default function LiveChat({
   role,
   roomId = 'nyitott-muhely',
   compact = false,
+  title,
+  placeholder = 'Irj egy rovid uzenetet...',
+  hideHeader = false,
   onUnreadChange,
   active = true,
   authToken = null,
   requireAuth = false,
+  enableRealtime = true,
+  pollIntervalMs = 2500,
+  selfRole,
 }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -49,7 +61,7 @@ export default function LiveChat({
   const [unread, setUnread] = useState(0);
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  const title = useMemo(() => (compact ? 'Live chat' : 'Live feed'), [compact]);
+  const resolvedTitle = useMemo(() => title || (compact ? 'Live chat' : 'Live feed'), [compact, title]);
 
   useEffect(() => {
     onUnreadChange?.(unread);
@@ -82,32 +94,46 @@ export default function LiveChat({
 
     loadInitial();
 
-    const channel = supabase
-      .channel(`public:live_chat_messages:${roomId}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'live_chat_messages', filter: `room_id=eq.${roomId}` },
-        (payload) => {
-          const incoming = payload.new as ChatMessage;
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === incoming.id)) {
-              return prev;
-            }
-            return [...prev, incoming];
-          });
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
 
-          if (!active) {
-            setUnread((count) => count + 1);
+    if (enableRealtime) {
+      channel = supabase
+        .channel(`public:live_chat_messages:${roomId}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'live_chat_messages', filter: `room_id=eq.${roomId}` },
+          (payload) => {
+            const incoming = payload.new as ChatMessage;
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === incoming.id)) {
+                return prev;
+              }
+              return [...prev, incoming];
+            });
+
+            if (!active) {
+              setUnread((count) => count + 1);
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    } else if (pollIntervalMs > 0) {
+      pollTimer = setInterval(() => {
+        void loadInitial();
+      }, pollIntervalMs);
+    }
 
     return () => {
       mounted = false;
-      channel.unsubscribe();
+      if (channel) {
+        channel.unsubscribe();
+      }
+      if (pollTimer) {
+        clearInterval(pollTimer);
+      }
     };
-  }, [roomId, active]);
+  }, [roomId, active, enableRealtime, pollIntervalMs]);
 
   useEffect(() => {
     if (active) {
@@ -171,10 +197,12 @@ export default function LiveChat({
 
   return (
     <div className="h-full flex flex-col rounded-xl border border-gray-800 bg-black/50">
-      <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-        <h3 className="font-semibold tracking-wide">{title}</h3>
-        <span className="text-xs text-gray-400">{messages.length} uzenet</span>
-      </div>
+      {!hideHeader ? (
+        <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
+          <h3 className="font-semibold tracking-wide">{resolvedTitle}</h3>
+          <span className="text-xs text-gray-400">{messages.length} uzenet</span>
+        </div>
+      ) : null}
 
       <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
         {loading ? (
@@ -183,9 +211,10 @@ export default function LiveChat({
           <div className="text-sm text-gray-500">Meg nincs uzenet. Legyel te az elso.</div>
         ) : (
           messages.map((message) => {
-            const ownMessage =
-              message.display_name.toLowerCase() === displayName.toLowerCase() &&
-              message.sender_role === role;
+            const ownMessage = selfRole
+              ? message.sender_role === selfRole
+              : message.display_name.toLowerCase() === displayName.toLowerCase() &&
+                message.sender_role === role;
 
             return (
               <div
@@ -219,7 +248,7 @@ export default function LiveChat({
               void sendMessage();
             }
           }}
-          placeholder="Irj egy rovid uzenetet..."
+          placeholder={placeholder}
           maxLength={MAX_MESSAGE_LENGTH}
           rows={2}
           disabled={sending || (requireAuth && !authToken)}

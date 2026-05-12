@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { guardWriteOperation } from '@/lib/systemGuard';
 import { createClient } from '@/lib/server';
+import { getPrivateRoomSenderRole, isPrivateRoomId, isPrivateRoomParticipant } from '@/lib/live/privateRooms';
 
 const DEFAULT_ROOM_ID = 'nyitott-muhely';
 const MATRICA_ROOM_ID = 'matrica-global';
@@ -22,7 +23,22 @@ function normalizeRoomId(value: unknown): string {
 }
 
 function requiresAuthenticatedWriter(roomId: string): boolean {
-  return roomId === MATRICA_ROOM_ID || roomId === 'matrica';
+  return roomId === MATRICA_ROOM_ID || roomId === 'matrica' || isPrivateRoomId(roomId);
+}
+
+async function getAuthenticatedUser(req: Request) {
+  const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
+  if (!token) {
+    return { user: null, error: 'auth_required' as const };
+  }
+
+  const anonClient = await createClient();
+  const { data: authData, error: authError } = await anonClient.auth.getUser(token);
+  if (authError || !authData?.user) {
+    return { user: null, error: 'unauthenticated' as const };
+  }
+
+  return { user: authData.user, error: null };
 }
 
 export async function GET(req: Request) {
@@ -31,6 +47,16 @@ export async function GET(req: Request) {
   const before = url.searchParams.get('before');
   const limitRaw = Number(url.searchParams.get('limit') || '80');
   const limit = Math.min(200, Math.max(1, Number.isFinite(limitRaw) ? limitRaw : 80));
+
+  if (isPrivateRoomId(roomId)) {
+    const { user, error } = await getAuthenticatedUser(req);
+    if (!user) {
+      return NextResponse.json({ ok: false, error }, { status: error === 'auth_required' ? 401 : 401 });
+    }
+    if (!isPrivateRoomParticipant(roomId, user.id)) {
+      return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
+    }
+  }
 
   let query = supabaseAdmin
     .from('live_chat_messages')
@@ -76,23 +102,30 @@ export async function POST(req: Request) {
   const role = (typeof sender_role === 'string' ? sender_role : '').trim();
   const messageBody = (typeof body === 'string' ? body : '').trim().slice(0, MAX_MESSAGE_LENGTH);
   let effectiveDisplayName = displayName;
+  let effectiveRole = role;
 
   if (requiresAuthenticatedWriter(roomId)) {
-    const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-    if (!token) {
-      return NextResponse.json({ ok: false, error: 'auth_required' }, { status: 401 });
+    const { user, error } = await getAuthenticatedUser(req);
+    if (!user) {
+      return NextResponse.json({ ok: false, error }, { status: 401 });
     }
 
-    const anonClient = await createClient();
-    const { data: authData, error: authError } = await anonClient.auth.getUser(token);
-    if (authError || !authData?.user) {
-      return NextResponse.json({ ok: false, error: 'unauthenticated' }, { status: 401 });
+    if (isPrivateRoomId(roomId)) {
+      if (!isPrivateRoomParticipant(roomId, user.id)) {
+        return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
+      }
+
+      const privateRole = getPrivateRoomSenderRole(roomId, user.id);
+      if (!privateRole) {
+        return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
+      }
+      effectiveRole = privateRole;
     }
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('users')
       .select('nickname')
-      .eq('id', authData.user.id)
+      .eq('id', user.id)
       .maybeSingle();
 
     if (profileError) {
@@ -107,7 +140,7 @@ export async function POST(req: Request) {
     effectiveDisplayName = nickname.slice(0, 48);
   }
 
-  if (!effectiveDisplayName || !isSenderRole(role) || !messageBody) {
+  if (!effectiveDisplayName || !isSenderRole(effectiveRole) || !messageBody) {
     return NextResponse.json({ ok: false, error: 'missing_fields' }, { status: 400 });
   }
 
@@ -131,7 +164,7 @@ export async function POST(req: Request) {
       {
         room_id: roomId,
         display_name: effectiveDisplayName,
-        sender_role: role,
+        sender_role: effectiveRole,
         body: messageBody,
       },
     ])
