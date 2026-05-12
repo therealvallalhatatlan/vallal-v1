@@ -75,6 +75,12 @@ export default function Navigation() {
               </Link>
               <div className="flex items-center gap-3 flex-wrap justify-center">
                 <Link
+                  href="/halozat"
+                  className="rounded-lg bg-white px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-neutral-200"
+                >
+                  Hálózat
+                </Link>
+                <Link
                   href="/reader"
                   className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
                 >
@@ -151,6 +157,12 @@ export default function Navigation() {
                 className="text-xs text-neutral-300 hover:text-lime-300 normal-case tracking-normal max-w-[220px] truncate transition-colors"
               >
                 Üdv, {userEmail}
+              </Link>
+              <Link
+                href="/halozat"
+                className="rounded-lg bg-white px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-neutral-200"
+              >
+                Hálózat
               </Link>
               <Link
                 href="/reader"
