@@ -921,14 +921,14 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           style={{
             position: 'absolute',
             top: 70,
-            left: 12,
-            right: 12,
+            left: 0,
+            right: 0,
             zIndex: 34,
-            borderRadius: 16,
-            border: '1px solid rgba(148,163,184,0.28)',
-            background: 'linear-gradient(160deg, rgba(8,10,14,0.94), rgba(15,23,42,0.86))',
-            boxShadow: '0 16px 42px rgba(0,0,0,0.45)',
-            padding: 14,
+            borderRadius: 0,
+            border: 'none',
+            background: 'rgba(0, 0, 0, 0.6)',
+            boxShadow: 'none',
+            padding: '14px 16px',
             overflow: 'hidden',
           }}
         >
