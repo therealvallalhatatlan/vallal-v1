@@ -249,6 +249,7 @@ function MatricaNav() {
   const [score, setScore] = useState<number | null>(null)
   const [accepted, setAccepted] = useState<number | null>(null)
   const [nickname, setNickname] = useState<string | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [nicknameDraft, setNicknameDraft] = useState('')
   const [nicknameEditing, setNicknameEditing] = useState(false)
   const [nicknameSaving, setNicknameSaving] = useState(false)
@@ -328,6 +329,7 @@ function MatricaNav() {
   useEffect(() => {
     if (!user?.id) {
       setNickname(null)
+      setAvatarUrl(null)
       return
     }
 
@@ -343,15 +345,18 @@ function MatricaNav() {
         if (res.ok && json?.ok && typeof json?.profile?.nickname === 'string') {
           const value = json.profile.nickname.trim()
           setNickname(value || null)
+          setAvatarUrl(typeof json?.profile?.avatar_url === 'string' ? json.profile.avatar_url : null)
           setNicknameDraft(value || '')
           return
         }
 
         setNickname(null)
+        setAvatarUrl(null)
         setNicknameDraft('')
       } catch {
         if (!cancelled) {
           setNickname(null)
+          setAvatarUrl(null)
           setNicknameDraft('')
         }
       }
@@ -572,10 +577,13 @@ function MatricaNav() {
           }}
         >
           <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
-            <path d="M4 5h12M4 10h12M4 15h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            <circle cx="4" cy="5" r="1" fill="currentColor" />
-            <circle cx="4" cy="10" r="1" fill="currentColor" />
-            <circle cx="4" cy="15" r="1" fill="currentColor" />
+            <path
+              d="M10 16.2c3.1-3.04 4.6-5.32 4.6-7.31A4.6 4.6 0 0 0 10 4.3a4.6 4.6 0 0 0-4.6 4.59c0 1.99 1.5 4.27 4.6 7.31Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+            <circle cx="10" cy="8.9" r="1.9" stroke="currentColor" strokeWidth="1.5" />
           </svg>
         </button>
 
@@ -603,10 +611,40 @@ function MatricaNav() {
                 color: menuOpen ? '#e2e8f0' : '#f4f4f5',
               }}
             >
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
-                <path d="M10 3.5l1.2 1.2 1.7-.4.7 1.6 1.8.5-.2 1.8 1.2 1.2-1.2 1.2.2 1.8-1.8.5-.7 1.6-1.7-.4L10 16.5l-1.2-1.2-1.7.4-.7-1.6-1.8-.5.2-1.8L3.6 10l1.2-1.2-.2-1.8 1.8-.5.7-1.6 1.7.4L10 3.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-                <circle cx="10" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.4" />
-              </svg>
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={nickname || email || 'Profilkep'}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    display: 'block',
+                    border: menuOpen
+                      ? '1px solid rgba(226,232,240,0.8)'
+                      : '1px solid rgba(255,255,255,0.18)',
+                  }}
+                />
+              ) : (
+                <span
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'rgba(148,163,184,0.2)',
+                    color: menuOpen ? '#e2e8f0' : '#f4f4f5',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  {(nickname || email || '?').trim().charAt(0).toUpperCase() || '?'}
+                </span>
+              )}
             </button>
 
             {menuOpen && (
@@ -805,14 +843,12 @@ function MatricaNav() {
       >
         <div
           style={{
-            margin: '0 auto',
-            width: 'min(1200px, calc(100vw - 20px))',
-            borderBottomLeftRadius: 14,
-            borderBottomRightRadius: 14,
-            border: '1px solid rgba(148,163,184,0.25)',
-            borderTop: 'none',
-            background: 'linear-gradient(180deg, rgba(10,10,14,0.97), rgba(17,24,39,0.94))',
-            boxShadow: '0 22px 50px rgba(0,0,0,0.45)',
+            margin: 0,
+            width: '100vw',
+            borderRadius: 0,
+            border: 'none',
+            background: 'rgba(0, 0, 0, 0.6)',
+            boxShadow: 'none',
             overflow: 'hidden',
           }}
         >
@@ -821,8 +857,8 @@ function MatricaNav() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '10px 14px',
-              borderBottom: '1px solid rgba(255,255,255,0.07)',
+              padding: '14px 16px',
+              borderBottom: 'none',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -846,7 +882,7 @@ function MatricaNav() {
             </button>
           </div>
 
-          <div style={{ padding: 12 }}>
+          <div style={{ padding: '12px 16px' }}>
             {spotsLoading ? (
               <div style={{ color: '#a1a1aa', fontSize: 13 }}>Szpotok betöltése...</div>
             ) : spotsError ? (
