@@ -684,7 +684,7 @@ function MatricaNav() {
     setSpotsSheetOpen(false)
   }
 
-  // Fetch user's hidden spots
+  // Fetch the same spots list as admin "Összes szpot" card
   useEffect(() => {
     if (!myClaimsSheetOpen || !authToken || !user?.id) return
 
@@ -693,7 +693,7 @@ function MatricaNav() {
       setMyClaimsLoading(true)
       setMyClaimsError(null)
       try {
-        const res = await fetch('/api/matrica/my-spots?type=hidden', {
+        const res = await fetch('/api/admin/matrica/spots', {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
@@ -726,32 +726,34 @@ function MatricaNav() {
     }
   }, [myClaimsSheetOpen, authToken, user?.id])
 
-  // Delete user's hidden spot
+  // Delete spot from the same source used by admin page
   async function handleDeleteClaim(spotId: string) {
     if (!authToken) return
 
-    const confirmed = window.confirm('Biztosan torlesz ezt az elrejtett szpotot?')
+    const confirmed = window.confirm('Biztosan torlod ezt a szpotot?')
     if (!confirmed) return
 
     setMyClaimsDeletingIds((prev) => new Set([...prev, spotId]))
 
     try {
-      const res = await fetch(`/api/matrica/hidden-spots/${spotId}`, {
+      const res = await fetch('/api/admin/matrica/spots', {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ id: spotId }),
       })
 
       if (!res.ok) {
-        alert('Nem sikerult torlesni az elrejtett szpotot.')
+        alert('Nem sikerult torolni a szpotot.')
         return
       }
 
       // Remove from list
       setMyClaims((prev) => prev.filter((s) => s.id !== spotId))
     } catch {
-      alert('Nem sikerult torlesni az elrejtett szpotot.')
+      alert('Nem sikerult torolni a szpotot.')
     } finally {
       setMyClaimsDeletingIds((prev) => {
         const next = new Set(prev)
@@ -1360,7 +1362,7 @@ function MatricaNav() {
                 </p>
               </div>
             ) : myClaims.length === 0 ? (
-              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Meg nem rejtettel el szpotot!</div>
+              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Meg nincsenek szpotok.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {myClaims.map((spot: any) => {
