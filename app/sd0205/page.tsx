@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 export default function Sd0205Page() {
   const quote = `"Annabella?? Komolyan?
 Te vagy az egyetlen, aki elég idióta volt beülni mellé a Morrisba és ezt még le is írod.
@@ -25,6 +29,7 @@ Mókázz a speckó agyaddal. De ha legközelebb valakit megnevezel, tudd: nem mi
               csak krisztiannak
             </p>
           </div>
+
         </header>
 
         <article className="border-b border-[#4c534d] p-5 sm:p-7">
@@ -86,6 +91,10 @@ Mókázz a speckó agyaddal. De ha legközelebb valakit megnevezel, tudd: nem mi
             href="https://www.reddit.com/r/vallalhatatlan/comments/1jzvn8c/furcsa_v%C3%A1s%C3%A1rl%C3%B3k_2_r%C3%A9sz_st%C3%A1zit%C3%B3l_elk%C3%B6sz%C3%B6n%C3%BCnk/"
           />
         </div>
+
+        <div className="border-t border-[#4c534d] p-5 font-mono sm:p-7">
+          <ShareButton />
+        </div>
       </section>
 
       <style>{`
@@ -143,6 +152,53 @@ function DataRow({
         </a>
       ) : (
         <p className="mt-1 break-words text-sm text-[#d2d9d2] sm:text-[15px]">{value}</p>
+      )}
+    </div>
+  );
+}
+
+function ShareButton() {
+  const [status, setStatus] = useState<"idle" | "ok" | "err">("idle");
+
+  const handleShare = async () => {
+    try {
+      const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+      const payload = {
+        title: "SD0205 // Szemelyes Klubdosszie",
+        text: "Titkos klub belso anyag",
+        url: shareUrl,
+      };
+
+      if (navigator.share) {
+        await navigator.share(payload);
+        setStatus("ok");
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
+      setStatus("ok");
+    } catch {
+      setStatus("err");
+    }
+  };
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={handleShare}
+        className="inline-flex items-center justify-center border border-[#6a736b] bg-[#172019] px-3 py-2 text-[11px] uppercase tracking-[0.14em] text-[#d7e0d8] transition hover:bg-[#1e2a20]"
+      >
+        Megosztas
+      </button>
+      <p className="mt-2 text-[11px] text-[#b9c5bb]">
+        Jol fontold meg, kivel osztod meg ezt az informaciot.
+      </p>
+      {status === "ok" && (
+        <p className="mt-2 text-[11px] text-[#9db5a2]">Megosztasi link elokeszitve.</p>
+      )}
+      {status === "err" && (
+        <p className="mt-2 text-[11px] text-[#d59b9b]">A megosztas most nem elerheto.</p>
       )}
     </div>
   );
