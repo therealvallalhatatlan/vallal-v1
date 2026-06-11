@@ -12,6 +12,7 @@ import BookCover from "@/components/BookCover";
 import CtaBuyBox from "@/components/CtaBuyBox";
 import TweetRotator from "@/components/TweetRotator";
 import Navigation from "@/components/Navigation";
+import EventAnnouncement from "@/components/EventAnnouncement";
 import CrewCoupon from "@/components/CrewCoupon";
 import Matricak from "@/components/matricak";
 import OlvassBele from "@/components/OlvassBele";
@@ -21,6 +22,7 @@ export default function Page() {
   return (
     <main className="text-zinc-200">
       <Navigation />
+      <EventAnnouncement />
       <Hero />
       <OlvassBele />
       <MiEz />

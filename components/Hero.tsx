@@ -66,7 +66,7 @@ export default function Hero() {
   }, [startDescription]);
 
   return (
-    <section className="relative mx-auto max-w-3xl px-6 py-32 md:py-48">
+    <section className="relative mx-auto max-w-3xl px-6 pt-6 pb-32 md:pt-8 md:pb-48">
 
 
       <div className="">
@@ -88,24 +88,29 @@ export default function Hero() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 
             {/* Első Könyv */}
-            <div className="flex flex-col justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+            <div className="relative flex flex-col justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
               <div className="space-y-2">
                 <p className="font-mono text-xs uppercase tracking-widest text-zinc-600">Első könyv</p>
-                <h2 className="text-xl font-black uppercase tracking-tight text-white">
+                <span className="absolute right-4 top-4 font-mono text-[10px] font-bold uppercase tracking-[0.35em] text-red-300 writing-mode-vertical-rl [text-orientation:mixed]">
+                  Elfogyott
+                </span>
+                <h2 className="pr-10 text-xl font-black uppercase tracking-tight text-white">
                   Vállalhatatlan v1.0
                 </h2>
                 <p className="text-lg leading-relaxed text-zinc-400">
-                  Az eredeti, első kiadás. Még senki sem számolta meg hány oldal.  
+                  Az eredeti, első kiadás. Még senki sem számolta meg hány oldal.
                 </p>
               </div>
               <div className="mt-6 flex items-center gap-4">
                 <span className="font-mono text-sm font-semibold text-zinc-400">10 000 Ft</span>
-                <a
-                  href="https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
-                  className="rounded-lg bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition hover:bg-zinc-200"
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  className="cursor-not-allowed rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-zinc-500 opacity-70"
                 >
                   Megrendelem
-                </a>
+                </button>
               </div>
             </div>
 
