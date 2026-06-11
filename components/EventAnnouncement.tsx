@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ShoppingBag, BookOpen, Shield } from "lucide-react";
 
 export default function EventAnnouncement() {
   return (
@@ -18,31 +19,35 @@ export default function EventAnnouncement() {
         </h2>
 
         {/* Body */}
-        <p className="text-xl text-zinc-800 leading-relaxed">
-          Aznap meghajlítjuk a valóságot! Támogasd V.-t hogy megcsinálhassa
-          amit a fejébe vett!{" "}
+        <p className="text-xl text-zinc-800 leading-relaxed mb-6">
+          Aznap, közösen meghajlítjuk a valóságot. Támogasd V.-t hogy megcsinálhassa
+          amit a fejébe vett!
+        </p>
+
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-3">
           <Link
             href="/shop"
-            className="text-lime-600 underline underline-offset-2 hover:text-lime-300 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-lime-400 px-5 py-3 text-sm font-semibold text-black transition-colors hover:bg-lime-300"
           >
-            Nézd meg a Shop-ot
+            <ShoppingBag className="h-4 w-4" />
+            Veszek egy pólót
           </Link>
-          {", "}
           <Link
             href="/konyv-2"
-            className="text-lime-600 underline underline-offset-2 hover:text-lime-300 transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-5 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:bg-zinc-800"
           >
-            rendeld meg a könyvet
+            <BookOpen className="h-4 w-4" />
+            Könyv II. előrendelés
           </Link>
-          {", vagy "}
           <Link
-            href="/rendszergazda"
-            className="text-lime-600 underline underline-offset-2 hover:text-lime-300 transition-colors"
+            href="/mecenas"
+            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-5 py-3 text-sm font-semibold text-zinc-700 transition-colors hover:bg-zinc-100"
           >
-            legyél Rendszergazda
+            <Shield className="h-4 w-4" />
+            Mecénás Leszek
           </Link>
-          .
-        </p>
+        </div>
       </div>
     </div>
   );
