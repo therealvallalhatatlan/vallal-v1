@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "check:registry": "npx --yes tsx scripts/checkKonyv2Registry.ts",
     "dev": "next dev",
     "ingest": "node scripts/ingest.mjs",
     "ingest:text": "node scripts/ingest.mjs",
