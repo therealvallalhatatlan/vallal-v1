@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 
+const MIN_PUBLIC_ID_LENGTH = 4;
+const MAX_PUBLIC_ID_LENGTH = 15;
+
 type IdentityGeneratorProps = {
   suggestedId: string;
   errorMessage?: string;
@@ -13,7 +16,7 @@ export default function IdentityGenerator({ suggestedId, errorMessage, onSubmit 
   const [hasClearedSuggestedId, setHasClearedSuggestedId] = useState(false);
 
   const isValid = useMemo(() => {
-    return /^[A-Z0-9-]{4,16}$/i.test(publicId.trim());
+    return new RegExp(`^[A-Z0-9-]{${MIN_PUBLIC_ID_LENGTH},${MAX_PUBLIC_ID_LENGTH}}$`, "i").test(publicId.trim());
   }, [publicId]);
 
   return (
@@ -43,7 +46,7 @@ export default function IdentityGenerator({ suggestedId, errorMessage, onSubmit 
             id="nyul-public-id"
             className="min-h-16 w-full border border-white bg-black px-4 py-3 font-mono text-xl uppercase tracking-[0.18em] text-white outline-none transition-colors placeholder:text-neutral-500 focus:border-neutral-300 focus:text-white"
             value={publicId}
-            onChange={(event) => setPublicId(event.target.value.toUpperCase())}
+            onChange={(event) => setPublicId(event.target.value.toUpperCase().slice(0, MAX_PUBLIC_ID_LENGTH))}
             onFocus={() => {
               if (!hasClearedSuggestedId && publicId === suggestedId) {
                 setPublicId("");
@@ -51,7 +54,7 @@ export default function IdentityGenerator({ suggestedId, errorMessage, onSubmit 
               }
             }}
             placeholder="RABBIT-027"
-            maxLength={16}
+            maxLength={MAX_PUBLIC_ID_LENGTH}
             autoCapitalize="characters"
             autoCorrect="off"
             spellCheck={false}

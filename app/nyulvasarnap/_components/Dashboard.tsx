@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { ensureIdentity, getNyulDbClient, markFeatureComplete } from "../_lib/supabase";
 import type { NyulFeedEntry, NyulFeatureKey, NyulIdentitySession } from "../_lib/types";
 import styles from "./nyulvasarnap.module.css";
@@ -32,6 +33,7 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
   const [chatInput, setChatInput] = useState("");
   const [activePartner, setActivePartner] = useState<{ public_id: string; display_name: string; identity_token: string } | null>(null);
   const [personStatus, setPersonStatus] = useState("");
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [completion, setCompletion] = useState<Record<NyulFeatureKey, boolean>>({
     "rabbit-network": false,
     "person-finder": false,
@@ -40,6 +42,7 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
   });
   const [matchResult, setMatchResult] = useState<{ location_text: string; icebreaker_text: string } | null>(null);
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const chatChannelRef = useRef<RealtimeChannel | null>(null);
 
   const completedCount = useMemo(() => ALL_FEATURES.filter((key) => completion[key]).length, [completion]);
   const unlocked = completedCount === ALL_FEATURES.length;
@@ -147,6 +150,11 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
       db.removeChannel(tickerChannel);
       window.clearInterval(tickerPollingId);
       window.clearInterval(onlineUsersPollingId);
+
+      if (chatChannelRef.current) {
+        db.removeChannel(chatChannelRef.current);
+        chatChannelRef.current = null;
+      }
     };
   }, [session.identityToken]);
 
@@ -216,12 +224,23 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
       return;
     }
 
+    setIsChatModalOpen(true);
+    setActiveThreadId(null);
+    setChatMessages([]);
+    setActivePartner(selectedOnlineUser);
+    setPersonStatus(`Kapcsolodas: ${selectedOnlineUser.public_id}...`);
+
     await startChatWithTarget(selectedOnlineUser);
   }
 
   async function startChatWithTarget(target: { public_id: string; display_name: string; identity_token: string }) {
     const db = getNyulDbClient();
     if (!db) return;
+
+    if (chatChannelRef.current) {
+      db.removeChannel(chatChannelRef.current);
+      chatChannelRef.current = null;
+    }
 
     const threadResult = await db.rpc("nyul_start_chat", {
       p_identity_token: session.identityToken,
@@ -231,6 +250,7 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
     const threadId = threadResult.data as string | null;
     if (!threadId) {
       setPersonStatus("Chat inditas sikertelen.");
+      setIsChatModalOpen(false);
       return;
     }
 
@@ -261,9 +281,18 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
       )
       .subscribe();
 
-    setTimeout(() => {
-      db.removeChannel(channel);
-    }, 1000 * 60 * 30);
+    chatChannelRef.current = channel;
+  }
+
+  function closeChatModal() {
+    setIsChatModalOpen(false);
+    setChatInput("");
+
+    const db = getNyulDbClient();
+    if (db && chatChannelRef.current) {
+      db.removeChannel(chatChannelRef.current);
+      chatChannelRef.current = null;
+    }
   }
 
   async function sendChatMessage() {
@@ -392,7 +421,13 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
                     </option>
                   ))}
                 </select>
-                <button type="button" className={styles.actionButton} onClick={connectSelectedUser}>
+                <button
+                  type="button"
+                  className={styles.actionButton}
+                  onClick={connectSelectedUser}
+                  disabled={!selectedOnlineUser}
+                  aria-disabled={!selectedOnlineUser}
+                >
                   [ CHAT INDITAS ]
                 </button>
               </div>
@@ -408,43 +443,10 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
                     <span className={styles.finderUserId}>{selectedOnlineUser.public_id}</span>
                     <span className={styles.finderUserName}>{selectedOnlineUser.display_name || "Anon user"}</span>
                   </div>
-                  <div className={styles.finderActionGrid}>
-                    <button type="button" className={styles.secondaryButton} onClick={() => blockUser(selectedOnlineUser)}>
-                      [ BLOCK ]
-                    </button>
-                    <button type="button" className={styles.secondaryButton} onClick={() => reportUser(selectedOnlineUser)}>
-                      [ REPORT ]
-                    </button>
-                  </div>
                 </div>
               ) : null}
 
               {personStatus ? <p className={styles.helpText}>{personStatus}</p> : null}
-              {activeThreadId ? (
-                <div className={styles.chatBox}>
-                  <p className={styles.helpText}>
-                    Aktiv chat: {activePartner?.public_id} ({activeThreadId.slice(0, 8)})
-                  </p>
-                  <div className={styles.chatMessages}>
-                    {chatMessages.map((message) => (
-                      <p key={message.id} className={styles.chatMessageLine}>
-                        [{message.sender_identity_token === session.identityToken ? "EN" : "MASIK"}] {message.body}
-                      </p>
-                    ))}
-                  </div>
-                  <div className={styles.row}>
-                    <input
-                      className={styles.input}
-                      value={chatInput}
-                      onChange={(event) => setChatInput(event.target.value)}
-                      placeholder="Uzenet..."
-                    />
-                    <button type="button" className={styles.actionButton} onClick={sendChatMessage}>
-                      [ KULD ]
-                    </button>
-                  </div>
-                </div>
-              ) : null}
             </AccordionContent>
           </AccordionItem>
 
@@ -490,6 +492,68 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
           <p className={styles.progressText}>Progress: {completedCount}/4 feature kesz</p>
         )}
       </main>
+
+      {isChatModalOpen ? (
+        <div className={styles.chatModalOverlay} role="dialog" aria-modal="true" aria-labelledby="chat-modal-title">
+          <div className={styles.chatModalDialog}>
+            <div className={styles.chatModalHeader}>
+              <div>
+                <h2 id="chat-modal-title" className={styles.chatModalTitle}>
+                  CHAT / {activePartner?.public_id ?? "USER"}
+                </h2>
+                <p className={styles.chatModalMeta}>
+                  {activeThreadId ? `Thread: ${activeThreadId.slice(0, 8)}` : "Kapcsolodas folyamatban..."}
+                </p>
+              </div>
+              <button type="button" className={styles.chatModalClose} onClick={closeChatModal} aria-label="Chat bezarasa">
+                [ X ]
+              </button>
+            </div>
+
+            <div className={styles.chatModalBody}>
+              <div className={styles.chatMessagesPanel}>
+                {chatMessages.length === 0 ? (
+                  <p className={styles.chatEmptyState}>Nincs meg uzenet. Kezdd te a beszelgetest.</p>
+                ) : (
+                  chatMessages.map((message) => {
+                    const isOwnMessage = message.sender_identity_token === session.identityToken;
+
+                    return (
+                      <div
+                        key={message.id}
+                        className={`${styles.chatMessageRow} ${isOwnMessage ? styles.chatMessageRowOwn : styles.chatMessageRowPeer}`}
+                      >
+                        <p className={`${styles.chatBubble} ${isOwnMessage ? styles.chatBubbleOwn : styles.chatBubblePeer}`}>
+                          {message.body}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className={styles.chatComposer}>
+                <input
+                  className={styles.chatInput}
+                  value={chatInput}
+                  onChange={(event) => setChatInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void sendChatMessage();
+                    }
+                  }}
+                  placeholder="Uzenet..."
+                  disabled={!activeThreadId}
+                />
+                <button type="button" className={styles.chatSendButton} onClick={sendChatMessage} disabled={!activeThreadId}>
+                  [ KULD ]
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isResetDialogOpen ? (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="identity-reset-title">

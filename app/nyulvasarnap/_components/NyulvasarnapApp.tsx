@@ -9,6 +9,8 @@ import type { NyulIdentitySession } from "../_lib/types";
 import styles from "./nyulvasarnap.module.css";
 
 type GateState = "loading" | "identity" | "dashboard";
+const MAX_PUBLIC_ID_LENGTH = 15;
+const PUBLIC_ID_PATTERN = /^[A-Z0-9-]{4,15}$/;
 
 export default function NyulvasarnapApp() {
   const [gateState, setGateState] = useState<GateState>("loading");
@@ -38,7 +40,13 @@ export default function NyulvasarnapApp() {
   }, []);
 
   async function handleIdentitySubmit(publicId: string) {
-    const normalizedPublicId = publicId.trim().toUpperCase();
+    const normalizedPublicId = publicId.trim().toUpperCase().slice(0, MAX_PUBLIC_ID_LENGTH);
+
+    if (!PUBLIC_ID_PATTERN.test(normalizedPublicId)) {
+      setIdentityError("A PUBLIC ID csak A-Z, 0-9, - lehet, 4-15 karakter hosszan.");
+      return;
+    }
+
     const next = buildIdentity(normalizedPublicId);
     next.publicId = normalizedPublicId;
     next.displayName = normalizedPublicId;
