@@ -76,6 +76,18 @@
   text-transform: uppercase;
 }
 
+.unreadBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid #fff;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .tickerWrap {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
@@ -145,6 +157,18 @@
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.unreadTriggerBadge {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid #fff;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .accordionContent {

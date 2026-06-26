@@ -34,6 +34,7 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
   const [activePartner, setActivePartner] = useState<{ public_id: string; display_name: string; identity_token: string } | null>(null);
   const [personStatus, setPersonStatus] = useState("");
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [completion, setCompletion] = useState<Record<NyulFeatureKey, boolean>>({
     "rabbit-network": false,
     "person-finder": false,
@@ -96,12 +97,73 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
     }
   }
 
+  async function refreshUnreadChatCount() {
+    const db = getNyulDbClient();
+    if (!db) return;
+
+    const participantsResult = await db
+      .from("nyul_chat_participants")
+      .select("thread_id, last_read_at")
+      .eq("identity_token", session.identityToken);
+
+    if (participantsResult.error || !participantsResult.data) {
+      return;
+    }
+
+    const participants = participantsResult.data as Array<{ thread_id: string; last_read_at: string | null }>;
+    if (participants.length === 0) {
+      setUnreadChatCount(0);
+      return;
+    }
+
+    const threadIds = participants.map((participant) => participant.thread_id);
+    const lastReadByThread = new Map(participants.map((participant) => [participant.thread_id, participant.last_read_at]));
+
+    const messageResult = await db
+      .from("nyul_chat_messages")
+      .select("id, thread_id, created_at, sender_identity_token")
+      .in("thread_id", threadIds)
+      .neq("sender_identity_token", session.identityToken)
+      .order("created_at", { ascending: false })
+      .limit(400);
+
+    if (messageResult.error || !messageResult.data) {
+      return;
+    }
+
+    const unreadCount = (messageResult.data as Array<{ thread_id: string; created_at: string }>).reduce((count, message) => {
+      const lastReadAt = lastReadByThread.get(message.thread_id);
+
+      if (!lastReadAt) {
+        return count + 1;
+      }
+
+      return new Date(message.created_at) > new Date(lastReadAt) ? count + 1 : count;
+    }, 0);
+
+    setUnreadChatCount(unreadCount);
+  }
+
+  async function markThreadAsRead(threadId: string) {
+    const db = getNyulDbClient();
+    if (!db) return;
+
+    await db
+      .from("nyul_chat_participants")
+      .update({ last_read_at: new Date().toISOString() })
+      .eq("thread_id", threadId)
+      .eq("identity_token", session.identityToken);
+
+    void refreshUnreadChatCount();
+  }
+
   useEffect(() => {
     const db = getNyulDbClient();
     if (!db) return;
 
     void refreshTickerFromDb();
     void refreshOnlineUsers();
+    void refreshUnreadChatCount();
 
     void db
       .from("nyul_feed_entries")
@@ -146,10 +208,28 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
       void refreshOnlineUsers();
     }, 5000);
 
+    const unreadPollingId = window.setInterval(() => {
+      void refreshUnreadChatCount();
+    }, 5000);
+
+    const unreadChannel = db
+      .channel(`nyul-chat-unread-${session.identityToken}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "nyul_chat_messages" },
+        (payload: { new: { sender_identity_token?: string } }) => {
+          if (payload.new.sender_identity_token === session.identityToken) return;
+          void refreshUnreadChatCount();
+        }
+      )
+      .subscribe();
+
     return () => {
       db.removeChannel(tickerChannel);
+      db.removeChannel(unreadChannel);
       window.clearInterval(tickerPollingId);
       window.clearInterval(onlineUsersPollingId);
+      window.clearInterval(unreadPollingId);
 
       if (chatChannelRef.current) {
         db.removeChannel(chatChannelRef.current);
@@ -266,6 +346,7 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
       .limit(80);
 
     setChatMessages(history.data ?? []);
+    void markThreadAsRead(threadId);
 
     await markFeatureComplete(session, "person-finder");
     setCompletion((prev) => ({ ...prev, "person-finder": true }));
@@ -395,6 +476,11 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
         <div className={styles.identityStrip}>
           <span>ID: {session.publicId}</span>
           {session.displayName && session.displayName !== session.publicId ? <span>{session.displayName}</span> : null}
+          {unreadChatCount > 0 ? (
+            <span className={styles.unreadBadge}>
+              UJ UZENET: {unreadChatCount > 9 ? "9+" : unreadChatCount}
+            </span>
+          ) : null}
           <button type="button" className={styles.linkButton} onClick={() => setIsResetDialogOpen(true)}>
             identity reset
           </button>
@@ -435,7 +521,12 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
           </AccordionItem>
 
           <AccordionItem value="person-finder" className={styles.accordionItem}>
-            <AccordionTrigger className={styles.accordionTrigger}>2. / Nyúl kereső</AccordionTrigger>
+            <AccordionTrigger className={styles.accordionTrigger}>
+              <span>2. / Nyúl kereső</span>
+              {unreadChatCount > 0 ? (
+                <span className={styles.unreadTriggerBadge}>{unreadChatCount > 9 ? "9+" : unreadChatCount}</span>
+              ) : null}
+            </AccordionTrigger>
             <AccordionContent className={styles.accordionContent}>
               <div className={styles.finderTopRow}>
                 <select
