@@ -276,10 +276,20 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "nyul_chat_messages", filter: `thread_id=eq.${threadId}` },
         (payload: { new: { id: string; body: string; sender_identity_token: string } }) => {
-          setChatMessages((prev) => [...prev, payload.new]);
+          setChatMessages((prev) => {
+            if (prev.some((message) => message.id === payload.new.id)) {
+              return prev;
+            }
+
+            return [...prev, payload.new];
+          });
         }
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setPersonStatus("Realtime kapcsolat hiba. Ellenorizd a Supabase realtime publication beallitast.");
+        }
+      });
 
     chatChannelRef.current = channel;
   }
@@ -303,11 +313,30 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
     const db = getNyulDbClient();
     if (!db) return;
 
-    await db.from("nyul_chat_messages").insert({
-      thread_id: activeThreadId,
-      sender_identity_token: session.identityToken,
-      body: message,
-    });
+    const insertResult = await db
+      .from("nyul_chat_messages")
+      .insert({
+        thread_id: activeThreadId,
+        sender_identity_token: session.identityToken,
+        body: message,
+      })
+      .select("id, body, sender_identity_token")
+      .single();
+
+    if (insertResult.error) {
+      setPersonStatus(`Uzenet kuldes hiba: ${insertResult.error.message}`);
+      return;
+    }
+
+    if (insertResult.data) {
+      setChatMessages((prev) => {
+        if (prev.some((existing) => existing.id === insertResult.data.id)) {
+          return prev;
+        }
+
+        return [...prev, insertResult.data];
+      });
+    }
 
     setChatInput("");
   }
