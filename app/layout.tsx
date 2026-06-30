@@ -7,7 +7,7 @@ import "./globals.css"
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 // import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
-import { Crimson_Pro, Inter } from "next/font/google";
+import { Crimson_Pro, Inter, VT323 } from "next/font/google";
 import { Special_Elite } from "next/font/google";
 import PWAInstallManager from "@/components/PWAInstallManager";
 import AuthUrlSessionSync from "@/components/AuthUrlSessionSync";
@@ -31,6 +31,8 @@ const inter = Inter({
 });
 
 const specialElite = Special_Elite({ subsets: ["latin"], weight: "400", variable: "--font-heading" });
+
+const vt323 = VT323({ subsets: ["latin"], weight: "400", variable: "--font-terminal" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vallalhatatlan.online"),
@@ -80,7 +82,7 @@ export const metadata: Metadata = {
     type: "book",
     url: "/",
     siteName: "Vállalhatatlan",
-    title: "Vállalhatatlan — Y2K | Underground Budapest a 90-es évekből",
+    title: "Vállalhatatlan — Meg sem történt történetek",
     description:
       "Nyers, sötét humorú novellák a 90-es évek/ezredforduló Budapestjéről: techno, acid, rave, drogkultúra és töréspontok.",
     images: [
@@ -88,7 +90,7 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "Vállalhatatlan — Y2K könyv: Budapest underground, techno és 90-es évek",
+        alt: "Vállalhatatlan — Meg sem történt történetek",
       },
     ],
     locale: "hu_HU",
@@ -133,7 +135,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${crimson.variable} ${inter.variable} ${specialElite.variable} antialiased overflow-x-hidden`}
+        className={`${crimson.variable} ${inter.variable} ${specialElite.variable} ${vt323.variable} antialiased overflow-x-hidden`}
         style={{ touchAction: 'pan-y' }}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

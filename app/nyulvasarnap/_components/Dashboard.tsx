@@ -35,6 +35,9 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
   const [personStatus, setPersonStatus] = useState("");
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [unreadSenders, setUnreadSenders] = useState<
+    Array<{ identity_token: string; public_id: string; display_name: string; unread_count: number; latest_at: string }>
+  >([]);
   const [completion, setCompletion] = useState<Record<NyulFeatureKey, boolean>>({
     "rabbit-network": false,
     "person-finder": false,
@@ -113,6 +116,7 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
     const participants = participantsResult.data as Array<{ thread_id: string; last_read_at: string | null }>;
     if (participants.length === 0) {
       setUnreadChatCount(0);
+      setUnreadSenders([]);
       return;
     }
 
@@ -131,17 +135,95 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
       return;
     }
 
-    const unreadCount = (messageResult.data as Array<{ thread_id: string; created_at: string }>).reduce((count, message) => {
-      const lastReadAt = lastReadByThread.get(message.thread_id);
+    const unreadMessages = (messageResult.data as Array<{ thread_id: string; created_at: string; sender_identity_token: string }>).filter(
+      (message) => {
+        const lastReadAt = lastReadByThread.get(message.thread_id);
 
-      if (!lastReadAt) {
-        return count + 1;
+        if (!lastReadAt) {
+          return true;
+        }
+
+        return new Date(message.created_at) > new Date(lastReadAt);
       }
+    );
 
-      return new Date(message.created_at) > new Date(lastReadAt) ? count + 1 : count;
-    }, 0);
+    setUnreadChatCount(unreadMessages.length);
 
-    setUnreadChatCount(unreadCount);
+    if (unreadMessages.length === 0) {
+      setUnreadSenders([]);
+      return;
+    }
+
+    const senderAggregate = unreadMessages.reduce(
+      (acc, message) => {
+        const existing = acc.get(message.sender_identity_token);
+
+        if (!existing) {
+          acc.set(message.sender_identity_token, {
+            identity_token: message.sender_identity_token,
+            unread_count: 1,
+            latest_at: message.created_at,
+          });
+          return acc;
+        }
+
+        existing.unread_count += 1;
+        if (new Date(message.created_at) > new Date(existing.latest_at)) {
+          existing.latest_at = message.created_at;
+        }
+
+        return acc;
+      },
+      new Map<string, { identity_token: string; unread_count: number; latest_at: string }>()
+    );
+
+    const senderTokens = Array.from(senderAggregate.keys());
+    const senderIdentityResult = await db
+      .from("nyul_identities")
+      .select("identity_token, public_id, display_name")
+      .in("identity_token", senderTokens);
+
+    const senderIdentityRows = (senderIdentityResult.data ?? []) as Array<{
+      identity_token: string;
+      public_id: string;
+      display_name: string;
+    }>;
+    const senderIdentityMap = new Map(senderIdentityRows.map((row) => [row.identity_token, row]));
+
+    const mappedSenders = Array.from(senderAggregate.values())
+      .map((sender) => {
+        const identity = senderIdentityMap.get(sender.identity_token);
+        return {
+          identity_token: sender.identity_token,
+          public_id: identity?.public_id ?? "ISMERETLEN",
+          display_name: identity?.display_name ?? "Anon user",
+          unread_count: sender.unread_count,
+          latest_at: sender.latest_at,
+        };
+      })
+      .sort((a, b) => new Date(b.latest_at).getTime() - new Date(a.latest_at).getTime());
+
+    setUnreadSenders(mappedSenders);
+  }
+
+  async function connectToUser(target: { public_id: string; display_name: string; identity_token: string }) {
+    setIsChatModalOpen(true);
+    setActiveThreadId(null);
+    setChatMessages([]);
+    setActivePartner(target);
+    setPersonStatus(`Kapcsolodas: ${target.public_id}...`);
+
+    await startChatWithTarget(target);
+  }
+
+  async function openUnreadSenderChat(sender: { identity_token: string; public_id: string; display_name: string }) {
+    if (sender.public_id === "ISMERETLEN") {
+      setPersonStatus("Az uzenet kuldoje mar nem elerheto a listaban.");
+      return;
+    }
+
+    setSelectedUserToken(sender.identity_token);
+    await connectToUser(sender);
   }
 
   async function markThreadAsRead(threadId: string) {
@@ -304,13 +386,7 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
       return;
     }
 
-    setIsChatModalOpen(true);
-    setActiveThreadId(null);
-    setChatMessages([]);
-    setActivePartner(selectedOnlineUser);
-    setPersonStatus(`Kapcsolodas: ${selectedOnlineUser.public_id}...`);
-
-    await startChatWithTarget(selectedOnlineUser);
+    await connectToUser(selectedOnlineUser);
   }
 
   async function startChatWithTarget(target: { public_id: string; display_name: string; identity_token: string }) {
@@ -364,6 +440,10 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
 
             return [...prev, payload.new];
           });
+
+          if (payload.new.sender_identity_token !== session.identityToken) {
+            void markThreadAsRead(threadId);
+          }
         }
       )
       .subscribe((status: string) => {
@@ -474,16 +554,35 @@ export default function Dashboard({ session, onResetIdentity }: DashboardProps) 
 
       <header className={styles.identityHeader}>
         <div className={styles.identityStrip}>
-          <span>ID: {session.publicId}</span>
-          {session.displayName && session.displayName !== session.publicId ? <span>{session.displayName}</span> : null}
-          {unreadChatCount > 0 ? (
-            <span className={styles.unreadBadge}>
-              UJ UZENET: {unreadChatCount > 9 ? "9+" : unreadChatCount}
-            </span>
-          ) : null}
-          <button type="button" className={styles.linkButton} onClick={() => setIsResetDialogOpen(true)}>
-            identity reset
-          </button>
+          <div className={styles.identityPrimary}>
+            <span>ID: {session.publicId}</span>
+            {session.displayName && session.displayName !== session.publicId ? <span>{session.displayName}</span> : null}
+            <button type="button" className={styles.linkButton} onClick={() => setIsResetDialogOpen(true)}>
+              identity reset
+            </button>
+          </div>
+          <div className={styles.identityUnreadRail}>
+            {unreadSenders.length > 0 ? (
+              <div className={styles.unreadRailLabel}>
+                UJ UZENET {unreadChatCount > 9 ? "9+" : unreadChatCount}
+              </div>
+            ) : null}
+            {unreadSenders.map((sender) => (
+              <button
+                key={sender.identity_token}
+                type="button"
+                className={styles.unreadChip}
+                onClick={() => void openUnreadSenderChat(sender)}
+                aria-label={`Olvasatlan uzenet ${sender.public_id} feladotol`}
+              >
+                <span className={styles.unreadChipName}>
+                  {sender.public_id}
+                  {sender.display_name && sender.display_name !== sender.public_id ? ` (${sender.display_name})` : ""}
+                </span>
+                <span className={styles.unreadChipMeta}>{sender.unread_count}</span>
+              </button>
+            ))}
+          </div>
         </div>
         <div className={styles.tickerWrap}>
           <div className={styles.tickerList}>

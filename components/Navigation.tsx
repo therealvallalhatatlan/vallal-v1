@@ -8,6 +8,13 @@ import { KeyRound, LogOut } from "lucide-react";
 import { useSessionGuard } from "@/hooks/useSessionGuard";
 import { createClient } from "@/lib/browser";
 
+const SOCIAL_LINKS = [
+  { label: "Email", href: "mailto:therealvallalhatatlan@gmail.com" },
+  { label: "Facebook", href: "https://www.facebook.com/vallalhatatlan2000" },
+  { label: "Reddit", href: "https://reddit.com/r/vallalhatatlan" },
+  { label: "Substack", href: "https://vallalhatatlan.substack.com/" },
+];
+
 export default function Navigation() {
   const { session, error } = useSessionGuard();
   const [isClient, setIsClient] = useState(false);
@@ -17,27 +24,21 @@ export default function Navigation() {
   const supabase = createClient();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  // Ensure we only render on client to prevent hydration mismatch
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   if (error) {
-    console.error('[Navigation] Auth error:', error);
+    console.error("[Navigation] Auth error:", error);
   }
 
-  // Prevent hydration mismatch by not rendering until client is ready
   if (!isClient) {
     return (
       <div className="relative">
-        <nav className="max-w-3xl mx-auto py-6 md:px-0 px-6">
-          <div className="flex md:hidden items-center justify-between gap-4 text-sm w-full">
-            <a href="/" className="hover:text-lime-300 transition-colors">
-              <img
-                src="/img/logo.png"
-                alt="Vállalhatatlan"
-                className="h-10 w-auto"
-              />
+        <nav className="py-4 px-4 md:px-8 border-b border-white/10 font-mono">
+          <div className="flex items-center justify-between">
+            <a href="/">
+              <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
             </a>
           </div>
         </nav>
@@ -54,144 +55,54 @@ export default function Navigation() {
 
   return (
     <div className="relative">
-      <nav className="max-w-3xl mx-auto py-6 md:px-0 px-6">
-        {/* Mobile Layout */}
-        {userEmail ? (
-          <div className="flex md:hidden flex-col items-center gap-4 w-full text-sm">
-            <Link href="/" className="hover:text-lime-300 transition-colors">
-              <img
-                src="/img/logo.png"
-                alt="Vállalhatatlan"
-                className="h-16 md:h-10 w-auto"
-              />
-            </Link>
+      <nav className="py-4 px-4 md:px-8 border-b border-white/10 font-mono text-gray-200">
 
-            <div className="flex flex-col items-center gap-3 w-full">
-              <Link
-                href={`/user/${userId}`}
-                className="text-xs text-neutral-300 hover:text-lime-300 normal-case tracking-normal truncate max-w-full px-4 text-center transition-colors"
-              >
-                Üdv, {userEmail}
-              </Link>
-              <div className="flex items-center gap-3 flex-wrap justify-center">
-                <Link
-                  href="/halozat"
-                  className="rounded-lg bg-white px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-neutral-200"
-                >
-                  Hálózat
-                </Link>
-                <Link
-                  href="/reader"
-                  className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
-                >
-                  Reader
-                </Link>
-                {/*
-                <Link
-                  href="/matrica"
-                  className="rounded-lg bg-purple-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-purple-400"
-                >
-                  Maps
-                </Link>
-                */}
-                
-                <button
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                  aria-label="Kijelentkezés"
-                  className="text-neutral-400 hover:text-lime-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed p-1"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex md:hidden w-full items-center justify-between gap-4 text-sm">
-            <Link href="/" className="hover:text-lime-300 transition-colors">
-              <img
-                src="/img/logo.png"
-                alt="Vállalhatatlan"
-                className="h-10 w-auto"
-              />
-            </Link>
+        {/* ── Mobile Layout ── */}
+        <div className="flex md:hidden items-center justify-between gap-4 text-sm">
+          <Link href="/" className="hover:opacity-80 transition-opacity ml-20">
+            <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
+          </Link>
 
-            <div className="flex items-center justify-end gap-2">
+          {userEmail ? (
+            <div className="flex items-center gap-2">
               <Link
                 href="/shop"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-lime-400 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-300 hover:text-black"
+                className="border border-white/30 px-3 py-1.5 text-xs font-bold tracking-widest text-lime-400 hover:border-lime-400 hover:bg-lime-400/5 transition-colors"
               >
                 Shop
               </Link>
               <Link
-                href="/auth?from=/reader"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/50 bg-black/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-white hover:text-black transition-colors hover:bg-lime-400"
-              >
-                Klubtagoknak
-                <KeyRound className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Desktop Layout: Horizontal */}
-        <div className="hidden md:flex w-full items-center justify-between gap-6 text-sm uppercase tracking-[0.18em] text-neutral-300">
-          <Link href="/" className="hover:text-lime-300 transition-colors">
-            <img
-              src="/img/logo.png"
-              alt="Vállalhatatlan"
-              className="h-10 md:px-6 w-auto"
-            />
-          </Link>
-
-          {userEmail ? (
-            <div className="flex items-center gap-4 justify-end">
-              <Link
-                href={`/user/${userId}`}
-                className="text-xs text-neutral-300 hover:text-lime-300 normal-case tracking-normal max-w-[220px] truncate transition-colors"
-              >
-                Üdv, {userEmail}
-              </Link>
-              <Link
                 href="/halozat"
-                className="rounded-lg bg-white px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-neutral-200"
+                className="border border-white/30 px-3 py-1.5 text-xs font-semibold tracking-widest text-white hover:border-lime-400 hover:text-lime-400 transition-colors"
               >
                 Hálózat
               </Link>
               <Link
                 href="/reader"
-                className="rounded-lg bg-lime-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-400"
+                className="border border-lime-500/60 bg-lime-500/10 px-3 py-1.5 text-xs font-semibold tracking-widest text-lime-400 hover:bg-lime-500/20 transition-colors"
               >
                 Reader
               </Link>
-              {/*
-              <Link
-                href="/matrica"
-                className="rounded-lg bg-purple-500 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-purple-400"
-              >
-                Maps
-              </Link>
-              */}
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
                 aria-label="Kijelentkezés"
-                className="text-neutral-400 hover:text-lime-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed p-1"
+                className="text-gray-500 hover:text-lime-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed p-1"
               >
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center gap-2">
               <Link
                 href="/shop"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-lime-400 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-black transition-colors hover:bg-lime-300 hover:text-black"
+                className="border border-white/30 px-3 py-1.5 text-xs font-bold tracking-widest text-lime-400 hover:border-lime-400 hover:bg-lime-400/5 transition-colors"
               >
                 Shop
               </Link>
               <Link
                 href="/auth?from=/reader"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/50 bg-black/20 px-4 py-2 text-xs font-semibold tracking-[0.2em] text-white hover:text-black transition-colors hover:bg-lime-400"
+                className="inline-flex items-center gap-1.5 border border-white/30 px-3 py-1.5 text-xs font-bold tracking-widest text-white hover:border-lime-400 hover:text-lime-400 transition-colors"
               >
                 Klubtagoknak
                 <KeyRound className="h-3.5 w-3.5" />
@@ -199,9 +110,86 @@ export default function Navigation() {
             </div>
           )}
         </div>
+
+        {/* ── Desktop Layout: Logo | Auth | Social ── */}
+        <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center gap-6 text-xs uppercase tracking-[0.18em]">
+
+          {/* Left: Logo — shifted right to clear the corner crack */}
+          <Link href="/" className="hover:opacity-80 transition-opacity ml-36">
+            <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
+          </Link>
+
+          {/* Center: Auth / KLUBTAGOKNAK */}
+          {userEmail ? (
+            <div className="flex items-center gap-4">
+              <Link
+                href={`/user/${userId}`}
+                className="text-xs normal-case tracking-normal text-gray-400 hover:text-lime-300 max-w-[200px] truncate transition-colors"
+              >
+                Üdv, {userEmail}
+              </Link>
+              <Link
+                href="/halozat"
+                className="border border-white/30 px-4 py-2 font-semibold tracking-widest text-white hover:border-lime-400 hover:text-lime-400 transition-colors"
+              >
+                Hálózat
+              </Link>
+              <Link
+                href="/shop"
+                className="border border-white/30 px-4 py-2 font-semibold tracking-widest text-lime-400 hover:border-lime-400 hover:bg-lime-400/5 transition-colors"
+              >
+                Shop
+              </Link>
+              <Link
+                href="/reader"
+                className="border border-lime-500/60 bg-lime-500/10 px-4 py-2 font-semibold tracking-widest text-lime-400 hover:bg-lime-500/20 hover:border-lime-400 transition-colors"
+              >
+                Reader
+              </Link>
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                aria-label="Kijelentkezés"
+                className="text-gray-500 hover:text-lime-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed p-1"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-2 border border-white/30 px-5 py-2.5 font-bold tracking-[0.25em] text-lime-400 hover:border-lime-400 hover:bg-lime-400/5 transition-colors"
+              >
+                Shop
+              </Link>
+              <Link
+                href="/auth?from=/reader"
+                className="inline-flex items-center gap-2 border border-white/30 px-5 py-2.5 font-bold tracking-[0.25em] text-white hover:border-lime-400 hover:text-lime-400 transition-colors"
+              >
+                Klubtagoknak
+                <KeyRound className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          )}
+
+          {/* Right: Social links */}
+          <div className="flex items-center justify-end gap-5 text-gray-400 normal-case tracking-normal">
+            {SOCIAL_LINKS.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target={link.href.startsWith("mailto") ? undefined : "_blank"}
+                rel={link.href.startsWith("mailto") ? undefined : "noopener noreferrer"}
+                className="hover:text-lime-400 transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+
+        </div>
       </nav>
-
-
     </div>
   );
 }

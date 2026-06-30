@@ -1,0 +1,78 @@
+/* CRT Page-specific Styles */
+
+.crtContainer {
+  background: linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%);
+  color: #a3e635;
+}
+
+.terminalGlow {
+  text-shadow: 0 0 10px rgba(163, 230, 53, 0.5), 0 0 20px
+    rgba(163, 230, 53, 0.2);
+  font-family: "Courier New", monospace;
+}
+
+.scanlineOverlay {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.28) 0 1px,
+    rgba(0, 0, 0, 0) 3px 4px
+  );
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.glitchShift {
+  animation: glitch-shift 0.15s steps(4) infinite;
+}
+
+@keyframes glitch-shift {
+  0% {
+    transform: translateX(-2px);
+  }
+  25% {
+    transform: translateX(2px);
+  }
+  50% {
+    transform: translateX(-1px);
+  }
+  75% {
+    transform: translateX(1px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.terminalCursor {
+  animation: terminal-blink 1s steps(2) infinite;
+  display: inline-block;
+  margin-left: 4px;
+}
+
+@keyframes terminal-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.vignette {
+  position: relative;
+}
+
+.vignette::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  pointer-events: none;
+}

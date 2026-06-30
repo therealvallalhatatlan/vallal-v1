@@ -19,15 +19,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, camp
 
   return (
     <motion.div
-      whileHover={{ scale: 1.025, boxShadow: "0 4px 32px 0 rgba(0,255,128,0.10)" }}
-      className="group relative flex flex-col rounded-3xl border border-neutral-800 bg-black/80 shadow-xl overflow-hidden cursor-pointer transition-all duration-200 hover:border-lime-400"
+      whileHover={{ scale: 1.015, boxShadow: "0 0 28px 0 rgba(163,230,53,0.12)" }}
+      className="group relative flex flex-col border border-white/10 bg-black/80 overflow-hidden cursor-pointer transition-all duration-200 hover:border-lime-400/50 font-mono"
       onClick={onClick}
     >
-      <div className="relative aspect-[4/5] w-full bg-neutral-900 flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-[4/5] w-full bg-black/60 flex items-center justify-center overflow-hidden">
         <img
           src={currentImage}
           alt={product.name}
-          className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300"
+          className="object-contain w-full h-full grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
           loading="lazy"
         />
         {product.comingSoon && (
@@ -47,7 +47,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, camp
         )}
         {hasBack && (
           <button
-            className="absolute bottom-2 right-2 z-10 bg-black/70 border border-neutral-600 text-neutral-300 rounded-full p-2 hover:bg-lime-400 hover:text-black hover:border-lime-400 transition-all"
+            className="absolute bottom-2 right-2 z-10 bg-black/70 border border-white/20 text-white/50 p-2 hover:border-lime-400/60 hover:text-lime-400 transition-all"
             onClick={(e) => { e.stopPropagation(); setShowBack((v) => !v); }}
             aria-label="Megfordítás"
           >
@@ -56,9 +56,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, camp
         )}
       </div>
 
-      <div className="flex-1 flex flex-col p-5 gap-3">
-        <h3 className="text-xl font-extrabold text-white drop-shadow-sm mb-1">{product.name}</h3>
-        <span className="text-2xl font-black text-lime-400 mb-2">{product.price} Ft</span>
+      <div className="flex-1 flex flex-col p-4 gap-2">
+        <h3 className="text-sm font-bold text-white/80 uppercase tracking-wider mb-1">{product.name}</h3>
+        <span className="text-base font-bold text-lime-400">{product.price} Ft</span>
       </div>
 
     </motion.div>

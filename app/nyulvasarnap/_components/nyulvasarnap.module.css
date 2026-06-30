@@ -67,6 +67,23 @@
   overflow-x: auto;
 }
 
+.identityPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.identityUnreadRail {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  max-width: 62%;
+}
+
 .linkButton {
   min-height: 44px;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -76,10 +93,10 @@
   text-transform: uppercase;
 }
 
-.unreadBadge {
+.unreadRailLabel {
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
   padding: 6px 12px;
   border: 1px solid #fff;
   color: #fff;
@@ -88,10 +105,39 @@
   text-transform: uppercase;
 }
 
+.unreadChip {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  font-family: inherit;
+}
+
+.unreadChip:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.unreadChipName {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.unreadChipMeta {
+  color: #a3a3a3;
+  font-size: 18px;
+}
+
 .tickerWrap {
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 8px 10px;
+  padding: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
 }
 
 .tickerList {
@@ -99,7 +145,7 @@
   overflow-y: hidden;
   display: flex;
   flex-direction: row;
-  gap: 10px;
+  gap: 12px;
   padding-right: 4px;
   white-space: nowrap;
 }
@@ -107,13 +153,16 @@
 .tickerRow {
   display: inline-flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   align-items: flex-start;
   justify-content: center;
-  min-width: 420px;
-  min-height: 110px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 10px 12px;
+  min-width: 460px;
+  min-height: 148px;
+  border: 1px solid rgba(0, 0, 0, 0.72);
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(226, 226, 226, 0.88));
+  color: #0a0a0a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
 .tickerRow:last-child {
@@ -121,17 +170,20 @@
 }
 
 .tickerMeta {
-  color: #737373;
-  font-size: 18px;
+  color: #111;
+  font-size: 20px;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .tickerMessage {
-  color: #fff;
-  font-size: 24px;
-  line-height: 1.2;
+  color: #111;
+  font-size: 30px;
+  line-height: 1.15;
   white-space: normal;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .mainPanel {
@@ -981,17 +1033,18 @@
 
 @media (max-width: 767px) {
   .tickerRow {
-    min-width: 300px;
-    min-height: 120px;
+    min-width: 320px;
+    min-height: 156px;
+    padding: 12px 14px;
     gap: 6px;
   }
 
   .tickerMeta {
-    font-size: 14px;
+    font-size: 16px;
   }
 
   .tickerMessage {
-    font-size: 20px;
+    font-size: 24px;
   }
 
   .finderActionGrid {
@@ -1006,6 +1059,25 @@
   .projectorMeta {
     font-size: clamp(16px, 4.4vw, 24px);
     letter-spacing: 0.08em;
+  }
+
+  .identityStrip {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  .identityPrimary {
+    width: 100%;
+  }
+
+  .identityUnreadRail {
+    width: 100%;
+    max-width: 100%;
+    justify-content: flex-start;
+  }
+
+  .unreadChipName {
+    white-space: normal;
   }
 
   .chatModalOverlay {

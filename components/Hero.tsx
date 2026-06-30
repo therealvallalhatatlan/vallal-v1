@@ -53,7 +53,7 @@ export default function Hero() {
   useEffect(() => {
     if (!startDescription) return;
     let i = 0;
-    const descText = 'Ezt a könyvet ne keresd a könyvesboltokban. Ez egy városi kaland. Egy titkos küldetés. A könyv megszerzése része a történetnek.';
+    const descText = 'Ez nem egy könyv. Ez egy városi kaland. Egy titkos küldetés. A könyv megszerzése része a történetnek.';
     const interval = setInterval(() => {
       if (i <= descText.length) {
         setDescriptionText(descText.slice(0, i));
