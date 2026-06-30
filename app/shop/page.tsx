@@ -24,19 +24,17 @@ function getCategory(product: Product) {
   return "other";
 }
 
+// Only show pin and men's shirt (no women's shirt)
+const VISIBLE_PRODUCTS = products.filter((p) => p.id !== 'women-shirt-1');
+
 export default function ShopPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string | undefined>(undefined);
   const [quantity, setQuantity] = useState(1);
   const [cartOpen, setCartOpen] = useState(false);
-  const [category, setCategory] = useState("all");
   const addItem = useCartStore((s) => s.addItem);
   const { campaign, loading: campaignLoading } = usePreorderCampaign(DEFAULT_PREORDER_CAMPAIGN_SLUG);
-
-  const filteredProducts = category === "all"
-    ? products
-    : products.filter((p) => getCategory(p) === category);
 
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
@@ -78,26 +76,8 @@ export default function ShopPage() {
           ) : null}
         </div>
 */}
-        {/* Category Tabs */}
-        <div className="flex justify-center gap-4 mb-10">
-          <div className="inline-flex border border-white/10 p-0.5 font-mono">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.value}
-                className={`px-5 py-2 text-xs font-bold tracking-widest uppercase transition-all ${
-                  category === cat.value
-                    ? 'border border-lime-400/50 bg-lime-400/10 text-lime-400'
-                    : 'text-white/40 hover:text-lime-400 border border-transparent'
-                }`}
-                onClick={() => setCategory(cat.value)}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-        </div>
         <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-          {filteredProducts.map((product) => (
+          {VISIBLE_PRODUCTS.map((product) => (
             <ProductCard key={product.id} product={product} campaign={campaign} onClick={() => handleProductClick(product)} />
           ))}
         </motion.div>

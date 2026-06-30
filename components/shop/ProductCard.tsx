@@ -35,14 +35,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, camp
         )}
         {(product.type === 'men-shirt' || product.type === 'women-shirt') && (
           <div className="absolute top-2 left-2 flex flex-row gap-2 items-center">
-            <Badge className="border border-neutral-500 bg-lime-400/0 text-neutral-400 font-bold hover:bg-lime-400">Előrendelhető</Badge>
-            <span className="text-[10px] text-neutral-400 leading-tight">Várható érkezés: 2026.05.26.</span>
+            <Badge className="border border-neutral-500 bg-lime-400 text-neutral-800 font-bold hover:bg-lime-400">Raktáron</Badge>
+            <span className="text-[10px] text-neutral-400 leading-tight">Limitált készlet / gyorsan fogy</span>
           </div>
         )}
         {product.type === 'pin' && (
           <div className="absolute top-2 left-2 flex flex-row gap-2 items-center">
             <Badge className="border border-neutral-500 bg-lime-400 text-neutral-800 font-bold hover:bg-lime-400">Raktáron</Badge>
             <span className="text-[10px] text-neutral-400 leading-tight">Csomagautomata / dead drop</span>
+          </div>
+        )}
+        {product.type === 'bag' && (
+          <div className="absolute top-2 left-2 flex flex-row gap-2 items-center">
+            <Badge className="border border-neutral-500 bg-lime-400 text-neutral-800 font-bold hover:bg-lime-400">Raktáron</Badge>
+            <span className="text-[10px] text-neutral-400 leading-tight">
+              Pink: {product.colorStock?.Pink ?? 0} db / Fekete: {product.colorStock?.Fekete ?? 0} db
+            </span>
           </div>
         )}
         {hasBack && (

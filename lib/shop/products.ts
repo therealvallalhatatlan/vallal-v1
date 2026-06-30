@@ -1,7 +1,9 @@
 // lib/shop/products.ts
 
 
-export type ProductType = 'pin' | 'men-shirt' | 'women-shirt';
+export type ProductType = 'pin' | 'men-shirt' | 'women-shirt' | 'bag';
+
+export type ProductSize = 'S' | 'M' | 'L' | 'XL' | '2XL';
 
 export type PreorderCampaignStatus = 'collecting' | 'printing_started';
 
@@ -22,7 +24,11 @@ export interface Product {
   description: string;
   images: string[];
   price: number;
-  sizes?: Array<'S' | 'M' | 'L' | 'XL' | '2XL'>;
+  sizes?: Array<ProductSize>;
+  /** Átírható méret szerinti készlet – 0 = elfogyott */
+  sizeStock?: Partial<Record<ProductSize, number>>;
+  /** Átírható szín szerinti készlet – 0 = elfogyott */
+  colorStock?: Record<string, number>;
   stock?: number;
   comingSoon?: boolean;
   preorder?: ProductPreorderConfig;
@@ -41,11 +47,18 @@ export const products: Product[] = [
   {
     id: 'men-shirt-1',
     type: 'men-shirt',
-    name: 'Férfi póló',
-    description: 'Vállalhatatlan nyuszis póló fiúknak, fényvisszaverő sávval. Szitanyomás, kiváló minőség. 100% pamut.',
+    name: 'Vállalhatatlan Póló',
+    description: 'Vállalhatatlan nyuszis póló, fényvisszaverő sávval. Szitanyomás, kiváló minőség. 100% pamut. Lányoknak crop top változatban is kérhető.',
     images: ['/m1.jpg', '/m2.jpg'],
     price: 9990,
-    sizes: ['S', 'M', 'L', 'XL', '2XL'],
+    sizes: ['S', 'M', 'L', 'XL'],
+    // ── ITT ÍRD ÁT A KÉSZLETET méretenként ──
+    sizeStock: {
+      S:   7,
+      M:   6,
+      L:   2,
+      XL:  2,
+    },
     stock: 50,
     preorder: {
       campaignSlug: SHARED_TSHIRT_PREORDER_CAMPAIGN_SLUG,
@@ -54,19 +67,18 @@ export const products: Product[] = [
     },
   },
   {
-    id: 'women-shirt-1',
-    type: 'women-shirt',
-    name: 'Női póló',
-    description: 'Vállalhatatlan nyuszis póló lányoknak, fényvisszaverő sávval. Szitanyomás, kiváló minőség. 100% pamut.',
-    images: ['/w1.jpg', '/w2.jpg'],
-    price: 9990,
-    sizes: ['S', 'M', 'L', 'XL', '2XL'],
-    stock: 50,
-    preorder: {
-      campaignSlug: SHARED_TSHIRT_PREORDER_CAMPAIGN_SLUG,
-      preorderOnly: true,
-      goal: SHARED_TSHIRT_PREORDER_GOAL,
+    id: 'bag-1',
+    type: 'bag',
+    name: 'Vállalhatatlan Táska',
+    description: 'Erős, tartós anyag, szitanyomással, fényvisszaverő csíkkal.',
+    images: ['/ny2.jpg'],
+    price: 10000,
+    // ── ITT ÍRD ÁT A KÉSZLETET színenként ──
+    colorStock: {
+      Pink: 5,
+      Fekete: 11,
     },
+    stock: 16,
   },
   // Room for future drops
 ];

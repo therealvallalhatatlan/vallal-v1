@@ -161,11 +161,11 @@ export default function HeroTerminal() {
           <div className="flex-1 overflow-y-auto divide-y divide-white/10">
             {/* Product 1: Férfi póló */}
             <div className="p-4 space-y-3">
-              <div className="overflow-hidden aspect-[4/3] bg-zinc-900">
+              <div className="overflow-hidden bg-zinc-900">
                 <img
                   src="/ny1.jpg"
                   alt="Férfi póló"
-                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                  className="w-full h-auto object-cover grayscale hover:grayscale-0 transition-all duration-500"
                 />
               </div>
               <p className="text-xs text-white/45 leading-relaxed">
@@ -181,11 +181,11 @@ export default function HeroTerminal() {
 
             {/* Product 2: Női póló */}
             <div className="p-4 space-y-3">
-              <div className="overflow-hidden aspect-[4/3] bg-zinc-900">
+              <div className="overflow-hidden bg-zinc-900">
                 <img
                   src="/ny2.jpg"
                   alt="Női póló"
-                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                  className="w-full h-auto object-cover grayscale hover:grayscale-0 transition-all duration-500"
                 />
               </div>
               <p className="text-xs text-white/45 leading-relaxed">

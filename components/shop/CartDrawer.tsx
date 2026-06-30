@@ -50,7 +50,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ open, onOpenChange, onCh
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-white/80 text-sm uppercase tracking-wider truncate">{item.product?.name}</div>
                   {item.variantId && (
-                    <div className="text-xs text-white/40 mt-1">Méret: <span className="font-bold text-white/70">{item.variantId}</span></div>
+                    <div className="text-xs text-white/40 mt-1">Változat: <span className="font-bold text-white/70">{item.variantId}</span></div>
                   )}
                   <div className="flex items-center gap-2 mt-2">
                     <button className="border border-white/20 hover:border-lime-400/50 text-white/50 hover:text-lime-400 w-7 h-7 flex items-center justify-center transition-all" onClick={() => updateQuantity(item.productId, item.variantId, Math.max(1, item.quantity - 1))}>-</button>
