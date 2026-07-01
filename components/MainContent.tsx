@@ -25,7 +25,7 @@ export default function MainContent({ children }: MainContentProps) {
         alt=""
         aria-hidden="true"
         className="fixed pointer-events-none z-[60] w-48 md:w-64 select-none"
-        style={{ top: "-20px", left: "-30px" }}
+        style={{ top: "-30px", left: "-30px" }}
         draggable={false}
       />
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { DeliveryMethod, getDeliveryFee } from "@/lib/shop/delivery";
 import { products } from "@/lib/shop/products";
 import {
   attachStripeSessionToOrder,
@@ -21,6 +22,10 @@ type CheckoutItem = {
   variantId?: string;
 };
 
+function parseDeliveryMethod(input: unknown): DeliveryMethod {
+  return input === "postaautomata" ? "postaautomata" : "dead-drop";
+}
+
 export async function POST(req: NextRequest) {
   let draftOrderId: string | null = null;
 
@@ -37,6 +42,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const items = Array.isArray(body?.items) ? (body.items as CheckoutItem[]) : [];
+    const deliveryMethod = parseDeliveryMethod(body?.deliveryMethod);
 
     if (items.length === 0) {
       return NextResponse.json(
@@ -46,10 +52,10 @@ export async function POST(req: NextRequest) {
     }
 
     const validatedItems = validateCheckoutItems(items);
-    const draftOrder = await createShopOrderDraft(validatedItems);
+    const draftOrder = await createShopOrderDraft({ items: validatedItems, deliveryMethod });
     draftOrderId = draftOrder.orderId;
 
-    const line_items = validatedItems.map((item) => {
+    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = validatedItems.map((item) => {
       const product = products.find((p) => p.id === item.product.id);
       if (!product) throw new Error(`Product not found: ${item.product.id}`);
 
@@ -66,6 +72,20 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    const deliveryFee = getDeliveryFee(deliveryMethod);
+    if (deliveryFee > 0) {
+      line_items.push({
+        price_data: {
+          currency: "huf",
+          product_data: {
+            name: "Postaautomata kézbesítés",
+          },
+          unit_amount: deliveryFee * 100,
+        },
+        quantity: 1,
+      });
+    }
+
     const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
     const session = await stripe.checkout.sessions.create({
@@ -77,6 +97,9 @@ export async function POST(req: NextRequest) {
       metadata: {
         orderType: "merch",
         orderId: draftOrder.orderId,
+        deliveryMethod,
+        shippingAmount: String(draftOrder.shippingAmount),
+        totalAmount: String(draftOrder.totalAmount),
       },
       shipping_address_collection: { allowed_countries: ["HU"] },
     });

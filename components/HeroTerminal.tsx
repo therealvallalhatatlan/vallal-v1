@@ -37,7 +37,7 @@ export default function HeroTerminal() {
         <div className="relative overflow-hidden border-b md:border-b-0 md:border-r border-white/10 min-h-[67vh] md:min-h-0">
           <video
             ref={videoRef}
-            className="absolute inset-0 w-full h-full object-cover opacity-80 grayscale"
+            className="absolute inset-0 w-full h-full max-h-max object-cover opacity-80 grayscale"
             src="/videos/0420.mp4"
             autoPlay
             muted
@@ -93,15 +93,14 @@ export default function HeroTerminal() {
 
           {/* Body */}
           <div className="flex-1 px-6 py-8 flex flex-col gap-6">
-            <h1 className="text-2xl md:text-3xl font-bold leading-snug tracking-wide text-white/90">
+            <h1 className="text-2xl md:text-3xl font-bold  tracking-wide leading-tight text-white/90">
               Vállalhatatlan,<br />
-              meg sem történt<br />
-              történetek
+              meg sem történt történetek
             </h1>
 
-            <p className="text-base text-white/55 leading-relaxed">
-             Ezt a könyvet ne keresd a könyvesboltokban.<br/>
-             Ez egy városi kaland. Egy titkos küldetés.<br/>A könyv megszerzése része a történetnek.
+            <p className="text-xl text-white/55 leading-tight">
+             Nem kapható könyvesboltokban.<br/>
+             Ez egy városi kaland.<br/>A könyv megszerzése a küldetés része.
             </p>
 
             <p className="text-xs text-red-200/65 italic">
@@ -121,83 +120,143 @@ export default function HeroTerminal() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold tracking-widest uppercase text-white/75 group-hover:text-white transition-colors">
-                  második Könyv
+                  KÜLDETÉS INDÍTÁSA
                 </span>
                 <span className="relative flex items-center justify-center w-3 h-3">
                   <span className="absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-60 animate-ping" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-lime-400" />
                 </span>
               </div>
-              <span className="text-xs text-white/35 mt-1 tracking-wider">
-                Sorszámozott darabok, limitált példányszám
+              <span className="text-sm text-white/65 mt-1 tracking-wider">
+                Budapest: dead drop 24 órán belül.<br/>Vidék: diszkrét postai kézbesítés, ha a körön kívül vagy.
               </span>
             </Link>
 
             {/* Dead drop section */}
             <div className="border-t border-white/10 pt-6 space-y-3">
               <h2 className="text-sm font-bold tracking-wider uppercase text-white/70">
-                Mi az a dead drop?
+                [ PROTOCOL // DEAD_DROP ]
               </h2>
               <p className="text-base text-white/50 leading-relaxed">
-                A könyvet elrejtem valahol a városban* és megadok egy leírást,
-                <br/>pár fotót és a koordinátáit.
+                A könyvet elrejtem valahol a városban és megadok egy leírást,
+                <br/>pár fotót és egy koordinátát.
                 <br/>24 órád van megtalálni.
-                <br/>
-                <span className="text-white/50 text-xs">*Ha unalmas automatára vágysz, jelezd.</span>
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── Right Column: Shop ── */}
-        <div className="flex flex-col font-mono">
-          {/* Shop header bar */}
-          <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5 text-xs">
-            <span className="text-white/40">[ Shop ]</span>
-            <span className="text-lime-400">Feltöltve</span>
+        {/* ── Right Column: Infrastructure Catalog ── */}
+        <div className="flex flex-col font-mono bg-black/30">
+          {/* System header bar */}
+          <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-2.5 text-[11px] uppercase tracking-[0.14em]">
+            <span className="text-neutral-400">[ INFRASTRUCTURE // SELF-SUSTENANCE ]</span>
+            <span className="inline-flex items-center gap-2 text-lime-400/90">
+              <span className="h-1.5 w-1.5 rounded-full bg-lime-400" />
+              Active
+            </span>
           </div>
 
-          {/* Product cards */}
-          <div className="flex-1 overflow-y-auto divide-y divide-white/10">
-            {/* Product 1: Férfi póló */}
-            <div className="p-4 space-y-3">
-              <div className="overflow-hidden bg-zinc-900">
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            {/* Manifesto */}
+            <section className="border border-neutral-800 bg-black/40 p-3.5 space-y-2">
+              <p className="text-xl leading-tight text-white/55">
+                Ez a projekt tisztán a könyv bevételeiből és az alábbi három, egyedileg, kézzel készített cuccból tartja fenn magát. 
+              </p>
+            </section>
+
+            {/* Technical catalog */}
+            <section className="border border-neutral-800 divide-y divide-neutral-800 bg-black/40">
+              <article className="grid grid-cols-[150px_minmax(0,1fr)] gap-3 p-3.5 items-start">
                 <img
                   src="/ny1.jpg"
-                  alt="Férfi póló"
-                  className="w-full h-auto object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                  alt="VÁLLALHATATLAN PÓLÓ"
+                  className="h-[150px] w-[150px] border border-neutral-800 object-cover grayscale"
                 />
-              </div>
-              <p className="text-xs text-white/45 leading-relaxed">
-                100% pamut póló, szitanyomattal elöl hátul, kézzel varrott fényvisszaverő szalaggal. Lányoknak crop top változatban is.
-              </p>
-              <Link
-                href="/shop"
-                className="block w-full text-center border border-white/25 hover:border-lime-400/50 py-2.5 text-xs font-bold tracking-widest uppercase text-white/65 hover:text-white hover:bg-lime-400/5 transition-all"
-              >
-                Vállalhatatlan póló
-              </Link>
-            </div>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <h3 className="text-xs uppercase tracking-[0.18em] text-neutral-100">01 // VÁLLALHATATLAN PÓLÓ</h3>
+                    <p className="text-[11px] leading-relaxed text-neutral-400">
+                      Screen printed front and back. Hand-stitched reflective tape. Crop top version available.
+                    </p>
+                  </div>
+                  <details className="group border border-neutral-800 bg-black/40">
+                    <summary className="cursor-pointer list-none px-2.5 py-2 text-[10px] uppercase tracking-[0.14em] text-neutral-500 group-open:text-neutral-300">
+                      Technical Specifications
+                    </summary>
+                    <div className="border-t border-neutral-800 px-2.5 py-2 text-[10px] uppercase tracking-[0.12em] text-neutral-500">
+                      Build: Manual assembly / Print: Dual-side / Tape: Reflective stitched panel
+                    </div>
+                  </details>
+                  <Link
+                    href="/shop"
+                    className="block w-full border border-neutral-800 bg-black/50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.2em] text-neutral-200 hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5 transition-colors"
+                  >
+                    MŰVELETI RUHÁZAT
+                  </Link>
+                </div>
+              </article>
 
-            {/* Product 2: Női póló */}
-            <div className="p-4 space-y-3">
-              <div className="overflow-hidden bg-zinc-900">
+              <article className="grid grid-cols-[150px_minmax(0,1fr)] gap-3 p-3.5 items-start">
                 <img
                   src="/ny2.jpg"
-                  alt="Női póló"
-                  className="w-full h-auto object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                  alt="VÁLLALHATATLAN TÁSKA"
+                  className="h-[150px] w-[150px] border border-neutral-800 object-cover grayscale"
                 />
-              </div>
-              <p className="text-xs text-white/45 leading-relaxed">
-                Erős, strapabíró anyagból készült bevásárlótáska fényvisszaverő szalaggal. Pink és fekete színben.
-              </p>
-              <Link
-                href="/shop"
-                className="block w-full text-center border border-white/25 hover:border-lime-400/50 py-2.5 text-xs font-bold tracking-widest uppercase text-white/65 hover:text-white hover:bg-lime-400/5 transition-all"
-              >
-                Vállalhatatlan bevásárlótáska
-              </Link>
-            </div>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <h3 className="text-xs uppercase tracking-[0.18em] text-neutral-100">02 // VÁLLALHATATLAN TÁSKA</h3>
+                    <p className="text-[11px] leading-relaxed text-neutral-400">
+                      Heavy-duty canvas engineered for urban drops and survival. Custom branding, manual post-processing.
+                    </p>
+                  </div>
+                  <details className="group border border-neutral-800 bg-black/40">
+                    <summary className="cursor-pointer list-none px-2.5 py-2 text-[10px] uppercase tracking-[0.14em] text-neutral-500 group-open:text-neutral-300">
+                      Technical Specifications
+                    </summary>
+                    <div className="border-t border-neutral-800 px-2.5 py-2 text-[10px] uppercase tracking-[0.12em] text-neutral-500">
+                      Material: Reinforced canvas / Branding: Custom mark / Finish: Manual treatment
+                    </div>
+                  </details>
+                  <Link
+                    href="/shop"
+                    className="block w-full border border-neutral-800 bg-black/50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.2em] text-neutral-200 hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5 transition-colors"
+                  >
+                    Request Bag
+                  </Link>
+                </div>
+              </article>
+
+              <article className="grid grid-cols-[150px_minmax(0,1fr)] gap-3 p-3.5 items-start">
+                <img
+                  src="/s1.jpg"
+                  alt="RENDSZER KITŰZŐ"
+                  className="h-[150px] w-[150px] border border-neutral-800 object-cover grayscale"
+                />
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <h3 className="text-xs uppercase tracking-[0.18em] text-neutral-100">03 // RENDSZER KITŰZŐ</h3>
+                    <p className="text-[11px] leading-relaxed text-neutral-400">
+                      Hand-pressed metal pin, matte black and glitch design. Visual token of system membership.
+                    </p>
+                  </div>
+                  <details className="group border border-neutral-800 bg-black/40">
+                    <summary className="cursor-pointer list-none px-2.5 py-2 text-[10px] uppercase tracking-[0.14em] text-neutral-500 group-open:text-neutral-300">
+                      Technical Specifications
+                    </summary>
+                    <div className="border-t border-neutral-800 px-2.5 py-2 text-[10px] uppercase tracking-[0.12em] text-neutral-500">
+                      Body: Pressed metal / Finish: Matte black / Face: Glitch symbol coating
+                    </div>
+                  </details>
+                  <Link
+                    href="/shop"
+                    className="block w-full border border-neutral-800 bg-black/50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.2em] text-neutral-200 hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5 transition-colors"
+                  >
+                    Request Pin
+                  </Link>
+                </div>
+              </article>
+            </section>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { POSTA_AUTOMATA_FEE } from "@/lib/shop/delivery";
 import { Product, isPreorderProduct } from "@/lib/shop/products";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw } from "lucide-react";
@@ -66,7 +67,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, camp
 
       <div className="flex-1 flex flex-col p-4 gap-2">
         <h3 className="text-sm font-bold text-white/80 uppercase tracking-wider mb-1">{product.name}</h3>
-        <span className="text-base font-bold text-lime-400">{product.price} Ft</span>
+        <div className="flex flex-col gap-1 text-sm">
+          <span className="font-bold text-lime-400">Dead drop: {product.price} Ft</span>
+          <span className="text-white/50">Postaautomata: {product.price + POSTA_AUTOMATA_FEE} Ft</span>
+        </div>
       </div>
 
     </motion.div>

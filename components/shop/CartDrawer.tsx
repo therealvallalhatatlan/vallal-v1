@@ -3,6 +3,7 @@ import React from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/shop/cartStore";
+import { DELIVERY_METHODS, DeliveryMethod, getDeliveryFee } from "@/lib/shop/delivery";
 import { products } from "@/lib/shop/products";
 import Link from "next/link";
 import { PreorderCampaignSummary } from "@/lib/shop/preorder";
@@ -16,15 +17,17 @@ interface CartDrawerProps {
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({ open, onOpenChange, onCheckout, campaign }) => {
-  const { items, removeItem, updateQuantity, clearCart } = useCartStore();
+  const { items, deliveryMethod, setDeliveryMethod, removeItem, updateQuantity, clearCart } = useCartStore();
   const cartProducts = items.map((item) => {
     const product = products.find((p) => p.id === item.productId);
     return { ...item, product };
   });
-  const total = cartProducts.reduce((sum, item) => {
+  const subtotal = cartProducts.reduce((sum, item) => {
     const price = item.product?.price || 0;
     return sum + price * item.quantity;
   }, 0);
+  const deliveryFee = getDeliveryFee(deliveryMethod);
+  const total = subtotal + deliveryFee;
 
   // Debug log for checkout error
   const handleCheckout = () => {
@@ -65,10 +68,50 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ open, onOpenChange, onCh
               </div>
             ))
           )}
+
+          {cartProducts.length > 0 && (
+            <div className="flex flex-col gap-3 border border-white/10 bg-black/40 p-4">
+              <div className="text-xs uppercase tracking-[0.2em] text-white/50">Kézbesítés</div>
+              {(["dead-drop", "postaautomata"] as DeliveryMethod[]).map((method) => (
+                <label
+                  key={method}
+                  className={`flex cursor-pointer items-start gap-3 border px-3 py-3 transition-colors ${
+                    deliveryMethod === method
+                      ? "border-lime-400/60 bg-lime-400/5"
+                      : "border-white/10 bg-black/30 hover:border-white/20"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="cartDeliveryMethod"
+                    value={method}
+                    checked={deliveryMethod === method}
+                    onChange={() => setDeliveryMethod(method)}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-bold text-white">{DELIVERY_METHODS[method].label}</span>
+                      <span className="text-sm font-bold text-lime-400">{DELIVERY_METHODS[method].fee === 0 ? "benne van" : `+${DELIVERY_METHODS[method].fee} Ft`}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-white/45">{DELIVERY_METHODS[method].description}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
         <SheetFooter>
           <div className="flex flex-col gap-4 w-full mt-2">
            
+            <div className="flex items-center justify-between text-sm font-bold text-white/60 uppercase tracking-widest">
+              <span>Részösszeg:</span>
+              <span>{subtotal} Ft</span>
+            </div>
+            <div className="flex items-center justify-between text-sm font-bold text-white/60 uppercase tracking-widest -mt-2">
+              <span>Kézbesítés:</span>
+              <span>{deliveryFee === 0 ? "Dead drop / 0 Ft" : `Postaautomata / ${deliveryFee} Ft`}</span>
+            </div>
             <div className="flex items-center justify-between text-sm font-bold text-lime-400 uppercase tracking-widest">
               <span>Összesen:</span>
               <span>{total} Ft</span>

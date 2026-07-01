@@ -50,7 +50,7 @@ export const products: Product[] = [
     name: 'Vállalhatatlan Póló',
     description: 'Vállalhatatlan nyuszis póló, fényvisszaverő sávval. Szitanyomás, kiváló minőség. 100% pamut. Lányoknak crop top változatban is kérhető.',
     images: ['/m1.jpg', '/m2.jpg'],
-    price: 9990,
+    price: 10000,
     sizes: ['S', 'M', 'L', 'XL'],
     // ── ITT ÍRD ÁT A KÉSZLETET méretenként ──
     sizeStock: {

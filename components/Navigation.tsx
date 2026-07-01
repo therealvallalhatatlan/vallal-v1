@@ -58,7 +58,7 @@ export default function Navigation() {
       <nav className="py-4 px-4 md:px-8 border-b border-white/10 font-mono text-gray-200">
 
         {/* ── Mobile Layout ── */}
-        <div className="flex md:hidden items-center justify-between gap-4 text-sm">
+        <div className="flex lg:hidden items-center justify-between gap-4 text-sm">
           <Link href="/" className="hover:opacity-80 transition-opacity ml-20">
             <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
           </Link>
@@ -112,10 +112,10 @@ export default function Navigation() {
         </div>
 
         {/* ── Desktop Layout: Logo | Auth | Social ── */}
-        <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center gap-6 text-xs uppercase tracking-[0.18em]">
+        <div className="hidden lg:grid grid-cols-[1fr_auto_1fr] items-center gap-6 text-xs uppercase tracking-[0.18em]">
 
           {/* Left: Logo — shifted right to clear the corner crack */}
-          <Link href="/" className="hover:opacity-80 transition-opacity ml-36">
+          <Link href="/" className="hover:opacity-80 transition-opacity ml-[124px]">
             <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
           </Link>
 

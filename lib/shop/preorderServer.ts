@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { DeliveryMethod, getDeliveryFee } from "@/lib/shop/delivery";
 import { Product, products } from "@/lib/shop/products";
 import { PreorderCampaignSummary, toPreorderCampaignSummary } from "@/lib/shop/preorder";
 
@@ -12,6 +13,11 @@ export interface ValidatedCheckoutItem {
   product: Product;
   quantity: number;
   variantId?: string;
+}
+
+export interface CreateShopOrderDraftInput {
+  items: ValidatedCheckoutItem[];
+  deliveryMethod: DeliveryMethod;
 }
 
 type CampaignRow = {
@@ -51,8 +57,13 @@ export function validateCheckoutItems(items: CheckoutItemInput[]): ValidatedChec
   });
 }
 
-export async function createShopOrderDraft(items: ValidatedCheckoutItem[]): Promise<{ orderId: string; subtotalAmount: number; }> {
+export async function createShopOrderDraft({
+  items,
+  deliveryMethod,
+}: CreateShopOrderDraftInput): Promise<{ orderId: string; subtotalAmount: number; shippingAmount: number; totalAmount: number; }> {
   const subtotalAmount = items.reduce((sum, item) => sum + item.product.price * 100 * item.quantity, 0);
+  const shippingAmount = getDeliveryFee(deliveryMethod) * 100;
+  const totalAmount = subtotalAmount + shippingAmount;
 
   const { data: order, error: orderError } = await supabaseAdmin()
     .from("shop_orders")
@@ -63,6 +74,9 @@ export async function createShopOrderDraft(items: ValidatedCheckoutItem[]): Prom
       subtotal_amount: subtotalAmount,
       metadata: {
         source: "shop",
+        deliveryMethod,
+        shippingAmount,
+        totalAmount,
       },
     })
     .select("id")
@@ -98,6 +112,8 @@ export async function createShopOrderDraft(items: ValidatedCheckoutItem[]): Prom
   return {
     orderId: order.id,
     subtotalAmount,
+    shippingAmount,
+    totalAmount,
   };
 }
 

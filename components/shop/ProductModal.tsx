@@ -1,5 +1,6 @@
 
 import React from "react";
+import { POSTA_AUTOMATA_FEE } from "@/lib/shop/delivery";
 import { Product, isPreorderProduct } from "@/lib/shop/products";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,10 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       <SheetContent side="right" className="max-w-md w-full bg-black border-l border-white/10 flex flex-col font-mono">
         <SheetHeader>
           <SheetTitle className="text-xl font-bold text-white/90 tracking-wider uppercase mb-1">{product.name}</SheetTitle>
-          <span className="text-lg font-bold text-lime-400 mb-1">{product.price} Ft</span>
+          <div className="mb-1 flex flex-col gap-1 text-sm font-mono">
+            <span className="text-lg font-bold text-lime-400">Dead drop: {product.price} Ft</span>
+            <span className="text-white/50">Postaautomata: {product.price + POSTA_AUTOMATA_FEE} Ft</span>
+          </div>
           <SheetDescription className="text-white/50 text-sm font-mono">
             {product.description}
           </SheetDescription>
