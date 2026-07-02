@@ -160,7 +160,7 @@ export default function HeroTerminal() {
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
             {/* Manifesto */}
             <section className="border border-neutral-800 bg-black/40 p-3.5 space-y-2">
-              <p className="text-xl leading-tight text-white/55">
+              <p className="text-xl italic leading-tight text-white/55">
                 Ez a projekt tisztán a könyv bevételeiből és az alábbi három, egyedileg, kézzel készített cuccból tartja fenn magát. 
               </p>
             </section>
@@ -175,22 +175,14 @@ export default function HeroTerminal() {
                 />
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <h3 className="text-xs uppercase tracking-[0.18em] text-neutral-100">01 // VÁLLALHATATLAN PÓLÓ</h3>
-                    <p className="text-[11px] leading-relaxed text-neutral-400">
-                      Screen printed front and back. Hand-stitched reflective tape. Crop top version available.
+                    <h3 className="text-md uppercase tracking-[0.18em] text-neutral-100">01 // VÁLLALHATATLAN PÓLÓ</h3>
+                    <p className="text-[14px] leading-relaxed text-neutral-400">
+                      Szitanyomott mintával elöl hátul, kézzel varrt fényvisszaverő szalaggal.
                     </p>
                   </div>
-                  <details className="group border border-neutral-800 bg-black/40">
-                    <summary className="cursor-pointer list-none px-2.5 py-2 text-[10px] uppercase tracking-[0.14em] text-neutral-500 group-open:text-neutral-300">
-                      Technical Specifications
-                    </summary>
-                    <div className="border-t border-neutral-800 px-2.5 py-2 text-[10px] uppercase tracking-[0.12em] text-neutral-500">
-                      Build: Manual assembly / Print: Dual-side / Tape: Reflective stitched panel
-                    </div>
-                  </details>
                   <Link
                     href="/shop"
-                    className="block w-full border border-neutral-800 bg-black/50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.2em] text-neutral-200 hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5 transition-colors"
+                    className="block w-full border border-neutral-800 bg-black/50 px-3 py-2 text-center text-[12px] uppercase tracking-[0.2em] text-neutral-200 hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5 transition-colors"
                   >
                     MŰVELETI RUHÁZAT
                   </Link>
@@ -205,19 +197,11 @@ export default function HeroTerminal() {
                 />
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <h3 className="text-xs uppercase tracking-[0.18em] text-neutral-100">02 // VÁLLALHATATLAN TÁSKA</h3>
-                    <p className="text-[11px] leading-relaxed text-neutral-400">
-                      Heavy-duty canvas engineered for urban drops and survival. Custom branding, manual post-processing.
+                    <h3 className="text-md uppercase tracking-[0.18em] text-neutral-100">02 // VÁLLALHATATLAN TÁSKA</h3>
+                    <p className="text-[14px] leading-relaxed text-neutral-400">
+                      Erős vászontáska, tartós szitanyomattal és kézzel varrott fényvisszaverő csíkkal.
                     </p>
                   </div>
-                  <details className="group border border-neutral-800 bg-black/40">
-                    <summary className="cursor-pointer list-none px-2.5 py-2 text-[10px] uppercase tracking-[0.14em] text-neutral-500 group-open:text-neutral-300">
-                      Technical Specifications
-                    </summary>
-                    <div className="border-t border-neutral-800 px-2.5 py-2 text-[10px] uppercase tracking-[0.12em] text-neutral-500">
-                      Material: Reinforced canvas / Branding: Custom mark / Finish: Manual treatment
-                    </div>
-                  </details>
                   <Link
                     href="/shop"
                     className="block w-full border border-neutral-800 bg-black/50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.2em] text-neutral-200 hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5 transition-colors"
@@ -235,19 +219,11 @@ export default function HeroTerminal() {
                 />
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <h3 className="text-xs uppercase tracking-[0.18em] text-neutral-100">03 // RENDSZER KITŰZŐ</h3>
-                    <p className="text-[11px] leading-relaxed text-neutral-400">
-                      Hand-pressed metal pin, matte black and glitch design. Visual token of system membership.
+                    <h3 className="text-md uppercase tracking-[0.18em] text-neutral-100">03 // RENDSZER KITŰZŐ</h3>
+                    <p className="text-[14px] leading-relaxed text-neutral-400">
+                      Kézzel készített kitűző, a projekt logójával.
                     </p>
                   </div>
-                  <details className="group border border-neutral-800 bg-black/40">
-                    <summary className="cursor-pointer list-none px-2.5 py-2 text-[10px] uppercase tracking-[0.14em] text-neutral-500 group-open:text-neutral-300">
-                      Technical Specifications
-                    </summary>
-                    <div className="border-t border-neutral-800 px-2.5 py-2 text-[10px] uppercase tracking-[0.12em] text-neutral-500">
-                      Body: Pressed metal / Finish: Matte black / Face: Glitch symbol coating
-                    </div>
-                  </details>
                   <Link
                     href="/shop"
                     className="block w-full border border-neutral-800 bg-black/50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.2em] text-neutral-200 hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5 transition-colors"
