@@ -72,12 +72,6 @@ export default function Navigation() {
                 Shop
               </Link>
               <Link
-                href="/halozat"
-                className="border border-white/30 px-3 py-1.5 text-xs font-semibold tracking-widest text-white hover:border-lime-400 hover:text-lime-400 transition-colors"
-              >
-                Hálózat
-              </Link>
-              <Link
                 href="/reader"
                 className="border border-lime-500/60 bg-lime-500/10 px-3 py-1.5 text-xs font-semibold tracking-widest text-lime-400 hover:bg-lime-500/20 transition-colors"
               >
@@ -127,12 +121,6 @@ export default function Navigation() {
                 className="text-xs normal-case tracking-normal text-gray-400 hover:text-lime-300 max-w-[200px] truncate transition-colors"
               >
                 Üdv, {userEmail}
-              </Link>
-              <Link
-                href="/halozat"
-                className="border border-white/30 px-4 py-2 font-semibold tracking-widest text-white hover:border-lime-400 hover:text-lime-400 transition-colors"
-              >
-                Hálózat
               </Link>
               <Link
                 href="/shop"

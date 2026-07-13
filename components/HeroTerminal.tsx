@@ -59,7 +59,7 @@ export default function HeroTerminal() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
           {/* System status overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 font-mono text-xs space-y-1.5">
+          <div className="absolute bottom-0 left-0 right-0 p-4 font-mono text-[9px] tracking-[0.14em] space-y-1.5">
             <div className="flex justify-between">
               <span className="text-white/50">[ System</span>
               <span className="text-lime-400 font-bold">ONLINE ]</span>
@@ -116,10 +116,14 @@ export default function HeroTerminal() {
             {/* Primary CTA */}
             <Link
               href="/konyv-2"
-              className="flex flex-col border border-white/25 hover:border-lime-400/50 bg-black/40 hover:bg-lime-400/5 px-5 py-4 transition-all group"
+              className="relative overflow-hidden flex flex-col border border-white/50 bg-black/55 px-5 py-4 shadow-[0_0_0_1px_rgba(0,0,0,0.6),0_0_20px_rgba(163,230,53,0.12)] hover:border-lime-400/80 hover:bg-lime-400/10 hover:shadow-[0_0_0_1px_rgba(0,0,0,0.72),0_0_28px_rgba(163,230,53,0.24)] transition-all group"
             >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-[3px] border border-lime-400/60 group-hover:border-lime-400/90 transition-colors"
+              />
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold tracking-widest uppercase text-white/75 group-hover:text-white transition-colors">
+                <span className="text-sm font-bold tracking-widest uppercase text-white/85 group-hover:text-white transition-colors">
                   KÜLDETÉS INDÍTÁSA
                 </span>
                 <span className="relative flex items-center justify-center w-3 h-3">
@@ -142,6 +146,7 @@ export default function HeroTerminal() {
                 <br/>pár fotót és egy koordinátát.
                 <br/>24 órád van megtalálni.
               </p>
+
             </div>
           </div>
         </div>

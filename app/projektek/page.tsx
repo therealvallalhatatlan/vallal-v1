@@ -35,8 +35,7 @@ const projects: Project[] = [
     title: "Dead-drop könyvdropok",
     summary:
       "Időszakos rejtekhelyek a városban. A megtalálóknak QR-kód, hozzáférés és emlék.",
-    // ha lesz külön aloldal, ide jöhet majd a /projektek/dead-drop
-    href: "/konyv",
+    href: "/projektek/dead-drop",
   },
   {
     title: "QR-kódos „level-one” aloldalak",
