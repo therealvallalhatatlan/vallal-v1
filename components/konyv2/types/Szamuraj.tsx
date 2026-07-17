@@ -14,6 +14,7 @@ const DEFAULT_CLICK_SFX = '/audio/ui-click.wav'
 const DEFAULT_GLITCH_SFX = '/audio/sfx-glitch.wav'
 const DEFAULT_LIGHTER_SFX = '/audio/sfx-lighter.wav'
 const DEFAULT_TRAFFIC_SFX = '/audio/sfx-traffic.wav'
+const DEFAULT_ACCESS_SFX = '/audio/access.wav'
 
 const INTERAKCIO_QUESTIONS = [
   'Mennyi ido alatt puhul meg egy galamb?',
@@ -139,7 +140,7 @@ function playClick(audio: HTMLAudioElement | null) {
   void safePlay(audio)
 }
 
-function playOneShot(audio: HTMLAudioElement | null, volume = 0.55) {
+function playOneShot(audio: HTMLAudioElement | null, volume = 1) {
   if (!audio) return
   audio.loop = false
   audio.volume = volume
@@ -147,7 +148,7 @@ function playOneShot(audio: HTMLAudioElement | null, volume = 0.55) {
   void safePlay(audio)
 }
 
-function fadeInAudio(audio: HTMLAudioElement | null, durationMs = 1500, targetVolume = 0.45, loop = false) {
+function fadeInAudio(audio: HTMLAudioElement | null, durationMs = 1500, targetVolume = 1, loop = false) {
   if (!audio) return
 
   audio.volume = 0
@@ -168,19 +169,89 @@ function fadeInAudio(audio: HTMLAudioElement | null, durationMs = 1500, targetVo
 }
 
 function EntryGate({ onEnter }: { onEnter: () => void }) {
+  const [isGlitching, setIsGlitching] = useState(false)
+
+  useEffect(() => {
+    const schedule = () => {
+      const delay = 1800 + Math.random() * 2800
+      return window.setTimeout(() => {
+        setIsGlitching(true)
+        window.setTimeout(() => setIsGlitching(false), 140 + Math.random() * 120)
+        timer = schedule()
+      }, delay)
+    }
+
+    let timer = schedule()
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [])
+
   return (
-    <div className="fixed inset-0 z-40 flex min-h-screen items-center justify-center overflow-hidden bg-black px-6">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(22,163,74,0.18),_transparent_45%),radial-gradient(circle_at_bottom,_rgba(255,255,255,0.08),_transparent_40%)]" />
-      <div className="relative w-full max-w-lg border border-green-500/60 bg-black/90 p-6 font-mono text-green-500 shadow-[0_0_35px_rgba(34,197,94,0.25)]">
-        <p className="mb-2 text-xs uppercase tracking-[0.35em] text-green-400/80">Terminal 06</p>
-        <p className="mb-8 text-sm leading-relaxed text-green-300/90">SESSION EXPIRED. [ INITIALIZE RESTART ]</p>
-        <button
-          type="button"
-          onClick={onEnter}
-          className="w-full border border-green-400 px-4 py-3 text-left text-sm tracking-[0.28em] text-green-300 transition hover:bg-green-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400"
-        >
-          [ INITIALIZE RESTART ]
-        </button>
+    <div className="fixed inset-0 z-40 flex min-h-screen items-center justify-center overflow-hidden bg-[#040507] px-4 text-[#93ff8a] sm:px-6">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(34,197,94,0.12),transparent_28%),radial-gradient(circle_at_50%_115%,rgba(14,165,233,0.1),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_18%,rgba(0,0,0,0.26))]" />
+      <div className="pointer-events-none absolute inset-0 opacity-35 [background-image:linear-gradient(to_bottom,rgba(255,255,255,0.055)_1px,transparent_1px)] [background-size:100%_2px]" />
+
+      <div className="relative w-full max-w-md overflow-hidden border border-[#2a3a2f] bg-[#060806] shadow-[0_0_0_1px_rgba(0,0,0,0.8),0_0_80px_rgba(0,0,0,0.7)]">
+        <div className="flex items-center justify-between border-b border-[#1d2a21] bg-[#0b100d] px-4 py-2 font-mono text-[10px] uppercase tracking-[0.32em] text-[#76ff70]">
+          <span>private link internetcafe</span>
+          <span>internal network</span>
+        </div>
+
+        <div className="relative bg-[#090b09] px-5 py-6 sm:px-6 sm:py-7">
+          <div className="pointer-events-none absolute inset-0 opacity-35 [background-image:repeating-linear-gradient(180deg,rgba(118,255,112,0.08)_0px,rgba(118,255,112,0.08)_1px,transparent_1px,transparent_4px)]" />
+          <div className="relative mx-auto w-full max-w-sm border border-[#223127] bg-[#050705] px-4 py-5 font-mono text-[#92ff8a]">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-[#5f8b61]">login prompt</p>
+
+            <div className="mt-4 space-y-3 text-sm">
+              <label className="block space-y-1">
+                <span className="block text-[10px] uppercase tracking-[0.22em] text-[#6db06f]">user name</span>
+                <input
+                  type="text"
+                  defaultValue="Vállalhatatlan"
+                  readOnly
+                  className="w-full border border-[#223127] bg-[#091009] px-3 py-2 text-[#d8ffd8] outline-none"
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="block text-[10px] uppercase tracking-[0.22em] text-[#6db06f]">password</span>
+                <input
+                  type="password"
+                  defaultValue="vault-entry"
+                  readOnly
+                  className="w-full border border-[#223127] bg-[#091009] px-3 py-2 text-[#d8ffd8] outline-none"
+                />
+              </label>
+            </div>
+
+            <button
+              type="button"
+              onClick={onEnter}
+              className="mt-6 w-full border border-[#2f7a39] bg-[#0e1a10] px-4 py-3 text-xs uppercase tracking-[0.3em] text-[#b8ffb8] transition hover:bg-[#133017] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7bff7b] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050705]"
+              style={
+                isGlitching
+                  ? {
+                      boxShadow: '0 0 0 1px rgba(255,0,64,0.25), 0 0 16px rgba(0,255,255,0.18), 0 0 22px rgba(255,0,128,0.12)',
+                      transform: 'translate3d(0,0,0) skewX(-1deg)',
+                      textShadow: '1px 0 0 rgba(255,0,70,0.8), -1px 0 0 rgba(0,255,255,0.75), 0 0 8px rgba(123,255,123,0.35)',
+                    }
+                  : undefined
+              }
+            >
+              <span className={isGlitching ? 'relative inline-block animate-pulse' : 'relative inline-block'}>
+                login
+                {isGlitching && (
+                  <>
+                    <span className="pointer-events-none absolute inset-0 -translate-x-[1px] text-[#ff2d55] opacity-70">login</span>
+                    <span className="pointer-events-none absolute inset-0 translate-x-[1px] text-[#00e5ff] opacity-70">login</span>
+                  </>
+                )}
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -189,7 +260,10 @@ function EntryGate({ onEnter }: { onEnter: () => void }) {
 export default function Szamuraj({ title, content }: Konyv2PageProps) {
   const [hasEntered, setHasEntered] = useState(false)
   const [isBootFlicker, setIsBootFlicker] = useState(false)
+  const [isTitleGlitching, setIsTitleGlitching] = useState(false)
   const [interakcioStep, setInterakcioStep] = useState(0)
+  const [interakcioDisplay, setInterakcioDisplay] = useState('')
+  const [isInterakcioTyping, setIsInterakcioTyping] = useState(false)
   const [isInterakcioCrashed, setIsInterakcioCrashed] = useState(false)
   const [networkId, setNetworkId] = useState('')
   const [isUnlocking, setIsUnlocking] = useState(false)
@@ -201,6 +275,7 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
   const sfxGlitchRef = useRef<HTMLAudioElement | null>(null)
   const sfxLighterRef = useRef<HTMLAudioElement | null>(null)
   const sfxTrafficRef = useRef<HTMLAudioElement | null>(null)
+  const sfxAccessRef = useRef<HTMLAudioElement | null>(null)
   const cueInCenterZoneRef = useRef<Record<CueType, boolean>>({
     lighter: false,
     horn: false,
@@ -218,6 +293,55 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
   const { scrollYProgress } = useScroll()
   const tripAmount = useTransform(scrollYProgress, [0, 0.35, 1], [0, 1.5, 4.8])
   const textBlur = useTransform(scrollYProgress, [0, 1], [0, 1.6])
+  const glitchBoost = useTransform(scrollYProgress, [0, 0.8, 0.94, 1], [0, 0.12, 0.55, 0.9])
+
+  useEffect(() => {
+    const schedule = () => {
+      const delay = 1400 + Math.random() * 2600
+      return window.setTimeout(() => {
+        setIsTitleGlitching(true)
+        window.setTimeout(() => setIsTitleGlitching(false), 120 + Math.random() * 120)
+        timer = schedule()
+      }, delay)
+    }
+
+    let timer = schedule()
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isInterakcioCrashed) return
+
+    const currentQuestion = INTERAKCIO_QUESTIONS[interakcioStep]
+    if (!currentQuestion) {
+      setInterakcioDisplay('')
+      return
+    }
+
+    setIsInterakcioTyping(true)
+    setInterakcioDisplay('')
+
+    let index = 0
+    const tick = () => {
+      index += 1
+      setInterakcioDisplay(currentQuestion.slice(0, index))
+
+      if (index < currentQuestion.length) {
+        window.setTimeout(tick, 18 + Math.random() * 28)
+      } else {
+        setIsInterakcioTyping(false)
+      }
+    }
+
+    const timer = window.setTimeout(tick, 130)
+
+    return () => {
+      window.clearTimeout(timer)
+    }
+  }, [interakcioStep, isInterakcioCrashed])
 
   const startAcidLoop = () => {
     const audio = acidLoopRef.current
@@ -229,7 +353,7 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
     audio.loop = true
     audio.currentTime = 0
     acidIsPlayingRef.current = true
-    fadeInAudio(audio, 1400, 0.252, true)
+    fadeInAudio(audio, 1400, 1, true)
   }
 
   const stopAcidLoop = () => {
@@ -245,22 +369,21 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
 
   const triggerCue = (cueType: CueType) => {
     if (cueType === 'lighter') {
-      playOneShot(sfxLighterRef.current, 0.6)
+      playOneShot(sfxLighterRef.current, 1)
       return
     }
 
     if (cueType === 'horn') {
-      playOneShot(sfxTrafficRef.current, 0.1875)
+      playOneShot(sfxTrafficRef.current, 1)
       return
     }
 
     if (cueType === 'acid') {
-      if (bgNoiseRef.current) bgNoiseRef.current.volume = 0.14
       startAcidLoop()
     }
 
     if (cueType === 'internetezni') {
-      playOneShot(sfxGlitchRef.current, 0.45)
+      playOneShot(sfxGlitchRef.current, 1)
     }
   }
 
@@ -310,7 +433,7 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
   useEffect(() => {
     if (bgNoiseRef.current) {
       bgNoiseRef.current.loop = true
-      bgNoiseRef.current.volume = 0.28
+      bgNoiseRef.current.volume = 1
     }
     if (acidLoopRef.current) {
       acidLoopRef.current.loop = true
@@ -415,7 +538,7 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
       const nextStep = Math.min(currentStep + 1, INTERAKCIO_QUESTIONS.length)
       if (nextStep >= INTERAKCIO_QUESTIONS.length) {
         setIsInterakcioCrashed(true)
-        playOneShot(sfxGlitchRef.current, 0.55)
+        playOneShot(sfxGlitchRef.current, 1)
       }
       return nextStep
     })
@@ -427,6 +550,7 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
 
     playClick(sfxClickRef.current)
     playClick(sfxGlitchRef.current)
+    playOneShot(sfxAccessRef.current, 1)
     setIsUnlocking(true)
     await new Promise((resolve) => setTimeout(resolve, 1000))
     setIsUnlocking(false)
@@ -441,6 +565,7 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
       <audio ref={sfxGlitchRef} src={DEFAULT_GLITCH_SFX} preload="auto" />
       <audio ref={sfxLighterRef} src={DEFAULT_LIGHTER_SFX} preload="auto" />
       <audio ref={sfxTrafficRef} src={DEFAULT_TRAFFIC_SFX} preload="auto" />
+      <audio ref={sfxAccessRef} src={DEFAULT_ACCESS_SFX} preload="auto" />
 
       {!hasEntered && <EntryGate onEnter={handleEnter} />}
 
@@ -465,27 +590,49 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
             {
               '--trip': tripAmount,
               '--trip-blur': textBlur,
+              '--glitch-boost': glitchBoost,
             } as React.CSSProperties
           }
-          className="relative z-20 mx-auto max-w-3xl px-5 pb-20 pt-14 sm:px-7 sm:pt-20"
+          className="relative z-20 mx-auto w-full max-w-[24rem] px-5 pb-20 pt-14 sm:max-w-[31.2rem] sm:px-7 sm:pt-20"
         >
-        <header className="mb-10 border border-green-500/35 bg-black/60 p-4 sm:p-6">
-          <p className="mb-2 font-mono text-xs uppercase tracking-[0.28em] text-green-500">terminal_06.log</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-zinc-100 sm:text-4xl">{title}</h1>
-        </header>
+          <header className="mb-8">
+            <p className="mb-2 font-mono text-xs uppercase tracking-[0.28em] text-green-500">terminal_06.log</p>
+            <h1
+              className="text-[2.65rem] font-bold leading-[0.95] tracking-[-0.03em] text-[#ece7dc] sm:text-[3.65rem]"
+              style={{ fontFamily: 'Trebuchet MS, Verdana, Arial, sans-serif' }}
+            >
+              <span
+                className="relative inline-block"
+                style={
+                  isTitleGlitching
+                    ? {
+                        textShadow: '1px 0 0 rgba(255,0,70,0.7), -1px 0 0 rgba(0,255,255,0.65), 0 0 7px rgba(255,255,255,0.18)',
+                        transform: 'translate3d(0,0,0) skewX(-1deg)',
+                      }
+                    : undefined
+                }
+              >
+                {title}
+                {isTitleGlitching && (
+                  <>
+                    <span className="pointer-events-none absolute inset-0 -translate-x-[1px] text-[#ff2d55] opacity-70">{title}</span>
+                    <span className="pointer-events-none absolute inset-0 translate-x-[1px] text-[#00e5ff] opacity-70">{title}</span>
+                  </>
+                )}
+              </span>
+            </h1>
+          </header>
 
         <section className="mb-12 border border-green-500/25 bg-black/65 p-4 font-mono text-green-400 sm:p-5">
-          <p className="text-xs uppercase tracking-[0.22em] text-green-500/85">Interakcio</p>
-          <div className="mt-3 space-y-2 text-sm leading-7">
-            {INTERAKCIO_QUESTIONS.slice(0, interakcioStep).map((line, idx) => (
-              <p key={`${idx}-${line}`}>- {line}</p>
-            ))}
+          <p className="text-xs uppercase tracking-[0.22em] text-green-500/85">SZIMULÁTOR</p>
+          <div className="mt-3 min-h-[2.2rem] text-sm leading-7 text-green-300/90">
+            {interakcioDisplay ? <p className="whitespace-pre-wrap">{interakcioDisplay}{isInterakcioTyping ? '▍' : ''}</p> : <p>&nbsp;</p>}
           </div>
           {isInterakcioCrashed ? (
             <div className="mt-4 border border-red-500/60 bg-red-950/20 p-3 text-xs tracking-[0.12em] text-red-300">
-              [ INTERAKCIO MODUL HIBA ]
+              [ SZIMULÁTOR ]
               <br />
-              ERROR_0x06: KERDESEK_SZAMA_TULCSORDULT
+              ERROR_0x06: FASZOM_KIVAN
             </div>
           ) : (
             <button
@@ -493,13 +640,13 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
               onClick={handleParancsolj}
               className="mt-4 border border-green-400 px-4 py-2 text-xs tracking-[0.22em] transition hover:bg-green-500/10"
             >
-              [ PARANCSOLJ! ]
+              {isInterakcioTyping ? '[ BETOLT...' : '[ PARANCSOLJ! ]'}
             </button>
           )}
         </section>
 
-        {splitStory.beforeLock.length > 0 ? (
-          <div className="space-y-7 text-[1.03rem] leading-8 text-zinc-100/90 [text-shadow:calc(var(--trip)*0.45px)_0_0_rgba(255,0,68,0.65),calc(var(--trip)*-0.45px)_0_0_rgba(34,197,94,0.6),0_0_calc(var(--trip-blur)*1px)_rgba(255,255,255,0.55)]">
+          {splitStory.beforeLock.length > 0 ? (
+            <div className="mx-auto w-full max-w-[20rem] space-y-7 text-left text-[1.13rem] leading-8 text-zinc-400/80 sm:max-w-[30.5rem] [text-shadow:0_0_calc(var(--trip-blur)*(0.78+var(--glitch-boost)*0.3)*1px)_rgba(255,255,255,0.2),calc(var(--trip)*(0.23+var(--glitch-boost)*0.18)*1px)_0_0_rgba(255,0,68,0.36),calc(var(--trip)*(-0.23-var(--glitch-boost)*0.18)*1px)_0_0_rgba(34,197,94,0.33)]">
             {splitStory.beforeLock.map((paragraph, idx) => (
               <motion.p
                 key={paragraph.id}
@@ -516,8 +663,8 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
             ))}
           </div>
         ) : (
-          <p className="italic text-zinc-400">Tartalom hamarosan...</p>
-        )}
+            <p className="italic text-zinc-500/70">Tartalom hamarosan...</p>
+          )}
 
         {hasLockGate && !isUnlocked && (
           <section className="relative mt-12 overflow-hidden border border-green-400/40 bg-black/85 p-5 sm:p-7">
@@ -530,9 +677,9 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
               />
             )}
 
-            <p className="font-mono text-xs uppercase tracking-[0.25em] text-green-500/90">CRITICAL ANOMALY</p>
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-green-500/90">...FOLYTATÓDIK</p>
             <p className="mt-2 font-mono text-sm tracking-[0.08em] text-green-300">
-              [ ENTER NETWORK ID (EMAIL) TO DECRYPT FEED ]
+              [ ADD MEG AZ EMAILCÍMED A TITKOSÍTÁS FELOLDÁSÁHOZ. ]
             </p>
 
             <form onSubmit={handleUnlock} className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -549,38 +696,99 @@ export default function Szamuraj({ title, content }: Konyv2PageProps) {
                 disabled={isUnlocking}
                 className="border border-green-400 px-4 py-2 font-mono text-xs tracking-[0.22em] text-green-200 transition hover:bg-green-500/10 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isUnlocking ? '[ DECRYPTING... ]' : '[ DECRYPT FEED ]'}
+                {isUnlocking ? 'FELOLDÁS...' : 'FELOLDÁS'}
               </button>
             </form>
           </section>
         )}
 
-        <AnimatePresence>
-          {revealAfterLock && splitStory.afterLock.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.7 }}
-              className="mt-10 space-y-7 border-t border-green-500/30 pt-8 text-[1.03rem] leading-8 text-zinc-100/90 [text-shadow:calc(var(--trip)*0.55px)_0_0_rgba(255,0,68,0.68),calc(var(--trip)*-0.55px)_0_0_rgba(34,197,94,0.68),0_0_calc(var(--trip-blur)*1.2px)_rgba(255,255,255,0.62)]"
-            >
-              {splitStory.afterLock.map((paragraph, idx) => (
-                <motion.p
-                  key={paragraph.id}
-                  data-para-id={paragraph.id}
-                  data-paragraph-order={splitStory.beforeLock.length + idx}
-                  data-cue-type={paragraph.cueType ?? undefined}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: idx * 0.05 }}
-                  className="whitespace-pre-wrap"
-                >
-                  {paragraph.text}
-                </motion.p>
-              ))}
-            </motion.div>
+          <AnimatePresence>
+            {revealAfterLock && splitStory.afterLock.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.7 }}
+                className="mx-auto mt-10 w-full max-w-[18rem] space-y-7 pt-8 text-left text-[1.13rem] leading-8 text-zinc-400/78 sm:max-w-[30.5rem] [text-shadow:0_0_calc(var(--trip-blur)*(0.86+var(--glitch-boost)*0.34)*1px)_rgba(255,255,255,0.2),calc(var(--trip)*(0.24+var(--glitch-boost)*0.2)*1px)_0_0_rgba(255,0,68,0.38),calc(var(--trip)*(-0.24-var(--glitch-boost)*0.2)*1px)_0_0_rgba(34,197,94,0.34)]"
+              >
+                {splitStory.afterLock.map((paragraph, idx) => (
+                  <motion.p
+                    key={paragraph.id}
+                    data-para-id={paragraph.id}
+                    data-paragraph-order={splitStory.beforeLock.length + idx}
+                    data-cue-type={paragraph.cueType ?? undefined}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: idx * 0.05 }}
+                    className="whitespace-pre-wrap"
+                  >
+                    {paragraph.text}
+                  </motion.p>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {isUnlocked && (
+            <section className="mx-auto mt-24 w-full max-w-[20rem] sm:max-w-[30.5rem]">
+              <div className="shadow-neutral-950 relative overflow-hidden border border-green-500/0 bg-black/75 p-4 font-mono shadow-xl sm:p-5">
+                <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:100%_3px]" />
+
+                <a href="/" className="relative inline-block hover:opacity-85 transition-opacity" aria-label="Vissza a főoldalra">
+                  <img src="/img/logo.png" alt="Vállalhatatlan" className="h-8 w-auto" />
+                </a>
+
+                <h2 className="relative mt-3 text-sm uppercase tracking-[0.24em] text-green-300/95">Támogasd ezt a faszt !</h2>
+
+                <p className="relative mt-2 text-sm italic leading-6 text-zinc-300/80">
+                  Megírni egy korszak regényét, filmet rendezni belőle és szanaszét hajlítani a valóságot.
+                </p>
+
+                <div className="relative mt-4 space-y-3 text-sm leading-6 text-zinc-300/85">
+                  <a
+                    href="https://vallalhatatlan.substack.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block border border-green-500/25 bg-black/45 px-3 py-2 transition hover:border-green-400/50 hover:bg-green-500/10"
+                  >
+                    <span className="text-green-500/85">Substack:</span> vallalhatatlan.substack.com
+                  </a>
+
+                  <a
+                    href="https://buy.stripe.com/bJe9ATenoaR23C70RV8Ra0o"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block border border-green-500/25 bg-black/45 px-3 py-2 transition hover:border-green-400/50 hover:bg-green-500/10"
+                  >
+                    <span className="text-green-500/85">Stripe Donate:</span> Tetszőleges
+                  </a>
+
+                  <div className="border border-green-500/25 bg-black/45 px-3 py-3">
+                    <p>
+                      <span className="text-green-500/85">Revolut:</span> @vallalhatatlan
+                    </p>
+                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <img
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=164x164&data=https%3A%2F%2Frevolut.me%2Fvallalhatatlan"
+                        alt="Revolut QR - @vallalhatatlan"
+                        className="h-28 w-28 border border-green-500/30 bg-white p-1"
+                        loading="lazy"
+                      />
+                      <a
+                        href="https://revolut.me/vallalhatatlan"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block border border-green-500/30 px-3 py-2 text-xs uppercase tracking-[0.2em] text-green-200 transition hover:border-green-400/60 hover:bg-green-500/10"
+                      >
+                        Revolut megnyitása
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
           )}
-        </AnimatePresence>
+
         </motion.article>
       )}
     </main>

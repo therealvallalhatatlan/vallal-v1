@@ -11,7 +11,7 @@
  *   4. Run `pnpm check:registry` to verify consistency
  */
 
-export type Konyv2UiType = 'text-heavy' | 'fullscreen-video' | 'glitch-gallery' | 'terminal-os' | 'darknet-link' | 'szamuraj'
+export type Konyv2UiType = 'text-heavy' | 'fullscreen-video' | 'glitch-gallery' | 'terminal-os' | 'darknet-link' | 'pali' | 'szamuraj'
 
 export interface Konyv2Entry {
   slug: string
@@ -55,7 +55,7 @@ export const konyv2Novellak: Konyv2Entry[] = [
   { slug: 'a-golya',                     title: 'A Gólya',                              uiType: 'text-heavy' },
   { slug: 'fel-kene-ebredjek',           title: 'Fel kéne ébredjek lassan',             uiType: 'text-heavy' },
   { slug: 'azazel',                      title: 'Azazel',                               uiType: 'text-heavy' },
-  { slug: 'a-pali-aki',                  title: 'A Pali, aki...',                       uiType: 'darknet-link', props: { videoId: 'mOgujAoryuY', linkUrl: 'https://www.reddit.com/r/hungary/comments/1nj8bcv/a_magyar_esptein%C3%BCgy/', linkText: 'r/hungary – A magyar Epstein-ügy' } },
+  { slug: 'a-pali-aki',                  title: 'A Pali, aki...',                       uiType: 'pali' },
   { slug: 'nem-all-fol',                 title: 'Nem áll föl a Kábós fasza',            uiType: 'text-heavy' },
   { slug: 'sokkal-okosabban',            title: 'Sokkal okosabban',                     uiType: 'text-heavy' },
   { slug: 'arnyekforgalom',              title: 'Árnyékforgalom',                       uiType: 'text-heavy' },
