@@ -18,8 +18,9 @@ export default function BgVideoGate() {
   }, []);
 
   const shouldRender = useMemo(() => {
-    // Reader, AR, and Admin should be as light as possible / no video background
+    // Keep selected routes lightweight and disable global background video on homepage.
     return !(
+      pathname === "/" ||
       pathname === "/reader" || 
       pathname.startsWith("/reader/") || 
       pathname === "/ar" || 

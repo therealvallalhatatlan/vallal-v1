@@ -15,4 +15,5 @@ export const uiRegistry: Record<Konyv2UiType, ComponentType<Konyv2PageProps>> = 
   'glitch-gallery':  dynamic(() => import('./types/GlitchGallery'))  as ComponentType<Konyv2PageProps>,
   'terminal-os':     dynamic(() => import('./types/TerminalOs'))     as ComponentType<Konyv2PageProps>,
   'darknet-link':    dynamic(() => import('./types/DarknetLink'))    as ComponentType<Konyv2PageProps>,
+  'szamuraj':        dynamic(() => import('./types/Szamuraj'))       as ComponentType<Konyv2PageProps>,
 }

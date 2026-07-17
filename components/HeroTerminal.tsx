@@ -7,7 +7,40 @@ import { Volume2, VolumeX } from "lucide-react";
 export default function HeroTerminal() {
   const [now, setNow] = useState<Date | null>(null);
   const [isMuted, setIsMuted] = useState(true);
+  const [activeShopTab, setActiveShopTab] = useState(0);
+  const [isShopHovered, setIsShopHovered] = useState(false);
+  const [isShopGlitching, setIsShopGlitching] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hasMountedShopTabsRef = useRef(false);
+
+  const shopTabs = [
+    {
+      id: "01",
+      title: "VÁLLALHATATLAN PÓLÓ",
+      image: "/ny1.jpg",
+      alt: "VÁLLALHATATLAN PÓLÓ",
+      description: "Szitanyomott mintával elöl-hátul, kézzel varrt fényvisszaverő szalaggal. Utcai ruházat, ami azonnal felismerhető.",
+      cta: "PÓLÓ KATALÓGUS",
+    },
+    {
+      id: "02",
+      title: "VÁLLALHATATLAN TÁSKA",
+      image: "/ny2.jpg",
+      alt: "VÁLLALHATATLAN TÁSKA",
+      description: "Erős vászontáska, tartós szitanyomattal és kézzel varrott fényvisszaverő csíkkal. Napi használatra és rejtett küldetésekhez.",
+      cta: "TÁSKA KATALÓGUS",
+    },
+    {
+      id: "03",
+      title: "RENDSZER KITŰZŐ",
+      image: "/s1.jpg",
+      alt: "RENDSZER KITŰZŐ",
+      description: "Kézzel készített, limitált kitűző. Kicsi, de jelzésértékű tárgy azoknak, akik a rendszer peremén mozognak.",
+      cta: "KITŰZŐ KATALÓGUS",
+    },
+  ];
+
+  const currentShopItem = shopTabs[activeShopTab];
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -21,6 +54,32 @@ export default function HeroTerminal() {
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (isShopHovered) {
+      return;
+    }
+
+    const tabInterval = setInterval(() => {
+      setActiveShopTab((prev) => (prev + 1) % shopTabs.length);
+    }, 3000);
+
+    return () => clearInterval(tabInterval);
+  }, [isShopHovered, shopTabs.length]);
+
+  useEffect(() => {
+    if (!hasMountedShopTabsRef.current) {
+      hasMountedShopTabsRef.current = true;
+      return;
+    }
+
+    setIsShopGlitching(true);
+    const glitchTimeout = window.setTimeout(() => {
+      setIsShopGlitching(false);
+    }, 260);
+
+    return () => window.clearTimeout(glitchTimeout);
+  }, [activeShopTab]);
 
   const formattedDate = now
     ? `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`
@@ -114,25 +173,37 @@ export default function HeroTerminal() {
             </p>
 
             {/* Primary CTA */}
-            <Link
-              href="/konyv-2"
-              className="relative overflow-hidden flex flex-col border border-white/50 bg-black/55 px-5 py-4 shadow-[0_0_0_1px_rgba(0,0,0,0.6),0_0_20px_rgba(163,230,53,0.12)] hover:border-lime-400/80 hover:bg-lime-400/10 hover:shadow-[0_0_0_1px_rgba(0,0,0,0.72),0_0_28px_rgba(163,230,53,0.24)] transition-all group"
+            <div
+              className="group relative overflow-hidden flex flex-col border border-lime-300/75 bg-transparent px-4 py-3 transition-all"
             >
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-[3px] border border-lime-400/60 group-hover:border-lime-400/90 transition-colors"
+                className="pointer-events-none absolute inset-[3px] border border-lime-300/45 group-hover:border-lime-300/70 transition-colors"
               />
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold tracking-widest uppercase text-white/85 group-hover:text-white transition-colors">
+                <span className="cta-mission-title text-lg font-bold tracking-[0.2em] uppercase text-lime-200/95 transition-colors">
                   KÜLDETÉS INDÍTÁSA
                 </span>
                 <span className="relative flex items-center justify-center w-3 h-3">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-60 animate-ping" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-lime-400" />
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-lime-300/45 opacity-70 animate-ping" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-lime-300/95" />
                 </span>
               </div>
-              <span className="text-sm text-white/65 mt-1 tracking-wider">
+              <span className="cta-mission-body text-sm text-neutral-200/90 mt-1 tracking-wide leading-relaxed">
                 Budapest: dead drop 24 órán belül.<br/>Vidék: diszkrét postai kézbesítés, ha a körön kívül vagy.
+              </span>
+            </div>
+
+            <Link
+              href="/konyv-2"
+              className="cta-mission cta-mission--brutal group relative overflow-hidden flex items-center justify-center border border-lime-300/90 bg-lime-400 px-5 py-3 transition-all"
+            >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-[3px] border border-black/35 group-hover:border-black/50 transition-colors"
+              />
+              <span className="relative z-[1] text-lg font-bold tracking-[0.35em] uppercase text-neutral-950/95">
+                START
               </span>
             </Link>
 
@@ -165,76 +236,95 @@ export default function HeroTerminal() {
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
             {/* Manifesto */}
             <section className="border border-neutral-800 bg-black/40 p-3.5 space-y-2">
-              <p className="text-xl italic leading-tight text-white/55">
+              <p className="text-xl italic leading-tight text-lime-300/90">
                 Ez a projekt tisztán a könyv bevételeiből és az alábbi három, egyedileg, kézzel készített cuccból tartja fenn magát. 
               </p>
             </section>
 
             {/* Technical catalog */}
-            <section className="border border-neutral-800 divide-y divide-neutral-800 bg-black/40">
-              <article className="grid grid-cols-[150px_minmax(0,1fr)] gap-3 p-3.5 items-start">
-                <img
-                  src="/ny1.jpg"
-                  alt="VÁLLALHATATLAN PÓLÓ"
-                  className="h-[150px] w-[150px] border border-neutral-800 object-cover grayscale"
-                />
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <h3 className="text-md uppercase tracking-[0.18em] text-neutral-100">01 // VÁLLALHATATLAN PÓLÓ</h3>
-                    <p className="text-[14px] leading-relaxed text-neutral-400">
-                      Szitanyomott mintával elöl hátul, kézzel varrt fényvisszaverő szalaggal.
-                    </p>
-                  </div>
-                  <Link
-                    href="/shop"
-                    className="block w-full border border-neutral-800 bg-black/50 px-3 py-2 text-center text-[12px] uppercase tracking-[0.2em] text-neutral-200 hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5 transition-colors"
-                  >
-                    MŰVELETI RUHÁZAT
-                  </Link>
-                </div>
-              </article>
+            <section
+              className="border border-neutral-800 bg-black/40"
+              onMouseEnter={() => setIsShopHovered(true)}
+              onMouseLeave={() => setIsShopHovered(false)}
+            >
+              <div className="grid grid-cols-3 border-b border-neutral-800 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent)]">
+                {shopTabs.map((tab, index) => {
+                  const isActive = index === activeShopTab;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveShopTab(index)}
+                      className={`group relative border-r border-neutral-800 px-3 py-3 text-left transition-all duration-200 last:border-r-0 ${
+                        isActive
+                          ? "bg-white/[0.045]"
+                          : "bg-transparent hover:bg-white/[0.03]"
+                      }`}
+                      aria-current={isActive ? "true" : "false"}
+                    >
+                      {isActive && (
+                        <span className="pointer-events-none absolute inset-x-3 bottom-0 h-px bg-lime-300/70" />
+                      )}
+                      <div className="space-y-1">
+                        <span
+                          className={`block text-[26px] leading-none tracking-[0.26em] transition-colors ${
+                            isActive ? "text-lime-300/90" : "text-neutral-500"
+                          }`}
+                        >
+                          {tab.id}
+                        </span>
+                        <span
+                          className={`block text-[11px] uppercase tracking-[0.16em] transition-colors ${
+                            isActive ? "text-neutral-100" : "text-neutral-400"
+                          }`}
+                        >
+                          {tab.title}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
 
-              <article className="grid grid-cols-[150px_minmax(0,1fr)] gap-3 p-3.5 items-start">
-                <img
-                  src="/ny2.jpg"
-                  alt="VÁLLALHATATLAN TÁSKA"
-                  className="h-[150px] w-[150px] border border-neutral-800 object-cover grayscale"
-                />
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <h3 className="text-md uppercase tracking-[0.18em] text-neutral-100">02 // VÁLLALHATATLAN TÁSKA</h3>
-                    <p className="text-[14px] leading-relaxed text-neutral-400">
-                      Erős vászontáska, tartós szitanyomattal és kézzel varrott fényvisszaverő csíkkal.
-                    </p>
+              <article className={`relative overflow-hidden p-3.5 ${isShopGlitching ? "shop-preview-glitch" : ""}`}>
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_20%,rgba(163,230,53,0.09),transparent_46%),radial-gradient(circle_at_86%_12%,rgba(255,255,255,0.05),transparent_40%)]" />
+                {isShopGlitching && (
+                  <>
+                    <span className="shop-glitch-band shop-glitch-band--top" />
+                    <span className="shop-glitch-band shop-glitch-band--bottom" />
+                  </>
+                )}
+                <div className={`relative grid gap-3 sm:grid-cols-[150px_minmax(0,1fr)] items-start ${isShopGlitching ? "shop-preview-glitch__content" : ""}`}>
+                  <div className="relative w-full aspect-square sm:w-[150px]">
+                    <Link href="/shop" className="block h-full w-full">
+                      <img
+                        src={currentShopItem.image}
+                        alt={currentShopItem.alt}
+                        className="h-full w-full border border-neutral-700 object-cover grayscale transition-all hover:grayscale-0"
+                      />
+                    </Link>
+                    <span className="absolute left-2 top-2 border border-neutral-700 bg-black/70 px-1.5 py-0.5 text-[10px] tracking-[0.2em] text-lime-300">
+                      {currentShopItem.id}
+                    </span>
                   </div>
-                  <Link
-                    href="/shop"
-                    className="block w-full border border-neutral-800 bg-black/50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.2em] text-neutral-200 hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5 transition-colors"
-                  >
-                    Request Bag
-                  </Link>
-                </div>
-              </article>
 
-              <article className="grid grid-cols-[150px_minmax(0,1fr)] gap-3 p-3.5 items-start">
-                <img
-                  src="/s1.jpg"
-                  alt="RENDSZER KITŰZŐ"
-                  className="h-[150px] w-[150px] border border-neutral-800 object-cover grayscale"
-                />
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <h3 className="text-md uppercase tracking-[0.18em] text-neutral-100">03 // RENDSZER KITŰZŐ</h3>
-                    <p className="text-[14px] leading-relaxed text-neutral-400">
-                      Kézzel készített kitűző, a projekt logójával.
-                    </p>
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <h3 className="text-sm uppercase tracking-[0.22em] text-neutral-100">
+                        {currentShopItem.title}
+                      </h3>
+                      <p className="text-[14px] leading-relaxed text-neutral-300">
+                        {currentShopItem.description}
+                      </p>
+                    </div>
+
+                    <Link
+                      href="/shop"
+                      className="inline-flex min-h-10 w-full items-center justify-center border border-neutral-700 bg-black/65 px-4 py-2 text-center text-[11px] uppercase tracking-[0.24em] text-neutral-100 transition-colors hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5"
+                    >
+                      {currentShopItem.cta}
+                    </Link>
                   </div>
-                  <Link
-                    href="/shop"
-                    className="block w-full border border-neutral-800 bg-black/50 px-3 py-2 text-center text-[11px] uppercase tracking-[0.2em] text-neutral-200 hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5 transition-colors"
-                  >
-                    Request Pin
-                  </Link>
                 </div>
               </article>
             </section>
@@ -242,6 +332,130 @@ export default function HeroTerminal() {
         </div>
 
       </div>
+
+      <style jsx>{`
+        .shop-preview-glitch::before,
+        .shop-preview-glitch::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          opacity: 0;
+        }
+
+        .shop-preview-glitch::before {
+          background: linear-gradient(90deg, transparent 0%, rgba(163, 230, 53, 0.16) 45%, transparent 100%);
+          mix-blend-mode: screen;
+          animation: shopGlitchFlash 260ms ease-out;
+        }
+
+        .shop-preview-glitch::after {
+          background:
+            linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.08) 48%, transparent 52%, transparent 100%),
+            repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0px, rgba(255, 255, 255, 0.05) 1px, transparent 1px, transparent 4px);
+          animation: shopScanlineFlash 260ms ease-out;
+        }
+
+        .shop-preview-glitch__content {
+          animation: shopPreviewJitter 260ms steps(2, end);
+        }
+
+        .shop-glitch-band {
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 14%;
+          pointer-events: none;
+          opacity: 0;
+          background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.14) 35%, rgba(163, 230, 53, 0.22) 55%, transparent 100%);
+          mix-blend-mode: screen;
+        }
+
+        .shop-glitch-band--top {
+          top: 16%;
+          animation: shopBandTop 260ms ease-out;
+        }
+
+        .shop-glitch-band--bottom {
+          top: 58%;
+          animation: shopBandBottom 260ms ease-out;
+        }
+
+        @keyframes shopPreviewJitter {
+          0% {
+            transform: translate3d(0, 0, 0);
+            filter: saturate(1);
+          }
+          20% {
+            transform: translate3d(-2px, 1px, 0);
+            filter: saturate(1.08);
+          }
+          45% {
+            transform: translate3d(2px, -1px, 0);
+          }
+          70% {
+            transform: translate3d(-1px, 0, 0);
+          }
+          100% {
+            transform: translate3d(0, 0, 0);
+            filter: saturate(1);
+          }
+        }
+
+        @keyframes shopGlitchFlash {
+          0% {
+            opacity: 0;
+            transform: translateX(-12%);
+          }
+          18% {
+            opacity: 0.8;
+          }
+          100% {
+            opacity: 0;
+            transform: translateX(12%);
+          }
+        }
+
+        @keyframes shopScanlineFlash {
+          0% {
+            opacity: 0;
+          }
+          25% {
+            opacity: 0.55;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+
+        @keyframes shopBandTop {
+          0% {
+            opacity: 0;
+            transform: translate3d(-3%, -4px, 0);
+          }
+          30% {
+            opacity: 0.95;
+          }
+          100% {
+            opacity: 0;
+            transform: translate3d(4%, 3px, 0);
+          }
+        }
+
+        @keyframes shopBandBottom {
+          0% {
+            opacity: 0;
+            transform: translate3d(3%, 4px, 0);
+          }
+          30% {
+            opacity: 0.85;
+          }
+          100% {
+            opacity: 0;
+            transform: translate3d(-4%, -3px, 0);
+          }
+        }
+      `}</style>
     </section>
   );
 }

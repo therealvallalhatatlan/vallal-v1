@@ -11,7 +11,7 @@
  *   4. Run `pnpm check:registry` to verify consistency
  */
 
-export type Konyv2UiType = 'text-heavy' | 'fullscreen-video' | 'glitch-gallery' | 'terminal-os' | 'darknet-link'
+export type Konyv2UiType = 'text-heavy' | 'fullscreen-video' | 'glitch-gallery' | 'terminal-os' | 'darknet-link' | 'szamuraj'
 
 export interface Konyv2Entry {
   slug: string
@@ -49,7 +49,7 @@ export const konyv2Novellak: Konyv2Entry[] = [
   },
 
   // ── Book 2 novellas — uiType: 'text-heavy' placeholder; update each when the page is designed ──
-  { slug: 'prezentacio-szamurajkarddal', title: 'Prezentáció Szamurájkarddal',         uiType: 'text-heavy' },
+  { slug: 'prezentacio-szamurajkarddal', title: 'Prezentáció Szamurájkarddal',         uiType: 'szamuraj' },
   { slug: 'ejszaka-minden-megvaltozik',  title: 'Éjszaka minden megváltozik',           uiType: 'text-heavy' },
   { slug: 'meg-hat-ora',                 title: 'Még hat óra',                          uiType: 'text-heavy' },
   { slug: 'a-golya',                     title: 'A Gólya',                              uiType: 'text-heavy' },
