@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { POSTA_AUTOMATA_FEE } from "@/lib/shop/delivery";
 import { Product, isPreorderProduct } from "@/lib/shop/products";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PreorderCampaignSummary } from "@/lib/shop/preorder";
 import { PreorderCampaignPanel } from "@/components/shop/PreorderCampaignPanel";
 
@@ -14,9 +14,19 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, campaign }) => {
-  const [showBack, setShowBack] = useState(false);
-  const hasBack = product.images.length > 1;
-  const currentImage = hasBack && showBack ? product.images[1] : product.images[0];
+  const [imageIndex, setImageIndex] = useState(0);
+  const hasGallery = product.images.length > 1;
+  const currentImage = product.images[imageIndex] ?? product.images[0];
+
+  const showPrev = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+  };
+
+  const showNext = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setImageIndex((prev) => (prev + 1) % product.images.length);
+  };
 
   return (
     <motion.div
@@ -54,14 +64,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick, camp
             </span>
           </div>
         )}
-        {hasBack && (
-          <button
-            className="absolute bottom-2 right-2 z-10 bg-black/70 border border-white/20 text-white/50 p-2 hover:border-lime-400/60 hover:text-lime-400 transition-all"
-            onClick={(e) => { e.stopPropagation(); setShowBack((v) => !v); }}
-            aria-label="Megfordítás"
-          >
-            <RefreshCw size={16} className={showBack ? 'scale-x-[-1]' : ''} />
-          </button>
+        {hasGallery && (
+          <>
+            <button
+              className="absolute bottom-2 left-2 z-10 bg-black/70 border border-white/20 text-white/50 p-2 hover:border-lime-400/60 hover:text-lime-400 transition-all"
+              onClick={showPrev}
+              aria-label="Előző kép"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              className="absolute bottom-2 right-2 z-10 bg-black/70 border border-white/20 text-white/50 p-2 hover:border-lime-400/60 hover:text-lime-400 transition-all"
+              onClick={showNext}
+              aria-label="Következő kép"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </>
         )}
       </div>
 

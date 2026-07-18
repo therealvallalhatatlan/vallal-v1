@@ -11,7 +11,7 @@
  *   4. Run `pnpm check:registry` to verify consistency
  */
 
-export type Konyv2UiType = 'text-heavy' | 'fullscreen-video' | 'glitch-gallery' | 'terminal-os' | 'darknet-link' | 'pali' | 'szamuraj'
+export type Konyv2UiType = 'text-heavy' | 'fullscreen-video' | 'glitch-gallery' | 'terminal-os' | 'darknet-link' | 'pali' | 'balaton' | 'szamuraj'
 
 export interface Konyv2Entry {
   slug: string
@@ -55,7 +55,7 @@ export const konyv2Novellak: Konyv2Entry[] = [
   { slug: 'a-golya',                     title: 'A Gólya',                              uiType: 'text-heavy' },
   { slug: 'fel-kene-ebredjek',           title: 'Fel kéne ébredjek lassan',             uiType: 'text-heavy' },
   { slug: 'azazel',                      title: 'Azazel',                               uiType: 'text-heavy' },
-  { slug: 'a-pali-aki',                  title: 'A Pali, aki...',                       uiType: 'pali' },
+  { slug: 'a-pali-aki',                  title: 'A Pali, aki a legdurvább orgiákat rendezi a városban',                       uiType: 'pali' },
   { slug: 'nem-all-fol',                 title: 'Nem áll föl a Kábós fasza',            uiType: 'text-heavy' },
   { slug: 'sokkal-okosabban',            title: 'Sokkal okosabban',                     uiType: 'text-heavy' },
   { slug: 'arnyekforgalom',              title: 'Árnyékforgalom',                       uiType: 'text-heavy' },
@@ -63,7 +63,7 @@ export const konyv2Novellak: Konyv2Entry[] = [
   { slug: 'kreativ-teszteles',           title: 'Kreatív tesztelés',                    uiType: 'text-heavy' },
   { slug: 'tavaszi-muszak',              title: 'Tavaszi műszak',                       uiType: 'text-heavy' },
   { slug: 'hianyzo-csavarok',            title: 'Hiányzó Csavarok',                     uiType: 'text-heavy' },
-  { slug: 'a-balatonnal',                title: 'A Balatonnál',                         uiType: 'text-heavy' },
+  { slug: 'a-balatonnal',                title: 'A Balatonnál',                         uiType: 'balaton' },
   { slug: 'korinthus-127',               title: 'Korinthus 1:27',                       uiType: 'text-heavy' },
   { slug: 'utolso-nap-utopiaban',        title: 'Utolsó nap utópiában',                 uiType: 'text-heavy' },
   { slug: 'mintazat',                    title: 'Mintázat',                             uiType: 'text-heavy' },

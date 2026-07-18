@@ -6,6 +6,8 @@ import matter from 'gray-matter'
 import { konyv2Novellak } from '@/data/konyv2Novellak'
 import { uiRegistry } from '@/components/konyv2/registry'
 import { BackLink } from '@/components/konyv2/BackLink'
+import { SupportersTicker } from '@/components/supporters/SupportersTicker'
+import { SUPPORTER_NAMES } from '@/data/supporters'
 
 export const runtime = 'nodejs'
 
@@ -58,6 +60,12 @@ export default async function Konyv2NovellaPage({ params }: PageProps) {
         content={content}
         props={entry.props}
       />
+
+      <section className="relative z-20 pb-14 sm:pb-16">
+        <div className="relative left-1/2 w-screen -translate-x-1/2 sm:left-auto sm:w-full sm:translate-x-0 sm:mx-auto sm:max-w-[30.5rem]">
+          <SupportersTicker names={SUPPORTER_NAMES} label="Tamogatok nevei" className="bg-black/70" />
+        </div>
+      </section>
     </>
   )
 }

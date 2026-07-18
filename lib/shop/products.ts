@@ -1,7 +1,7 @@
 // lib/shop/products.ts
 
 
-export type ProductType = 'pin' | 'men-shirt' | 'women-shirt' | 'bag' | 'book';
+export type ProductType = 'pin' | 'men-shirt' | 'women-shirt' | 'bag' | 'book' | 'wallet';
 
 export type ProductSize = 'S' | 'M' | 'L' | 'XL' | '2XL';
 
@@ -86,6 +86,15 @@ export const products: Product[] = [
     name: 'Vállalhatatlan könyv II. rész',
     description: 'A Vállalhatatlan könyv második része. Dead drop és postaautomata átvétellel is rendelhető.',
     images: ['/vallalhatatlan2.png'],
+    price: 10000,
+    stock: 100,
+  },
+  {
+    id: 'wallet-1',
+    type: 'wallet',
+    name: 'Vállalhatatlan Dohány Tárca',
+    description: 'Vállalhatatlan Dohány Tárca, négy nézetből fotózva.',
+    images: ['/dohany1.jpg', '/dohany2.jpg', '/dohany3.jpg', '/dohany4.jpg'],
     price: 10000,
     stock: 100,
   },

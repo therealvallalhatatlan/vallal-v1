@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { POSTA_AUTOMATA_FEE } from "@/lib/shop/delivery";
 import { Product, isPreorderProduct } from "@/lib/shop/products";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PreorderCampaignSummary } from "@/lib/shop/preorder";
 import { PreorderCampaignPanel } from "@/components/shop/PreorderCampaignPanel";
 
@@ -32,6 +33,14 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   campaign,
 }) => {
   if (!product) return null;
+  const [imageIndex, setImageIndex] = useState(0);
+
+  useEffect(() => {
+    setImageIndex(0);
+  }, [product.id]);
+
+  const galleryImages = product.images.length > 0 ? product.images : ["/s1.jpg"];
+  const hasGallery = galleryImages.length > 1;
   const requiresVariant = Boolean(product.sizes?.length || product.colorStock);
   const selectedImage =
     product.type === "bag"
@@ -39,8 +48,17 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         ? "/pink.jpg"
         : selectedSize === "Fekete"
         ? "/ny.jpg"
-        : product.images[0]
-      : product.images[0];
+        : galleryImages[imageIndex]
+      : galleryImages[imageIndex];
+
+  const showPrev = () => {
+    setImageIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+  };
+
+  const showNext = () => {
+    setImageIndex((prev) => (prev + 1) % galleryImages.length);
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="max-w-md w-full bg-black border-l border-white/10 flex flex-col font-mono">
@@ -56,16 +74,44 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-3">
           {/* Hero image + gallery */}
-          <div className="w-full aspect-[4/5] bg-black/60 border border-white/10 flex items-center justify-center overflow-hidden">
+          <div className="relative w-full aspect-[4/5] bg-black/60 border border-white/10 flex items-center justify-center overflow-hidden">
             <img
               src={selectedImage}
               alt={product.name}
               className="object-contain w-full h-full grayscale hover:grayscale-0 transition-all duration-500"
               onError={(e) => {
                 e.currentTarget.onerror = null;
-                e.currentTarget.src = product.images[0];
+                e.currentTarget.src = galleryImages[0];
               }}
             />
+            {hasGallery && (
+              <>
+                <button
+                  type="button"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/70 border border-white/20 text-white/50 p-2 hover:border-lime-400/60 hover:text-lime-400 transition-all"
+                  onClick={showPrev}
+                  aria-label="Előző kép"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/70 border border-white/20 text-white/50 p-2 hover:border-lime-400/60 hover:text-lime-400 transition-all"
+                  onClick={showNext}
+                  aria-label="Következő kép"
+                >
+                  <ChevronRight size={16} />
+                </button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+                  {galleryImages.map((_, idx) => (
+                    <span
+                      key={`gallery-dot-${idx}`}
+                      className={`h-1.5 w-1.5 rounded-full ${idx === imageIndex ? "bg-lime-400" : "bg-white/30"}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           {/* Size selector */}
           {product.sizes && (

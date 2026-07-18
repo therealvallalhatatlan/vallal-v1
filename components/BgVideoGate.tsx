@@ -23,6 +23,7 @@ export default function BgVideoGate() {
       pathname === "/" ||
       pathname === "/reader" || 
       pathname.startsWith("/reader/") || 
+      pathname.startsWith("/konyv-2/") ||
       pathname === "/ar" || 
       pathname.startsWith("/ar/") ||
       pathname === "/halozat" ||

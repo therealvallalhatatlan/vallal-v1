@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion'
@@ -6,23 +6,19 @@ import type { Konyv2PageProps } from '@/components/konyv2/props'
 
 /**
  * UI type: pali
- * Szamuraj-alapú oldal hangok nélkül, jelenleg csak a vizuális és narratív kerettel.
+ * Dedicated Pali page with its own audio phase system.
  */
-
-const INTERAKCIO_QUESTIONS = [
-  'Mennyi ido alatt puhul meg egy galamb?',
-  'Kinyomtatnad nekem ezt a halotti bizonyitvanyt?',
-  'Alairnad ezt az okiratot?',
-  'Tudnal rakni erre egy pecsetet?',
-  'Ekitek van?',
-  'Le tudod masolni ezt a lakatkulcsot A4-ben?',
-]
 
 const HOESES_LOOP_SRC = '/audio/hoeses.WAV'
 const SONG_LOOP_SRC = '/audio/song.wav'
 const SONG2_LOOP_SRC = '/audio/song2.wav'
 const HOUSE_LOOP_SRC = '/audio/house.wav'
 const CNN_LOOP_SRC = '/audio/cnn.wav'
+const TENSION_LOOP_SRC = '/audio/tension.wav'
+const TENSION2_LOOP_SRC = '/audio/tension2.wav'
+const CHRISTMAS_LOOP_SRC = '/audio/christmas2.WAV'
+const ACCESS_SFX_SRC = '/audio/access.wav'
+
 const HOESES_STOP_PHRASE = normalizeForMatch('Beletúrok az oldalzsebes gatyám zsebébe')
 const SONG_START_PHRASE = HOESES_STOP_PHRASE
 const SONG_STOP_PHRASE = normalizeForMatch('Mormogok valamit, hogy bocs')
@@ -30,15 +26,24 @@ const SONG2_START_PHRASE = normalizeForMatch('magamról a havat, és a faszi fel
 const SONG2_STOP_PHRASE = normalizeForMatch('Nem ismerjük egymást,')
 const HOUSE_START_PHRASE = normalizeForMatch('egy tizessel öregebb legalább')
 const HOUSE_STOP_PHRASE = normalizeForMatch('Másnap már hívott is')
-const CNN_START_PHRASE = HOUSE_STOP_PHRASE
+const CNN_START_PHRASE = normalizeForMatch('hazabotorkáltam, megetettem')
 const CNN_STOP_PHRASE = normalizeForMatch('Előpenderül egy fiatal lány')
+const TENSION_START_PHRASE = normalizeForMatch('Az ágyban is csak fekszünk a plafont bámulva')
+const TENSION_STOP_PHRASE = normalizeForMatch('Becsapom az apartman ajtaját és magamban szitkozódva')
+const TENSION2_START_PHRASE = normalizeForMatch('Körbenézve látok egy ilyen')
+const TENSION2_STOP_PHRASE = normalizeForMatch('Hazafelé a szokottnál is borúsabb')
+const CHRISTMAS_START_PHRASE = normalizeForMatch('Persze, bazdmeg.')
+
 const HOESES_VOLUME = 0.7
 const SONG_VOLUME = 0.72
 const SONG2_VOLUME = 0.52
 const HOUSE_VOLUME = 0.72
 const CNN_VOLUME = 0.72
+const TENSION_VOLUME = 0.72
+const TENSION2_VOLUME = 0.72
+const CHRISTMAS_VOLUME = 0.72
 
-type AudioPhase = 'hoeses' | 'song' | 'song2' | 'house' | 'cnn' | 'silent'
+type AudioPhase = 'hoeses' | 'song' | 'song2' | 'house' | 'cnn' | 'tension' | 'tension2' | 'christmas' | 'silent'
 
 type StorySection = 'before-lock' | 'after-lock'
 
@@ -52,6 +57,25 @@ interface SplitStory {
   beforeLock: StoryParagraph[]
   afterLock: StoryParagraph[]
 }
+
+const CHRISTMAS_BOKEH_LIGHTS = [
+  { left: '6%', top: '14%', size: 240, color: 'rgba(118, 168, 255, 0.18)', duration: 11, delay: 0 },
+  { left: '22%', top: '66%', size: 210, color: 'rgba(129, 204, 255, 0.16)', duration: 13, delay: 1.4 },
+  { left: '42%', top: '28%', size: 300, color: 'rgba(106, 145, 232, 0.2)', duration: 12, delay: 0.7 },
+  { left: '63%', top: '16%', size: 260, color: 'rgba(132, 179, 255, 0.16)', duration: 14, delay: 2.1 },
+  { left: '78%', top: '58%', size: 230, color: 'rgba(159, 231, 255, 0.15)', duration: 10, delay: 0.4 },
+  { left: '91%', top: '34%', size: 190, color: 'rgba(100, 142, 224, 0.15)', duration: 12, delay: 1.8 },
+]
+
+const WINTER_SNOWFLAKES = Array.from({ length: 34 }, (_, index) => ({
+  id: index,
+  left: `${((index * 17) % 100) + 0.5}%`,
+  size: 1 + (index % 4) * 0.9,
+  duration: 8 + (index % 7) * 1.35,
+  delay: (index % 9) * 0.55,
+  drift: -18 + (index % 8) * 5,
+  opacity: 0.18 + (index % 5) * 0.1,
+}))
 
 function normalizeForMatch(value: string): string {
   return value
@@ -121,6 +145,94 @@ function splitStoryContent(content: string | null): SplitStory {
   }
 }
 
+function ChristmasBokehBackground() {
+  return (
+    <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
+      <div className="absolute inset-0 bg-[#040812]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(64,120,208,0.18),transparent_42%),radial-gradient(circle_at_76%_16%,rgba(90,168,255,0.12),transparent_44%),radial-gradient(circle_at_54%_76%,rgba(114,132,186,0.12),transparent_50%)]" />
+
+      {CHRISTMAS_BOKEH_LIGHTS.map((light, index) => (
+        <motion.div
+          key={`${light.left}-${light.top}-${index}`}
+          className="absolute rounded-full blur-[48px]"
+          style={{
+            left: light.left,
+            top: light.top,
+            width: `${light.size}px`,
+            height: `${light.size}px`,
+            background: light.color,
+          }}
+          animate={{
+            x: [0, 16, -12, 0],
+            y: [0, -10, 8, 0],
+            scale: [1, 1.08, 0.96, 1],
+            opacity: [0.18, 0.3, 0.2, 0.18],
+          }}
+          transition={{
+            duration: light.duration,
+            repeat: Infinity,
+            repeatType: 'mirror',
+            ease: 'easeInOut',
+            delay: light.delay,
+          }}
+        />
+      ))}
+
+      <div className="absolute inset-0">
+        {WINTER_SNOWFLAKES.map((flake) => (
+          <motion.span
+            key={`bg-snow-${flake.id}`}
+            className="absolute top-[-12%] rounded-full bg-[#d6edff]"
+            style={{
+              left: flake.left,
+              width: `${flake.size * 1.18}px`,
+              height: `${flake.size * 1.18}px`,
+              opacity: flake.opacity * 0.95,
+              filter: 'drop-shadow(0 0 5px rgba(170,213,255,0.58))',
+            }}
+            animate={{
+              y: ['0vh', '120vh'],
+              x: [0, flake.drift, flake.drift * -0.35, 0],
+            }}
+            transition={{
+              duration: flake.duration,
+              delay: flake.delay,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+          />
+        ))}
+        {WINTER_SNOWFLAKES.map((flake) => (
+          <motion.span
+            key={`bg-snow-foreground-${flake.id}`}
+            className="absolute top-[-16%] rounded-full bg-[#e7f4ff]"
+            style={{
+              left: `calc(${flake.left} + 0.9%)`,
+              width: `${flake.size * 1.65}px`,
+              height: `${flake.size * 1.65}px`,
+              opacity: Math.min(0.85, flake.opacity * 0.9),
+              filter: 'drop-shadow(0 0 6px rgba(208,234,255,0.62))',
+            }}
+            animate={{
+              y: ['0vh', '122vh'],
+              x: [0, flake.drift * 1.35, flake.drift * -0.5, 0],
+            }}
+            transition={{
+              duration: Math.max(5.8, flake.duration * 0.72),
+              delay: flake.delay * 0.7,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="absolute inset-0 opacity-12 [background-image:linear-gradient(to_bottom,rgba(196,226,255,0.12)_1px,transparent_1px)] [background-size:100%_4px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_112%,rgba(10,18,36,0.2),rgba(2,6,14,0.9))]" />
+    </div>
+  )
+}
+
 function EntryGate({ onEnter }: { onEnter: () => void }) {
   const [isGlitching, setIsGlitching] = useState(false)
 
@@ -142,39 +254,65 @@ function EntryGate({ onEnter }: { onEnter: () => void }) {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-40 flex min-h-screen items-center justify-center overflow-hidden bg-[#040507] px-4 text-[#93ff8a] sm:px-6">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(34,197,94,0.12),transparent_28%),radial-gradient(circle_at_50%_115%,rgba(14,165,233,0.1),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_18%,rgba(0,0,0,0.26))]" />
-      <div className="pointer-events-none absolute inset-0 opacity-35 [background-image:linear-gradient(to_bottom,rgba(255,255,255,0.055)_1px,transparent_1px)] [background-size:100%_2px]" />
+    <div className="fixed inset-0 z-40 flex min-h-screen items-center justify-center overflow-hidden bg-[#020612] px-4 text-[#b8dbff] sm:px-6">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_12%,rgba(88,146,224,0.22),transparent_34%),radial-gradient(circle_at_45%_118%,rgba(70,126,208,0.16),transparent_36%),linear-gradient(180deg,rgba(230,241,255,0.04),transparent_22%,rgba(1,4,10,0.64))]" />
+      <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(to_bottom,rgba(202,225,255,0.08)_1px,transparent_1px)] [background-size:100%_2px]" />
 
-      <div className="relative w-full max-w-md overflow-hidden border border-[#2a3a2f] bg-[#060806] shadow-[0_0_0_1px_rgba(0,0,0,0.8),0_0_80px_rgba(0,0,0,0.7)]">
-        <div className="flex items-center justify-between border-b border-[#1d2a21] bg-[#0b100d] px-4 py-2 font-mono text-[10px] uppercase tracking-[0.32em] text-[#76ff70]">
+      <div className="pointer-events-none absolute inset-0">
+        {WINTER_SNOWFLAKES.map((flake) => (
+          <motion.span
+            key={flake.id}
+            className="absolute top-[-12%] rounded-full bg-[#d6edff]"
+            style={{
+              left: flake.left,
+              width: `${flake.size}px`,
+              height: `${flake.size}px`,
+              opacity: flake.opacity,
+              filter: 'drop-shadow(0 0 4px rgba(182,220,255,0.55))',
+            }}
+            animate={{
+              y: ['0vh', '120vh'],
+              x: [0, flake.drift, flake.drift * -0.35, 0],
+            }}
+            transition={{
+              duration: flake.duration,
+              delay: flake.delay,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative w-full max-w-md overflow-hidden border border-[#2a3d5f] bg-[#060d1d] shadow-[0_0_0_1px_rgba(0,0,0,0.85),0_0_90px_rgba(0,5,20,0.75)]">
+        <div className="flex items-center justify-between border-b border-[#1d2d46] bg-[#0b1426] px-4 py-2 font-mono text-[10px] uppercase tracking-[0.32em] text-[#93c8ff]">
           <span>private link internetcafe</span>
           <span>internal network</span>
         </div>
 
-        <div className="relative bg-[#090b09] px-5 py-6 sm:px-6 sm:py-7">
-          <div className="pointer-events-none absolute inset-0 opacity-35 [background-image:repeating-linear-gradient(180deg,rgba(118,255,112,0.08)_0px,rgba(118,255,112,0.08)_1px,transparent_1px,transparent_4px)]" />
-          <div className="relative mx-auto w-full max-w-sm border border-[#223127] bg-[#050705] px-4 py-5 font-mono text-[#92ff8a]">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-[#5f8b61]">login prompt</p>
+        <div className="relative bg-[#070d19] px-5 py-6 sm:px-6 sm:py-7">
+          <div className="pointer-events-none absolute inset-0 opacity-30 [background-image:repeating-linear-gradient(180deg,rgba(154,210,255,0.07)_0px,rgba(154,210,255,0.07)_1px,transparent_1px,transparent_4px)]" />
+          <div className="relative mx-auto w-full max-w-sm border border-[#20314d] bg-[#050b16] px-4 py-5 font-mono text-[#b8dcff]">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-[#6c8fb9]">login prompt</p>
 
             <div className="mt-4 space-y-3 text-sm">
               <label className="block space-y-1">
-                <span className="block text-[10px] uppercase tracking-[0.22em] text-[#6db06f]">user name</span>
+                <span className="block text-[10px] uppercase tracking-[0.22em] text-[#78a7d8]">user name</span>
                 <input
                   type="text"
                   defaultValue="Vállalhatatlan"
                   readOnly
-                  className="w-full border border-[#223127] bg-[#091009] px-3 py-2 text-[#d8ffd8] outline-none"
+                  className="w-full border border-[#20314d] bg-[#0b1527] px-3 py-2 text-[#d8ebff] outline-none"
                 />
               </label>
 
               <label className="block space-y-1">
-                <span className="block text-[10px] uppercase tracking-[0.22em] text-[#6db06f]">password</span>
+                <span className="block text-[10px] uppercase tracking-[0.22em] text-[#78a7d8]">password</span>
                 <input
                   type="password"
                   defaultValue="vault-entry"
                   readOnly
-                  className="w-full border border-[#223127] bg-[#091009] px-3 py-2 text-[#d8ffd8] outline-none"
+                  className="w-full border border-[#20314d] bg-[#0b1527] px-3 py-2 text-[#d8ebff] outline-none"
                 />
               </label>
             </div>
@@ -182,13 +320,13 @@ function EntryGate({ onEnter }: { onEnter: () => void }) {
             <button
               type="button"
               onClick={onEnter}
-              className="mt-6 w-full border border-[#2f7a39] bg-[#0e1a10] px-4 py-3 text-xs uppercase tracking-[0.3em] text-[#b8ffb8] transition hover:bg-[#133017] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7bff7b] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050705]"
+              className="mt-6 w-full border border-[#3a5e8d] bg-[#0f1d34] px-4 py-3 text-xs uppercase tracking-[0.3em] text-[#d8ecff] transition hover:bg-[#173055] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#98ceff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050b16]"
               style={
                 isGlitching
                   ? {
-                      boxShadow: '0 0 0 1px rgba(255,0,64,0.25), 0 0 16px rgba(0,255,255,0.18), 0 0 22px rgba(255,0,128,0.12)',
+                      boxShadow: '0 0 0 1px rgba(98,166,255,0.4), 0 0 20px rgba(116,199,255,0.24), 0 0 28px rgba(126,152,255,0.16)',
                       transform: 'translate3d(0,0,0) skewX(-1deg)',
-                      textShadow: '1px 0 0 rgba(255,0,70,0.8), -1px 0 0 rgba(0,255,255,0.75), 0 0 8px rgba(123,255,123,0.35)',
+                      textShadow: '1px 0 0 rgba(81,145,255,0.85), -1px 0 0 rgba(148,230,255,0.8), 0 0 8px rgba(173,220,255,0.4)',
                     }
                   : undefined
               }
@@ -197,8 +335,8 @@ function EntryGate({ onEnter }: { onEnter: () => void }) {
                 login
                 {isGlitching && (
                   <>
-                    <span className="pointer-events-none absolute inset-0 -translate-x-[1px] text-[#ff2d55] opacity-70">login</span>
-                    <span className="pointer-events-none absolute inset-0 translate-x-[1px] text-[#00e5ff] opacity-70">login</span>
+                    <span className="pointer-events-none absolute inset-0 -translate-x-[1px] text-[#78a9ff] opacity-70">login</span>
+                    <span className="pointer-events-none absolute inset-0 translate-x-[1px] text-[#8de7ff] opacity-70">login</span>
                   </>
                 )}
               </span>
@@ -214,23 +352,29 @@ export default function Pali({ title, content }: Konyv2PageProps) {
   const [hasEntered, setHasEntered] = useState(false)
   const [isBootFlicker, setIsBootFlicker] = useState(false)
   const [isTitleGlitching, setIsTitleGlitching] = useState(false)
-  const [interakcioStep, setInterakcioStep] = useState(0)
-  const [interakcioDisplay, setInterakcioDisplay] = useState('')
-  const [isInterakcioTyping, setIsInterakcioTyping] = useState(false)
-  const [isInterakcioCrashed, setIsInterakcioCrashed] = useState(false)
   const [networkId, setNetworkId] = useState('')
   const [isUnlocking, setIsUnlocking] = useState(false)
   const [isUnlocked, setIsUnlocked] = useState(false)
+
+  const accessAudioRef = useRef<HTMLAudioElement | null>(null)
   const hoesesAudioRef = useRef<HTMLAudioElement | null>(null)
   const songAudioRef = useRef<HTMLAudioElement | null>(null)
   const song2AudioRef = useRef<HTMLAudioElement | null>(null)
   const houseAudioRef = useRef<HTMLAudioElement | null>(null)
   const cnnAudioRef = useRef<HTMLAudioElement | null>(null)
+  const tensionAudioRef = useRef<HTMLAudioElement | null>(null)
+  const tension2AudioRef = useRef<HTMLAudioElement | null>(null)
+  const christmasAudioRef = useRef<HTMLAudioElement | null>(null)
+
   const hoesesFadeTimerRef = useRef<number | null>(null)
   const songFadeTimerRef = useRef<number | null>(null)
   const song2FadeTimerRef = useRef<number | null>(null)
   const houseFadeTimerRef = useRef<number | null>(null)
   const cnnFadeTimerRef = useRef<number | null>(null)
+  const tensionFadeTimerRef = useRef<number | null>(null)
+  const tension2FadeTimerRef = useRef<number | null>(null)
+  const christmasFadeTimerRef = useRef<number | null>(null)
+
   const desiredAudioPhaseRef = useRef<AudioPhase>('hoeses')
   const activeAudioPhaseRef = useRef<AudioPhase | null>(null)
 
@@ -242,6 +386,19 @@ export default function Pali({ title, content }: Konyv2PageProps) {
   const tripAmount = useTransform(scrollYProgress, [0, 0.35, 1], [0, 1.5, 4.8])
   const textBlur = useTransform(scrollYProgress, [0, 1], [0, 1.6])
   const glitchBoost = useTransform(scrollYProgress, [0, 0.8, 0.94, 1], [0, 0.12, 0.55, 0.9])
+
+  useEffect(() => {
+    const access = new Audio(ACCESS_SFX_SRC)
+    access.preload = 'auto'
+    access.volume = 0.9
+    accessAudioRef.current = access
+
+    return () => {
+      access.pause()
+      access.currentTime = 0
+      accessAudioRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     const hoeses = new Audio(HOESES_LOOP_SRC)
@@ -269,11 +426,29 @@ export default function Pali({ title, content }: Konyv2PageProps) {
     cnn.preload = 'auto'
     cnn.volume = CNN_VOLUME
 
+    const tension = new Audio(TENSION_LOOP_SRC)
+    tension.loop = true
+    tension.preload = 'auto'
+    tension.volume = TENSION_VOLUME
+
+    const tension2 = new Audio(TENSION2_LOOP_SRC)
+    tension2.loop = true
+    tension2.preload = 'auto'
+    tension2.volume = TENSION2_VOLUME
+
+    const christmas = new Audio(CHRISTMAS_LOOP_SRC)
+    christmas.loop = true
+    christmas.preload = 'auto'
+    christmas.volume = CHRISTMAS_VOLUME
+
     hoesesAudioRef.current = hoeses
     songAudioRef.current = song
     song2AudioRef.current = song2
     houseAudioRef.current = house
     cnnAudioRef.current = cnn
+    tensionAudioRef.current = tension
+    tension2AudioRef.current = tension2
+    christmasAudioRef.current = christmas
 
     const clearFadeTimer = (timerRef: React.MutableRefObject<number | null>) => {
       if (timerRef.current !== null) {
@@ -333,45 +508,31 @@ export default function Pali({ title, content }: Konyv2PageProps) {
       const currentSong2 = song2AudioRef.current
       const currentHouse = houseAudioRef.current
       const currentCnn = cnnAudioRef.current
-      if (!currentHoeses || !currentSong || !currentSong2 || !currentHouse || !currentCnn) return
+      const currentTension = tensionAudioRef.current
+      const currentTension2 = tension2AudioRef.current
+      const currentChristmas = christmasAudioRef.current
 
-      if (nextPhase === 'hoeses') {
-        stopWithFade(currentSong, SONG_VOLUME, songFadeTimerRef)
-        stopWithFade(currentSong2, SONG2_VOLUME, song2FadeTimerRef)
-        stopWithFade(currentHouse, HOUSE_VOLUME, houseFadeTimerRef)
-        stopWithFade(currentCnn, CNN_VOLUME, cnnFadeTimerRef)
-        playFromStart(currentHoeses, HOESES_VOLUME, hoesesFadeTimerRef)
-      } else if (nextPhase === 'song') {
-        stopWithFade(currentHoeses, HOESES_VOLUME, hoesesFadeTimerRef)
-        stopWithFade(currentSong2, SONG2_VOLUME, song2FadeTimerRef)
-        stopWithFade(currentHouse, HOUSE_VOLUME, houseFadeTimerRef)
-        stopWithFade(currentCnn, CNN_VOLUME, cnnFadeTimerRef)
-        playFromStart(currentSong, SONG_VOLUME, songFadeTimerRef)
-      } else if (nextPhase === 'song2') {
-        stopWithFade(currentHoeses, HOESES_VOLUME, hoesesFadeTimerRef)
-        stopWithFade(currentSong, SONG_VOLUME, songFadeTimerRef)
-        stopWithFade(currentHouse, HOUSE_VOLUME, houseFadeTimerRef)
-        stopWithFade(currentCnn, CNN_VOLUME, cnnFadeTimerRef)
-        playFromStart(currentSong2, SONG2_VOLUME, song2FadeTimerRef)
-      } else if (nextPhase === 'house') {
-        stopWithFade(currentHoeses, HOESES_VOLUME, hoesesFadeTimerRef)
-        stopWithFade(currentSong, SONG_VOLUME, songFadeTimerRef)
-        stopWithFade(currentSong2, SONG2_VOLUME, song2FadeTimerRef)
-        stopWithFade(currentCnn, CNN_VOLUME, cnnFadeTimerRef)
-        playFromStart(currentHouse, HOUSE_VOLUME, houseFadeTimerRef)
-      } else if (nextPhase === 'cnn') {
-        stopWithFade(currentHoeses, HOESES_VOLUME, hoesesFadeTimerRef)
-        stopWithFade(currentSong, SONG_VOLUME, songFadeTimerRef)
-        stopWithFade(currentSong2, SONG2_VOLUME, song2FadeTimerRef)
-        stopWithFade(currentHouse, HOUSE_VOLUME, houseFadeTimerRef)
-        playFromStart(currentCnn, CNN_VOLUME, cnnFadeTimerRef)
-      } else {
-        stopWithFade(currentHoeses, HOESES_VOLUME, hoesesFadeTimerRef)
-        stopWithFade(currentSong, SONG_VOLUME, songFadeTimerRef)
-        stopWithFade(currentSong2, SONG2_VOLUME, song2FadeTimerRef)
-        stopWithFade(currentHouse, HOUSE_VOLUME, houseFadeTimerRef)
-        stopWithFade(currentCnn, CNN_VOLUME, cnnFadeTimerRef)
+      if (!currentHoeses || !currentSong || !currentSong2 || !currentHouse || !currentCnn || !currentTension || !currentTension2 || !currentChristmas) {
+        return
       }
+
+      if (nextPhase !== 'hoeses') stopWithFade(currentHoeses, HOESES_VOLUME, hoesesFadeTimerRef)
+      if (nextPhase !== 'song') stopWithFade(currentSong, SONG_VOLUME, songFadeTimerRef)
+      if (nextPhase !== 'song2') stopWithFade(currentSong2, SONG2_VOLUME, song2FadeTimerRef)
+      if (nextPhase !== 'house') stopWithFade(currentHouse, HOUSE_VOLUME, houseFadeTimerRef)
+      if (nextPhase !== 'cnn') stopWithFade(currentCnn, CNN_VOLUME, cnnFadeTimerRef)
+      if (nextPhase !== 'tension') stopWithFade(currentTension, TENSION_VOLUME, tensionFadeTimerRef)
+      if (nextPhase !== 'tension2') stopWithFade(currentTension2, TENSION2_VOLUME, tension2FadeTimerRef)
+      if (nextPhase !== 'christmas') stopWithFade(currentChristmas, CHRISTMAS_VOLUME, christmasFadeTimerRef)
+
+      if (nextPhase === 'hoeses') playFromStart(currentHoeses, HOESES_VOLUME, hoesesFadeTimerRef)
+      if (nextPhase === 'song') playFromStart(currentSong, SONG_VOLUME, songFadeTimerRef)
+      if (nextPhase === 'song2') playFromStart(currentSong2, SONG2_VOLUME, song2FadeTimerRef)
+      if (nextPhase === 'house') playFromStart(currentHouse, HOUSE_VOLUME, houseFadeTimerRef)
+      if (nextPhase === 'cnn') playFromStart(currentCnn, CNN_VOLUME, cnnFadeTimerRef)
+      if (nextPhase === 'tension') playFromStart(currentTension, TENSION_VOLUME, tensionFadeTimerRef)
+      if (nextPhase === 'tension2') playFromStart(currentTension2, TENSION2_VOLUME, tension2FadeTimerRef)
+      if (nextPhase === 'christmas') playFromStart(currentChristmas, CHRISTMAS_VOLUME, christmasFadeTimerRef)
 
       activeAudioPhaseRef.current = nextPhase
     }
@@ -383,8 +544,8 @@ export default function Pali({ title, content }: Konyv2PageProps) {
       }
 
       const viewportCenter = window.innerHeight / 2
-      const songStartLine = document.querySelector<HTMLElement>('[data-song-start="true"]')
 
+      const songStartLine = document.querySelector<HTMLElement>('[data-song-start="true"]')
       if (!songStartLine) {
         applyAudioPhase('hoeses')
         return
@@ -475,7 +636,67 @@ export default function Pali({ title, content }: Konyv2PageProps) {
       }
 
       const hasReachedCnnStop = cnnStopLine.getBoundingClientRect().top <= viewportCenter
-      applyAudioPhase(hasReachedCnnStop ? 'silent' : 'cnn')
+      if (!hasReachedCnnStop) {
+        applyAudioPhase('cnn')
+        return
+      }
+
+      const tensionStartLine = document.querySelector<HTMLElement>('[data-tension-start="true"]')
+      if (!tensionStartLine) {
+        applyAudioPhase('silent')
+        return
+      }
+
+      const hasReachedTensionStart = tensionStartLine.getBoundingClientRect().top <= viewportCenter
+      if (!hasReachedTensionStart) {
+        applyAudioPhase('silent')
+        return
+      }
+
+      const tensionStopLine = document.querySelector<HTMLElement>('[data-tension-stop="true"]')
+      if (!tensionStopLine) {
+        applyAudioPhase('tension')
+        return
+      }
+
+      const hasReachedTensionStop = tensionStopLine.getBoundingClientRect().top <= viewportCenter
+      if (!hasReachedTensionStop) {
+        applyAudioPhase('tension')
+        return
+      }
+
+      const tension2StartLine = document.querySelector<HTMLElement>('[data-tension2-start="true"]')
+      if (!tension2StartLine) {
+        applyAudioPhase('silent')
+        return
+      }
+
+      const hasReachedTension2Start = tension2StartLine.getBoundingClientRect().top <= viewportCenter
+      if (!hasReachedTension2Start) {
+        applyAudioPhase('silent')
+        return
+      }
+
+      const tension2StopLine = document.querySelector<HTMLElement>('[data-tension2-stop="true"]')
+      if (!tension2StopLine) {
+        applyAudioPhase('tension2')
+        return
+      }
+
+      const hasReachedTension2Stop = tension2StopLine.getBoundingClientRect().top <= viewportCenter
+      if (!hasReachedTension2Stop) {
+        applyAudioPhase('tension2')
+        return
+      }
+
+      const christmasStartLine = document.querySelector<HTMLElement>('[data-christmas-start="true"]')
+      if (!christmasStartLine) {
+        applyAudioPhase('silent')
+        return
+      }
+
+      const hasReachedChristmasStart = christmasStartLine.getBoundingClientRect().top <= viewportCenter
+      applyAudioPhase(hasReachedChristmasStart ? 'christmas' : 'silent')
     }
 
     applyAudioPhase('hoeses')
@@ -495,26 +716,36 @@ export default function Pali({ title, content }: Konyv2PageProps) {
       window.removeEventListener('keydown', retryOnUserInteraction)
       window.removeEventListener('scroll', updatePhaseFromViewport)
       window.removeEventListener('resize', updatePhaseFromViewport)
-      clearFadeTimer(hoesesFadeTimerRef)
-      clearFadeTimer(songFadeTimerRef)
-      clearFadeTimer(song2FadeTimerRef)
-      clearFadeTimer(houseFadeTimerRef)
-      clearFadeTimer(cnnFadeTimerRef)
-      hoeses.pause()
-      song.pause()
-      song2.pause()
-      house.pause()
-      cnn.pause()
-      hoeses.currentTime = 0
-      song.currentTime = 0
-      song2.currentTime = 0
-      house.currentTime = 0
-      cnn.currentTime = 0
+
+      ;[
+        hoesesFadeTimerRef,
+        songFadeTimerRef,
+        song2FadeTimerRef,
+        houseFadeTimerRef,
+        cnnFadeTimerRef,
+        tensionFadeTimerRef,
+        tension2FadeTimerRef,
+        christmasFadeTimerRef,
+      ].forEach((timerRef) => {
+        if (timerRef.current !== null) {
+          window.clearInterval(timerRef.current)
+          timerRef.current = null
+        }
+      })
+
+      ;[hoeses, song, song2, house, cnn, tension, tension2, christmas].forEach((audio) => {
+        audio.pause()
+        audio.currentTime = 0
+      })
+
       hoesesAudioRef.current = null
       songAudioRef.current = null
       song2AudioRef.current = null
       houseAudioRef.current = null
       cnnAudioRef.current = null
+      tensionAudioRef.current = null
+      tension2AudioRef.current = null
+      christmasAudioRef.current = null
       activeAudioPhaseRef.current = null
     }
   }, [hasEntered, revealAfterLock, splitStory.afterLock.length, splitStory.beforeLock.length])
@@ -536,58 +767,23 @@ export default function Pali({ title, content }: Konyv2PageProps) {
     }
   }, [])
 
-  useEffect(() => {
-    if (isInterakcioCrashed) return
-
-    const currentQuestion = INTERAKCIO_QUESTIONS[interakcioStep]
-    if (!currentQuestion) {
-      setInterakcioDisplay('')
-      return
-    }
-
-    setIsInterakcioTyping(true)
-    setInterakcioDisplay('')
-
-    let index = 0
-    const tick = () => {
-      index += 1
-      setInterakcioDisplay(currentQuestion.slice(0, index))
-
-      if (index < currentQuestion.length) {
-        window.setTimeout(tick, 18 + Math.random() * 28)
-      } else {
-        setIsInterakcioTyping(false)
-      }
-    }
-
-    const timer = window.setTimeout(tick, 130)
-
-    return () => {
-      window.clearTimeout(timer)
-    }
-  }, [interakcioStep, isInterakcioCrashed])
-
   const handleEnter = () => {
     setIsBootFlicker(true)
     setHasEntered(true)
     window.setTimeout(() => setIsBootFlicker(false), 260)
   }
 
-  const handleParancsolj = () => {
-    if (isInterakcioCrashed) return
-
-    setInterakcioStep((currentStep) => {
-      const nextStep = Math.min(currentStep + 1, INTERAKCIO_QUESTIONS.length)
-      if (nextStep >= INTERAKCIO_QUESTIONS.length) {
-        setIsInterakcioCrashed(true)
-      }
-      return nextStep
-    })
-  }
-
   const handleUnlock = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!networkId || isUnlocking || isUnlocked) return
+
+    const access = accessAudioRef.current
+    if (access) {
+      access.currentTime = 0
+      void access.play().catch(() => {
+        // Ignore blocked playback attempts.
+      })
+    }
 
     setIsUnlocking(true)
     await new Promise((resolve) => setTimeout(resolve, 800))
@@ -596,11 +792,10 @@ export default function Pali({ title, content }: Konyv2PageProps) {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-black text-zinc-100">
+    <main className="relative min-h-screen overflow-hidden bg-[#030811] text-zinc-100">
       {!hasEntered && <EntryGate onEnter={handleEnter} />}
 
-      <div className="pointer-events-none fixed inset-0 z-10 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:100%_4px] opacity-20" />
-      <div className="pointer-events-none fixed inset-0 z-10 bg-[radial-gradient(circle_at_50%_10%,rgba(34,197,94,0.15),transparent_58%),radial-gradient(circle_at_50%_120%,rgba(59,130,246,0.12),transparent_52%)]" />
+      <ChristmasBokehBackground />
 
       <AnimatePresence>
         {isBootFlicker && (
@@ -626,7 +821,7 @@ export default function Pali({ title, content }: Konyv2PageProps) {
           className="relative z-20 mx-auto w-full max-w-[24rem] px-5 pb-20 pt-14 sm:max-w-[31.2rem] sm:px-7 sm:pt-20"
         >
           <header className="mb-8">
-            <p className="mb-2 font-mono text-xs uppercase tracking-[0.28em] text-green-500">terminal_06.log</p>
+            <p className="mb-2 font-mono text-xs uppercase tracking-[0.28em] text-[#7db9ff]">terminal_06.log</p>
             <h1
               className="text-[2.65rem] font-bold leading-[0.95] tracking-[-0.03em] text-[#ece7dc] sm:text-[3.65rem]"
               style={{ fontFamily: 'Trebuchet MS, Verdana, Arial, sans-serif' }}
@@ -653,28 +848,6 @@ export default function Pali({ title, content }: Konyv2PageProps) {
             </h1>
           </header>
 
-          <section className="mb-12 border border-green-500/25 bg-black/65 p-4 font-mono text-green-400 sm:p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-green-500/85">SZIMULÁTOR</p>
-            <div className="mt-3 min-h-[2.2rem] text-sm leading-7 text-green-300/90">
-              {interakcioDisplay ? <p className="whitespace-pre-wrap">{interakcioDisplay}{isInterakcioTyping ? '▍' : ''}</p> : <p>&nbsp;</p>}
-            </div>
-            {isInterakcioCrashed ? (
-              <div className="mt-4 border border-red-500/60 bg-red-950/20 p-3 text-xs tracking-[0.12em] text-red-300">
-                [ SZIMULÁTOR ]
-                <br />
-                ERROR_0x06: FASZOM_KIVAN
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={handleParancsolj}
-                className="mt-4 border border-green-400 px-4 py-2 text-xs tracking-[0.22em] transition hover:bg-green-500/10"
-              >
-                {isInterakcioTyping ? '[ BETOLT...' : '[ PARANCSOLJ! ]'}
-              </button>
-            )}
-          </section>
-
           {splitStory.beforeLock.length > 0 ? (
             <div className="mx-auto w-full max-w-[20rem] space-y-7 text-left text-[1.13rem] leading-8 text-zinc-400/80 sm:max-w-[30.5rem] [text-shadow:0_0_calc(var(--trip-blur)*(0.78+var(--glitch-boost)*0.3)*1px)_rgba(255,255,255,0.2),calc(var(--trip)*(0.23+var(--glitch-boost)*0.18)*1px)_0_0_rgba(255,0,68,0.36),calc(var(--trip)*(-0.23-var(--glitch-boost)*0.18)*1px)_0_0_rgba(34,197,94,0.33)]">
               {splitStory.beforeLock.map((paragraph, idx) => (
@@ -690,6 +863,11 @@ export default function Pali({ title, content }: Konyv2PageProps) {
                   data-house-stop={isHouseStopLine(paragraph.text) ? 'true' : undefined}
                   data-cnn-start={isCnnStartLine(paragraph.text) ? 'true' : undefined}
                   data-cnn-stop={isCnnStopLine(paragraph.text) ? 'true' : undefined}
+                  data-tension-start={isTensionStartLine(paragraph.text) ? 'true' : undefined}
+                  data-tension-stop={isTensionStopLine(paragraph.text) ? 'true' : undefined}
+                  data-tension2-start={isTension2StartLine(paragraph.text) ? 'true' : undefined}
+                  data-tension2-stop={isTension2StopLine(paragraph.text) ? 'true' : undefined}
+                  data-christmas-start={isChristmasStartLine(paragraph.text) ? 'true' : undefined}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.35, delay: idx * 0.03 }}
@@ -731,7 +909,7 @@ export default function Pali({ title, content }: Konyv2PageProps) {
                   disabled={isUnlocking}
                   className="border border-green-400 px-4 py-2 font-mono text-xs tracking-[0.22em] text-green-200 transition hover:bg-green-500/10 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {isUnlocking ? 'FELOLDÁS...' : 'FELOLDÁS'}
+                  {isUnlocking ? 'FELOLDÁS...' : 'FELOLDÁS'}
                 </button>
               </form>
             </section>
@@ -744,7 +922,7 @@ export default function Pali({ title, content }: Konyv2PageProps) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.7 }}
-                className="mx-auto mt-10 w-full max-w-[18rem] space-y-7 pt-8 text-left text-[1.13rem] leading-8 text-zinc-400/78 sm:max-w-[30.5rem] [text-shadow:0_0_calc(var(--trip-blur)*(0.86+var(--glitch-boost)*0.34)*1px)_rgba(255,255,255,0.2),calc(var(--trip)*(0.24+var(--glitch-boost)*0.2)*1px)_0_0_rgba(255,0,68,0.38),calc(var(--trip)*(-0.24-var(--glitch-boost)*0.2)*1px)_0_0_rgba(34,197,94,0.34)]"
+                className="mx-auto mt-10 w-full max-w-[18rem] space-y-7 pt-8 text-left text-[1.13rem] leading-8 text-zinc-400/78 sm:max-w-[30.5rem] [text-shadow:0_0_calc(var(--trip-blur)*(0.86+var(--glitch-boost)*0.34)*1px)_rgba(255,255,255,0.2),calc(var(--trip)*(0.24+var(--glitch-boost)*0.2)*1px)_0_0_rgba(88,150,255,0.34),calc(var(--trip)*(-0.24-var(--glitch-boost)*0.2)*1px)_0_0_rgba(120,232,255,0.28)]"
               >
                 {splitStory.afterLock.map((paragraph, idx) => (
                   <motion.p
@@ -759,6 +937,11 @@ export default function Pali({ title, content }: Konyv2PageProps) {
                     data-house-stop={isHouseStopLine(paragraph.text) ? 'true' : undefined}
                     data-cnn-start={isCnnStartLine(paragraph.text) ? 'true' : undefined}
                     data-cnn-stop={isCnnStopLine(paragraph.text) ? 'true' : undefined}
+                    data-tension-start={isTensionStartLine(paragraph.text) ? 'true' : undefined}
+                    data-tension-stop={isTensionStopLine(paragraph.text) ? 'true' : undefined}
+                    data-tension2-start={isTension2StartLine(paragraph.text) ? 'true' : undefined}
+                    data-tension2-stop={isTension2StopLine(paragraph.text) ? 'true' : undefined}
+                    data-christmas-start={isChristmasStartLine(paragraph.text) ? 'true' : undefined}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: idx * 0.05 }}
@@ -772,61 +955,58 @@ export default function Pali({ title, content }: Konyv2PageProps) {
           </AnimatePresence>
 
           {isUnlocked && (
-            <section className="mx-auto mt-24 w-full max-w-[20rem] sm:max-w-[30.5rem]">
-              <div className="shadow-neutral-950 relative overflow-hidden border border-green-500/0 bg-black/75 p-4 font-mono shadow-xl sm:p-5">
-                <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:100%_3px]" />
+            <section className="mx-auto mt-48 w-full max-w-[20rem] sm:max-w-[30.5rem]">
+              <div className="relative overflow-hidden border border-zinc-700/55 bg-[#05070b]/95 p-4 font-mono shadow-[0_14px_50px_rgba(0,0,0,0.6)] sm:p-5">
+                <div className="pointer-events-none absolute inset-0 opacity-16 [background-image:linear-gradient(to_bottom,rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:100%_3px]" />
 
-                <a href="/" className="relative inline-block hover:opacity-85 transition-opacity" aria-label="Vissza a főoldalra">
-                  <img src="/img/logo.png" alt="Vállalhatatlan" className="h-8 w-auto" />
-                </a>
-
-                <h2 className="relative mt-3 text-sm uppercase tracking-[0.24em] text-green-300/95">Támogasd ezt a faszt !</h2>
-
-                <p className="relative mt-2 text-sm italic leading-6 text-zinc-300/80">
-                  Megírni egy korszak regényét, filmet rendezni belőle és szanaszét hajlítani a valóságot.
-                </p>
-
-                <div className="relative mt-4 space-y-3 text-sm leading-6 text-zinc-300/85">
-                  <a
-                    href="https://vallalhatatlan.substack.com/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block border border-green-500/25 bg-black/45 px-3 py-2 transition hover:border-green-400/50 hover:bg-green-500/10"
-                  >
-                    <span className="text-green-500/85">Substack:</span> vallalhatatlan.substack.com
-                  </a>
-
-                  <a
-                    href="https://buy.stripe.com/bJe9ATenoaR23C70RV8Ra0o"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block border border-green-500/25 bg-black/45 px-3 py-2 transition hover:border-green-400/50 hover:bg-green-500/10"
-                  >
-                    <span className="text-green-500/85">Stripe Donate:</span> Tetszőleges
-                  </a>
-
-                  <div className="border border-green-500/25 bg-black/45 px-3 py-3">
-                    <p>
-                      <span className="text-green-500/85">Revolut:</span> @vallalhatatlan
-                    </p>
-                    <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <img
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=164x164&data=https%3A%2F%2Frevolut.me%2Fvallalhatatlan"
-                        alt="Revolut QR - @vallalhatatlan"
-                        className="h-28 w-28 border border-green-500/30 bg-white p-1"
-                        loading="lazy"
-                      />
-                      <a
-                        href="https://revolut.me/vallalhatatlan"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block border border-green-500/30 px-3 py-2 text-xs uppercase tracking-[0.2em] text-green-200 transition hover:border-green-400/60 hover:bg-green-500/10"
-                      >
-                        Revolut megnyitása
-                      </a>
-                    </div>
+                <div className="relative flex items-center justify-between border-b border-zinc-700/60 pb-2">
+                  <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-300/90">PROJECT FINANCE TERMINAL</p>
+                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-red-300">
+                    KRITIKUS
+                    <span className="relative inline-flex h-3.5 w-6 items-center rounded-[2px] border border-red-400/85 px-[1px]">
+                      <span className="h-[6px] w-[1%] min-w-[1px] rounded-[1px] bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.75)]" />
+                      <span className="absolute -right-[3px] top-1/2 h-1.5 w-[2px] -translate-y-1/2 rounded-r-[1px] bg-red-300/90" />
+                    </span>
                   </div>
                 </div>
+
+                <table className="relative mt-3 w-full border-collapse text-left text-xs text-zinc-300/85">
+                  <tbody>
+                    <tr className="border-b border-zinc-800/80">
+                      <th className="py-2 font-normal uppercase tracking-[0.14em] text-zinc-500">Állapot</th>
+                      <td className="py-2 text-red-300">Kritikus finanszírozási szint</td>
+                    </tr>
+                    <tr className="border-b border-zinc-800/80">
+                      <th className="py-2 font-normal uppercase tracking-[0.14em] text-zinc-500">Kampány cél</th>
+                      <td className="py-2">III. Évad + Könyv + Film fejlesztés</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <p className="relative mt-3 text-[11px] leading-5 text-zinc-400/90">
+                  Rendszerüzenet: a projekt stabilizálásához azonnali külső támogatás szükséges.
+                </p>
+
+                <a
+                  href="/tamogatas"
+                  className="group w-full relative mt-4 inline-flex items-center justify-center overflow-hidden border border-green-500/65 bg-green-500/10 px-4 py-4 text-xs uppercase tracking-[0.24em] text-green-200 transition hover:bg-green-500/20 hover:text-green-100"
+                >
+                  <span className="relative inline-block text-center">
+                    [ TÁMOGATÁSI LEHETŐSÉGEK ]
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 -translate-x-[1px] text-[#ff4fd8]/70 opacity-0 transition-opacity duration-200 group-hover:opacity-90"
+                    >
+                      [ TÁMOGATÁSI LEHETŐSÉGEK ]
+                    </span>
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 translate-x-[1px] text-[#42f5ff]/75 opacity-0 transition-opacity duration-200 group-hover:opacity-90"
+                    >
+                      [ TÁMOGATÁSI LEHETŐSÉGEK ]
+                    </span>
+                  </span>
+                </a>
               </div>
             </section>
           )}
@@ -866,4 +1046,24 @@ function isCnnStartLine(text: string): boolean {
 
 function isCnnStopLine(text: string): boolean {
   return normalizeForMatch(text).includes(CNN_STOP_PHRASE)
+}
+
+function isTensionStartLine(text: string): boolean {
+  return normalizeForMatch(text).includes(TENSION_START_PHRASE)
+}
+
+function isTensionStopLine(text: string): boolean {
+  return normalizeForMatch(text).includes(TENSION_STOP_PHRASE)
+}
+
+function isTension2StartLine(text: string): boolean {
+  return normalizeForMatch(text).includes(TENSION2_START_PHRASE)
+}
+
+function isTension2StopLine(text: string): boolean {
+  return normalizeForMatch(text).includes(TENSION2_STOP_PHRASE)
+}
+
+function isChristmasStartLine(text: string): boolean {
+  return normalizeForMatch(text).includes(CHRISTMAS_START_PHRASE)
 }

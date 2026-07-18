@@ -1305,6 +1305,14 @@ input[type="range"]:focus {
   outline: none;
 }
 
+.tamogatas-range {
+  height: 14px;
+}
+
+.tamogatas-range::-webkit-slider-thumb {
+  margin-top: -5.5px;
+}
+
 .retro-chat-shell {
   position: relative;
 }
