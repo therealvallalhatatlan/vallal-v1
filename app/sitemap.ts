@@ -7,10 +7,10 @@ import { join } from 'path';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = 'https://vallalhatatlan.online';
 
-  // (A) Build-time listing from public/playlists (Node.js runtime). Falls back to (B) below.
-  async function getSlugsFromPublic(): Promise<string[]> {
+  // (A) Build-time listing from data/playlists (Node.js runtime). Falls back to (B) below.
+  async function getSlugsFromData(): Promise<string[]> {
     try {
-      const dir = join(process.cwd(), 'public', 'playlists');
+      const dir = join(process.cwd(), 'data', 'playlists');
       const files = await readdir(dir);
       return files
         .filter(f => f.endsWith('.json'))
@@ -20,7 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  const fsSlugs = await getSlugsFromPublic();
+  const fsSlugs = await getSlugsFromData();
   // (B) Runtime fallback: use existing helper (e.g. Supabase/index), if fs listing is empty.
   const fallbackSlugs = fsSlugs.length ? fsSlugs : (await listSlugs().catch(() => [] as string[]));
 

@@ -7,8 +7,8 @@ export type Track = { title: string; file: string }
 export type PlaylistData = { excerpt?: string; tracks: Track[]; visuals?: string[] }
 
 
-const PUBLIC_DIR = path.join(process.cwd(), 'public')
-const PLAYLISTS_DIR = path.join(PUBLIC_DIR, 'playlists')
+const DATA_DIR = path.join(process.cwd(), 'data')
+const PLAYLISTS_DIR = path.join(DATA_DIR, 'playlists')
 
 
 export async function listSlugs(): Promise<string[]> {
