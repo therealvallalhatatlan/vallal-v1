@@ -67,10 +67,10 @@ export default function SpotPreview({
             right: 0,
             bottom: 'var(--matrica-action-rail-offset, 0px)',
             zIndex: 43,
-            background: 'linear-gradient(180deg, rgba(12,10,20,0.98), rgba(5,8,18,0.98))',
-            borderTop: '1px solid rgba(232,121,249,0.28)',
-            borderRadius: '16px 16px 12px 12px',
-            boxShadow: '0 -22px 48px rgba(0,0,0,0.38)',
+            background: 'linear-gradient(180deg, rgba(6,7,9,0.99), rgba(8,11,15,0.99))',
+            borderTop: '1px solid rgba(163,230,53,0.28)',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            boxShadow: '0 -26px 60px rgba(0,0,0,0.46)',
             padding: '12px 16px calc(18px + env(safe-area-inset-bottom, 0px))',
           }}
         >
@@ -79,8 +79,7 @@ export default function SpotPreview({
               style={{
                 width: 36,
                 height: 4,
-                borderRadius: 999,
-                background: 'rgba(255,255,255,0.2)',
+                background: 'rgba(163,230,53,0.35)',
               }}
             />
           </div>
@@ -99,9 +98,8 @@ export default function SpotPreview({
               style={{
                 width: 30,
                 height: 30,
-                borderRadius: 999,
                 border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.08)',
+                background: 'rgba(255,255,255,0.03)',
                 color: '#e4e4e7',
                 cursor: 'pointer',
                 fontSize: 16,
@@ -122,8 +120,8 @@ export default function SpotPreview({
                 marginTop: 12,
                 maxHeight: 160,
                 objectFit: 'cover',
-                borderRadius: 10,
                 border: '1px solid rgba(255,255,255,0.12)',
+                filter: 'grayscale(0.18) contrast(1.04)',
               }}
             />
           ) : null}
@@ -137,13 +135,12 @@ export default function SpotPreview({
           <div
             style={{
               marginTop: 12,
-              borderRadius: 10,
-              border: '1px solid rgba(148,163,184,0.35)',
-              background: 'rgba(148,163,184,0.12)',
-              padding: '9px 11px',
+              border: '1px solid rgba(255,255,255,0.14)',
+              background: 'rgba(255,255,255,0.04)',
+              padding: '10px 11px',
             }}
           >
-            <div style={{ color: '#cbd5e1', fontSize: 12, fontWeight: 700, letterSpacing: '0.05em' }}>KOZELITO TAVOLSAG</div>
+            <div style={{ color: '#a3e635', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>KOZELITO TAVOLSAG</div>
             <div style={{ marginTop: 4, color: '#f8fafc', fontSize: 14, fontWeight: 700 }}>{approxDistance}</div>
           </div>
 
@@ -161,10 +158,9 @@ export default function SpotPreview({
               style={{
                 width: '100%',
                 marginTop: 12,
-                borderRadius: 10,
-                border: '1px solid rgba(232,121,249,0.45)',
-                background: 'rgba(232,121,249,0.22)',
-                color: '#fdf2f8',
+                border: '1px solid rgba(163,230,53,0.34)',
+                background: 'rgba(163,230,53,0.08)',
+                color: '#d9f99d',
                 fontSize: 13,
                 fontWeight: 700,
                 padding: '10px 12px',
@@ -183,10 +179,9 @@ export default function SpotPreview({
               style={{
                 width: '100%',
                 marginTop: 12,
-                borderRadius: 10,
-                border: '1px solid rgba(232,121,249,0.4)',
-                background: 'rgba(232,121,249,0.18)',
-                color: '#fdf2f8',
+                border: '1px solid rgba(255,255,255,0.18)',
+                background: 'rgba(255,255,255,0.04)',
+                color: '#f5f5f5',
                 fontSize: 13,
                 fontWeight: 700,
                 padding: '10px 12px',
@@ -222,11 +217,10 @@ export default function SpotPreview({
         width: cardWidth,
         maxWidth: 'calc(100vw - 24px)',
         transform: 'translate(-50%, calc(-100% - 14px))',
-        borderRadius: 12,
-        border: '1px solid rgba(232,121,249,0.35)',
-        background: 'linear-gradient(180deg, rgba(18,12,30,0.96), rgba(9,9,14,0.95))',
+        border: '1px solid rgba(163,230,53,0.24)',
+        background: 'linear-gradient(180deg, rgba(8,10,12,0.98), rgba(4,6,8,0.98))',
         color: '#f4f4f5',
-        boxShadow: '0 20px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.03) inset',
+        boxShadow: '0 20px 48px rgba(0,0,0,0.52), inset 0 0 0 1px rgba(255,255,255,0.03)',
         pointerEvents: 'auto',
         backdropFilter: 'blur(8px)',
       }}
@@ -239,13 +233,12 @@ export default function SpotPreview({
         <div
           style={{
             marginTop: 10,
-            borderRadius: 9,
-            border: '1px solid rgba(148,163,184,0.3)',
-            background: 'rgba(148,163,184,0.12)',
+            border: '1px solid rgba(255,255,255,0.14)',
+            background: 'rgba(255,255,255,0.04)',
             padding: '7px 9px',
           }}
         >
-          <div style={{ fontSize: 11, color: '#cbd5e1', letterSpacing: '0.05em', fontWeight: 700 }}>KOZELITO TAVOLSAG</div>
+          <div style={{ fontSize: 11, color: '#a3e635', letterSpacing: '0.08em', fontWeight: 700 }}>KOZELITO TAVOLSAG</div>
           <div style={{ marginTop: 3, fontSize: 13, color: '#f8fafc', fontWeight: 700 }}>{approxDistance}</div>
         </div>
 
@@ -269,10 +262,9 @@ export default function SpotPreview({
             style={{
               width: '100%',
               marginTop: 10,
-              borderRadius: 9,
-              border: '1px solid rgba(232,121,249,0.45)',
-              background: 'rgba(232,121,249,0.22)',
-              color: '#fdf2f8',
+              border: '1px solid rgba(163,230,53,0.34)',
+              background: 'rgba(163,230,53,0.08)',
+              color: '#d9f99d',
               fontSize: 12,
               fontWeight: 700,
               padding: '8px 10px',
@@ -291,10 +283,9 @@ export default function SpotPreview({
             style={{
               width: '100%',
               marginTop: 10,
-              borderRadius: 9,
-              border: '1px solid rgba(56,189,248,0.5)',
-              background: 'rgba(56,189,248,0.2)',
-              color: '#e0f2fe',
+              border: '1px solid rgba(255,255,255,0.18)',
+              background: 'rgba(255,255,255,0.04)',
+              color: '#f5f5f5',
               fontSize: 12,
               fontWeight: 700,
               padding: '8px 10px',

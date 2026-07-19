@@ -312,6 +312,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
 
 function MatricaNav() {
   const SECONDARY_NAV_EXTRA_OFFSET = 8
+  const CONTROL_RAIL_HEIGHT = 52
   const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
   const pathname = usePathname()
   const router = useRouter()
@@ -348,6 +349,7 @@ function MatricaNav() {
   const pmUnreadStorageReadyRef = useRef(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const clickSfxRef = useRef<HTMLAudioElement | null>(null)
+  const headerOffset = onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET + CONTROL_RAIL_HEIGHT
 
   const playUiClick = useCallback(() => {
     const audio = clickSfxRef.current
@@ -541,8 +543,8 @@ function MatricaNav() {
     }, [authToken, user?.id, pmRecipient?.id])
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--matrica-header-offset', `${onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET}px`)
-  }, [onlineBarHeight])
+    document.documentElement.style.setProperty('--matrica-header-offset', `${headerOffset}px`)
+  }, [headerOffset])
 
   // Fetch score when session is available and after successful claims.
   useEffect(() => {
@@ -888,11 +890,10 @@ function MatricaNav() {
               style={{
                 width: profileAvatarSize,
                 height: profileAvatarSize,
-                borderRadius: 999,
                 border: menuOpen
-                  ? '1px solid rgba(148,163,184,0.7)'
+                  ? '1px solid rgba(163,230,53,0.45)'
                   : '1px solid rgba(255,255,255,0.2)',
-                background: menuOpen ? 'rgba(148,163,184,0.2)' : 'rgba(255,255,255,0.08)',
+                background: menuOpen ? 'rgba(163,230,53,0.08)' : 'rgba(255,255,255,0.05)',
                 cursor: 'pointer',
                 padding: 0,
                 display: 'flex',
@@ -941,10 +942,9 @@ function MatricaNav() {
                   position: 'absolute',
                   top: -6,
                   left: -5,
-                  borderRadius: 999,
                   border: '1px solid rgba(255,255,255,0.18)',
-                  background: '#0f172a',
-                  color: '#cbd5e1',
+                  background: '#0a0d10',
+                  color: '#d9f99d',
                   fontSize: 9,
                   fontWeight: 800,
                   letterSpacing: '0.06em',
@@ -962,10 +962,9 @@ function MatricaNav() {
                   position: 'absolute',
                   top: 'calc(100% + 8px)',
                   right: 0,
-                  minWidth: 220,
-                  background: 'rgba(15,15,20,0.97)',
-                  border: '1px solid rgba(148,163,184,0.25)',
-                  borderRadius: 12,
+                  minWidth: 260,
+                  background: 'rgba(5,7,9,0.98)',
+                  border: '1px solid rgba(163,230,53,0.18)',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
                   backdropFilter: 'blur(16px)',
                   WebkitBackdropFilter: 'blur(16px)',
@@ -975,7 +974,7 @@ function MatricaNav() {
               >
                 {/* Identity */}
                 <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                  <p style={{ margin: 0, fontSize: 11, color: '#71717a', marginBottom: 3 }}>Bejelentkezve</p>
+                  <p style={{ margin: 0, fontSize: 10, color: '#a3e635', marginBottom: 6, letterSpacing: '0.12em', fontWeight: 700 }}>SESSION ACTIVE</p>
                   {nicknameEditing ? (
                     <>
                       <input
@@ -1001,9 +1000,8 @@ function MatricaNav() {
                           fontSize: 14,
                           color: '#f4f4f5',
                           fontWeight: 700,
-                          borderRadius: 8,
-                          border: '1px solid rgba(148,163,184,0.35)',
-                          background: 'rgba(24,24,27,0.85)',
+                          border: '1px solid rgba(255,255,255,0.14)',
+                          background: 'rgba(255,255,255,0.03)',
                           padding: '7px 9px',
                           outline: 'none',
                         }}
@@ -1014,10 +1012,9 @@ function MatricaNav() {
                           onClick={() => void handleSaveNickname()}
                           disabled={nicknameSaving}
                           style={{
-                            border: '1px solid rgba(148,163,184,0.45)',
-                            background: 'rgba(148,163,184,0.18)',
-                            color: '#e2e8f0',
-                            borderRadius: 8,
+                            border: '1px solid rgba(163,230,53,0.28)',
+                            background: 'rgba(163,230,53,0.08)',
+                            color: '#d9f99d',
                             fontSize: 11,
                             fontWeight: 700,
                             padding: '5px 8px',
@@ -1039,7 +1036,6 @@ function MatricaNav() {
                             border: '1px solid rgba(255,255,255,0.14)',
                             background: 'transparent',
                             color: '#a1a1aa',
-                            borderRadius: 8,
                             fontSize: 11,
                             fontWeight: 600,
                             padding: '5px 8px',
@@ -1073,7 +1069,7 @@ function MatricaNav() {
                         style={{
                           border: 'none',
                           background: 'transparent',
-                          color: '#94a3b8',
+                          color: '#a3e635',
                           fontSize: 11,
                           fontWeight: 700,
                           cursor: 'pointer',
@@ -1099,9 +1095,9 @@ function MatricaNav() {
                   borderBottom: '1px solid rgba(255,255,255,0.07)',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
-                  <span style={{ fontSize: 13, color: '#a1a1aa' }}>Pontszám</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#cbd5e1', fontWeight: 700, fontSize: 14 }}>
-                    <span style={{ fontSize: 15 }}>★</span>
+                  <span style={{ fontSize: 12, color: '#a1a1aa', letterSpacing: '0.08em' }}>PONTSZAM</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#d9f99d', fontWeight: 700, fontSize: 14 }}>
+                    <span style={{ fontSize: 15 }}>+</span>
                     {score !== null ? `${score} pont` : '…'}
                   </span>
                 </div>
@@ -1113,7 +1109,7 @@ function MatricaNav() {
                     borderBottom: '1px solid rgba(255,255,255,0.07)',
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   }}>
-                    <span style={{ fontSize: 13, color: '#a1a1aa' }}>Elfogadott matricák</span>
+                    <span style={{ fontSize: 12, color: '#a1a1aa', letterSpacing: '0.08em' }}>ELFOGADOTT</span>
                     <span style={{ fontSize: 13, color: '#d4d4d8', fontWeight: 600 }}>{accepted} db</span>
                   </div>
                 )}
@@ -1127,11 +1123,11 @@ function MatricaNav() {
                   style={{
                     width: '100%', padding: '12px 16px',
                     background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer',
-                    textAlign: 'left', fontSize: 13, color: '#e2e8f0',
+                    textAlign: 'left', fontSize: 13, color: '#e2e8f0', letterSpacing: '0.05em',
                     display: 'flex', alignItems: 'center', gap: 8,
                   }}
                 >
-                  <span>📍</span> A szpotjaim
+                  <span>[01]</span> A szpotjaim
                 </button>
 
                 {/* Sign out */}
@@ -1140,11 +1136,11 @@ function MatricaNav() {
                   style={{
                     width: '100%', padding: '12px 16px',
                     background: 'transparent', border: 'none', cursor: 'pointer',
-                    textAlign: 'left', fontSize: 13, color: '#fca5a5',
+                    textAlign: 'left', fontSize: 13, color: '#fca5a5', letterSpacing: '0.05em',
                     display: 'flex', alignItems: 'center', gap: 8,
                   }}
                 >
-                  <span>↩</span> Kijelentkezés
+                  <span>[00]</span> Kijelentkezés
                 </button>
               </div>
             )}
@@ -1155,7 +1151,7 @@ function MatricaNav() {
       <div
         style={{
           position: 'fixed',
-          top: onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET,
+          top: headerOffset,
           left: 0,
           right: 0,
           zIndex: 190,
@@ -1171,9 +1167,9 @@ function MatricaNav() {
             margin: 0,
             width: '100vw',
             borderRadius: 0,
-            border: 'none',
-            background: 'rgba(0, 0, 0, 0.6)',
-            boxShadow: 'none',
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(5, 7, 9, 0.96)',
+            boxShadow: '0 24px 42px rgba(0,0,0,0.42)',
             overflow: 'hidden',
           }}
         >
@@ -1197,7 +1193,6 @@ function MatricaNav() {
                 border: '1px solid rgba(255,255,255,0.18)',
                 background: 'transparent',
                 color: '#d4d4d8',
-                borderRadius: 8,
                 padding: '4px 8px',
                 fontSize: 12,
                 cursor: 'pointer',
@@ -1230,14 +1225,13 @@ function MatricaNav() {
                     style={{
                       minWidth: 'min(310px, 78vw)',
                       maxWidth: 340,
-                      borderRadius: 12,
                       border: '1px solid rgba(255,255,255,0.12)',
-                      background: 'rgba(2,6,23,0.7)',
+                      background: 'rgba(255,255,255,0.03)',
                       overflow: 'hidden',
                       scrollSnapAlign: 'start',
                     }}
                   >
-                    <div style={{ height: 128, background: 'rgba(148,163,184,0.12)' }}>
+                    <div style={{ height: 128, background: 'rgba(255,255,255,0.04)' }}>
                       {spot.image_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -1266,7 +1260,7 @@ function MatricaNav() {
                     <div style={{ padding: 11, display: 'grid', gap: 8 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                         <strong style={{ color: '#f4f4f5', fontSize: 14, lineHeight: 1.25 }}>{spot.title}</strong>
-                        <span style={{ color: '#d4d4d8', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        <span style={{ color: '#a3e635', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>
                           {spot.remaining_quantity} maradt
                         </span>
                       </div>
@@ -1283,9 +1277,8 @@ function MatricaNav() {
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: 6,
-                          borderRadius: 9,
-                          border: '1px solid rgba(148,163,184,0.45)',
-                          background: 'rgba(148,163,184,0.16)',
+                          border: '1px solid rgba(255,255,255,0.18)',
+                          background: 'rgba(255,255,255,0.04)',
                           color: '#e5e7eb',
                           fontSize: 12,
                           fontWeight: 700,
@@ -1308,7 +1301,7 @@ function MatricaNav() {
       <div
         style={{
           position: 'fixed',
-          top: onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET,
+          top: headerOffset,
           left: 0,
           right: 0,
           zIndex: 190,
@@ -1324,9 +1317,9 @@ function MatricaNav() {
             margin: 0,
             width: '100vw',
             borderRadius: 0,
-            border: 'none',
-            background: 'rgba(0, 0, 0, 0.6)',
-            boxShadow: 'none',
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(5, 7, 9, 0.96)',
+            boxShadow: '0 24px 42px rgba(0,0,0,0.42)',
             overflow: 'hidden',
           }}
         >
@@ -1350,7 +1343,6 @@ function MatricaNav() {
                 border: '1px solid rgba(255,255,255,0.18)',
                 background: 'transparent',
                 color: '#d4d4d8',
-                borderRadius: 8,
                 padding: '4px 8px',
                 fontSize: 12,
                 cursor: 'pointer',
@@ -1381,15 +1373,14 @@ function MatricaNav() {
                     <article
                       key={spot.id}
                       style={{
-                        borderRadius: 12,
                         border: '1px solid rgba(255,255,255,0.12)',
-                        background: 'rgba(2,6,23,0.7)',
+                        background: 'rgba(255,255,255,0.03)',
                         overflow: 'hidden',
                         opacity: isDeleting ? 0.5 : 1,
                         transition: 'opacity 200ms ease',
                       }}
                     >
-                      <div style={{ height: 96, background: 'rgba(148,163,184,0.12)' }}>
+                      <div style={{ height: 96, background: 'rgba(255,255,255,0.04)' }}>
                         {spot?.image_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -1439,7 +1430,6 @@ function MatricaNav() {
                               letterSpacing: '0.05em',
                               padding: '2px 6px',
                               background: 'rgba(255,255,255,0.05)',
-                              borderRadius: 4,
                               whiteSpace: 'nowrap',
                             }}
                           >
@@ -1456,7 +1446,6 @@ function MatricaNav() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: 6,
-                            borderRadius: 9,
                             border: '1px solid rgba(252,105,105,0.35)',
                             background: 'rgba(252,105,105,0.1)',
                             color: isDeleting ? '#a1a1aa' : '#fda4af',

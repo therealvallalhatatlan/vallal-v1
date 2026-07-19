@@ -57,10 +57,10 @@ export default function MatricaPrivateMessagePanel({
         height: isMobile ? 'calc(100dvh - var(--matrica-header-offset, 90px))' : 'min(62vh, 520px)',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: isMobile ? 0 : 16,
+        borderRadius: 0,
         overflow: 'hidden',
-        border: isMobile ? 'none' : '1px solid rgba(148,163,184,0.24)',
-        background: 'linear-gradient(180deg, rgba(7,10,16,0.96), rgba(11,18,32,0.94))',
+        border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.12)',
+        background: 'linear-gradient(180deg, rgba(6,8,10,0.98), rgba(4,6,8,0.98))',
         backdropFilter: 'blur(12px)',
         boxShadow: isMobile ? 'none' : '0 20px 48px rgba(0,0,0,0.55)',
       }}
@@ -112,10 +112,9 @@ export default function MatricaPrivateMessagePanel({
           type="button"
           onClick={onClose}
           style={{
-            border: 'none',
-            background: 'transparent',
+            border: '1px solid rgba(255,255,255,0.14)',
+            background: 'rgba(255,255,255,0.03)',
             color: '#a1a1aa',
-            borderRadius: 4,
             padding: '2px 6px',
             cursor: 'pointer',
             fontSize: 16,

@@ -245,19 +245,19 @@ export default function LiveChat({
   }
 
   return (
-    <div className="h-full flex flex-col rounded-xl border border-gray-800 bg-black/50">
+    <div className="flex h-full flex-col border border-white/10 bg-[#050607]">
       {!hideHeader ? (
-        <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-          <h3 className="font-semibold tracking-wide">{resolvedTitle}</h3>
-          <span className="text-xs text-gray-400">{messages.length} uzenet</span>
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <h3 className="font-semibold tracking-[0.12em] text-zinc-100">{resolvedTitle}</h3>
+          <span className="text-xs uppercase tracking-[0.12em] text-zinc-500">{messages.length} uzenet</span>
         </div>
       ) : null}
 
-      <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+      <div ref={listRef} className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
         {isInitialLoad && loading ? (
-          <div className="text-sm text-gray-500">Betoltes...</div>
+          <div className="text-sm text-zinc-500">Betoltes...</div>
         ) : messages.length === 0 ? (
-          <div className="text-sm text-gray-500">Meg nincs uzenet. Legyel te az elso.</div>
+          <div className="text-sm text-zinc-500">Meg nincs uzenet. Legyel te az elso.</div>
         ) : (
           messages.map((message) => {
             const ownMessage = selfRole
@@ -268,15 +268,15 @@ export default function LiveChat({
             return (
               <div
                 key={message.id}
-                className={`rounded-lg px-3 py-2 text-sm ${
+                className={`border px-3 py-2 text-sm ${
                   ownMessage
-                    ? 'bg-lime-500/15 border border-lime-500/30'
+                    ? 'border-lime-500/30 bg-lime-500/10'
                     : message.sender_role === 'broadcaster'
-                    ? 'bg-fuchsia-500/15 border border-fuchsia-500/30'
-                    : 'bg-white/5 border border-white/10'
+                    ? 'border-fuchsia-500/30 bg-fuchsia-500/10'
+                    : 'border-white/10 bg-white/[0.03]'
                 }`}
               >
-                <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-gray-400">
+                <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-[0.12em] text-zinc-500">
                   <span
                     onClick={() => {
                       if (message.display_name.toLowerCase() !== displayName.toLowerCase() && onUserNameClick) {
@@ -292,22 +292,22 @@ export default function LiveChat({
                         message.display_name.toLowerCase() === displayName.toLowerCase() ? 'transparent' : 'rgba(148,163,184,0.5)',
                       textUnderlineOffset: 2,
                     }}
-                    className={message.display_name.toLowerCase() === displayName.toLowerCase() ? '' : 'hover:text-slate-200'}
+                    className={message.display_name.toLowerCase() === displayName.toLowerCase() ? '' : 'hover:text-zinc-100'}
                   >
                     {message.display_name}
                   </span>
                   <span>{new Date(message.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
-                <p className="mt-1 whitespace-pre-wrap break-words text-gray-100">{message.body}</p>
+                <p className="mt-1 whitespace-pre-wrap break-words text-zinc-100">{message.body}</p>
               </div>
             );
           })
         )}
       </div>
 
-      <div className="border-t border-gray-800 px-3 py-3 space-y-2">
+      <div className="space-y-2 border-t border-white/10 px-3 py-3">
         {onUserNameClick ? (
-          <div className="text-[11px] text-gray-500">Tipp: koppints egy nevre privat uzenethez.</div>
+          <div className="text-[11px] uppercase tracking-[0.08em] text-zinc-500">Tipp: koppints egy nevre privat uzenethez.</div>
         ) : null}
         <textarea
           value={input}
@@ -322,15 +322,15 @@ export default function LiveChat({
           maxLength={MAX_MESSAGE_LENGTH}
           rows={2}
           disabled={sending || (requireAuth && !authToken)}
-          className="w-full resize-none rounded-md border border-gray-700 bg-black px-3 py-2 text-sm text-white outline-none focus:border-lime-500"
+          className="w-full resize-none border border-white/12 bg-black px-3 py-2 text-sm text-white outline-none focus:border-lime-500"
         />
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500">{input.length}/{MAX_MESSAGE_LENGTH}</span>
+          <span className="text-xs text-zinc-500">{input.length}/{MAX_MESSAGE_LENGTH}</span>
           <button
             type="button"
             onClick={sendMessage}
             disabled={sending || !input.trim() || (requireAuth && !authToken)}
-            className="rounded-md bg-lime-500 px-3 py-1.5 text-sm font-semibold text-black disabled:opacity-40"
+            className="border border-lime-500/40 bg-lime-500/10 px-3 py-1.5 text-sm font-semibold text-lime-200 disabled:opacity-40"
           >
             {sending ? 'Kuldes...' : 'Kuld'}
           </button>

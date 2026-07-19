@@ -20,23 +20,23 @@ const s = {
     fontFamily: 'inherit',
   } as React.CSSProperties,
   card: {
-    background: '#111113',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 12,
+    background: 'linear-gradient(180deg, rgba(6,7,9,0.98), rgba(10,11,14,0.98))',
+    border: '1px solid rgba(255,255,255,0.1)',
     padding: '20px 24px',
     marginBottom: 24,
+    boxShadow: '0 20px 44px rgba(0,0,0,0.34)',
   } as React.CSSProperties,
   label: {
     display: 'block',
-    fontSize: 12,
-    color: '#a1a1aa',
+    fontSize: 11,
+    color: '#a3a3a3',
     marginBottom: 6,
+    letterSpacing: '0.08em',
   } as React.CSSProperties,
   input: {
     width: '100%',
-    background: 'rgba(255,255,255,0.05)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: 8,
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.12)',
     color: '#f4f4f5',
     padding: '8px 10px',
     fontSize: 14,
@@ -46,9 +46,8 @@ const s = {
   } as React.CSSProperties,
   btn: (color = '#e879f9', disabled = false): React.CSSProperties => ({
     padding: '9px 18px',
-    background: disabled ? 'rgba(255,255,255,0.06)' : color,
-    border: 'none',
-    borderRadius: 8,
+    background: disabled ? 'rgba(255,255,255,0.04)' : color,
+    border: '1px solid rgba(255,255,255,0.12)',
     color: disabled ? '#52525b' : '#fff',
     cursor: disabled ? 'not-allowed' : 'pointer',
     fontSize: 13,
@@ -383,6 +382,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
 
   return (
     <div style={s.card}>
+      <p style={{ margin: '0 0 6px', fontSize: 11, color: '#a3e635', letterSpacing: '0.14em', fontWeight: 700 }}>CREATE SPOT</p>
       <h2 style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 700 }}>Új rejtekhely létrehozása</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
@@ -449,7 +449,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
               {imagePreviews.map((preview, index) => (
                 <div key={preview} style={{ position: 'relative' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={preview} alt={`preview-${index + 1}`} style={{ width: '100%', height: 92, objectFit: 'cover', borderRadius: 8 }} />
+                  <img src={preview} alt={`preview-${index + 1}`} style={{ width: '100%', height: 92, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.12)' }} />
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
@@ -458,8 +458,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
                       top: 6,
                       right: 6,
                       background: 'rgba(0,0,0,0.7)',
-                      border: 'none',
-                      borderRadius: '50%',
+                      border: '1px solid rgba(255,255,255,0.14)',
                       color: '#fff',
                       width: 22,
                       height: 22,
@@ -478,7 +477,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={preparingImage || imageFiles.length >= MAX_SPOT_IMAGE_COUNT}
-            style={{ width: '100%', padding: '10px 0', background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 8, color: '#71717a', cursor: 'pointer', fontSize: 13 }}
+            style={{ width: '100%', padding: '10px 0', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.16)', color: '#71717a', cursor: 'pointer', fontSize: 13 }}
           >
             {preparingImage
               ? 'Képek előkészítése…'
@@ -527,12 +526,12 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
         </div>
 
         {error && (
-          <p style={{ margin: 0, padding: '8px 12px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, color: '#fca5a5', fontSize: 13 }}>
+          <p style={{ margin: 0, padding: '8px 12px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: 13 }}>
             {error}
           </p>
         )}
         {success && (
-          <p style={{ margin: 0, padding: '8px 12px', background: 'rgba(134,239,172,0.1)', border: '1px solid rgba(134,239,172,0.25)', borderRadius: 8, color: '#86efac', fontSize: 13 }}>
+          <p style={{ margin: 0, padding: '8px 12px', background: 'rgba(134,239,172,0.08)', border: '1px solid rgba(134,239,172,0.25)', color: '#86efac', fontSize: 13 }}>
             ✓ Rejtekhely létrehozva!
           </p>
         )}

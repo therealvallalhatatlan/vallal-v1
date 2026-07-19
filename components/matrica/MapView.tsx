@@ -594,6 +594,27 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       `)
       marker.togglePopup()
 
+      const popupElement = marker.getPopup().getElement()
+      const chatButton = popupElement?.querySelector('.matrica-chat-user-btn') as HTMLButtonElement | null
+      const handleChatClick = (clickEvent: Event) => {
+        clickEvent.preventDefault()
+        clickEvent.stopPropagation()
+
+        if (!userId) return
+
+        window.dispatchEvent(new CustomEvent('matrica:open-pm', {
+          detail: {
+            userId,
+            nickname,
+            avatarUrl: avatarUrl ?? null,
+          },
+        }))
+
+        marker.remove()
+      }
+
+      chatButton?.addEventListener('click', handleChatClick)
+
       // Remove marker after 5 seconds
       const timeoutId = setTimeout(() => {
         marker.remove()
@@ -601,6 +622,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
 
       return () => {
         clearTimeout(timeoutId)
+        chatButton?.removeEventListener('click', handleChatClick)
         marker.remove()
       }
     }
@@ -1533,18 +1555,16 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           position: 'fixed',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: 'min(520px, calc(100vw - 24px))',
+          width: 'min(520px, calc(100vw - 16px))',
           bottom: 10,
           zIndex: 230,
-          borderRadius: 14,
           border: '1px solid rgba(255,255,255,0.11)',
-          background: 'rgba(5, 7, 10, 0.86)',
+          background: 'rgba(4, 6, 8, 0.94)',
           backdropFilter: 'blur(10px)',
-          boxShadow: '0 16px 32px rgba(0,0,0,0.42)',
+          boxShadow: '0 18px 34px rgba(0,0,0,0.46)',
           display: 'flex',
           gap: 8,
-          overflowX: 'auto',
-          scrollSnapType: 'x mandatory',
+          overflow: 'hidden',
           padding: '9px 10px calc(9px + env(safe-area-inset-bottom, 0px))',
         }}
       >
@@ -1554,20 +1574,18 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           aria-label="Szpot hozzáadása"
           title="Szpot hozzáadása"
           style={{
-            borderRadius: 10,
             border: '1px solid rgba(34,197,94,0.45)',
-            background: 'rgba(34,197,94,0.13)',
+            background: 'rgba(14,40,24,0.8)',
             color: '#bbf7d0',
             padding: '10px 8px',
             cursor: 'pointer',
             minHeight: 44,
-            minWidth: 124,
-            flex: '0 0 124px',
+            minWidth: 0,
+            flex: '1 1 0',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'inset 0 0 14px rgba(34,197,94,0.12)',
-            scrollSnapAlign: 'center',
+            boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.08)',
           }}
         >
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
@@ -1581,20 +1599,18 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           aria-label="Aktív szpot"
           title="Aktív szpot"
           style={{
-            borderRadius: 10,
             border: '1px solid rgba(249,115,22,0.48)',
-            background: previewSpot ? 'rgba(249,115,22,0.2)' : 'rgba(249,115,22,0.1)',
+            background: previewSpot ? 'rgba(66,28,8,0.95)' : 'rgba(43,22,9,0.88)',
             color: '#fed7aa',
             padding: '10px 8px',
             cursor: 'pointer',
             minHeight: 44,
-            minWidth: 124,
-            flex: '0 0 124px',
+            minWidth: 0,
+            flex: '1 1 0',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: previewSpot ? '0 0 16px rgba(249,115,22,0.25)' : 'inset 0 0 12px rgba(249,115,22,0.1)',
-            scrollSnapAlign: 'center',
+            boxShadow: 'inset 0 0 0 1px rgba(249,115,22,0.08)',
           }}
         >
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
@@ -1609,20 +1625,18 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           aria-label="Chat panel"
           title="Chat panel"
           style={{
-            borderRadius: 10,
             border: '1px solid rgba(148,163,184,0.5)',
-            background: livePanelOpen ? 'rgba(148,163,184,0.26)' : 'rgba(148,163,184,0.12)',
+            background: livePanelOpen ? 'rgba(28,36,47,0.96)' : 'rgba(12,16,20,0.94)',
             color: '#e2e8f0',
             padding: '10px 8px',
             cursor: 'pointer',
             minHeight: 44,
-            minWidth: 124,
-            flex: '0 0 124px',
+            minWidth: 0,
+            flex: '1 1 0',
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: livePanelOpen ? '0 0 16px rgba(148,163,184,0.28)' : 'inset 0 0 12px rgba(148,163,184,0.11)',
-            scrollSnapAlign: 'center',
+            boxShadow: 'inset 0 0 0 1px rgba(148,163,184,0.08)',
           }}
         >
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
