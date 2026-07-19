@@ -68,7 +68,7 @@ export default function SpotPreview({
             bottom: 'var(--matrica-action-rail-offset, 0px)',
             zIndex: 43,
             background: 'linear-gradient(180deg, rgba(6,7,9,0.99), rgba(8,11,15,0.99))',
-            borderTop: '1px solid rgba(163,230,53,0.28)',
+            borderTop: '1px solid rgba(200,169,126,0.32)',
             borderBottom: '1px solid rgba(255,255,255,0.08)',
             boxShadow: '0 -26px 60px rgba(0,0,0,0.46)',
             padding: '12px 16px calc(18px + env(safe-area-inset-bottom, 0px))',
@@ -79,14 +79,14 @@ export default function SpotPreview({
               style={{
                 width: 36,
                 height: 4,
-                background: 'rgba(163,230,53,0.35)',
+                background: 'rgba(200,169,126,0.42)',
               }}
             />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 11, color: '#f9a8d4', fontWeight: 700, letterSpacing: '0.08em' }}>
+              <div style={{ fontSize: 11, color: '#c8a97e', fontWeight: 700, letterSpacing: '0.08em' }}>
                 {isPaid ? 'FIZETOS SZPOT' : 'AKTIV SZPOT'}
               </div>
               <h3 style={{ margin: '4px 0 0', fontSize: 18, lineHeight: 1.2, color: '#f4f4f5' }}>{spot.title}</h3>
@@ -140,12 +140,12 @@ export default function SpotPreview({
               padding: '10px 11px',
             }}
           >
-            <div style={{ color: '#a3e635', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>KOZELITO TAVOLSAG</div>
+            <div style={{ color: '#c8a97e', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>KOZELITO TAVOLSAG</div>
             <div style={{ marginTop: 4, color: '#f8fafc', fontSize: 14, fontWeight: 700 }}>{approxDistance}</div>
           </div>
 
           {isPaid ? (
-            <div style={{ marginTop: 9, fontSize: 12, color: isLocked ? '#f5d0fe' : '#86efac' }}>
+            <div style={{ marginTop: 9, fontSize: 12, color: '#cbd5e1' }}>
               {isLocked ? `Feloldas ara: ${priceHuf} HUF / 24 ora` : 'Feloldva: teljes adatok elerhetok'}
             </div>
           ) : null}
@@ -158,9 +158,9 @@ export default function SpotPreview({
               style={{
                 width: '100%',
                 marginTop: 12,
-                border: '1px solid rgba(163,230,53,0.34)',
-                background: 'rgba(163,230,53,0.08)',
-                color: '#d9f99d',
+                border: '1px solid rgba(200,169,126,0.4)',
+                background: 'rgba(200,169,126,0.14)',
+                color: '#f3e9d8',
                 fontSize: 13,
                 fontWeight: 700,
                 padding: '10px 12px',
@@ -217,7 +217,7 @@ export default function SpotPreview({
         width: cardWidth,
         maxWidth: 'calc(100vw - 24px)',
         transform: 'translate(-50%, calc(-100% - 14px))',
-        border: '1px solid rgba(163,230,53,0.24)',
+        border: '1px solid rgba(200,169,126,0.28)',
         background: 'linear-gradient(180deg, rgba(8,10,12,0.98), rgba(4,6,8,0.98))',
         color: '#f4f4f5',
         boxShadow: '0 20px 48px rgba(0,0,0,0.52), inset 0 0 0 1px rgba(255,255,255,0.03)',
@@ -226,7 +226,7 @@ export default function SpotPreview({
       }}
     >
       <div style={{ padding: '11px 12px 12px' }}>
-        <div style={{ fontSize: 10, color: '#f9a8d4', letterSpacing: '0.08em', fontWeight: 700 }}>
+        <div style={{ fontSize: 10, color: '#c8a97e', letterSpacing: '0.08em', fontWeight: 700 }}>
           {isPaid ? 'FIZETOS SZPOT' : 'AKTIV SZPOT'}
         </div>
         <div style={{ marginTop: 4, fontSize: 16, lineHeight: 1.2, fontWeight: 700 }}>{spot.title}</div>
@@ -238,7 +238,7 @@ export default function SpotPreview({
             padding: '7px 9px',
           }}
         >
-          <div style={{ fontSize: 11, color: '#a3e635', letterSpacing: '0.08em', fontWeight: 700 }}>KOZELITO TAVOLSAG</div>
+          <div style={{ fontSize: 11, color: '#c8a97e', letterSpacing: '0.08em', fontWeight: 700 }}>KOZELITO TAVOLSAG</div>
           <div style={{ marginTop: 3, fontSize: 13, color: '#f8fafc', fontWeight: 700 }}>{approxDistance}</div>
         </div>
 
@@ -249,7 +249,7 @@ export default function SpotPreview({
         ) : null}
 
         {isPaid ? (
-          <div style={{ marginTop: 8, fontSize: 12, color: isLocked ? '#f5d0fe' : '#86efac' }}>
+          <div style={{ marginTop: 8, fontSize: 12, color: '#cbd5e1' }}>
             {isLocked ? `Feloldas ara: ${priceHuf} HUF / 24 ora` : 'Feloldva: teljes adatok'}
           </div>
         ) : null}
@@ -262,9 +262,9 @@ export default function SpotPreview({
             style={{
               width: '100%',
               marginTop: 10,
-              border: '1px solid rgba(163,230,53,0.34)',
-              background: 'rgba(163,230,53,0.08)',
-              color: '#d9f99d',
+              border: '1px solid rgba(200,169,126,0.4)',
+              background: 'rgba(200,169,126,0.14)',
+              color: '#f3e9d8',
               fontSize: 12,
               fontWeight: 700,
               padding: '8px 10px',

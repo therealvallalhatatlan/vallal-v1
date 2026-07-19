@@ -30,7 +30,7 @@ type OnlineUserProfile = {
 export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrentUser = false, reserveRightSpace = 0 }: { onMessageUser?: (user: OnlineUserProfile) => void; pmUnreadCounts?: Record<string, number | undefined>; hideCurrentUser?: boolean; reserveRightSpace?: number }) {
   usePresence()
 
-  const currentUserAccent = '#94a3b8'
+  const currentUserAccent = '#c8a97e'
 
   const { session } = useSessionGuard()
   const currentUserId = (session as any)?.user?.id
@@ -149,9 +149,9 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
             marginRight: 10,
             padding: u.id === currentUserId ? (isMobile ? '3px 6px' : '4px 8px') : 0,
             borderRadius: u.id === currentUserId ? (isMobile ? 14 : 999) : 999,
-            background: u.id === currentUserId ? 'rgba(148,163,184,0.2)' : 'transparent',
-            border: u.id === currentUserId ? '1px solid rgba(148,163,184,0.65)' : '1px solid transparent',
-            boxShadow: u.id === currentUserId ? '0 0 0 1px rgba(148,163,184,0.2), 0 4px 12px rgba(15,23,42,0.45)' : 'none',
+            background: u.id === currentUserId ? 'rgba(200,169,126,0.16)' : 'transparent',
+            border: u.id === currentUserId ? '1px solid rgba(200,169,126,0.5)' : '1px solid transparent',
+            boxShadow: u.id === currentUserId ? '0 0 0 1px rgba(200,169,126,0.16), 0 4px 12px rgba(0,0,0,0.4)' : 'none',
           }}
         >
           <div 
@@ -205,13 +205,13 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                   height: isMobile ? 44 : 32,
                   borderRadius: '50%',
                   objectFit: 'cover',
-                  border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #52525b',
+                  border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #4b5563',
                   background: '#23232a',
                 }}
               />
             ) : (
 
-              <div style={{ width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#cbd5e1' : '#a1a1aa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: isMobile ? 17 : 15, border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #52525b' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
+              <div style={{ width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#dbe1e8' : '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: isMobile ? 17 : 15, border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #4b5563' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
             )}
             {u.id === currentUserId ? (
               <span
@@ -224,7 +224,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                   width: isMobile ? 22 : 20,
                   height: isMobile ? 14 : 16,
                   borderRadius: 999,
-                  background: '#94a3b8',
+                  background: '#c8a97e',
                   border: '2px solid #0b1020',
                   lineHeight: 1,
                   display: 'flex',
@@ -255,7 +255,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                   borderRadius: '50%',
                   border: '1px solid rgba(255,255,255,0.16)',
                   background: 'rgba(9,9,11,0.92)',
-                  color: '#d4d4d8',
+                  color: '#e5e7eb',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -278,7 +278,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                 ) : null}
               </button>
             ) : null}
-            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#94a3b8' : '#52525b', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
+            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#c8a97e' : '#4b5563', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
           </div>
           <span
             onClick={(e) => {
@@ -298,7 +298,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
               textAlign: 'center',
               cursor: u.id === currentUserId || !onMessageUser ? 'default' : 'pointer',
               textDecoration: u.id === currentUserId || !onMessageUser ? 'none' : 'underline',
-              textDecorationColor: 'rgba(148,163,184,0.45)',
+              textDecorationColor: 'rgba(200,169,126,0.5)',
               textUnderlineOffset: 2,
             }}
           >
@@ -891,7 +891,7 @@ function MatricaNav() {
                 width: profileAvatarSize,
                 height: profileAvatarSize,
                 borderRadius: '50%',
-                border: '2px solid #22c55e',
+                border: '2px solid #c8a97e',
                 background: 'transparent',
                 cursor: 'pointer',
                 padding: 0,
@@ -912,7 +912,7 @@ function MatricaNav() {
                     borderRadius: '50%',
                     objectFit: 'cover',
                     display: 'block',
-                    border: '2px solid #22c55e',
+                    border: '2px solid #c8a97e',
                   }}
                 />
               ) : (
@@ -924,12 +924,12 @@ function MatricaNav() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'rgba(34,197,94,0.15)',
+                    background: 'rgba(200,169,126,0.16)',
                     color: '#f4f4f5',
                     fontSize: 11,
                     fontWeight: 700,
                     letterSpacing: '0.02em',
-                    border: '2px solid #22c55e',
+                    border: '2px solid #c8a97e',
                   }}
                 >
                   {(nickname || email || '?').trim().charAt(0).toUpperCase() || '?'}
@@ -941,7 +941,7 @@ function MatricaNav() {
                   top: -6,
                   left: -5,
                   border: '1px solid rgba(255,255,255,0.18)',
-                  background: '#22c55e',
+                  background: '#c8a97e',
                   color: '#111827',
                   fontSize: 9,
                   fontWeight: 800,
@@ -962,7 +962,7 @@ function MatricaNav() {
                   right: 0,
                   minWidth: 260,
                   background: 'rgba(5,7,9,0.98)',
-                  border: '1px solid rgba(163,230,53,0.18)',
+                  border: '1px solid rgba(200,169,126,0.22)',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
                   backdropFilter: 'blur(16px)',
                   WebkitBackdropFilter: 'blur(16px)',
@@ -972,7 +972,7 @@ function MatricaNav() {
               >
                 {/* Identity */}
                 <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                  <p style={{ margin: 0, fontSize: 10, color: '#a3e635', marginBottom: 6, letterSpacing: '0.12em', fontWeight: 700 }}>SESSION ACTIVE</p>
+                  <p style={{ margin: 0, fontSize: 10, color: '#c8a97e', marginBottom: 6, letterSpacing: '0.12em', fontWeight: 700 }}>SESSION ACTIVE</p>
                   {nicknameEditing ? (
                     <>
                       <input
@@ -1010,9 +1010,9 @@ function MatricaNav() {
                           onClick={() => void handleSaveNickname()}
                           disabled={nicknameSaving}
                           style={{
-                            border: '1px solid rgba(163,230,53,0.28)',
-                            background: 'rgba(163,230,53,0.08)',
-                            color: '#d9f99d',
+                            border: '1px solid rgba(200,169,126,0.35)',
+                            background: 'rgba(200,169,126,0.12)',
+                            color: '#f3e9d8',
                             fontSize: 11,
                             fontWeight: 700,
                             padding: '5px 8px',
@@ -1067,7 +1067,7 @@ function MatricaNav() {
                         style={{
                           border: 'none',
                           background: 'transparent',
-                          color: '#a3e635',
+                          color: '#c8a97e',
                           fontSize: 11,
                           fontWeight: 700,
                           cursor: 'pointer',
@@ -1094,7 +1094,7 @@ function MatricaNav() {
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
                   <span style={{ fontSize: 12, color: '#a1a1aa', letterSpacing: '0.08em' }}>PONTSZAM</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#d9f99d', fontWeight: 700, fontSize: 14 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#c8a97e', fontWeight: 700, fontSize: 14 }}>
                     <span style={{ fontSize: 15 }}>+</span>
                     {score !== null ? `${score} pont` : '…'}
                   </span>
@@ -1258,7 +1258,7 @@ function MatricaNav() {
                     <div style={{ padding: 11, display: 'grid', gap: 8 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                         <strong style={{ color: '#f4f4f5', fontSize: 14, lineHeight: 1.25 }}>{spot.title}</strong>
-                        <span style={{ color: '#a3e635', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>
+                        <span style={{ color: '#c8a97e', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>
                           {spot.remaining_quantity} maradt
                         </span>
                       </div>
@@ -1423,7 +1423,7 @@ function MatricaNav() {
                             style={{
                               fontSize: 10,
                               fontWeight: 700,
-                              color: spot.status === 'active' ? '#86efac' : spot.status === 'empty' ? '#fbbf24' : '#71717a',
+                              color: spot.status === 'active' ? '#c8a97e' : spot.status === 'empty' ? '#9ca3af' : '#71717a',
                               textTransform: 'uppercase',
                               letterSpacing: '0.05em',
                               padding: '2px 6px',
@@ -1499,11 +1499,11 @@ function MatricaNav() {
             key={toast.id}
             style={{
               animation: 'slideInRight 0.3s ease-out',
-              background: 'linear-gradient(135deg, rgba(34,197,94,0.95), rgba(22,163,74,0.95))',
-              border: '1px solid rgba(34,197,94,0.4)',
+              background: 'linear-gradient(135deg, rgba(200,169,126,0.92), rgba(146,121,91,0.92))',
+              border: '1px solid rgba(200,169,126,0.45)',
               borderRadius: 12,
               padding: '12px 14px',
-              color: '#ecfdf5',
+              color: '#101418',
               fontSize: 13,
               fontWeight: 600,
               boxShadow: '0 12px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1)',

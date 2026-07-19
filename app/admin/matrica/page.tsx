@@ -21,7 +21,8 @@ const s = {
   } as React.CSSProperties,
   card: {
     background: 'linear-gradient(180deg, rgba(6,7,9,0.98), rgba(10,11,14,0.98))',
-    border: '1px solid rgba(255,255,255,0.1)',
+    border: '1px solid rgba(200,169,126,0.24)',
+    borderRadius: 12,
     padding: '20px 24px',
     marginBottom: 24,
     boxShadow: '0 20px 44px rgba(0,0,0,0.34)',
@@ -36,9 +37,10 @@ const s = {
   input: {
     width: '100%',
     background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.12)',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: 10,
     color: '#f4f4f5',
-    padding: '8px 10px',
+    padding: '10px 12px',
     fontSize: 14,
     boxSizing: 'border-box' as const,
     outline: 'none',
@@ -382,8 +384,11 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
 
   return (
     <div style={s.card}>
-      <p style={{ margin: '0 0 6px', fontSize: 11, color: '#a3e635', letterSpacing: '0.14em', fontWeight: 700 }}>CREATE SPOT</p>
-      <h2 style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 700 }}>Új rejtekhely létrehozása</h2>
+      <p style={{ margin: '0 0 6px', fontSize: 11, color: '#c8a97e', letterSpacing: '0.14em', fontWeight: 700 }}>CREATE SPOT</p>
+      <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700, color: '#f3f4f6' }}>Új rejtekhely létrehozása</h2>
+      <p style={{ margin: '0 0 18px', fontSize: 12, color: '#9ca3af', lineHeight: 1.45 }}>
+        Pontos hely, tiszta leírás és könnyű beazonosítás. A panel automatikusan optimalizálja a képeket.
+      </p>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* Title */}
@@ -477,7 +482,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={preparingImage || imageFiles.length >= MAX_SPOT_IMAGE_COUNT}
-            style={{ width: '100%', padding: '10px 0', background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.16)', color: '#71717a', cursor: 'pointer', fontSize: 13 }}
+            style={{ width: '100%', padding: '11px 0', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(200,169,126,0.34)', borderRadius: 10, color: '#d1d5db', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
           >
             {preparingImage
               ? 'Képek előkészítése…'
@@ -485,7 +490,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
                 ? 'Elérted a maximum 3 képet'
                 : '+ Képek hozzáadása'}
           </button>
-          <p style={{ margin: '6px 0 0 0', fontSize: 11, color: '#71717a', lineHeight: 1.35 }}>
+          <p style={{ margin: '6px 0 0 0', fontSize: 11, color: '#6b7280', lineHeight: 1.35 }}>
             A rendszer erosen tomorit (cel: ~120 KB/kep), hogy minel kisebb adatforgalommal menjen fel.
           </p>
           <input ref={fileRef} type="file" accept="image/*" multiple capture="environment" style={{ display: 'none' }} onChange={handleFileChange} />
@@ -503,7 +508,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
             <label style={s.label} htmlFor="sp-vis">Láthatóság (m)</label>
             <input id="sp-vis" type="number" min={1} style={s.input} value={radiusVisibility}
               onChange={e => setRadiusVisibility(Math.max(1, Number(e.target.value)))} />
-            <p style={{ margin: '6px 0 0 0', fontSize: 11, color: '#71717a', lineHeight: 1.35 }}>
+            <p style={{ margin: '6px 0 0 0', fontSize: 11, color: '#6b7280', lineHeight: 1.35 }}>
               Ezen a távolságon belül jelenik meg a rejtekhely a térképen.
             </p>
           </div>
@@ -511,7 +516,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
             <label style={s.label} htmlFor="sp-claim">Claim zóna (m)</label>
             <input id="sp-claim" type="number" min={1} style={s.input} value={radiusClaim}
               onChange={e => setRadiusClaim(Math.max(1, Number(e.target.value)))} />
-            <p style={{ margin: '6px 0 0 0', fontSize: 11, color: '#71717a', lineHeight: 1.35 }}>
+            <p style={{ margin: '6px 0 0 0', fontSize: 11, color: '#6b7280', lineHeight: 1.35 }}>
               Ennyire közel kell menni, hogy a megtaláló rögzíthesse a találatot.
             </p>
           </div>
@@ -519,24 +524,35 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
             <label style={s.label} htmlFor="sp-qty">Darabszám</label>
             <input id="sp-qty" type="number" min={1} style={s.input} value={totalQty}
               onChange={e => setTotalQty(Math.max(1, Number(e.target.value)))} />
-            <p style={{ margin: '6px 0 0 0', fontSize: 11, color: '#71717a', lineHeight: 1.35 }}>
+            <p style={{ margin: '6px 0 0 0', fontSize: 11, color: '#6b7280', lineHeight: 1.35 }}>
               Hány darab tárgy rejthető itt összesen.
             </p>
           </div>
         </div>
 
         {error && (
-          <p style={{ margin: 0, padding: '8px 12px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#fca5a5', fontSize: 13 }}>
+          <p style={{ margin: 0, padding: '9px 12px', background: 'rgba(248,113,113,0.11)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 10, color: '#fecaca', fontSize: 13 }}>
             {error}
           </p>
         )}
         {success && (
-          <p style={{ margin: 0, padding: '8px 12px', background: 'rgba(134,239,172,0.08)', border: '1px solid rgba(134,239,172,0.25)', color: '#86efac', fontSize: 13 }}>
+          <p style={{ margin: 0, padding: '9px 12px', background: 'rgba(200,169,126,0.12)', border: '1px solid rgba(200,169,126,0.35)', borderRadius: 10, color: '#f3e9d8', fontSize: 13 }}>
             ✓ Rejtekhely létrehozva!
           </p>
         )}
 
-        <button type="submit" disabled={submitting || preparingImage} style={{ ...s.btn('#e879f9', submitting || preparingImage), alignSelf: 'flex-start' }}>
+        <button
+          type="submit"
+          disabled={submitting || preparingImage}
+          style={{
+            ...s.btn('#c8a97e', submitting || preparingImage),
+            alignSelf: 'flex-start',
+            borderRadius: 10,
+            color: submitting || preparingImage ? '#6b7280' : '#101418',
+            border: '1px solid rgba(200,169,126,0.45)',
+            boxShadow: submitting || preparingImage ? 'none' : 'inset 0 1px 0 rgba(255,255,255,0.35)',
+          }}
+        >
           {uploadProgress ?? (preparingImage ? 'Kép előkészítése…' : submitting ? 'Mentés…' : 'Rejtekhely létrehozása')}
         </button>
       </form>

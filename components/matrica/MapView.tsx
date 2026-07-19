@@ -368,9 +368,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             dot.className = 'matrica-user-dot';
             dot.style.cssText = `
               width: 18px; height: 18px; border-radius: 50%;
-              background: radial-gradient(circle at 30% 30%, #e0f2fe 0%, #7dd3fc 40%, #0ea5e9 100%);
+              background: radial-gradient(circle at 30% 30%, #f7efe4 0%, #d6ba92 42%, #92795b 100%);
               border: 2px solid rgba(255,255,255,0.92);
-              box-shadow: 0 0 0 6px rgba(56,189,248,0.2), 0 0 24px rgba(56,189,248,0.25);
+              box-shadow: 0 0 0 6px rgba(200,169,126,0.2), 0 0 24px rgba(200,169,126,0.28);
               animation: userPulse 2.4s ease-in-out infinite;
             `;
 
@@ -554,9 +554,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        background: #06b6d4;
+        background: #c8a97e;
         border: 3px solid #fff;
-        box-shadow: 0 0 12px rgba(6, 182, 212, 0.6), inset 0 0 6px rgba(6, 182, 212, 0.3);
+        box-shadow: 0 0 12px rgba(200,169,126,0.55), inset 0 0 6px rgba(200,169,126,0.25);
       `
 
       const marker = new mapboxgl.Marker({ element: el })
@@ -567,34 +567,36 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       const safeNickname = escapeHtml(nickname)
       const safeAvatar = avatarUrl ? escapeHtml(avatarUrl) : null
       const initial = safeNickname.charAt(0).toUpperCase() || '?'
+      const popup = marker.getPopup()
+      if (!popup) return
 
-      marker.getPopup().setHTML(`
-        <div style="min-width:220px;padding:11px 12px;background:linear-gradient(180deg, rgba(10,12,16,0.96), rgba(15,23,42,0.9));color:#f4f4f5;border:1px solid rgba(148,163,184,0.24);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);backdrop-filter: blur(8px);">
+      popup.setHTML(`
+        <div style="min-width:228px;padding:12px;background:linear-gradient(180deg, rgba(9,12,16,0.97), rgba(11,14,19,0.97));color:#f4f4f5;border:1px solid rgba(200,169,126,0.28);border-radius:12px;box-shadow:0 14px 28px rgba(0,0,0,0.42);backdrop-filter: blur(8px);">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
             ${safeAvatar
-              ? `<img src="${safeAvatar}" alt="${safeNickname}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #94a3b8;" />`
-              : `<div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#23232a;color:#cbd5e1;font-weight:700;border:2px solid #94a3b8;">${initial}</div>`}
+              ? `<img src="${safeAvatar}" alt="${safeNickname}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,169,126,0.9);" />`
+              : `<div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#1f2937;color:#dbe1e8;font-weight:700;border:2px solid rgba(200,169,126,0.9);">${initial}</div>`}
             <div style="min-width:0;">
               <div style="font-weight:700;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">${safeNickname}</div>
-              <div style="font-size:12px;color:#a1a1aa;">Online most</div>
+              <div style="font-size:12px;color:#9ca3af;">Online most</div>
             </div>
           </div>
-          <div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;">
-            <div style="display:flex;flex-direction:column;">
-              <span style="color:#a1a1aa;">Pontszam</span>
-              <span style="color:#cbd5e1;font-weight:700;">${Number.isFinite(score) ? score : 0}</span>
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:${userId && canChat ? '10px' : '0'};">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <span style="color:#9ca3af;">Pontszam</span>
+              <span style="color:#e5e7eb;font-weight:700;">${Number.isFinite(score) ? score : 0}</span>
             </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;">
-              <span style="color:#a1a1aa;">Elfogadott</span>
-              <span style="color:#d4d4d8;font-weight:700;">${Number.isFinite(accepted) ? accepted : 0} db</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+              <span style="color:#9ca3af;">Elfogadott</span>
+              <span style="color:#e5e7eb;font-weight:700;">${Number.isFinite(accepted) ? accepted : 0} db</span>
             </div>
           </div>
-          ${userId && canChat ? `<button class="matrica-chat-user-btn" data-user-id="${escapeHtml(userId)}" data-nickname="${safeNickname}" data-avatar-url="${safeAvatar || ''}" style="width:100%;margin-top:10px;padding:8px 12px;background:linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1));border:1px solid rgba(34,197,94,0.4);border-radius:8px;color:#86efac;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s ease;">CHAT</button><div style="font-size:10px;color:#a1a1aa;text-align:center;margin-top:4px;">ideiglenes privat chat,<br/>amig online vagytok</div>` : ''}
+          ${userId && canChat ? `<button class="matrica-chat-user-btn" data-user-id="${escapeHtml(userId)}" data-nickname="${safeNickname}" data-avatar-url="${safeAvatar || ''}" style="width:100%;padding:9px 12px;background:rgba(200,169,126,0.14);border:1px solid rgba(200,169,126,0.48);border-radius:8px;color:#f3e9d8;font-size:13px;font-weight:700;letter-spacing:0.03em;cursor:pointer;">CHAT</button><div style="font-size:10px;color:#9ca3af;text-align:center;margin-top:5px;line-height:1.35;">ideiglenes privat chat,<br/>amig online vagytok</div>` : ''}
         </div>
       `)
       marker.togglePopup()
 
-      const popupElement = marker.getPopup().getElement()
+      const popupElement = popup.getElement()
       const chatButton = popupElement?.querySelector('.matrica-chat-user-btn') as HTMLButtonElement | null
       const handleChatClick = (clickEvent: Event) => {
         clickEvent.preventDefault()
@@ -645,6 +647,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     const loadRoute = async () => {
       const origin = routeState.origin
       const target = routeState.spot
+      if (!origin || !target) return
 
       setRouteLoading(true)
       setRouteError(null)
@@ -698,7 +701,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               'line-join': 'round',
             },
             paint: {
-              'line-color': '#f472b6',
+              'line-color': '#c8a97e',
               'line-width': 5,
               'line-opacity': 0.9,
             },
@@ -760,10 +763,13 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       const lat = typeof detail.lat === 'number' ? detail.lat : targetSpot?.lat
       const lng = typeof detail.lng === 'number' ? detail.lng : targetSpot?.lng
 
-      if (!mapRef.current || !Number.isFinite(lat) || !Number.isFinite(lng)) return
+      if (!mapRef.current || typeof lat !== 'number' || typeof lng !== 'number') return
+
+      const focusLat: number = lat
+      const focusLng: number = lng
 
       mapRef.current.flyTo({
-        center: [lng, lat],
+        center: [focusLng, focusLat],
         zoom: 16.4,
         duration: 1200,
         essential: true,
@@ -1234,23 +1240,23 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               position: 'absolute',
               inset: 0,
               pointerEvents: 'none',
-              background: 'linear-gradient(90deg, transparent, rgba(125,211,252,0.14), transparent)',
+              background: 'linear-gradient(90deg, transparent, rgba(200,169,126,0.16), transparent)',
               animation: 'hudSweep 3.6s ease-in-out infinite',
             }}
           />
 
           <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.08em', fontWeight: 700 }}>SAJAT POZICIOD</div>
+              <div style={{ fontSize: 11, color: '#9ca3af', letterSpacing: '0.08em', fontWeight: 700 }}>SAJAT POZICIOD</div>
               <div style={{ marginTop: 4, color: '#f4f4f5', fontSize: 15, fontWeight: 700 }}>Kovetkezo kuldetes elerheto</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
                 style={{
                   borderRadius: 999,
-                  border: '1px solid rgba(148,163,184,0.34)',
-                  background: 'rgba(148,163,184,0.14)',
-                  color: '#e2e8f0',
+                  border: '1px solid rgba(200,169,126,0.34)',
+                  background: 'rgba(200,169,126,0.14)',
+                  color: '#f3e9d8',
                   padding: '6px 10px',
                   fontSize: 11,
                   fontWeight: 700,
@@ -1267,7 +1273,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
                 style={{
                   width: 30,
                   height: 30,
-                  borderRadius: 999,
+                  borderRadius: 8,
                   border: '1px solid rgba(255,255,255,0.2)',
                   background: 'rgba(255,255,255,0.06)',
                   color: '#cbd5e1',
@@ -1294,8 +1300,8 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
                   width: `${radarProgressPercent}%`,
                   height: '100%',
                   borderRadius: 999,
-                  background: 'linear-gradient(90deg, #38bdf8, #7dd3fc)',
-                  boxShadow: '0 0 14px rgba(56,189,248,0.35)',
+                  background: 'linear-gradient(90deg, #92795b, #c8a97e)',
+                  boxShadow: '0 0 14px rgba(200,169,126,0.35)',
                   transition: 'width 320ms ease',
                 }}
               />
@@ -1313,9 +1319,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
                 onClick={() => startRouteForSpot(nearestSpot)}
                 style={{
                   borderRadius: 10,
-                  border: '1px solid rgba(148,163,184,0.48)',
-                  background: 'rgba(148,163,184,0.2)',
-                  color: '#f8fafc',
+                  border: '1px solid rgba(200,169,126,0.45)',
+                  background: 'rgba(200,169,126,0.16)',
+                  color: '#f3e9d8',
                   fontSize: 12,
                   fontWeight: 700,
                   padding: '8px 12px',
@@ -1363,7 +1369,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             bottom: BOTTOM_ACTION_BAR_HEIGHT + 12,
             zIndex: 35,
             borderRadius: 14,
-            border: '1px solid rgba(244,114,182,0.28)',
+            border: '1px solid rgba(200,169,126,0.32)',
             background: 'rgba(9,9,11,0.93)',
             boxShadow: '0 18px 48px rgba(0,0,0,0.42)',
             padding: 14,
@@ -1372,7 +1378,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'start' }}>
             <div>
-              <div style={{ fontSize: 11, color: '#f9a8d4', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <div style={{ fontSize: 11, color: '#c8a97e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Utvonal aktiv
               </div>
               <div style={{ marginTop: 3, fontSize: 16, fontWeight: 700 }}>{routeState.spot.title}</div>
@@ -1405,7 +1411,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           {routeLoading ? (
             <div style={{ marginTop: 10, fontSize: 12, color: '#a1a1aa' }}>Utvonal tervezese...</div>
           ) : routeError ? (
-            <div style={{ marginTop: 10, fontSize: 12, color: '#fda4af' }}>{routeError}</div>
+            <div style={{ marginTop: 10, fontSize: 12, color: '#fca5a5' }}>{routeError}</div>
           ) : (
             <div style={{ marginTop: 10, fontSize: 12, color: '#a1a1aa' }}>
               Kovessd a rozsaszin vonalat, aztan claimeld a szpotot a helyszinen.
@@ -1420,9 +1426,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
                 alignItems: 'center',
                 gap: 6,
                 borderRadius: 999,
-                border: '1px solid rgba(244,114,182,0.24)',
-                background: 'rgba(244,114,182,0.12)',
-                color: '#fbcfe8',
+                border: '1px solid rgba(200,169,126,0.28)',
+                background: 'rgba(200,169,126,0.14)',
+                color: '#f3e9d8',
                 padding: '5px 9px',
                 fontSize: 11,
                 fontWeight: 700,
@@ -1439,13 +1445,14 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               type="button"
               onClick={() => {
                 playUiSound('click')
+                if (!routeState.spot) return
                 handleOpenPreview(routeState.spot)
               }}
               style={{
                 borderRadius: 10,
-                border: '1px solid rgba(132,204,22,0.35)',
-                background: 'rgba(132,204,22,0.18)',
-                color: '#d9f99d',
+                border: '1px solid rgba(200,169,126,0.4)',
+                background: 'rgba(200,169,126,0.14)',
+                color: '#f3e9d8',
                 fontSize: 12,
                 fontWeight: 700,
                 padding: '8px 12px',
@@ -1462,9 +1469,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               }}
               style={{
                 borderRadius: 10,
-                border: '1px solid rgba(244,114,182,0.28)',
-                background: 'rgba(244,114,182,0.14)',
-                color: '#fbcfe8',
+                border: '1px solid rgba(200,169,126,0.34)',
+                background: 'rgba(200,169,126,0.12)',
+                color: '#ead8bf',
                 fontSize: 12,
                 fontWeight: 700,
                 padding: '8px 12px',
@@ -1535,7 +1542,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           bottom: 10,
           zIndex: 230,
           borderRadius: 16,
-          border: '1px solid rgba(255,255,255,0.11)',
+          border: '1px solid rgba(200,169,126,0.22)',
           background: 'rgba(4, 6, 8, 0.94)',
           backdropFilter: 'blur(10px)',
           boxShadow: '0 18px 34px rgba(0,0,0,0.46)',
@@ -1552,9 +1559,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           title="Szpot hozzáadása"
           style={{
             borderRadius: 12,
-            border: '1px solid rgba(34,197,94,0.45)',
-            background: 'rgba(14,40,24,0.8)',
-            color: '#bbf7d0',
+            border: '1px solid rgba(200,169,126,0.4)',
+            background: 'rgba(200,169,126,0.14)',
+            color: '#f3e9d8',
             padding: '10px 8px',
             cursor: 'pointer',
             minHeight: 44,
@@ -1563,7 +1570,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.08)',
+            boxShadow: 'inset 0 0 0 1px rgba(200,169,126,0.12)',
           }}
         >
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
@@ -1578,9 +1585,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           title="Aktív szpot"
           style={{
             borderRadius: 12,
-            border: '1px solid rgba(249,115,22,0.48)',
-            background: previewSpot ? 'rgba(66,28,8,0.95)' : 'rgba(43,22,9,0.88)',
-            color: '#fed7aa',
+            border: '1px solid rgba(200,169,126,0.4)',
+            background: previewSpot ? 'rgba(42,35,27,0.96)' : 'rgba(23,26,31,0.92)',
+            color: '#e5e7eb',
             padding: '10px 8px',
             cursor: 'pointer',
             minHeight: 44,
@@ -1589,7 +1596,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'inset 0 0 0 1px rgba(249,115,22,0.08)',
+            boxShadow: 'inset 0 0 0 1px rgba(200,169,126,0.1)',
           }}
         >
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
@@ -1605,7 +1612,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           title="Chat panel"
           style={{
             borderRadius: 12,
-            border: '1px solid rgba(148,163,184,0.5)',
+            border: '1px solid rgba(200,169,126,0.35)',
             background: livePanelOpen ? 'rgba(28,36,47,0.96)' : 'rgba(12,16,20,0.94)',
             color: '#e2e8f0',
             padding: '10px 8px',
@@ -1616,7 +1623,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'inset 0 0 0 1px rgba(148,163,184,0.08)',
+            boxShadow: 'inset 0 0 0 1px rgba(200,169,126,0.1)',
           }}
         >
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">

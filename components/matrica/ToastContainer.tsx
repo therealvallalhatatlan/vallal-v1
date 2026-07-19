@@ -3,9 +3,9 @@
 import type { ToastItem } from './useToast'
 
 const KIND_STYLE: Record<string, { bg: string; border: string; color: string; icon: string }> = {
-  success: { bg: 'rgba(134,239,172,0.12)', border: 'rgba(134,239,172,0.3)', color: '#86efac', icon: '✓' },
-  error:   { bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.3)',   color: '#fca5a5', icon: '✕' },
-  info:    { bg: 'rgba(56,189,248,0.12)',   border: 'rgba(56,189,248,0.3)',  color: '#7dd3fc', icon: 'ℹ' },
+  success: { bg: 'rgba(200,169,126,0.14)', border: 'rgba(200,169,126,0.35)', color: '#f3e9d8', icon: '✓' },
+  error:   { bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.32)', color: '#fecaca', icon: '✕' },
+  info:    { bg: 'rgba(255,255,255,0.08)', border: 'rgba(255,255,255,0.18)', color: '#e5e7eb', icon: 'ℹ' },
 }
 
 interface Props {
@@ -27,7 +27,7 @@ export default function ToastContainer({ toasts, onDismiss }: Props) {
       <div
         style={{
           position: 'fixed',
-          top: 20,
+          top: 'calc(var(--matrica-header-offset, 90px) + 8px)',
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 100,

@@ -270,9 +270,9 @@ export default function LiveChat({
                 key={message.id}
                 className={`border px-3 py-2 text-sm ${
                   ownMessage
-                    ? 'border-lime-500/30 bg-lime-500/10'
+                    ? 'border-[#c8a97e]/35 bg-[#c8a97e]/12'
                     : message.sender_role === 'broadcaster'
-                    ? 'border-fuchsia-500/30 bg-fuchsia-500/10'
+                    ? 'border-[#c8a97e]/30 bg-white/[0.05]'
                     : 'border-white/10 bg-white/[0.03]'
                 }`}
               >
@@ -322,7 +322,7 @@ export default function LiveChat({
           maxLength={MAX_MESSAGE_LENGTH}
           rows={2}
           disabled={sending || (requireAuth && !authToken)}
-          className="w-full resize-none border border-white/12 bg-black px-3 py-2 text-sm text-white outline-none focus:border-lime-500"
+          className="w-full resize-none border border-white/12 bg-black px-3 py-2 text-sm text-white outline-none focus:border-[#c8a97e]"
         />
         <div className="flex items-center justify-between">
           <span className="text-xs text-zinc-500">{input.length}/{MAX_MESSAGE_LENGTH}</span>
@@ -330,12 +330,12 @@ export default function LiveChat({
             type="button"
             onClick={sendMessage}
             disabled={sending || !input.trim() || (requireAuth && !authToken)}
-            className="border border-lime-500/40 bg-lime-500/10 px-3 py-1.5 text-sm font-semibold text-lime-200 disabled:opacity-40"
+            className="border border-[#c8a97e]/45 bg-[#c8a97e]/14 px-3 py-1.5 text-sm font-semibold text-[#f3e9d8] disabled:opacity-40"
           >
             {sending ? 'Kuldes...' : 'Kuld'}
           </button>
         </div>
-        {requireAuth && !authToken ? <div className="text-xs text-amber-300">Uzenetkuldeshez be kell jelentkezned.</div> : null}
+        {requireAuth && !authToken ? <div className="text-xs text-[#d7c2a3]">Uzenetkuldeshez be kell jelentkezned.</div> : null}
         {error ? <div className="text-xs text-rose-400">{error}</div> : null}
       </div>
     </div>

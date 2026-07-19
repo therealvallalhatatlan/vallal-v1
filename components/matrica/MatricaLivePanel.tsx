@@ -191,7 +191,7 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 220,
-            border: '1px solid rgba(148,163,184,0.4)',
+            border: '1px solid rgba(200,169,126,0.32)',
             background: 'rgba(5,7,9,0.95)',
             color: '#f4f4f5',
             minWidth: 60,
@@ -214,8 +214,8 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
                 right: -4,
                 minWidth: 20,
                 height: 20,
-                background: '#a3e635',
-                color: '#0f172a',
+                background: '#c8a97e',
+                color: '#111827',
                 fontSize: 11,
                 fontWeight: 700,
                 display: 'inline-flex',
@@ -238,7 +238,7 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
           right: 0,
           bottom: 0,
           left: 0,
-          background: 'rgba(2, 6, 23, 0.45)',
+          background: 'rgba(5, 7, 10, 0.5)',
           backdropFilter: 'blur(1px)',
           opacity: open ? 1 : 0,
           pointerEvents: open ? 'auto' : 'none',
@@ -261,7 +261,7 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
           flexDirection: 'column',
           borderRadius: 0,
           overflow: 'hidden',
-          borderLeft: '1px solid rgba(255,255,255,0.12)',
+          borderLeft: '1px solid rgba(200,169,126,0.24)',
           background: 'linear-gradient(180deg, rgba(6,8,10,0.98), rgba(4,6,8,0.98))',
           backdropFilter: 'blur(12px)',
           boxShadow: '0 20px 48px rgba(0,0,0,0.55)',
@@ -314,9 +314,9 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
             type="button"
             onClick={() => setActiveTab('chat')}
             style={{
-              border: activeTab === 'chat' ? '1px solid rgba(163,230,53,0.35)' : '1px solid rgba(255,255,255,0.15)',
-              background: activeTab === 'chat' ? 'rgba(163,230,53,0.08)' : 'transparent',
-              color: activeTab === 'chat' ? '#d9f99d' : '#d4d4d8',
+              border: activeTab === 'chat' ? '1px solid rgba(200,169,126,0.36)' : '1px solid rgba(255,255,255,0.15)',
+              background: activeTab === 'chat' ? 'rgba(200,169,126,0.12)' : 'transparent',
+              color: activeTab === 'chat' ? '#f3e9d8' : '#d4d4d8',
               fontSize: 12,
               fontWeight: 700,
               padding: '5px 12px',
@@ -329,9 +329,9 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
             type="button"
             onClick={() => setActiveTab('activity')}
             style={{
-              border: activeTab === 'activity' ? '1px solid rgba(163,230,53,0.35)' : '1px solid rgba(255,255,255,0.15)',
-              background: activeTab === 'activity' ? 'rgba(163,230,53,0.08)' : 'transparent',
-              color: activeTab === 'activity' ? '#d9f99d' : '#d4d4d8',
+              border: activeTab === 'activity' ? '1px solid rgba(200,169,126,0.36)' : '1px solid rgba(255,255,255,0.15)',
+              background: activeTab === 'activity' ? 'rgba(200,169,126,0.12)' : 'transparent',
+              color: activeTab === 'activity' ? '#f3e9d8' : '#d4d4d8',
               fontSize: 12,
               fontWeight: 700,
               padding: '5px 12px',
@@ -380,7 +380,7 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
               {activityLoading ? (
                 <p style={{ margin: 0, color: '#71717a', fontSize: 13 }}>Betoltes...</p>
               ) : activityError ? (
-                <p style={{ margin: 0, color: '#fda4af', fontSize: 13 }}>{activityError}</p>
+                <p style={{ margin: 0, color: '#fca5a5', fontSize: 13 }}>{activityError}</p>
               ) : activity.length === 0 ? (
                 <p style={{ margin: 0, color: '#71717a', fontSize: 13 }}>Meg nincs activity bejegyzes.</p>
               ) : (
