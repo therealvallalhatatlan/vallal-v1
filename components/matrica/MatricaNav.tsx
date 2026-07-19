@@ -847,7 +847,7 @@ function MatricaNav() {
           alignItems: 'center',
           justifyContent: 'flex-end',
           padding: 0,
-          zIndex: 200,
+          zIndex: 1010,
           boxShadow: 'none',
           pointerEvents: 'none',
         }}
