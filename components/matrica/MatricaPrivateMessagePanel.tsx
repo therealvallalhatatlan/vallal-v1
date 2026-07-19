@@ -29,6 +29,9 @@ export default function MatricaPrivateMessagePanel({
 }: Props) {
   const [isMobile, setIsMobile] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const bottomRailOffset = isMobile
+    ? 'calc(86px + env(safe-area-inset-bottom, 0px))'
+    : '94px'
 
   useEffect(() => {
     const updateMobileState = () => setIsMobile(window.innerWidth < 768)
@@ -44,25 +47,36 @@ export default function MatricaPrivateMessagePanel({
     onUnreadChange?.(unreadCount, recipient.id)
   }, [unreadCount, recipient.id, onUnreadChange])
 
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [onClose])
+
   return (
     <section
       style={{
-        position: isMobile ? 'fixed' : 'absolute',
+        position: 'fixed',
         right: isMobile ? 0 : 14,
         left: isMobile ? 0 : 'auto',
-        bottom: isMobile ? 0 : 14,
-        top: isMobile ? 'var(--matrica-header-offset, 90px)' : 'auto',
-        zIndex: 240,
+        bottom: bottomRailOffset,
+        top: 'var(--matrica-header-offset, 90px)',
+        zIndex: 260,
         width: isMobile ? '100vw' : 'min(380px, calc(100vw - 28px))',
-        height: isMobile ? 'calc(100dvh - var(--matrica-header-offset, 90px))' : 'min(62vh, 520px)',
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 0,
         overflow: 'hidden',
-        border: isMobile ? 'none' : '1px solid rgba(255,255,255,0.12)',
+        border: '1px solid rgba(255,255,255,0.12)',
         background: 'linear-gradient(180deg, rgba(6,8,10,0.98), rgba(4,6,8,0.98))',
         backdropFilter: 'blur(12px)',
-        boxShadow: isMobile ? 'none' : '0 20px 48px rgba(0,0,0,0.55)',
+        boxShadow: '0 20px 48px rgba(0,0,0,0.55)',
+        pointerEvents: 'auto',
       }}
     >
       <header

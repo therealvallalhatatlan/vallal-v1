@@ -890,10 +890,9 @@ function MatricaNav() {
               style={{
                 width: profileAvatarSize,
                 height: profileAvatarSize,
-                border: menuOpen
-                  ? '1px solid rgba(163,230,53,0.45)'
-                  : '1px solid rgba(255,255,255,0.2)',
-                background: menuOpen ? 'rgba(163,230,53,0.08)' : 'rgba(255,255,255,0.05)',
+                borderRadius: '50%',
+                border: '2px solid #22c55e',
+                background: 'transparent',
                 cursor: 'pointer',
                 padding: 0,
                 display: 'flex',
@@ -908,30 +907,29 @@ function MatricaNav() {
                   src={avatarUrl}
                   alt={nickname || email || 'Profilkep'}
                   style={{
-                    width: profileAvatarSize - 6,
-                    height: profileAvatarSize - 6,
+                    width: profileAvatarSize,
+                    height: profileAvatarSize,
                     borderRadius: '50%',
                     objectFit: 'cover',
                     display: 'block',
-                    border: menuOpen
-                      ? '1px solid rgba(226,232,240,0.8)'
-                      : '1px solid rgba(255,255,255,0.18)',
+                    border: '2px solid #22c55e',
                   }}
                 />
               ) : (
                 <span
                   style={{
-                    width: profileAvatarSize - 6,
-                    height: profileAvatarSize - 6,
+                    width: profileAvatarSize,
+                    height: profileAvatarSize,
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'rgba(148,163,184,0.2)',
-                    color: menuOpen ? '#e2e8f0' : '#f4f4f5',
+                    background: 'rgba(34,197,94,0.15)',
+                    color: '#f4f4f5',
                     fontSize: 11,
                     fontWeight: 700,
                     letterSpacing: '0.02em',
+                    border: '2px solid #22c55e',
                   }}
                 >
                   {(nickname || email || '?').trim().charAt(0).toUpperCase() || '?'}
@@ -943,8 +941,8 @@ function MatricaNav() {
                   top: -6,
                   left: -5,
                   border: '1px solid rgba(255,255,255,0.18)',
-                  background: '#0a0d10',
-                  color: '#d9f99d',
+                  background: '#22c55e',
+                  color: '#111827',
                   fontSize: 9,
                   fontWeight: 800,
                   letterSpacing: '0.06em',

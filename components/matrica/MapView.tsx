@@ -137,7 +137,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState<string | null>(null)
   const [routeStatus, setRouteStatus] = useState<string | null>(null)
-  const [positionHudVisible, setPositionHudVisible] = useState(false)
+  const [missionHudVisible, setMissionHudVisible] = useState(true)
   const [livePanelOpen, setLivePanelOpen] = useState(false)
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
   const previewCloseTimerRef = useRef<number | null>(null)
@@ -864,6 +864,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   }
 
   const nearestSpot = useMemo(() => getNearestSpot(userLocation, spots), [userLocation, spots])
+  const nearestSpotHasPosition = Boolean(
+    nearestSpot && isFiniteCoordinate(nearestSpot.lat) && isFiniteCoordinate(nearestSpot.lng)
+  )
   const nearestDistanceMeters = nearestSpot && userLocation
     ? getDistanceMeters(userLocation.lat, userLocation.lng, nearestSpot.lat, nearestSpot.lng)
     : null
@@ -871,6 +874,10 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     ? 0
     : Math.max(0, Math.min(1, 1 - (nearestDistanceMeters / 1600)))
   const radarProgressPercent = Math.round(radarProgress * 100)
+
+  useEffect(() => {
+    setMissionHudVisible(true)
+  }, [nearestSpot?.id])
 
   const handleOpenPreview = useCallback((spot: StickerSpot, anchor?: PreviewAnchor | null) => {
     if (previewCloseTimerRef.current !== null) {
@@ -1203,7 +1210,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         }}
       />
 
-      {userLocation && !routeState.spot && positionHudVisible && (
+      {userLocation && !routeState.spot && nearestSpotHasPosition && missionHudVisible && (
         <div
           style={{
             position: 'fixed',
@@ -1235,9 +1242,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 11, color: '#94a3b8', letterSpacing: '0.08em', fontWeight: 700 }}>SAJAT POZICIOD</div>
-              <div style={{ marginTop: 4, color: '#f4f4f5', fontSize: 15, fontWeight: 700 }}>
-                {nearestSpot ? 'Kovetkezo kuldetes elerheto' : 'GPS aktiv'}
-              </div>
+              <div style={{ marginTop: 4, color: '#f4f4f5', fontSize: 15, fontWeight: 700 }}>Kovetkezo kuldetes elerheto</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
@@ -1257,8 +1262,8 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               </div>
               <button
                 type="button"
-                onClick={() => setPositionHudVisible(false)}
-                aria-label="HUD bezarasa"
+                onClick={() => setMissionHudVisible(false)}
+                aria-label="Panel bezarasa"
                 style={{
                   width: 30,
                   height: 30,
@@ -1347,35 +1352,6 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           ) : null}
         </div>
       )}
-
-      {userLocation && !routeState.spot && !positionHudVisible ? (
-        <button
-          type="button"
-          onClick={() => {
-            playUiSound('click')
-            setPositionHudVisible(true)
-          }}
-          style={{
-            position: 'fixed',
-            right: 14,
-            bottom: BOTTOM_ACTION_BAR_HEIGHT + 10,
-            zIndex: 36,
-            borderRadius: 999,
-            border: '1px solid rgba(125,211,252,0.45)',
-            background: 'rgba(8,15,25,0.86)',
-            color: '#bae6fd',
-            fontSize: 11,
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-            padding: '8px 11px',
-            cursor: 'pointer',
-            boxShadow: '0 10px 26px rgba(0,0,0,0.35)',
-          }}
-        >
-          HUD megnyitása
-        </button>
-      ) : null}
 
       {routeState.spot && !previewSpot && (
         <div
@@ -1558,6 +1534,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           width: 'min(520px, calc(100vw - 16px))',
           bottom: 10,
           zIndex: 230,
+          borderRadius: 16,
           border: '1px solid rgba(255,255,255,0.11)',
           background: 'rgba(4, 6, 8, 0.94)',
           backdropFilter: 'blur(10px)',
@@ -1574,6 +1551,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           aria-label="Szpot hozzáadása"
           title="Szpot hozzáadása"
           style={{
+            borderRadius: 12,
             border: '1px solid rgba(34,197,94,0.45)',
             background: 'rgba(14,40,24,0.8)',
             color: '#bbf7d0',
@@ -1588,7 +1566,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             boxShadow: 'inset 0 0 0 1px rgba(34,197,94,0.08)',
           }}
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
             <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
@@ -1599,6 +1577,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           aria-label="Aktív szpot"
           title="Aktív szpot"
           style={{
+            borderRadius: 12,
             border: '1px solid rgba(249,115,22,0.48)',
             background: previewSpot ? 'rgba(66,28,8,0.95)' : 'rgba(43,22,9,0.88)',
             color: '#fed7aa',
@@ -1613,7 +1592,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             boxShadow: 'inset 0 0 0 1px rgba(249,115,22,0.08)',
           }}
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2" />
             <circle cx="12" cy="12" r="2.2" fill="currentColor" />
           </svg>
@@ -1625,6 +1604,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           aria-label="Chat panel"
           title="Chat panel"
           style={{
+            borderRadius: 12,
             border: '1px solid rgba(148,163,184,0.5)',
             background: livePanelOpen ? 'rgba(28,36,47,0.96)' : 'rgba(12,16,20,0.94)',
             color: '#e2e8f0',
@@ -1639,7 +1619,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             boxShadow: 'inset 0 0 0 1px rgba(148,163,184,0.08)',
           }}
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
             <path d="M4 6.8a2.8 2.8 0 0 1 2.8-2.8h10.4A2.8 2.8 0 0 1 20 6.8v6.4a2.8 2.8 0 0 1-2.8 2.8H10.5l-3.9 3.1a.7.7 0 0 1-1.1-.55V16A2.8 2.8 0 0 1 4 13.2V6.8Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
           </svg>
         </button>
