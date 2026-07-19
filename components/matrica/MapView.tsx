@@ -20,7 +20,7 @@ import { getDistanceMeters } from '@/lib/matrica'
 import type { StickerSpot } from '@/lib/matrica'
 import SpotCircle from './SpotCircle'
 import SpotMarker from './SpotMarker'
-import SpotModal from './SpotModal'
+import SpotPreview from './SpotPreview'
 import ToastContainer from './ToastContainer'
 import { useToast } from './useToast'
 import MatricaLivePanel from './MatricaLivePanel'
@@ -58,6 +58,11 @@ interface RouteState {
   durationSeconds: number | null
 }
 
+interface PreviewAnchor {
+  x: number
+  y: number
+}
+
 function isFiniteCoordinate(value: number | undefined): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
@@ -77,6 +82,15 @@ function formatRouteDuration(durationSeconds: number | null): string {
   return minutes > 0 ? `${hours} ora ${minutes} perc` : `${hours} ora`
 }
 
+function formatApproxDistanceBand(distanceMeters: number | null): string {
+  if (distanceMeters === null) return 'Nem elerheto'
+  if (distanceMeters < 100) return 'Nagyon kozel (0-100 m)'
+  if (distanceMeters < 300) return 'Kozel (100-300 m)'
+  if (distanceMeters < 800) return 'Kozepes tav (300-800 m)'
+  if (distanceMeters < 1500) return 'Tagabb kornyek (0.8-1.5 km)'
+  return 'Messzebb (1.5 km+)'
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -84,6 +98,10 @@ function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
+}
+
+function isPaidLockedSpot(spot: StickerSpot): boolean {
+  return spot.spot_type === 'paid' && !!spot.is_locked
 }
 
 
@@ -101,7 +119,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const [geoError, setGeoError] = useState<string | null>(null)
   const [geoRetry, setGeoRetry] = useState(0)
   const [spots, setSpots] = useState<StickerSpot[]>([])
-  const [selectedSpot, setSelectedSpot] = useState<StickerSpot | null>(null)
+  const [previewSpot, setPreviewSpot] = useState<StickerSpot | null>(null)
+  const [previewAnchor, setPreviewAnchor] = useState<PreviewAnchor | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [routeState, setRouteState] = useState<RouteState>({
     spot: null,
@@ -114,6 +134,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const [routeStatus, setRouteStatus] = useState<string | null>(null)
   const [positionHudVisible, setPositionHudVisible] = useState(true)
   const [livePanelOpen, setLivePanelOpen] = useState(false)
+  const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
+  const previewCloseTimerRef = useRef<number | null>(null)
+  const unlockToastHandledRef = useRef(false)
 
   const { toasts, show: showToast, dismiss: dismissToast } = useToast()
 
@@ -129,6 +152,27 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     }
   }, [routeStatus])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const mqMobile = window.matchMedia('(max-width: 900px)')
+    const mqTouch = window.matchMedia('(pointer: coarse)')
+    const apply = () => {
+      setIsMobile(mqMobile.matches || mqTouch.matches)
+    }
+
+    apply()
+    mqMobile.addEventListener('change', apply)
+    mqTouch.addEventListener('change', apply)
+    window.addEventListener('resize', apply)
+
+    return () => {
+      mqMobile.removeEventListener('change', apply)
+      mqTouch.removeEventListener('change', apply)
+      window.removeEventListener('resize', apply)
+    }
+  }, [])
+
   const clearRouteFromMap = useCallback(() => {
     if (!mapRef.current) return
     const map = mapRef.current
@@ -141,6 +185,11 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   }, [])
 
   const startRouteForSpot = useCallback((spot: StickerSpot, originOverride?: UserLocation | null) => {
+    if (isPaidLockedSpot(spot)) {
+      setRouteError('Ehhez a fizetos szpothoz elobb feloldas szukseges.')
+      return
+    }
+
     if (mapRef.current) {
       mapRef.current.flyTo({
         center: [spot.lng, spot.lat],
@@ -316,20 +365,93 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   }, [geoRetry, spots]);
 
   // ── Fetch spots ─────────────────────────────────────────────────────────────
-  useEffect(() => {
-    async function loadSpots() {
-      try {
-        const res = await fetch('/api/matrica/spots')
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const json = await res.json()
-        setSpots(json.spots ?? [])
-      } catch (err) {
-        console.error('[MapView] spot fetch failed', err)
-        setFetchError('Nem sikerült betölteni a matrica pontokat.')
+  const loadSpots = useCallback(async () => {
+    try {
+      const headers: Record<string, string> = {}
+      if (chatAuthToken) {
+        headers.Authorization = `Bearer ${chatAuthToken}`
       }
+
+      const res = await fetch('/api/matrica/spots', {
+        headers,
+        cache: 'no-store',
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const json = await res.json()
+      setSpots(json.spots ?? [])
+    } catch (err) {
+      console.error('[MapView] spot fetch failed', err)
+      setFetchError('Nem sikerült betölteni a matrica pontokat.')
     }
-    loadSpots()
-  }, [])
+  }, [chatAuthToken])
+
+  useEffect(() => {
+    void loadSpots()
+  }, [loadSpots])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (unlockToastHandledRef.current) return
+
+    const params = new URLSearchParams(window.location.search)
+    const unlockState = params.get('unlock')
+    if (!unlockState) return
+
+    unlockToastHandledRef.current = true
+
+    if (unlockState === 'success') {
+      showToast('Sikeres fizetes. A szpot reszletei feloldva 24 orara.', 'success')
+      void loadSpots()
+    } else if (unlockState === 'cancelled') {
+      showToast('Fizetes megszakitva.', 'info')
+    }
+
+    params.delete('unlock')
+    params.delete('spot_id')
+    const cleanQuery = params.toString()
+    const nextUrl = `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ''}`
+    window.history.replaceState({}, '', nextUrl)
+  }, [loadSpots, showToast])
+
+  const handleUnlockSpot = useCallback(async (spot: StickerSpot) => {
+    if (!chatAuthToken) {
+      showToast('Bejelentkezes szukseges a feloldashoz.', 'error')
+      return
+    }
+
+    setUnlockingSpotId(spot.id)
+    try {
+      const res = await fetch('/api/matrica/spot-unlock/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${chatAuthToken}`,
+        },
+        body: JSON.stringify({ spot_id: spot.id }),
+      })
+
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        if (json?.error === 'already_unlocked') {
+          showToast('Ez a szpot mar fel van oldva nalad.', 'info')
+          await loadSpots()
+          return
+        }
+        throw new Error(typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`)
+      }
+
+      if (!json?.url || typeof json.url !== 'string') {
+        throw new Error('missing_checkout_url')
+      }
+
+      window.location.assign(json.url)
+    } catch (error) {
+      console.error('[MapView] unlock checkout failed', error)
+      showToast('Nem sikerult elinditani a fizetest ehhez a szpothoz.', 'error')
+    } finally {
+      setUnlockingSpotId(null)
+    }
+  }, [chatAuthToken, loadSpots, showToast])
 
   // ── Handle online user focus events ─────────────────────────────────────────
   useEffect(() => {
@@ -586,7 +708,8 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       })
 
       if (targetSpot) {
-        setSelectedSpot(targetSpot)
+        setPreviewSpot(targetSpot)
+        setPreviewAnchor(null)
       }
     }
 
@@ -687,45 +810,59 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     : Math.max(0, Math.min(1, 1 - (nearestDistanceMeters / 1600)))
   const radarProgressPercent = Math.round(radarProgress * 100)
 
-  const handleSelect = useCallback((spot: StickerSpot) => {
-    setSelectedSpot(spot)
+  const handleOpenPreview = useCallback((spot: StickerSpot, anchor?: PreviewAnchor | null) => {
+    if (previewCloseTimerRef.current !== null) {
+      window.clearTimeout(previewCloseTimerRef.current)
+      previewCloseTimerRef.current = null
+    }
+    setPreviewSpot(spot)
+    setPreviewAnchor(anchor ?? null)
   }, [])
 
-  const handleClaimSubmitted = useCallback((spotUpdate?: { id: string; remaining_quantity: number; status: StickerSpot['status'] }) => {
-    if (!spotUpdate) return
-
-    setSpots((prev) => {
-      const next = prev
-        .map((spot) => {
-          if (spot.id !== spotUpdate.id) return spot
-          return {
-            ...spot,
-            remaining_quantity: spotUpdate.remaining_quantity,
-            status: spotUpdate.status,
-          }
-        })
-        .filter((spot) => spot.status === 'active' && spot.remaining_quantity > 0)
-
-      return next
-    })
-
-    setSelectedSpot((prev) => {
-      if (!prev || prev.id !== spotUpdate.id) return prev
-      if (spotUpdate.status !== 'active' || spotUpdate.remaining_quantity <= 0) return null
-      return {
-        ...prev,
-        remaining_quantity: spotUpdate.remaining_quantity,
-        status: spotUpdate.status,
-      }
-    })
+  const handleClosePreview = useCallback(() => {
+    if (previewCloseTimerRef.current !== null) {
+      window.clearTimeout(previewCloseTimerRef.current)
+      previewCloseTimerRef.current = null
+    }
+    setPreviewSpot(null)
+    setPreviewAnchor(null)
   }, [])
 
-  const handleClosePanel = useCallback(() => setSelectedSpot(null), [])
+  const handleMarkerHoverStart = useCallback((spot: StickerSpot, anchor: PreviewAnchor) => {
+    if (isMobile) return
+    handleOpenPreview(spot, anchor)
+  }, [handleOpenPreview, isMobile])
 
-  const handleStartRouteFromModal = useCallback((spot: StickerSpot) => {
-    setSelectedSpot(null)
-    startRouteForSpot(spot)
-  }, [startRouteForSpot])
+  const handleMarkerHoverEnd = useCallback(() => {
+    if (isMobile) return
+    if (previewCloseTimerRef.current !== null) {
+      window.clearTimeout(previewCloseTimerRef.current)
+    }
+    previewCloseTimerRef.current = window.setTimeout(() => {
+      setPreviewSpot(null)
+      setPreviewAnchor(null)
+      previewCloseTimerRef.current = null
+    }, 120)
+  }, [isMobile])
+
+  const handleMarkerPress = useCallback((spot: StickerSpot, anchor: PreviewAnchor) => {
+    handleOpenPreview(spot, isMobile ? null : anchor)
+  }, [handleOpenPreview, isMobile])
+
+  useEffect(() => {
+    if (!mapRef.current) return
+
+    const map = mapRef.current
+    const closeOnMapClick = () => {
+      setPreviewSpot(null)
+      setPreviewAnchor(null)
+    }
+
+    map.on('click', closeOnMapClick)
+    return () => {
+      map.off('click', closeOnMapClick)
+    }
+  }, [mapLoaded])
 
   const handleCloseRoute = useCallback(() => {
     clearRouteFromMap()
@@ -871,11 +1008,18 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               map={mapRef.current!}
               spot={spot}
               radiusMeters={spot.radius_visibility}
-              onSelect={handleSelect}
+              onSelect={(selected) => handleOpenPreview(selected)}
             />
           ))}
           {clickableSpots.map((spot) => (
-            <SpotMarker key={spot.id} map={mapRef.current!} spot={spot} onSelect={handleSelect} />
+            <SpotMarker
+              key={spot.id}
+              map={mapRef.current!}
+              spot={spot}
+              onPress={handleMarkerPress}
+              onHoverStart={handleMarkerHoverStart}
+              onHoverEnd={handleMarkerHoverEnd}
+            />
           ))}
         </>
       )}
@@ -942,17 +1086,26 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         </div>
       )}
 
-      {/* Spot modal */}
-      {selectedSpot && (
-        <SpotModal
-          spot={selectedSpot}
-          userLocation={userLocation}
-          onClose={handleClosePanel}
-          onStartRoute={handleStartRouteFromModal}
-          onClaimSubmitted={handleClaimSubmitted}
-          showToast={showToast}
-        />
-      )}
+      <SpotPreview
+        spot={previewSpot}
+        approxDistance={formatApproxDistanceBand(
+          previewSpot && userLocation
+            ? getDistanceMeters(userLocation.lat, userLocation.lng, previewSpot.lat, previewSpot.lng)
+            : null
+        )}
+        isMobile={isMobile}
+        isPaid={previewSpot?.spot_type === 'paid'}
+        isLocked={previewSpot ? isPaidLockedSpot(previewSpot) : false}
+        priceHuf={previewSpot?.price_huf ?? 0}
+        unlocking={previewSpot?.id === unlockingSpotId}
+        anchor={previewAnchor}
+        onClose={handleClosePreview}
+        onUnlock={handleUnlockSpot}
+        onStartRoute={(spot) => {
+          handleClosePreview()
+          startRouteForSpot(spot)
+        }}
+      />
 
       {userLocation && !routeState.spot && positionHudVisible && (
         <div
@@ -1050,7 +1203,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             </div>
           </div>
 
-          {nearestSpot ? (
+          {nearestSpot && !isPaidLockedSpot(nearestSpot) ? (
             <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button
                 type="button"
@@ -1097,7 +1250,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         </div>
       )}
 
-      {routeState.spot && !selectedSpot && (
+      {routeState.spot && !previewSpot && (
         <div
           style={{
             position: 'absolute',
@@ -1177,7 +1330,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
             <button
               type="button"
-              onClick={() => setSelectedSpot(routeState.spot)}
+              onClick={() => handleOpenPreview(routeState.spot)}
               style={{
                 borderRadius: 10,
                 border: '1px solid rgba(132,204,22,0.35)',
@@ -1189,7 +1342,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
                 cursor: 'pointer',
               }}
             >
-              Claim ehhez a szpothoz
+              Szpot adatlap
             </button>
             <button
               type="button"

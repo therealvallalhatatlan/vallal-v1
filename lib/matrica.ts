@@ -7,6 +7,7 @@
 
 export type SpotStatus = 'active' | 'empty' | 'archived'
 export type ClaimStatus = 'pending' | 'accepted' | 'rejected'
+export type SpotType = 'free' | 'paid'
 
 export interface StickerSpot {
   id: string
@@ -16,6 +17,10 @@ export interface StickerSpot {
   image_urls?: string[] | null
   lat: number
   lng: number
+  spot_type?: SpotType
+  price_huf?: number
+  is_locked?: boolean
+  unlock_expires_at?: string | null
   radius_visibility: number
   radius_claim: number
   total_quantity: number

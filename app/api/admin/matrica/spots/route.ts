@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import type { SpotStatus } from '@/lib/matrica'
+import type { SpotStatus, SpotType } from '@/lib/matrica'
+import { canCreatePaidSpots, getUserRoleByEmail } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
-async function requireAuthenticatedUser(req: NextRequest): Promise<boolean> {
+type AuthUser = {
+  id: string
+  email: string | null
+}
+
+async function requireAuthenticatedUser(req: NextRequest): Promise<AuthUser | null> {
   const authHeader = req.headers.get('authorization') ?? ''
   const token = authHeader.replace(/^Bearer\s+/i, '').trim()
-  if (!token) return false
+  if (!token) return null
 
   const db = supabaseAdmin()
   const {
@@ -15,12 +21,14 @@ async function requireAuthenticatedUser(req: NextRequest): Promise<boolean> {
     error,
   } = await db.auth.getUser(token)
 
-  return !error && !!user
+  if (error || !user) return null
+  return { id: user.id, email: user.email ?? null }
 }
 
 // ── GET /api/admin/matrica/spots  (all spots, any status) ─────────────────────
 export async function GET(req: NextRequest) {
-  if (!(await requireAuthenticatedUser(req))) {
+  const user = await requireAuthenticatedUser(req)
+  if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
@@ -35,12 +43,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
 
-  return NextResponse.json({ spots: data ?? [] })
+  return NextResponse.json({
+    spots: data ?? [],
+    userRole: getUserRoleByEmail(user.email),
+  })
 }
 
 // ── POST /api/admin/matrica/spots  (create a new spot) ────────────────────────
 export async function POST(req: NextRequest) {
-  if (!(await requireAuthenticatedUser(req))) {
+  const user = await requireAuthenticatedUser(req)
+  if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
@@ -52,6 +64,26 @@ export async function POST(req: NextRequest) {
   }
 
   const { title, description, image_url, image_urls, lat, lng, radius_visibility, radius_claim, total_quantity } = body
+  const role = getUserRoleByEmail(user.email)
+
+  const spotType: SpotType = body.spot_type === 'paid' ? 'paid' : 'free'
+  const rawPriceHuf = Number(body.price_huf)
+  const parsedPriceHuf = Number.isFinite(rawPriceHuf) ? Math.floor(rawPriceHuf) : 0
+
+  if (parsedPriceHuf < 0) {
+    return NextResponse.json({ error: 'invalid_price_huf' }, { status: 400 })
+  }
+
+  if (spotType === 'paid') {
+    if (!canCreatePaidSpots(role)) {
+      return NextResponse.json({ error: 'paid_spot_forbidden' }, { status: 403 })
+    }
+    if (parsedPriceHuf <= 0) {
+      return NextResponse.json({ error: 'paid_price_required' }, { status: 400 })
+    }
+  }
+
+  const effectivePriceHuf = spotType === 'paid' ? parsedPriceHuf : 0
 
   if (typeof title !== 'string' || !title.trim()) {
     return NextResponse.json({ error: 'title_required' }, { status: 400 })
@@ -85,6 +117,9 @@ export async function POST(req: NextRequest) {
     total_quantity: qty,
     remaining_quantity: qty,
     status: 'active',
+    spot_type: spotType,
+    price_huf: effectivePriceHuf,
+    creator_id: user.id,
   }
 
   let data: any = null
@@ -146,21 +181,42 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
   }
 
-  const { id, status } = body
+  const { id, status, title, description } = body
   if (typeof id !== 'string' || !id.trim()) {
     return NextResponse.json({ error: 'id_required' }, { status: 400 })
   }
-  const allowedStatuses: SpotStatus[] = ['active', 'empty', 'archived']
-  if (!allowedStatuses.includes(status as SpotStatus)) {
-    return NextResponse.json({ error: 'invalid_status' }, { status: 400 })
+
+  const updates: Record<string, unknown> = {}
+
+  if (typeof status !== 'undefined') {
+    const allowedStatuses: SpotStatus[] = ['active', 'empty', 'archived']
+    if (!allowedStatuses.includes(status as SpotStatus)) {
+      return NextResponse.json({ error: 'invalid_status' }, { status: 400 })
+    }
+    updates.status = status as SpotStatus
+  }
+
+  if (typeof title !== 'undefined') {
+    if (typeof title !== 'string' || !title.trim()) {
+      return NextResponse.json({ error: 'title_required' }, { status: 400 })
+    }
+    updates.title = title.trim()
+  }
+
+  if (typeof description !== 'undefined') {
+    updates.description = typeof description === 'string' ? description.trim() || null : null
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'no_updates' }, { status: 400 })
   }
 
   const db = supabaseAdmin()
   const { data, error } = await db
     .from('sticker_spots')
-    .update({ status: status as SpotStatus })
+    .update(updates)
     .eq('id', id.trim())
-    .select('id, status')
+    .select('id, status, title, description, spot_type, price_huf')
     .single()
 
   if (error) {

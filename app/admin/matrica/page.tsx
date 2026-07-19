@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import type { StickerSpot, SpotStatus } from '@/lib/matrica'
+import type { StickerSpot, SpotStatus, SpotType } from '@/lib/matrica'
+import type { UserRole } from '@/lib/auth'
 import MatricaNav from '@/components/matrica/MatricaNav'
 import { useSessionGuard } from '@/hooks/useSessionGuard'
 
@@ -70,6 +71,7 @@ const STATUS_COLOR: Record<SpotStatus, string> = {
 // ── Create spot form ───────────────────────────────────────────────────────────
 interface CreateFormProps {
   accessToken: string
+  canCreatePaid: boolean
   onCreated: (spot: StickerSpot) => void
 }
 
@@ -195,9 +197,11 @@ async function optimizeSpotImage(file: File): Promise<File> {
   })
 }
 
-function CreateSpotForm({ accessToken, onCreated }: CreateFormProps) {
+function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [spotType, setSpotType] = useState<SpotType>('free')
+  const [priceHuf, setPriceHuf] = useState(1500)
   const [lat, setLat] = useState<number | null>(null)
   const [lng, setLng] = useState<number | null>(null)
   const [radiusVisibility, setRadiusVisibility] = useState(500)
@@ -275,6 +279,11 @@ function CreateSpotForm({ accessToken, onCreated }: CreateFormProps) {
     setError(null)
     if (!title.trim()) { setError('A cím kötelező.'); return }
     if (lat === null || lng === null) { setError('Kattints a térképre a hely megadásához.'); return }
+    if (spotType === 'paid' && !canCreatePaid) { setError('Ehhez nincs jogosultsagod.'); return }
+    if (spotType === 'paid' && (!Number.isFinite(priceHuf) || priceHuf <= 0)) {
+      setError('Fizetos szpothoz pozitiv HUF osszeg kell.');
+      return
+    }
 
     setSubmitting(true)
 
@@ -343,6 +352,8 @@ function CreateSpotForm({ accessToken, onCreated }: CreateFormProps) {
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() || null,
+          spot_type: spotType,
+          price_huf: spotType === 'paid' ? Math.max(0, Math.floor(priceHuf)) : 0,
           image_url: imageUrls[0] ?? null,
           image_urls: imageUrls,
           lat,
@@ -357,7 +368,7 @@ function CreateSpotForm({ accessToken, onCreated }: CreateFormProps) {
       setSuccess(true)
       onCreated(json.spot)
       // Reset form
-      setTitle(''); setDescription(''); setLat(null); setLng(null)
+      setTitle(''); setDescription(''); setSpotType('free'); setPriceHuf(1500); setLat(null); setLng(null)
       setRadiusVisibility(500); setRadiusClaim(50); setTotalQty(1)
       imagePreviews.forEach((preview) => URL.revokeObjectURL(preview))
       setImageFiles([]); setImagePreviews([])
@@ -392,6 +403,43 @@ function CreateSpotForm({ accessToken, onCreated }: CreateFormProps) {
             placeholder="Tipp vagy kontextus a megtalálóknak…"
           />
         </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: canCreatePaid ? '1fr 1fr' : '1fr', gap: 10 }}>
+          <div>
+            <label style={s.label} htmlFor="sp-type">Szpot tipus</label>
+            <select
+              id="sp-type"
+              style={s.input}
+              value={spotType}
+              onChange={(e) => setSpotType(e.target.value === 'paid' ? 'paid' : 'free')}
+            >
+              <option value="free">Ingyenes</option>
+              <option value="paid" disabled={!canCreatePaid}>Fizetos</option>
+            </select>
+          </div>
+
+          {canCreatePaid ? (
+            <div>
+              <label style={s.label} htmlFor="sp-price">Ar (HUF)</label>
+              <input
+                id="sp-price"
+                type="number"
+                min={0}
+                step={1}
+                style={{ ...s.input, opacity: spotType === 'paid' ? 1 : 0.6 }}
+                value={spotType === 'paid' ? priceHuf : 0}
+                onChange={(e) => setPriceHuf(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                disabled={spotType !== 'paid'}
+              />
+            </div>
+          ) : null}
+        </div>
+
+        {!canCreatePaid ? (
+          <p style={{ margin: 0, fontSize: 12, color: '#a1a1aa' }}>
+            Jelenlegi jogosultsaggal csak ingyenes szpot hozhato letre.
+          </p>
+        ) : null}
 
         {/* Image upload */}
         <div>
@@ -627,6 +675,17 @@ function SpotList({ spots, accessToken, onStatusChanged, onDeleted }: SpotListPr
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
                 <span style={{ fontWeight: 600, fontSize: 14 }}>{spot.title}</span>
                 <span style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: '2px 7px',
+                  borderRadius: 99,
+                  border: '1px solid rgba(232,121,249,0.4)',
+                  background: (spot.spot_type ?? 'free') === 'paid' ? 'rgba(232,121,249,0.15)' : 'rgba(56,189,248,0.12)',
+                  color: (spot.spot_type ?? 'free') === 'paid' ? '#f5d0fe' : '#bae6fd',
+                }}>
+                  {(spot.spot_type ?? 'free') === 'paid' ? `Fizetos (${spot.price_huf ?? 0} HUF)` : 'Ingyenes'}
+                </span>
+                <span style={{
                   fontSize: 11, fontWeight: 600, padding: '2px 7px', borderRadius: 99,
                   background: `${STATUS_COLOR[spot.status as SpotStatus]}22`,
                   color: STATUS_COLOR[spot.status as SpotStatus],
@@ -726,6 +785,7 @@ export default function MatricaAdminPage() {
   const router = useRouter()
   const { session, loading: authLoading } = useSessionGuard()
   const [spots, setSpots] = useState<StickerSpot[]>([])
+  const [userRole, setUserRole] = useState<UserRole>('user')
   const [loadingSpots, setLoadingSpots] = useState(false)
   const accessToken = (session as any)?.access_token as string | undefined
 
@@ -744,6 +804,9 @@ export default function MatricaAdminPage() {
       if (res.ok) {
         const json = await res.json()
         setSpots(json.spots ?? [])
+        if (json.userRole === 'admin' || json.userRole === 'editor' || json.userRole === 'user') {
+          setUserRole(json.userRole)
+        }
       }
     } finally {
       setLoadingSpots(false)
@@ -796,7 +859,7 @@ export default function MatricaAdminPage() {
           </div>
         </div>
 
-        {accessToken ? <CreateSpotForm accessToken={accessToken} onCreated={handleCreated} /> : null}
+        {accessToken ? <CreateSpotForm accessToken={accessToken} canCreatePaid={userRole === 'admin' || userRole === 'editor'} onCreated={handleCreated} /> : null}
 
         {loadingSpots ? (
           <div style={{ ...s.card, color: '#71717a', fontSize: 14 }}>Betöltés…</div>

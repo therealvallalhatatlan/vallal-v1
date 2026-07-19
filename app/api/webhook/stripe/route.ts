@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import Stripe from 'stripe';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { DEFAULT_PREORDER_CAMPAIGN_SLUG } from '@/lib/shop/preorder';
+import { PAID_SPOT_UNLOCK_HOURS } from '@/lib/matricaUnlocks';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',
@@ -82,6 +83,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
   console.log(`💳 Processing checkout completion for session: ${session.id}`);
 
   const metadata = session.metadata;
+  if (metadata?.type === 'spot_unlock') {
+    await handleSpotUnlockCheckoutCompleted(session);
+    return;
+  }
+
   const orderType = metadata?.orderType ?? metadata?.type;
 
   if (orderType === 'merch') {
@@ -211,4 +217,85 @@ async function resolveMerchOrderId(
   }
 
   return data?.id ?? null;
+}
+
+async function handleSpotUnlockCheckoutCompleted(session: Stripe.Checkout.Session) {
+  if (session.payment_status !== 'paid') {
+    console.log(`ℹ️ Spot unlock session ${session.id} is not paid yet, skipping`);
+    return;
+  }
+
+  const metadata = session.metadata ?? {};
+  const userId = metadata.user_id;
+  const spotId = metadata.spot_id;
+
+  if (!userId || !spotId) {
+    console.error('❌ Missing metadata for spot unlock checkout', session.id);
+    return;
+  }
+
+  const db = supabaseAdmin();
+
+  // Idempotency for webhook retries.
+  const { data: existingBySession, error: sessionCheckError } = await db
+    .from('paid_spot_unlocks')
+    .select('id')
+    .eq('stripe_checkout_session_id', session.id)
+    .maybeSingle<{ id: string }>();
+
+  if (sessionCheckError) {
+    console.error('❌ Failed to check existing spot unlock by session id:', sessionCheckError);
+    return;
+  }
+
+  if (existingBySession?.id) {
+    console.log(`✅ Spot unlock already processed for session ${session.id}`);
+    return;
+  }
+
+  const { data: existingUnlock, error: existingUnlockError } = await db
+    .from('paid_spot_unlocks')
+    .select('id, expires_at')
+    .eq('user_id', userId)
+    .eq('spot_id', spotId)
+    .maybeSingle<{ id: string; expires_at: string }>();
+
+  if (existingUnlockError) {
+    console.error('❌ Failed to load existing spot unlock:', existingUnlockError);
+    return;
+  }
+
+  const unlockHoursRaw = Number.parseInt(metadata.unlock_hours ?? String(PAID_SPOT_UNLOCK_HOURS), 10);
+  const unlockHours = Number.isFinite(unlockHoursRaw) && unlockHoursRaw > 0
+    ? unlockHoursRaw
+    : PAID_SPOT_UNLOCK_HOURS;
+
+  const now = new Date();
+  const baseTime = existingUnlock?.expires_at && new Date(existingUnlock.expires_at) > now
+    ? new Date(existingUnlock.expires_at)
+    : now;
+  const nextExpiresAt = new Date(baseTime.getTime() + unlockHours * 60 * 60 * 1000).toISOString();
+
+  const paymentIntentId = typeof session.payment_intent === 'string'
+    ? session.payment_intent
+    : session.payment_intent?.id ?? null;
+
+  const { error: upsertError } = await db
+    .from('paid_spot_unlocks')
+    .upsert({
+      user_id: userId,
+      spot_id: spotId,
+      stripe_checkout_session_id: session.id,
+      stripe_payment_intent_id: paymentIntentId,
+      purchased_at: now.toISOString(),
+      expires_at: nextExpiresAt,
+    }, { onConflict: 'user_id,spot_id' });
+
+  if (upsertError) {
+    console.error('❌ Failed to upsert spot unlock entitlement:', upsertError);
+    return;
+  }
+
+  console.log(`✅ Spot unlock granted user=${userId} spot=${spotId} until ${nextExpiresAt}`);
+  revalidatePath('/halozat');
 }

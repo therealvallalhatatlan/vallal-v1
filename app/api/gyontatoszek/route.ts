@@ -18,7 +18,7 @@ function uuidv4() {
   });
 }
 
-export const runtime = 'edge'; // for streaming
+export const runtime = 'nodejs';
 
 async function requireAuthenticatedUser(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
