@@ -5,7 +5,7 @@ const MATRICA_START_ROUTE_EVENT = 'matrica:start-route';
 
 import { createClient } from '@/lib/browser'
 import Link from 'next/link'
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSessionGuard } from '@/hooks/useSessionGuard.js'
 import { usePresence } from '@/hooks/usePresence'
@@ -27,7 +27,7 @@ type OnlineUserProfile = {
   lng?: number;
 };
 
-export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {} }: { onMessageUser?: (user: OnlineUserProfile) => void; pmUnreadCounts?: Record<string, number | undefined> }) {
+export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrentUser = false, reserveRightSpace = 0 }: { onMessageUser?: (user: OnlineUserProfile) => void; pmUnreadCounts?: Record<string, number | undefined>; hideCurrentUser?: boolean; reserveRightSpace?: number }) {
   usePresence()
 
   const currentUserAccent = '#94a3b8'
@@ -127,13 +127,17 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {} }: { onMessa
     return () => { cancelled = true; clearInterval(interval) }
   }, [currentUserId])
 
-  if (loading && users.length === 0) return null
-  if (users.length === 0) return (
-    <div style={{ width: '100%', background: 'rgba(10,12,16,0.94)', color: '#9ca3af', fontSize: 13, textAlign: 'center', padding: 6, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>Nincs online felhasználó</div>
+  const visibleUsers = hideCurrentUser
+    ? users.filter((u) => u.id !== currentUserId)
+    : users
+
+  if (loading && visibleUsers.length === 0) return null
+  if (visibleUsers.length === 0) return (
+    <div style={{ width: '100%', background: 'rgba(6,7,9,0.96)', color: '#9ca3af', fontSize: 12, letterSpacing: '0.04em', textAlign: 'center', padding: 6, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>NINCS ONLINE FELHASZNALO</div>
   )
   return (
-    <div id="matrica-online-users-bar" style={{ width: '100%', background: 'rgba(10,12,16,0.94)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: isMobile ? '4px 0' : '6px 0', display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto' }}>
-      {users.map(u => (
+    <div id="matrica-online-users-bar" style={{ width: '100%', background: 'rgba(6,7,9,0.96)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: isMobile ? `4px ${reserveRightSpace}px 4px 0` : `6px ${reserveRightSpace}px 6px 0`, display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.04)' }}>
+      {visibleUsers.map(u => (
         <div
           key={u.id}
           style={{
@@ -307,7 +311,8 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {} }: { onMessa
 }
 
 function MatricaNav() {
-  const SECONDARY_NAV_EXTRA_OFFSET = 36
+  const SECONDARY_NAV_EXTRA_OFFSET = 8
+  const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
   const pathname = usePathname()
   const router = useRouter()
   const isAdmin = pathname?.startsWith('/admin/matrica')
@@ -335,12 +340,37 @@ function MatricaNav() {
   const [myClaimsError, setMyClaimsError] = useState<string | null>(null)
   const [myClaimsDeletingIds, setMyClaimsDeletingIds] = useState<Set<string>>(new Set())
   const [onlineBarHeight, setOnlineBarHeight] = useState(38)
+  const [isMobile, setIsMobile] = useState(false)
   const [pmRecipient, setPmRecipient] = useState<OnlineUserProfile | null>(null)
   const [pmUnreadCounts, setPmUnreadCounts] = useState<Record<string, number | undefined>>({})
   const [pmToasts, setPmToasts] = useState<Array<{ id: string; userId: string; nickname: string }>>([])
   const pmLastMessageByUserRef = useRef<Record<string, string>>({})
   const pmUnreadStorageReadyRef = useRef(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const clickSfxRef = useRef<HTMLAudioElement | null>(null)
+
+  const playUiClick = useCallback(() => {
+    const audio = clickSfxRef.current
+    if (!audio) return
+    audio.currentTime = 0
+    void audio.play().catch(() => {
+      // Ignore autoplay restrictions.
+    })
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const click = new Audio(UI_CLICK_SFX_SRC)
+    click.preload = 'auto'
+    click.volume = 0.26
+    clickSfxRef.current = click
+    return () => {
+      if (clickSfxRef.current) {
+        clickSfxRef.current.pause()
+        clickSfxRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     pmUnreadStorageReadyRef.current = false
@@ -440,6 +470,13 @@ function MatricaNav() {
     }
   }, [])
 
+  useEffect(() => {
+    const updateIsMobile = () => setIsMobile(window.innerWidth < 768)
+    updateIsMobile()
+    window.addEventListener('resize', updateIsMobile)
+    return () => window.removeEventListener('resize', updateIsMobile)
+  }, [])
+
     useEffect(() => {
       if (!authToken || !user?.id) return
 
@@ -504,7 +541,7 @@ function MatricaNav() {
     }, [authToken, user?.id, pmRecipient?.id])
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--matrica-header-offset', `${onlineBarHeight + 52 + SECONDARY_NAV_EXTRA_OFFSET}px`)
+    document.documentElement.style.setProperty('--matrica-header-offset', `${onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET}px`)
   }, [onlineBarHeight])
 
   // Fetch score when session is available and after successful claims.
@@ -782,6 +819,8 @@ function MatricaNav() {
     router.replace('/auth')
   }
 
+  const profileAvatarSize = isMobile ? 44 : 32
+
   return (
     <>
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1001 }}>
@@ -791,39 +830,41 @@ function MatricaNav() {
             setPmUnreadCounts((prev) => ({ ...prev, [selectedUser.id]: undefined }))
           }}
           pmUnreadCounts={pmUnreadCounts}
+          hideCurrentUser
+          reserveRightSpace={profileAvatarSize + 42}
         />
       </div>
       <nav
         style={{
           position: 'fixed',
-          top: onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET,
+          top: 0,
           left: 0,
           right: 0,
-          height: 52,
-          background: 'rgba(9,9,11,0.88)',
-          backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px',
-        zIndex: 200,
+          height: 0,
+          background: 'transparent',
+          borderBottom: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          padding: 0,
+          zIndex: 200,
+          boxShadow: 'none',
+          pointerEvents: 'none',
         }}
       >
       {/* Wordmark */}
       <Link
         href="/"
         style={{
-          display: 'flex',
+          display: 'none',
           alignItems: 'center',
           flexShrink: 0,
           textDecoration: 'none',
-          color: '#d4d4d8',
-          fontSize: 11,
-          letterSpacing: '0.36em',
+          color: '#e5e7eb',
+          fontSize: 10,
+          letterSpacing: '0.3em',
           textTransform: 'uppercase',
-          fontWeight: 400,
+          fontWeight: 600,
           lineHeight: 1,
         }}
         aria-label="HÁLÓZAT"
@@ -832,76 +873,26 @@ function MatricaNav() {
       </Link>
 
       {/* Right side: links + profile */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Link
-          href="/admin/matrica"
-          aria-label="Szpot hozzáadása"
-          title="Szpot hozzáadása"
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            textDecoration: 'none',
-            color: isAdmin ? '#f4f4f5' : '#a1a1aa',
-            background: isAdmin ? 'rgba(148,163,184,0.14)' : 'transparent',
-            border: isAdmin ? '1px solid rgba(148,163,184,0.35)' : '1px solid rgba(255,255,255,0.08)',
-            transition: 'background 0.15s, color 0.15s',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
-            <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </Link>
-
-        <button
-          type="button"
-          onClick={() => setSpotsSheetOpen((prev) => !prev)}
-          aria-label="Szpotok"
-          title="Szpotok"
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 8,
-            color: spotsSheetOpen ? '#f4f4f5' : '#a1a1aa',
-            background: spotsSheetOpen ? 'rgba(148,163,184,0.14)' : 'transparent',
-            border: spotsSheetOpen ? '1px solid rgba(148,163,184,0.35)' : '1px solid rgba(255,255,255,0.08)',
-            transition: 'background 0.15s, color 0.15s',
-            cursor: 'pointer',
-            padding: 0,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
-            <path
-              d="M10 16.2c3.1-3.04 4.6-5.32 4.6-7.31A4.6 4.6 0 0 0 10 4.3a4.6 4.6 0 0 0-4.6 4.59c0 1.99 1.5 4.27 4.6 7.31Z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-            <circle cx="10" cy="8.9" r="1.9" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        </button>
+      <div style={{ position: 'fixed', top: isMobile ? 4 : 6, right: 8, display: 'flex', alignItems: 'center', gap: 4, pointerEvents: 'auto', zIndex: 1003 }}>
 
         {/* Profile menu trigger + dropdown */}
         {user && (
           <div ref={menuRef} style={{ position: 'relative', marginLeft: 4 }}>
             <button
-              onClick={() => setMenuOpen(o => !o)}
+              onClick={() => {
+                playUiClick()
+                setMenuOpen(o => !o)
+              }}
               aria-label="Felhasználói menü"
               title="Profil beállítások"
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
+                width: profileAvatarSize,
+                height: profileAvatarSize,
+                borderRadius: 999,
                 border: menuOpen
                   ? '1px solid rgba(148,163,184,0.7)'
-                  : '1px solid rgba(255,255,255,0.12)',
-                background: menuOpen ? 'rgba(148,163,184,0.18)' : 'rgba(148,163,184,0.1)',
+                  : '1px solid rgba(255,255,255,0.2)',
+                background: menuOpen ? 'rgba(148,163,184,0.2)' : 'rgba(255,255,255,0.08)',
                 cursor: 'pointer',
                 padding: 0,
                 display: 'flex',
@@ -916,8 +907,8 @@ function MatricaNav() {
                   src={avatarUrl}
                   alt={nickname || email || 'Profilkep'}
                   style={{
-                    width: 24,
-                    height: 24,
+                    width: profileAvatarSize - 6,
+                    height: profileAvatarSize - 6,
                     borderRadius: '50%',
                     objectFit: 'cover',
                     display: 'block',
@@ -929,8 +920,8 @@ function MatricaNav() {
               ) : (
                 <span
                   style={{
-                    width: 24,
-                    height: 24,
+                    width: profileAvatarSize - 6,
+                    height: profileAvatarSize - 6,
                     borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
@@ -945,6 +936,24 @@ function MatricaNav() {
                   {(nickname || email || '?').trim().charAt(0).toUpperCase() || '?'}
                 </span>
               )}
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -6,
+                  left: -5,
+                  borderRadius: 999,
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  background: '#0f172a',
+                  color: '#cbd5e1',
+                  fontSize: 9,
+                  fontWeight: 800,
+                  letterSpacing: '0.06em',
+                  padding: '2px 5px',
+                  lineHeight: 1,
+                }}
+              >
+                TE
+              </span>
             </button>
 
             {menuOpen && (
@@ -1146,7 +1155,7 @@ function MatricaNav() {
       <div
         style={{
           position: 'fixed',
-          top: onlineBarHeight + 52 + SECONDARY_NAV_EXTRA_OFFSET,
+          top: onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET,
           left: 0,
           right: 0,
           zIndex: 190,
@@ -1299,7 +1308,7 @@ function MatricaNav() {
       <div
         style={{
           position: 'fixed',
-          top: onlineBarHeight + 52 + SECONDARY_NAV_EXTRA_OFFSET,
+          top: onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET,
           left: 0,
           right: 0,
           zIndex: 190,

@@ -21,6 +21,7 @@ interface Props {
   displayName: string
   authToken: string | null
   onOpenChange?: (open: boolean) => void
+  showLauncher?: boolean
 }
 
 const supabase = createClient()
@@ -43,7 +44,7 @@ function statusLabel(status: string): string {
   return 'fuggoben'
 }
 
-export default function MatricaLivePanel({ displayName, authToken, onOpenChange }: Props) {
+export default function MatricaLivePanel({ displayName, authToken, onOpenChange, showLauncher = true }: Props) {
     const { session } = useSessionGuard()
     const currentUserId = (session as any)?.user?.id
   
@@ -161,57 +162,75 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange 
     onOpenChange?.(open)
   }, [onOpenChange, open])
 
+  useEffect(() => {
+    const onToggle = () => setOpen((prev) => !prev)
+    const onOpen = () => setOpen(true)
+    const onClose = () => setOpen(false)
+
+    window.addEventListener('matrica:toggle-live-panel', onToggle)
+    window.addEventListener('matrica:open-live-panel', onOpen)
+    window.addEventListener('matrica:close-live-panel', onClose)
+
+    return () => {
+      window.removeEventListener('matrica:toggle-live-panel', onToggle)
+      window.removeEventListener('matrica:open-live-panel', onOpen)
+      window.removeEventListener('matrica:close-live-panel', onClose)
+    }
+  }, [])
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        aria-label="Matrica live panel"
-        style={{
-          position: 'fixed',
-          right: 0,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          zIndex: 220,
-          borderRadius: '14px 0 0 14px',
-          border: '1px solid rgba(148,163,184,0.4)',
-          background: 'rgba(9,12,18,0.9)',
-          color: '#f4f4f5',
-          minWidth: 60,
-          height: 74,
-          padding: '0 14px',
-          fontSize: 13,
-          fontWeight: 700,
-          letterSpacing: '0.02em',
-          cursor: 'pointer',
-          boxShadow: '0 12px 34px rgba(0,0,0,0.45)',
-          backdropFilter: 'blur(10px)',
-        }}
-      >
-        LIVE
-        {!open && unreadTotal > 0 ? (
-          <span
-            style={{
-              position: 'absolute',
-              top: -4,
-              right: -4,
-              minWidth: 20,
-              height: 20,
-              borderRadius: 999,
-              background: '#94a3b8',
-              color: '#0f172a',
-              fontSize: 11,
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 6px',
-            }}
-          >
-            {Math.min(unreadTotal, 99)}
-          </span>
-        ) : null}
-      </button>
+      {showLauncher ? (
+        <button
+          type="button"
+          onClick={() => setOpen((prev) => !prev)}
+          aria-label="Matrica live panel"
+          style={{
+            position: 'fixed',
+            right: 0,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 220,
+            borderRadius: '14px 0 0 14px',
+            border: '1px solid rgba(148,163,184,0.4)',
+            background: 'rgba(9,12,18,0.9)',
+            color: '#f4f4f5',
+            minWidth: 60,
+            height: 74,
+            padding: '0 14px',
+            fontSize: 13,
+            fontWeight: 700,
+            letterSpacing: '0.02em',
+            cursor: 'pointer',
+            boxShadow: '0 12px 34px rgba(0,0,0,0.45)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          LIVE
+          {!open && unreadTotal > 0 ? (
+            <span
+              style={{
+                position: 'absolute',
+                top: -4,
+                right: -4,
+                minWidth: 20,
+                height: 20,
+                borderRadius: 999,
+                background: '#94a3b8',
+                color: '#0f172a',
+                fontSize: 11,
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 6px',
+              }}
+            >
+              {Math.min(unreadTotal, 99)}
+            </span>
+          ) : null}
+        </button>
+      ) : null}
 
       <div
         onClick={() => setOpen(false)}

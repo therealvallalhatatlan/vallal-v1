@@ -33,6 +33,9 @@ const ROUTE_SOURCE_ID = 'matrica-route-source'
 const ROUTE_LAYER_ID = 'matrica-route-layer'
 const AUTO_REROUTE_MIN_DISTANCE_METERS = 35
 const AUTO_REROUTE_COOLDOWN_MS = 15000
+const BOTTOM_ACTION_BAR_HEIGHT = 84
+const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
+const UI_TOGGLE_SFX_SRC = '/audio/sfx-glitch.WAV'
 
 interface UserLocation {
   lat: number
@@ -109,6 +112,8 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null)
+  const clickSfxRef = useRef<HTMLAudioElement | null>(null)
+  const toggleSfxRef = useRef<HTMLAudioElement | null>(null)
   const firstFixRef = useRef(false)
   const lastAutoRerouteAtRef = useRef(0)
   const pendingAutoRerouteStatusRef = useRef(false)
@@ -132,13 +137,48 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState<string | null>(null)
   const [routeStatus, setRouteStatus] = useState<string | null>(null)
-  const [positionHudVisible, setPositionHudVisible] = useState(true)
+  const [positionHudVisible, setPositionHudVisible] = useState(false)
   const [livePanelOpen, setLivePanelOpen] = useState(false)
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
   const previewCloseTimerRef = useRef<number | null>(null)
   const unlockToastHandledRef = useRef(false)
 
   const { toasts, show: showToast, dismiss: dismissToast } = useToast()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const click = new Audio(UI_CLICK_SFX_SRC)
+    click.preload = 'auto'
+    click.volume = 0.36
+
+    const toggle = new Audio(UI_TOGGLE_SFX_SRC)
+    toggle.preload = 'auto'
+    toggle.volume = 0.22
+
+    clickSfxRef.current = click
+    toggleSfxRef.current = toggle
+
+    return () => {
+      if (clickSfxRef.current) {
+        clickSfxRef.current.pause()
+        clickSfxRef.current = null
+      }
+      if (toggleSfxRef.current) {
+        toggleSfxRef.current.pause()
+        toggleSfxRef.current = null
+      }
+    }
+  }, [])
+
+  const playUiSound = useCallback((kind: 'click' | 'toggle' = 'click') => {
+    const audio = kind === 'toggle' ? toggleSfxRef.current : clickSfxRef.current
+    if (!audio) return
+    audio.currentTime = 0
+    void audio.play().catch(() => {
+      // Ignore autoplay restrictions/errors.
+    })
+  }, [])
 
   useEffect(() => {
     if (!routeStatus) return
@@ -901,8 +941,42 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     window.open(googleMapsUrl.toString(), '_blank', 'noopener,noreferrer')
   }, [routeState.spot, userLocation])
 
+  const handleOpenNearestSpot = useCallback(() => {
+    playUiSound('toggle')
+
+    if (previewSpot) {
+      handleClosePreview()
+      return
+    }
+
+    if (!nearestSpot) {
+      showToast('Nincs aktiv szpot a kozeledben.', 'info')
+      return
+    }
+
+    handleOpenPreview(nearestSpot)
+  }, [handleClosePreview, handleOpenPreview, nearestSpot, playUiSound, previewSpot, showToast])
+
+  const handleToggleChatPanel = useCallback(() => {
+    playUiSound('toggle')
+    window.dispatchEvent(new CustomEvent('matrica:toggle-live-panel'))
+  }, [playUiSound])
+
+  const handleOpenSpotAdmin = useCallback(() => {
+    playUiSound('click')
+    window.setTimeout(() => {
+      window.location.href = '/admin/matrica'
+    }, 80)
+  }, [playUiSound])
+
   return (
-    <div style={{ position: 'absolute', inset: 0 }}>
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        ['--matrica-action-rail-offset' as any]: `${BOTTOM_ACTION_BAR_HEIGHT + 16}px`,
+      }}
+    >
       <div
         style={{
           position: 'absolute',
@@ -1112,16 +1186,18 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           style={{
             position: 'fixed',
             top: 'auto',
-            bottom: 0,
-            left: 0,
-            right: 0,
+            bottom: BOTTOM_ACTION_BAR_HEIGHT + 8,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'min(560px, calc(100vw - 24px))',
             zIndex: 34,
-            borderRadius: 0,
-            border: 'none',
-            background: 'rgba(0, 0, 0, 0.6)',
-            boxShadow: 'none',
+            borderRadius: 14,
+            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(6, 8, 11, 0.82)',
+            boxShadow: '0 20px 34px rgba(0,0,0,0.38)',
             padding: '14px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px',
             overflow: 'hidden',
+            backdropFilter: 'blur(10px)',
           }}
         >
           <div
@@ -1250,13 +1326,43 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         </div>
       )}
 
+      {userLocation && !routeState.spot && !positionHudVisible ? (
+        <button
+          type="button"
+          onClick={() => {
+            playUiSound('click')
+            setPositionHudVisible(true)
+          }}
+          style={{
+            position: 'fixed',
+            right: 14,
+            bottom: BOTTOM_ACTION_BAR_HEIGHT + 10,
+            zIndex: 36,
+            borderRadius: 999,
+            border: '1px solid rgba(125,211,252,0.45)',
+            background: 'rgba(8,15,25,0.86)',
+            color: '#bae6fd',
+            fontSize: 11,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            fontWeight: 700,
+            padding: '8px 11px',
+            cursor: 'pointer',
+            boxShadow: '0 10px 26px rgba(0,0,0,0.35)',
+          }}
+        >
+          HUD megnyitása
+        </button>
+      ) : null}
+
       {routeState.spot && !previewSpot && (
         <div
           style={{
             position: 'absolute',
-            left: 12,
-            right: 12,
-            bottom: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'min(760px, calc(100vw - 24px))',
+            bottom: BOTTOM_ACTION_BAR_HEIGHT + 12,
             zIndex: 35,
             borderRadius: 14,
             border: '1px solid rgba(244,114,182,0.28)',
@@ -1280,7 +1386,10 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             </div>
             <button
               type="button"
-              onClick={handleCloseRoute}
+              onClick={() => {
+                playUiSound('click')
+                handleCloseRoute()
+              }}
               style={{
                 border: '1px solid rgba(255,255,255,0.14)',
                 background: 'transparent',
@@ -1330,7 +1439,10 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
             <button
               type="button"
-              onClick={() => handleOpenPreview(routeState.spot)}
+              onClick={() => {
+                playUiSound('click')
+                handleOpenPreview(routeState.spot)
+              }}
               style={{
                 borderRadius: 10,
                 border: '1px solid rgba(132,204,22,0.35)',
@@ -1346,7 +1458,10 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             </button>
             <button
               type="button"
-              onClick={handleRefreshRoute}
+              onClick={() => {
+                playUiSound('click')
+                handleRefreshRoute()
+              }}
               style={{
                 borderRadius: 10,
                 border: '1px solid rgba(244,114,182,0.28)',
@@ -1363,6 +1478,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             <button
               type="button"
               onClick={() => {
+                playUiSound('click')
                 if (!mapRef.current || !routeState.spot) return
                 mapRef.current.flyTo({
                   center: [routeState.spot.lng, routeState.spot.lat],
@@ -1387,7 +1503,10 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
             </button>
             <button
               type="button"
-              onClick={handleOpenExternalNavigation}
+              onClick={() => {
+                playUiSound('click')
+                handleOpenExternalNavigation()
+              }}
               style={{
                 borderRadius: 10,
                 border: '1px solid rgba(255,255,255,0.12)',
@@ -1407,12 +1526,117 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
 
       {/* Toasts */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      <nav
+        aria-label="Halozat gyors műveletek"
+        style={{
+          position: 'fixed',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'min(520px, calc(100vw - 24px))',
+          bottom: 10,
+          zIndex: 230,
+          borderRadius: 14,
+          border: '1px solid rgba(255,255,255,0.11)',
+          background: 'rgba(5, 7, 10, 0.86)',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 16px 32px rgba(0,0,0,0.42)',
+          display: 'flex',
+          gap: 8,
+          overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+          padding: '9px 10px calc(9px + env(safe-area-inset-bottom, 0px))',
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleOpenSpotAdmin}
+          aria-label="Szpot hozzáadása"
+          title="Szpot hozzáadása"
+          style={{
+            borderRadius: 10,
+            border: '1px solid rgba(34,197,94,0.45)',
+            background: 'rgba(34,197,94,0.13)',
+            color: '#bbf7d0',
+            padding: '10px 8px',
+            cursor: 'pointer',
+            minHeight: 44,
+            minWidth: 124,
+            flex: '0 0 124px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: 'inset 0 0 14px rgba(34,197,94,0.12)',
+            scrollSnapAlign: 'center',
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleOpenNearestSpot}
+          aria-label="Aktív szpot"
+          title="Aktív szpot"
+          style={{
+            borderRadius: 10,
+            border: '1px solid rgba(249,115,22,0.48)',
+            background: previewSpot ? 'rgba(249,115,22,0.2)' : 'rgba(249,115,22,0.1)',
+            color: '#fed7aa',
+            padding: '10px 8px',
+            cursor: 'pointer',
+            minHeight: 44,
+            minWidth: 124,
+            flex: '0 0 124px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: previewSpot ? '0 0 16px rgba(249,115,22,0.25)' : 'inset 0 0 12px rgba(249,115,22,0.1)',
+            scrollSnapAlign: 'center',
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2" />
+            <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleToggleChatPanel}
+          aria-label="Chat panel"
+          title="Chat panel"
+          style={{
+            borderRadius: 10,
+            border: '1px solid rgba(148,163,184,0.5)',
+            background: livePanelOpen ? 'rgba(148,163,184,0.26)' : 'rgba(148,163,184,0.12)',
+            color: '#e2e8f0',
+            padding: '10px 8px',
+            cursor: 'pointer',
+            minHeight: 44,
+            minWidth: 124,
+            flex: '0 0 124px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: livePanelOpen ? '0 0 16px rgba(148,163,184,0.28)' : 'inset 0 0 12px rgba(148,163,184,0.11)',
+            scrollSnapAlign: 'center',
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+            <path d="M4 6.8a2.8 2.8 0 0 1 2.8-2.8h10.4A2.8 2.8 0 0 1 20 6.8v6.4a2.8 2.8 0 0 1-2.8 2.8H10.5l-3.9 3.1a.7.7 0 0 1-1.1-.55V16A2.8 2.8 0 0 1 4 13.2V6.8Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </nav>
       </div>
 
       <MatricaLivePanel
         displayName={chatDisplayName}
         authToken={chatAuthToken}
         onOpenChange={setLivePanelOpen}
+        showLauncher={false}
       />
     </div>
   )

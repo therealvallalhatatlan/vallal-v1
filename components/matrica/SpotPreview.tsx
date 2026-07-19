@@ -65,11 +65,11 @@ export default function SpotPreview({
             position: 'fixed',
             left: 0,
             right: 0,
-            bottom: 0,
+            bottom: 'var(--matrica-action-rail-offset, 0px)',
             zIndex: 43,
             background: 'linear-gradient(180deg, rgba(12,10,20,0.98), rgba(5,8,18,0.98))',
             borderTop: '1px solid rgba(232,121,249,0.28)',
-            borderRadius: '16px 16px 0 0',
+            borderRadius: '16px 16px 12px 12px',
             boxShadow: '0 -22px 48px rgba(0,0,0,0.38)',
             padding: '12px 16px calc(18px + env(safe-area-inset-bottom, 0px))',
           }}
@@ -227,7 +227,7 @@ export default function SpotPreview({
         background: 'linear-gradient(180deg, rgba(18,12,30,0.96), rgba(9,9,14,0.95))',
         color: '#f4f4f5',
         boxShadow: '0 20px 48px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.03) inset',
-        pointerEvents: 'none',
+        pointerEvents: 'auto',
         backdropFilter: 'blur(8px)',
       }}
     >
@@ -259,6 +259,50 @@ export default function SpotPreview({
           <div style={{ marginTop: 8, fontSize: 12, color: isLocked ? '#f5d0fe' : '#86efac' }}>
             {isLocked ? `Feloldas ara: ${priceHuf} HUF / 24 ora` : 'Feloldva: teljes adatok'}
           </div>
+        ) : null}
+
+        {isPaid && isLocked && onUnlock ? (
+          <button
+            type="button"
+            onClick={() => onUnlock(spot)}
+            disabled={unlocking}
+            style={{
+              width: '100%',
+              marginTop: 10,
+              borderRadius: 9,
+              border: '1px solid rgba(232,121,249,0.45)',
+              background: 'rgba(232,121,249,0.22)',
+              color: '#fdf2f8',
+              fontSize: 12,
+              fontWeight: 700,
+              padding: '8px 10px',
+              cursor: unlocking ? 'not-allowed' : 'pointer',
+              opacity: unlocking ? 0.7 : 1,
+            }}
+          >
+            {unlocking ? 'Atiranyitas fizeteshez...' : 'Szpot feloldasa'}
+          </button>
+        ) : null}
+
+        {onStartRoute && (!isPaid || !isLocked) ? (
+          <button
+            type="button"
+            onClick={() => onStartRoute(spot)}
+            style={{
+              width: '100%',
+              marginTop: 10,
+              borderRadius: 9,
+              border: '1px solid rgba(56,189,248,0.5)',
+              background: 'rgba(56,189,248,0.2)',
+              color: '#e0f2fe',
+              fontSize: 12,
+              fontWeight: 700,
+              padding: '8px 10px',
+              cursor: 'pointer',
+            }}
+          >
+            Utvonal tervezese
+          </button>
         ) : null}
       </div>
     </aside>

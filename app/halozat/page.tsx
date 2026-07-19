@@ -17,7 +17,7 @@ export default function HalozatPage() {
       }}
     >
       <MatricaNav />
-      <div style={{ position: 'absolute', inset: '52px 0 0 0' }}>
+      <div style={{ position: 'absolute', inset: 0 }}>
         <MapViewClient />
       </div>
     </main>
