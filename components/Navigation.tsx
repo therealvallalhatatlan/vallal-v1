@@ -3,23 +3,23 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { KeyRound, LogOut, Menu, UserRound, X } from "lucide-react";
+import { Facebook, KeyRound, LogOut, Mail, Menu, MessageCircle, Rss, UserRound, X } from "lucide-react";
 
 import { useSessionGuard } from "@/hooks/useSessionGuard";
 import { createClient } from "@/lib/browser";
 
 const NAV_LINKS = [
   { label: "Shop", href: "/shop", accent: true },
-  { label: "Reader", href: "/reader" },
-  { label: "Hálózat", href: "/halozat" },
+  { label: "Reader", href: "/reader", protected: true },
+  { label: "Hálózat", href: "/halozat", protected: true },
   { label: "Támogatás", href: "/tamogatas" },
 ];
 
 const SOCIAL_LINKS = [
-  { label: "Email", href: "mailto:therealvallalhatatlan@gmail.com" },
-  { label: "Facebook", href: "https://www.facebook.com/vallalhatatlan2000" },
-  { label: "Reddit", href: "https://reddit.com/r/vallalhatatlan" },
-  { label: "Substack", href: "https://vallalhatatlan.substack.com/" },
+  { label: "Email", href: "mailto:therealvallalhatatlan@gmail.com", icon: Mail },
+  { label: "Facebook", href: "https://www.facebook.com/vallalhatatlan2000", icon: Facebook },
+  { label: "Reddit", href: "https://reddit.com/r/vallalhatatlan", icon: MessageCircle },
+  { label: "Substack", href: "https://vallalhatatlan.substack.com/", icon: Rss },
 ];
 
 type SessionUser = {
@@ -176,7 +176,7 @@ export default function Navigation() {
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  href={link.protected && !userEmail ? `/auth?from=${encodeURIComponent(link.href)}` : link.href}
                   onClick={closeMenu}
                   className={`group border px-4 py-4 transition-colors ${
                     link.accent
@@ -243,25 +243,16 @@ export default function Navigation() {
                   >
                     <span className="inline-flex items-center gap-2">
                       <KeyRound className="h-4 w-4" />
-                      Belépés a readerhez
+                      Klubtagoknak
                     </span>
                     <span className="text-lime-300/45">/</span>
-                  </Link>
-
-                  <Link
-                    href="/shop"
-                    onClick={closeMenu}
-                    className="inline-flex items-center justify-between border border-white/10 px-4 py-3 text-sm text-white/80 transition-colors hover:border-white/25 hover:bg-white/[0.05]"
-                  >
-                    <span>Vásárlás</span>
-                    <span className="text-white/35">/</span>
                   </Link>
                 </div>
               )}
             </div>
 
             <div className="border border-white/10 bg-white/[0.03] p-5">
-              <p className="mb-4 text-[11px] uppercase tracking-[0.28em] text-white/40">Kapcsolatok</p>
+              <p className="mb-4 text-[11px] uppercase tracking-[0.28em] text-white/40">Kapcsolat</p>
               <div className="grid gap-3">
                 {SOCIAL_LINKS.map((link) => (
                   <a
@@ -269,8 +260,9 @@ export default function Navigation() {
                     href={link.href}
                     target={link.href.startsWith("mailto") ? undefined : "_blank"}
                     rel={link.href.startsWith("mailto") ? undefined : "noopener noreferrer"}
-                    className="border border-white/10 px-4 py-3 text-sm text-white/70 transition-colors hover:border-white/20 hover:bg-white/[0.05] hover:text-lime-300"
+                    className="inline-flex items-center gap-3 border border-white/10 px-4 py-3 text-sm text-white/70 transition-colors hover:border-white/20 hover:bg-white/[0.05] hover:text-lime-300"
                   >
+                    <link.icon className="h-4 w-4 shrink-0" />
                     {link.label}
                   </a>
                 ))}
