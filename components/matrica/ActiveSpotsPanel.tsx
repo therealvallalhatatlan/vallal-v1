@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { StickerSpot } from '@/lib/matrica'
 import { getDistanceMeters } from '@/lib/matrica'
 
@@ -20,6 +20,8 @@ interface Props {
   onClose: () => void
   onSelectSpot: (spot: StickerSpot) => void
   onStartRoute: (spot: StickerSpot) => void
+  canEditSpots?: boolean
+  onSaveSpot?: (spotId: string, updates: { title: string; description: string }) => Promise<StickerSpot | void>
 }
 
 function isPaidLockedSpot(spot: StickerSpot): boolean {
@@ -43,8 +45,15 @@ export default function ActiveSpotsPanel({
   onClose,
   onSelectSpot,
   onStartRoute,
+  canEditSpots = false,
+  onSaveSpot,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [editingSpotId, setEditingSpotId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [savingSpotId, setSavingSpotId] = useState<string | null>(null)
+  const [editError, setEditError] = useState<string | null>(null)
 
   const sortedSpots = useMemo(() => {
     const withDistance = spots
@@ -189,6 +198,7 @@ export default function ActiveSpotsPanel({
           sortedSpots.map(({ spot, distance }) => {
             const locked = isPaidLockedSpot(spot)
             const coverImage = spot.image_url ?? spot.image_urls?.[0] ?? null
+            const isEditing = canEditSpots && editingSpotId === spot.id
 
             return (
               <article
@@ -237,35 +247,161 @@ export default function ActiveSpotsPanel({
                   <div style={{ fontSize: 9, color: '#c8a97e', letterSpacing: '0.06em', fontWeight: 700 }}>
                     {spot.spot_type === 'paid' ? 'FIZETOS' : 'AKTIV'}
                   </div>
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: '#f4f4f5',
-                      lineHeight: 1.25,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                    }}
-                  >
-                    {spot.title}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#94a3b8' }}>
-                    {formatDistance(distance)}
-                    {locked ? ' · zart' : ''}
-                  </div>
+                  {isEditing ? (
+                    <div style={{ display: 'grid', gap: 6 }}>
+                      <input
+                        value={editTitle}
+                        onChange={(event) => setEditTitle(event.target.value)}
+                        onClick={(event) => event.stopPropagation()}
+                        style={{
+                          width: '100%',
+                          border: '1px solid rgba(255,255,255,0.14)',
+                          background: 'rgba(255,255,255,0.03)',
+                          color: '#f4f4f5',
+                          fontSize: 12,
+                          padding: '7px 8px',
+                          outline: 'none',
+                        }}
+                      />
+                      <textarea
+                        value={editDescription}
+                        onChange={(event) => setEditDescription(event.target.value)}
+                        onClick={(event) => event.stopPropagation()}
+                        rows={3}
+                        style={{
+                          width: '100%',
+                          border: '1px solid rgba(255,255,255,0.14)',
+                          background: 'rgba(255,255,255,0.03)',
+                          color: '#f4f4f5',
+                          fontSize: 12,
+                          padding: '7px 8px',
+                          outline: 'none',
+                          resize: 'vertical',
+                        }}
+                      />
+                      {editError ? <div style={{ color: '#fda4af', fontSize: 11 }}>{editError}</div> : null}
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: '#f4f4f5',
+                          lineHeight: 1.25,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {spot.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                        {formatDistance(distance)}
+                        {locked ? ' · zart' : ''}
+                      </div>
 
-                  <div style={{ fontSize: 11, fontWeight: 700 }}>
-                    {typeof spot.price_huf === 'number' && spot.price_huf > 0 ? (
-                      <span style={{ color: '#f3e9d8' }}>{spot.price_huf} HUF</span>
-                    ) : (
-                      <span style={{ color: '#86efac' }}>FREE</span>
-                    )}
-                  </div>
+                      <div style={{ fontSize: 11, fontWeight: 700 }}>
+                        {typeof spot.price_huf === 'number' && spot.price_huf > 0 ? (
+                          <span style={{ color: '#f3e9d8' }}>{spot.price_huf} HUF</span>
+                        ) : (
+                          <span style={{ color: '#86efac' }}>FREE</span>
+                        )}
+                      </div>
+                    </>
+                  )}
 
                   <div style={{ marginTop: 'auto', display: 'flex', gap: 6 }}>
+                    {canEditSpots ? (
+                      isEditing ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={async (event) => {
+                              event.stopPropagation()
+                              if (!onSaveSpot) return
+                              setSavingSpotId(spot.id)
+                              setEditError(null)
+                              try {
+                                await onSaveSpot(spot.id, {
+                                  title: editTitle.trim(),
+                                  description: editDescription.trim(),
+                                })
+                                setEditingSpotId(null)
+                              } catch (error) {
+                                setEditError(error instanceof Error ? error.message : 'Nem sikerult menteni a szpotot.')
+                              } finally {
+                                setSavingSpotId(null)
+                              }
+                            }}
+                            disabled={savingSpotId === spot.id}
+                            style={{
+                              flex: 1,
+                              border: '1px solid rgba(200,169,126,0.35)',
+                              background: 'rgba(200,169,126,0.12)',
+                              color: '#f3e9d8',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: '6px 4px',
+                              borderRadius: 8,
+                              cursor: savingSpotId === spot.id ? 'not-allowed' : 'pointer',
+                              opacity: savingSpotId === spot.id ? 0.7 : 1,
+                            }}
+                          >
+                            {savingSpotId === spot.id ? 'Mentes...' : 'Mentes'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              setEditingSpotId(null)
+                              setEditError(null)
+                            }}
+                            disabled={savingSpotId === spot.id}
+                            style={{
+                              flex: 1,
+                              border: '1px solid rgba(255,255,255,0.16)',
+                              background: 'rgba(255,255,255,0.04)',
+                              color: '#e4e4e7',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: '6px 4px',
+                              borderRadius: 8,
+                              cursor: savingSpotId === spot.id ? 'not-allowed' : 'pointer',
+                              opacity: savingSpotId === spot.id ? 0.7 : 1,
+                            }}
+                          >
+                            Megse
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setEditingSpotId(spot.id)
+                            setEditTitle(spot.title || '')
+                            setEditDescription(spot.description || '')
+                            setEditError(null)
+                          }}
+                          style={{
+                            flex: 1,
+                            border: '1px solid rgba(200,169,126,0.35)',
+                            background: 'rgba(200,169,126,0.08)',
+                            color: '#f3e9d8',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            padding: '6px 4px',
+                            borderRadius: 8,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Szerkesztes
+                        </button>
+                      )
+                    ) : null}
                     <button
                       type="button"
                       onClick={(e) => {

@@ -48,6 +48,7 @@ interface UserLocation {
 interface MapViewProps {
   chatDisplayName: string
   chatAuthToken: string | null
+  userRole: 'user' | 'editor' | 'admin'
 }
 
 interface FocusSpotDetail {
@@ -111,7 +112,7 @@ function isPaidLockedSpot(spot: StickerSpot): boolean {
 }
 
 
-export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps) {
+export default function MapView({ chatDisplayName, chatAuthToken, userRole }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null)
@@ -181,7 +182,14 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     if (!audio) return
     audio.currentTime = 0
     void audio.play().catch(() => {
-      // Ignore autoplay restrictions/errors.
+      // Some mobile browsers do not like the toggle asset/codec; fall back to the click sound.
+      if (kind === 'toggle' && clickSfxRef.current) {
+        const fallback = clickSfxRef.current
+        fallback.currentTime = 0
+        void fallback.play().catch(() => {
+          // Ignore autoplay restrictions/errors.
+        })
+      }
     })
   }, [])
 
@@ -428,6 +436,33 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       console.error('[MapView] spot fetch failed', err)
       setFetchError('Nem sikerült betölteni a matrica pontokat.')
     }
+  }, [chatAuthToken])
+
+  const handleSaveActiveSpot = useCallback(async (spotId: string, updates: { title: string; description: string }) => {
+    if (!chatAuthToken) {
+      throw new Error('unauthorized')
+    }
+
+    const res = await fetch('/api/admin/matrica/spots', {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${chatAuthToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: spotId,
+        title: updates.title,
+        description: updates.description,
+      }),
+    })
+
+    const json = await res.json().catch(() => null)
+    if (!res.ok || !json?.spot) {
+      throw new Error(typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`)
+    }
+
+    setSpots((prev) => prev.map((spot) => (spot.id === spotId ? { ...spot, ...json.spot } : spot)))
+    return json.spot as StickerSpot
   }, [chatAuthToken])
 
   useEffect(() => {
@@ -1530,16 +1565,18 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
       </div>
 
       <ActiveSpotsPanel
-  isOpen={spotsListOpen}
-  spots={clickableSpots}  // <- Ez változott
-  userLocation={userLocation}
-  isMobile={isMobile}
-  bottomOffset={BOTTOM_ACTION_BAR_HEIGHT + 12}
-  unlockingSpotId={unlockingSpotId}
-  onClose={handleCloseSpotsList}
-  onSelectSpot={handleSelectSpotFromList}
-  onStartRoute={handleStartRouteFromList}
-/>
+        isOpen={spotsListOpen}
+        spots={spots}
+        userLocation={userLocation}
+        isMobile={isMobile}
+        bottomOffset={BOTTOM_ACTION_BAR_HEIGHT + 12}
+        unlockingSpotId={unlockingSpotId}
+        onClose={handleCloseSpotsList}
+        onSelectSpot={handleSelectSpotFromList}
+        onStartRoute={handleStartRouteFromList}
+        canEditSpots={userRole === 'admin'}
+        onSaveSpot={handleSaveActiveSpot}
+      />
 
 
       <MatricaLivePanel

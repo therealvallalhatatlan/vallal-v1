@@ -28,29 +28,26 @@ export async function GET(req: NextRequest) {
   const db = supabaseAdmin()
 
   if (spotType === 'hidden') {
-    // Return user's hidden spots (joins hidden_spots with sticker_spots)
+    // Return user's own created spots
     try {
       const { data, error } = await db
-        .from('hidden_spots')
+        .from('sticker_spots')
         .select(
           `
           id,
-          spot_id,
+          creator_id,
           created_at,
-          sticker_spots (
-            id,
-            title,
-            description,
-            image_url,
-            image_urls,
-            lat,
-            lng,
-            status,
-            spot_type,
-            price_huf,
-            total_quantity,
-            remaining_quantity
-          )
+          title,
+          description,
+          image_url,
+          image_urls,
+          lat,
+          lng,
+          status,
+          spot_type,
+          price_huf,
+          total_quantity,
+          remaining_quantity
           `
         )
         .eq('creator_id', userId)
@@ -61,12 +58,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: error.message || 'server_error' }, { status: 500 })
       }
 
-      // Flatten the response to make it easier to work with
-      const spots = (data ?? []).map((item: any) => ({
-        ...item.sticker_spots,
-        hidden_spot_id: item.id,
-        created_at: item.created_at,
-      }))
+      const spots = data ?? []
 
       return NextResponse.json({
         ok: true,
@@ -123,7 +115,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * PATCH /api/matrica/my-spots
- * Updates a user's own hidden spot metadata.
+ * Updates a user's own spot metadata.
  *
  * Body: { id, title?, description?, image_url?, price_huf? }
  */
@@ -184,10 +176,10 @@ export async function PATCH(req: NextRequest) {
   const db = supabaseAdmin()
 
   const { data: ownership, error: ownershipError } = await db
-    .from('hidden_spots')
+    .from('sticker_spots')
     .select('id')
+    .eq('id', spotId)
     .eq('creator_id', userId)
-    .eq('spot_id', spotId)
     .maybeSingle()
 
   if (ownershipError) {

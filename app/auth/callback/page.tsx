@@ -46,24 +46,6 @@ function AuthCallbackContent() {
         }
       }
 
-      // If we already have a session, skip code handling and just redirect.
-      const existing = await supabase.auth.getSession();
-      if (existing?.data?.session) {
-        setMessage("Már be vagy jelentkezve, irány a /reader...");
-        try {
-          window.sessionStorage.removeItem("vallal_auth_next");
-          window.localStorage.removeItem("vallal_auth_next");
-        } catch {
-          // ignore
-        }
-        if (typeof window !== "undefined") {
-          window.location.replace(next);
-        } else {
-          router.replace(next);
-        }
-        return;
-      }
-
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) {
@@ -71,6 +53,24 @@ function AuthCallbackContent() {
           return;
         }
       } else {
+        // If we already have a session and there is no auth code/hash, just continue.
+        const existing = await supabase.auth.getSession();
+        if (existing?.data?.session) {
+          setMessage("Már be vagy jelentkezve, irány a /reader...");
+          try {
+            window.sessionStorage.removeItem("vallal_auth_next");
+            window.localStorage.removeItem("vallal_auth_next");
+          } catch {
+            // ignore
+          }
+          if (typeof window !== "undefined") {
+            window.location.replace(next);
+          } else {
+            router.replace(next);
+          }
+          return;
+        }
+
         // Fallback for implicit/hash redirects (e.g. #access_token=...)
         const hasHashToken = typeof window !== "undefined" && /access_token=|refresh_token=|error=/.test(window.location.hash || "");
         if (!hasHashToken) {

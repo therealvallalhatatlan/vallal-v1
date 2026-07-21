@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getUserRoleByEmail } from "@/lib/auth";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -213,8 +214,10 @@ export async function GET(req: Request) {
 
     // Fetch avatar from Auth user metadata
     let avatar_url: string | null = null;
+    let authEmail: string | null = null;
     try {
       const { data: authUser, error: authError } = await adminClient.auth.admin.getUserById(userId);
+      authEmail = authUser?.user?.email ?? null;
       if (!authError && authUser?.user?.user_metadata?.avatar_url) {
         avatar_url = authUser.user.user_metadata.avatar_url;
       }
@@ -229,6 +232,7 @@ export async function GET(req: Request) {
         avatar_url,
         score: foundCount ?? 0,
         accepted: acceptedCount ?? 0,
+        role: getUserRoleByEmail(authEmail),
       },
     });
   } catch (err) {

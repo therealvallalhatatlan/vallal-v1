@@ -27,7 +27,6 @@ export async function GET(req: NextRequest) {
       'id, title, description, image_url, image_urls, lat, lng, radius_visibility, radius_claim, total_quantity, remaining_quantity, status, created_at, spot_type, price_huf',
     )
     .eq('status', 'active')
-    .gt('remaining_quantity', 0)
     .order('created_at', { ascending: false })
 
   if (error) {

@@ -31,6 +31,7 @@ export default function MapViewClient() {
   const user = (session as any)?.user
   const accessToken = (session as any)?.access_token ?? null
   const [nickname, setNickname] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<'user' | 'editor' | 'admin'>('user')
   const [nicknameLoading, setNicknameLoading] = useState(true)
   const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [nicknameInput, setNicknameInput] = useState('')
@@ -55,6 +56,7 @@ export default function MapViewClient() {
           const value = json.profile.nickname.trim()
           setNickname(value)
           setNicknameInput(value)
+          setUserRole(json?.profile?.role === 'admin' || json?.profile?.role === 'editor' ? json.profile.role : 'user')
           return
         }
 
@@ -160,7 +162,7 @@ export default function MapViewClient() {
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
-      <MapView chatDisplayName={chatDisplayName} chatAuthToken={accessToken} />
+      <MapView chatDisplayName={chatDisplayName} chatAuthToken={accessToken} userRole={userRole} />
 
       {needsNickname && (
         <div

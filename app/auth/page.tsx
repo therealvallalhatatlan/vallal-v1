@@ -31,6 +31,9 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
     setError(null);
     setOauthLoading(true);
     try {
+      // Ensure OAuth can switch accounts instead of silently reusing an existing local session.
+      await supabase.auth.signOut();
+
       try {
         window.sessionStorage.setItem("vallal_auth_next", next);
         window.localStorage.setItem("vallal_auth_next", next);
@@ -40,7 +43,12 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
       const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo },
+        options: {
+          redirectTo,
+          queryParams: {
+            prompt: "select_account",
+          },
+        },
       });
       if (error) {
         setError(error.message);
