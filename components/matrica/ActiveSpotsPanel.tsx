@@ -15,6 +15,7 @@ interface Props {
   userLocation: UserLocation | null
   isMobile: boolean
   bottomOffset: number
+  layout?: 'overlay' | 'inline'
   unlockingSpotId: string | null
   onClose: () => void
   onSelectSpot: (spot: StickerSpot) => void
@@ -37,6 +38,7 @@ export default function ActiveSpotsPanel({
   userLocation,
   isMobile,
   bottomOffset,
+  layout = 'overlay',
   unlockingSpotId,
   onClose,
   onSelectSpot,
@@ -303,6 +305,26 @@ export default function ActiveSpotsPanel({
       </div>
     </div>
   )
+
+  if (layout === 'inline') {
+    return (
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          borderRadius: 16,
+          border: '1px solid rgba(200,169,126,0.28)',
+          background: 'linear-gradient(180deg, rgba(9,12,16,0.97), rgba(6,8,10,0.97))',
+          boxShadow: '0 20px 48px rgba(0,0,0,0.5)',
+          padding: '14px 16px 12px',
+          backdropFilter: 'blur(10px)',
+        }}
+      >
+        {header}
+        {cardsRow}
+      </div>
+    )
+  }
 
   if (isMobile) {
     return (

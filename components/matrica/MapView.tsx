@@ -119,6 +119,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const firstFixRef = useRef(false)
   const lastAutoRerouteAtRef = useRef(0)
   const pendingAutoRerouteStatusRef = useRef(false)
+  const handledDeepLinkRef = useRef(false)
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
@@ -139,7 +140,6 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const [routeLoading, setRouteLoading] = useState(false)
   const [routeError, setRouteError] = useState<string | null>(null)
   const [routeStatus, setRouteStatus] = useState<string | null>(null)
-  const [missionHudVisible, setMissionHudVisible] = useState(true)
   const [livePanelOpen, setLivePanelOpen] = useState(false)
   const [spotsListOpen, setSpotsListOpen] = useState(false)
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
@@ -432,6 +432,36 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   useEffect(() => {
     void loadSpots()
   }, [loadSpots])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (handledDeepLinkRef.current) return
+    if (!mapLoaded || spots.length === 0) return
+
+    const params = new URLSearchParams(window.location.search)
+    const spotId = params.get('spotId')
+    if (!spotId) return
+
+    const targetSpot = spots.find((spot) => spot.id === spotId)
+    handledDeepLinkRef.current = true
+
+    if (targetSpot) {
+      const action = params.get('action')
+      if (action === 'route') {
+        startRouteForSpot(targetSpot)
+      } else {
+        window.dispatchEvent(new CustomEvent(MATRICA_FOCUS_SPOT_EVENT, {
+          detail: { spotId: targetSpot.id },
+        }))
+      }
+    }
+
+    params.delete('spotId')
+    params.delete('action')
+    const cleanQuery = params.toString()
+    const nextUrl = `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ''}`
+    window.history.replaceState({}, '', nextUrl)
+  }, [mapLoaded, spots, startRouteForSpot])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -874,20 +904,6 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   }
 
   const nearestSpot = useMemo(() => getNearestSpot(userLocation, spots), [userLocation, spots])
-  const nearestSpotHasPosition = Boolean(
-    nearestSpot && isFiniteCoordinate(nearestSpot.lat) && isFiniteCoordinate(nearestSpot.lng)
-  )
-  const nearestDistanceMeters = nearestSpot && userLocation
-    ? getDistanceMeters(userLocation.lat, userLocation.lng, nearestSpot.lat, nearestSpot.lng)
-    : null
-  const radarProgress = nearestDistanceMeters === null
-    ? 0
-    : Math.max(0, Math.min(1, 1 - (nearestDistanceMeters / 1600)))
-  const radarProgressPercent = Math.round(radarProgress * 100)
-
-  useEffect(() => {
-    setMissionHudVisible(true)
-  }, [nearestSpot?.id])
 
   const handleOpenPreview = useCallback((spot: StickerSpot, anchor?: PreviewAnchor | null) => {
     if (previewCloseTimerRef.current !== null) {
@@ -1236,149 +1252,6 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
           startRouteForSpot(spot)
         }}
       />
-
-      {userLocation && !routeState.spot && nearestSpotHasPosition && missionHudVisible && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 'auto',
-            bottom: BOTTOM_ACTION_BAR_HEIGHT + 8,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 'min(560px, calc(100vw - 24px))',
-            zIndex: 34,
-            borderRadius: 14,
-            border: '1px solid rgba(255,255,255,0.08)',
-            background: 'rgba(6, 8, 11, 0.82)',
-            boxShadow: '0 20px 34px rgba(0,0,0,0.38)',
-            padding: '14px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px',
-            overflow: 'hidden',
-            backdropFilter: 'blur(10px)',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              pointerEvents: 'none',
-              background: 'linear-gradient(90deg, transparent, rgba(200,169,126,0.16), transparent)',
-              animation: 'hudSweep 3.6s ease-in-out infinite',
-            }}
-          />
-
-          <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 11, color: '#9ca3af', letterSpacing: '0.08em', fontWeight: 700 }}>SAJAT POZICIOD</div>
-              <div style={{ marginTop: 4, color: '#f4f4f5', fontSize: 15, fontWeight: 700 }}>Kovetkezo kuldetes elerheto</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div
-                style={{
-                  borderRadius: 999,
-                  border: '1px solid rgba(200,169,126,0.34)',
-                  background: 'rgba(200,169,126,0.14)',
-                  color: '#f3e9d8',
-                  padding: '6px 10px',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: '0.04em',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Radar {clickableSpots.length}/{spots.length}
-              </div>
-              <button
-                type="button"
-                onClick={() => setMissionHudVisible(false)}
-                aria-label="Panel bezarasa"
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: 'rgba(255,255,255,0.06)',
-                  color: '#cbd5e1',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                  cursor: 'pointer',
-                }}
-              >
-                ×
-              </button>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', gap: 8, color: '#cbd5e1', fontSize: 12 }}>
-            <span>{nearestSpot ? `Legkozelebbi: ${nearestSpot.title}` : 'Nincs aktiv szpot a kozelben'}</span>
-            <span style={{ color: '#e5e7eb', fontWeight: 700 }}>{formatRouteDistance(nearestDistanceMeters)}</span>
-          </div>
-
-          <div style={{ marginTop: 10 }}>
-            <div style={{ height: 8, borderRadius: 999, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-              <div
-                style={{
-                  width: `${radarProgressPercent}%`,
-                  height: '100%',
-                  borderRadius: 999,
-                  background: 'linear-gradient(90deg, #92795b, #c8a97e)',
-                  boxShadow: '0 0 14px rgba(200,169,126,0.35)',
-                  transition: 'width 320ms ease',
-                }}
-              />
-            </div>
-            <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', color: '#a1a1aa', fontSize: 11 }}>
-              <span>Jelero</span>
-              <span>{radarProgressPercent}%</span>
-            </div>
-          </div>
-
-          {nearestSpot && !isPaidLockedSpot(nearestSpot) ? (
-            <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => startRouteForSpot(nearestSpot)}
-                style={{
-                  borderRadius: 10,
-                  border: '1px solid rgba(200,169,126,0.45)',
-                  background: 'rgba(200,169,126,0.16)',
-                  color: '#f3e9d8',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                }}
-              >
-                Kuldetes inditasa
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!mapRef.current) return
-                  mapRef.current.flyTo({
-                    center: [nearestSpot.lng, nearestSpot.lat],
-                    zoom: 16,
-                    duration: 900,
-                    essential: true,
-                  })
-                }}
-                style={{
-                  borderRadius: 10,
-                  border: '1px solid rgba(255,255,255,0.18)',
-                  background: 'rgba(255,255,255,0.06)',
-                  color: '#d4d4d8',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                }}
-              >
-                Celpont felfedes
-              </button>
-            </div>
-          ) : null}
-        </div>
-      )}
 
       {routeState.spot && !previewSpot && (
         <div
