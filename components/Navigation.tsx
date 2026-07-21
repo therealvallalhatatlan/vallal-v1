@@ -273,6 +273,17 @@ export default function Navigation() {
                 ) : null}
               </button>
             ) : null}
+            {!userEmail ? (
+              <Link
+                href="/auth?from=/reader"
+                onClick={closeMenu}
+                className="inline-flex h-12 items-center gap-2 border border-lime-500/40 bg-lime-500/10 px-4 text-sm font-semibold text-lime-300 transition-colors hover:border-lime-400 hover:bg-lime-500/15"
+                aria-label="Belépés"
+              >
+                <KeyRound className="h-4 w-4" />
+                <span>Belépés</span>
+              </Link>
+            ) : null}
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}

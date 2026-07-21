@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Volume2, VolumeX } from "lucide-react";
+import { BatteryWarning, Volume2, VolumeX } from "lucide-react";
 
 export default function HeroTerminal() {
   const [now, setNow] = useState<Date | null>(null);
@@ -227,10 +227,18 @@ export default function HeroTerminal() {
           {/* System header bar */}
           <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-2.5 text-[11px] uppercase tracking-[0.14em]">
             <span className="text-neutral-400">[ INFRASTRUCTURE // SELF-SUSTENANCE ]</span>
-            <span className="inline-flex items-center gap-2 text-lime-400/90">
-              <span className="h-1.5 w-1.5 rounded-full bg-lime-400" />
-              Active
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex animate-pulse items-center gap-1.5 rounded-full border border-red-500/35 bg-red-950/55 px-2 py-1 text-red-300">
+                <BatteryWarning className="h-3.5 w-3.5" />
+                <span className="font-semibold tracking-[0.18em]">CRITICAL</span>
+              </span>
+              <Link
+                href="/tamogatas"
+                className="inline-flex items-center rounded-full border border-red-400/30 bg-black/70 px-2 py-1 text-[10px] font-semibold tracking-[0.18em] text-red-200/90 transition-colors hover:border-red-300/55 hover:bg-red-950/35 hover:text-red-100"
+              >
+                FELTÖLTÉS
+              </Link>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
