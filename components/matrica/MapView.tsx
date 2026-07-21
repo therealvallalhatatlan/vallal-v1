@@ -21,7 +21,9 @@ import type { StickerSpot } from '@/lib/matrica'
 import SpotCircle from './SpotCircle'
 import SpotMarker from './SpotMarker'
 import SpotPreview from './SpotPreview'
+import ActiveSpotsPanel from './ActiveSpotsPanel'
 import ToastContainer from './ToastContainer'
+
 import { useToast } from './useToast'
 import MatricaLivePanel from './MatricaLivePanel'
 
@@ -139,7 +141,9 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
   const [routeStatus, setRouteStatus] = useState<string | null>(null)
   const [missionHudVisible, setMissionHudVisible] = useState(true)
   const [livePanelOpen, setLivePanelOpen] = useState(false)
+  const [spotsListOpen, setSpotsListOpen] = useState(false)
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
+
   const previewCloseTimerRef = useRef<number | null>(null)
   const unlockToastHandledRef = useRef(false)
 
@@ -976,21 +980,38 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     window.open(googleMapsUrl.toString(), '_blank', 'noopener,noreferrer')
   }, [routeState.spot, userLocation])
 
-  const handleOpenNearestSpot = useCallback(() => {
+  const handleToggleSpotsList = useCallback(() => {
     playUiSound('toggle')
 
     if (previewSpot) {
       handleClosePreview()
-      return
     }
 
-    if (!nearestSpot) {
-      showToast('Nincs aktiv szpot a kozeledben.', 'info')
-      return
-    }
+    setSpotsListOpen((prev) => {
+      const next = !prev
+      if (next && spots.length === 0) {
+        showToast('Nincs aktiv szpot a kozeledben.', 'info')
+      }
+      return next
+    })
+  }, [handleClosePreview, playUiSound, previewSpot, showToast, spots.length])
 
-    handleOpenPreview(nearestSpot)
-  }, [handleClosePreview, handleOpenPreview, nearestSpot, playUiSound, previewSpot, showToast])
+  const handleCloseSpotsList = useCallback(() => {
+    setSpotsListOpen(false)
+  }, [])
+
+  const handleSelectSpotFromList = useCallback((spot: StickerSpot) => {
+    playUiSound('click')
+    setSpotsListOpen(false)
+    handleOpenPreview(spot)
+  }, [handleOpenPreview, playUiSound])
+
+  const handleStartRouteFromList = useCallback((spot: StickerSpot) => {
+    playUiSound('click')
+    setSpotsListOpen(false)
+    startRouteForSpot(spot)
+  }, [playUiSound, startRouteForSpot])
+
 
   const handleToggleChatPanel = useCallback(() => {
     playUiSound('toggle')
@@ -1580,13 +1601,14 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
 
         <button
           type="button"
-          onClick={handleOpenNearestSpot}
-          aria-label="Aktív szpot"
-          title="Aktív szpot"
+          onClick={handleToggleSpotsList}
+          aria-label="Aktív szpotok"
+          title="Aktív szpotok"
           style={{
             borderRadius: 12,
             border: '1px solid rgba(200,169,126,0.4)',
-            background: previewSpot ? 'rgba(42,35,27,0.96)' : 'rgba(23,26,31,0.92)',
+            background: (previewSpot || spotsListOpen) ? 'rgba(42,35,27,0.96)' : 'rgba(23,26,31,0.92)',
+
             color: '#e5e7eb',
             padding: '10px 8px',
             cursor: 'pointer',
@@ -1632,6 +1654,19 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
         </button>
       </nav>
       </div>
+
+      <ActiveSpotsPanel
+  isOpen={spotsListOpen}
+  spots={clickableSpots}  // <- Ez változott
+  userLocation={userLocation}
+  isMobile={isMobile}
+  bottomOffset={BOTTOM_ACTION_BAR_HEIGHT + 12}
+  unlockingSpotId={unlockingSpotId}
+  onClose={handleCloseSpotsList}
+  onSelectSpot={handleSelectSpotFromList}
+  onStartRoute={handleStartRouteFromList}
+/>
+
 
       <MatricaLivePanel
         displayName={chatDisplayName}
