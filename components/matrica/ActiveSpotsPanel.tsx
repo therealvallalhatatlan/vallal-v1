@@ -76,12 +76,13 @@ export default function ActiveSpotsPanel({
   if (!isOpen) return null
 
   const hasSpots = sortedSpots.length > 0
+  const inlineMode = layout === 'inline'
 
   const header = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
       <div>
         <div style={{ fontSize: 10, color: '#c8a97e', letterSpacing: '0.08em', fontWeight: 700 }}>
-          AKTIV SZPOTOK
+          {inlineMode ? 'Aktiv szpotok - Most indulhatsz is erte' : 'AKTIV SZPOTOK'}
         </div>
         <div style={{ marginTop: 2, fontSize: 12, color: '#a1a1aa' }}>
           {hasSpots ? `${sortedSpots.length} db a kornyeken` : 'Nincs aktiv szpot'}
@@ -215,7 +216,10 @@ export default function ActiveSpotsPanel({
                       width: '100%',
                       height: 96,
                       objectFit: 'cover',
-                      filter: 'grayscale(0.15) contrast(1.04)',
+                      filter: locked
+                        ? 'blur(5px) grayscale(0.35) contrast(1.02)'
+                        : 'grayscale(0.15) contrast(1.04)',
+                      transform: locked ? 'scale(1.06)' : 'none',
                       display: 'block',
                     }}
                   />
@@ -251,6 +255,14 @@ export default function ActiveSpotsPanel({
                   <div style={{ fontSize: 11, color: '#94a3b8' }}>
                     {formatDistance(distance)}
                     {locked ? ' · zart' : ''}
+                  </div>
+
+                  <div style={{ fontSize: 11, fontWeight: 700 }}>
+                    {typeof spot.price_huf === 'number' && spot.price_huf > 0 ? (
+                      <span style={{ color: '#f3e9d8' }}>{spot.price_huf} HUF</span>
+                    ) : (
+                      <span style={{ color: '#86efac' }}>FREE</span>
+                    )}
                   </div>
 
                   <div style={{ marginTop: 'auto', display: 'flex', gap: 6 }}>

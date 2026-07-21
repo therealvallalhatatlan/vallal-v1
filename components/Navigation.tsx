@@ -202,7 +202,7 @@ export default function Navigation() {
       <div className="relative">
         <nav className="border-b border-white/10 px-4 py-4 font-mono md:px-8">
           <div className="flex items-center justify-between gap-4">
-            <a href="/" className="ml-0 md:ml-[124px]">
+            <a href="/" className="ml-0">
               <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
             </a>
             <span className="h-10 w-10 rounded-full border border-white/10 bg-white/5" aria-hidden="true" />
@@ -217,7 +217,7 @@ export default function Navigation() {
       <nav className="border-b border-white/10 bg-black/70 px-4 py-4 font-mono text-gray-200 backdrop-blur md:px-8">
         <div className="flex items-center justify-between gap-4">
           {!isHalozat ? (
-            <Link href="/" className="hover:opacity-80 transition-opacity md:ml-[124px]">
+            <Link href="/" className="hover:opacity-80 transition-opacity">
               <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
             </Link>
           ) : null}

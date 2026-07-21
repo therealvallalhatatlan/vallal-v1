@@ -19,16 +19,6 @@ export default function MainContent({ children }: MainContentProps) {
           "linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%)",
       }}
     >
-      {/* Fixed screen crack – top-left corner */}
-      <img
-        src="/tores.png"
-        alt=""
-        aria-hidden="true"
-        className="fixed pointer-events-none z-[60] w-48 md:w-64 select-none"
-        style={{ top: "-30px", left: "-30px" }}
-        draggable={false}
-      />
-
       {/* Base CRT scanlines overlay */}
       <div
         className="fixed inset-0 pointer-events-none z-40 fx-stripes"
