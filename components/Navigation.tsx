@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Facebook, KeyRound, LogOut, Mail, Menu, MessageCircle, Rss, UserRound, X } from "lucide-react";
 
 import { useSessionGuard } from "@/hooks/useSessionGuard";
@@ -31,6 +31,13 @@ type SessionUser = {
   };
 };
 
+type OnlineNavUser = {
+  id: string;
+  email: string;
+  nickname: string;
+  avatarUrl: string | null;
+};
+
 function Avatar({ avatarUrl, label }: { avatarUrl?: string | null; label: string }) {
   const initial = label.trim().charAt(0).toUpperCase() || "?";
 
@@ -57,8 +64,11 @@ export default function Navigation() {
   const [isClient, setIsClient] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineNavUser[]>([]);
+  const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const isHalozat = pathname === "/halozat";
 
   const user = (session as { user?: SessionUser } | null)?.user;
   const userEmail = user?.email ?? null;
@@ -90,6 +100,88 @@ export default function Navigation() {
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!isClient || !isHalozat) {
+      setOnlineUsers([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchOnlineUsers = async () => {
+      try {
+        const res = await fetch("/api/presence/online", { cache: "no-store" });
+        const json = await res.json();
+
+        if (!res.ok || !Array.isArray(json?.users)) {
+          if (!cancelled) setOnlineUsers([]);
+          return;
+        }
+
+        const online = json.users
+          .map((u: { id?: string; user_id?: string; email?: string }) => ({
+            id: u.id ?? u.user_id,
+            email: u.email ?? "",
+          }))
+          .filter((u: { id?: string; email?: string }) => Boolean(u.id && u.email)) as Array<{ id: string; email: string }>;
+
+        if (online.length === 0) {
+          if (!cancelled) setOnlineUsers([]);
+          return;
+        }
+
+        const profiles = await Promise.all(
+          online.map(async (u) => {
+            try {
+              const profileRes = await fetch(`/api/user/profile?userId=${encodeURIComponent(u.id)}`, { cache: "no-store" });
+              const profileJson = await profileRes.json();
+
+              if (profileRes.ok && profileJson?.ok && profileJson?.profile) {
+                return {
+                  id: u.id,
+                  email: u.email,
+                  nickname: profileJson.profile.nickname || u.email,
+                  avatarUrl: profileJson.profile.avatar_url || null,
+                } as OnlineNavUser;
+              }
+            } catch {
+              // fallback below
+            }
+
+            return {
+              id: u.id,
+              email: u.email,
+              nickname: u.email,
+              avatarUrl: null,
+            } as OnlineNavUser;
+          })
+        );
+
+        profiles.sort((a, b) => {
+          if (userId && a.id === userId) return -1;
+          if (userId && b.id === userId) return 1;
+          return a.nickname.localeCompare(b.nickname, "hu");
+        });
+
+        if (!cancelled) {
+          setOnlineUsers(profiles);
+        }
+      } catch {
+        if (!cancelled) {
+          setOnlineUsers([]);
+        }
+      }
+    };
+
+    void fetchOnlineUsers();
+    const intervalId = window.setInterval(fetchOnlineUsers, 60000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isClient, isHalozat, userId]);
 
   if (error) {
     console.error("[Navigation] Auth error:", error);
@@ -124,12 +216,63 @@ export default function Navigation() {
     <div className="relative">
       <nav className="border-b border-white/10 bg-black/70 px-4 py-4 font-mono text-gray-200 backdrop-blur md:px-8">
         <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="hover:opacity-80 transition-opacity md:ml-[124px]">
-            <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
-          </Link>
+          {!isHalozat ? (
+            <Link href="/" className="hover:opacity-80 transition-opacity md:ml-[124px]">
+              <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
+            </Link>
+          ) : null}
+
+          {isHalozat ? (
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="flex items-center gap-2 overflow-x-auto py-1 [scrollbar-width:thin]">
+                {onlineUsers.filter((onlineUser) => !userId || onlineUser.id !== userId).map((onlineUser) => {
+                  const initial = (onlineUser.nickname || onlineUser.email).trim().charAt(0).toUpperCase() || "?";
+
+                  return (
+                    <div
+                      key={onlineUser.id}
+                      className="relative shrink-0 rounded-full"
+                      title={onlineUser.nickname || onlineUser.email}
+                    >
+                      {onlineUser.avatarUrl ? (
+                        <img
+                          src={onlineUser.avatarUrl}
+                          alt={onlineUser.nickname || onlineUser.email}
+                          className="h-8 w-8 rounded-full border border-white/20 object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/5 text-[10px] font-semibold text-white/80">
+                          {initial}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
 
           <div className="flex items-center gap-3">
-            {userEmail ? <Avatar avatarUrl={avatarUrl} label={profileLabel} /> : null}
+            {userEmail ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isHalozat) return;
+                  window.dispatchEvent(new CustomEvent("matrica:open-profile-menu"));
+                }}
+                aria-label={isHalozat ? "Profil menü megnyitása" : "Profil"}
+                className="relative"
+                style={{ background: "transparent", border: 0, padding: 0, cursor: isHalozat ? "pointer" : "default" }}
+              >
+                <Avatar avatarUrl={avatarUrl} label={profileLabel} />
+                {isHalozat ? (
+                  <span className="absolute -bottom-1 -right-1 rounded-full border border-[#111] bg-[#c8a97e] px-1.5 py-[2px] text-[8px] font-bold leading-none text-[#111]">
+                    TE
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}

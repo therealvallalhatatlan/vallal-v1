@@ -42,9 +42,12 @@ export async function GET(req: NextRequest) {
             title,
             description,
             image_url,
+            image_urls,
             lat,
             lng,
             status,
+            spot_type,
+            price_huf,
             total_quantity,
             remaining_quantity
           )
@@ -116,4 +119,97 @@ export async function GET(req: NextRequest) {
     console.error('[matrica/my-spots] exception', err)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
+}
+
+/**
+ * PATCH /api/matrica/my-spots
+ * Updates a user's own hidden spot metadata.
+ *
+ * Body: { id, title?, description?, image_url?, price_huf? }
+ */
+export async function PATCH(req: NextRequest) {
+  const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+  if (!token) {
+    return NextResponse.json({ error: 'missing_token' }, { status: 401 })
+  }
+
+  const client = await createClient()
+  const { data: authData, error: authError } = await client.auth.getUser(token)
+  if (authError || !authData?.user) {
+    return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
+  }
+
+  let body: Record<string, unknown>
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
+  }
+
+  const spotId = typeof body.id === 'string' ? body.id.trim() : ''
+  if (!spotId) {
+    return NextResponse.json({ error: 'id_required' }, { status: 400 })
+  }
+
+  const updates: Record<string, unknown> = {}
+
+  if (typeof body.title !== 'undefined') {
+    if (typeof body.title !== 'string' || !body.title.trim()) {
+      return NextResponse.json({ error: 'title_required' }, { status: 400 })
+    }
+    updates.title = body.title.trim()
+  }
+
+  if (typeof body.description !== 'undefined') {
+    updates.description = typeof body.description === 'string' ? body.description.trim() || null : null
+  }
+
+  if (typeof body.image_url !== 'undefined') {
+    updates.image_url = typeof body.image_url === 'string' ? body.image_url.trim() || null : null
+  }
+
+  if (typeof body.price_huf !== 'undefined') {
+    const parsedPrice = Number(body.price_huf)
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      return NextResponse.json({ error: 'invalid_price_huf' }, { status: 400 })
+    }
+    updates.price_huf = Math.floor(parsedPrice)
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'no_updates' }, { status: 400 })
+  }
+
+  const userId = authData.user.id
+  const db = supabaseAdmin()
+
+  const { data: ownership, error: ownershipError } = await db
+    .from('hidden_spots')
+    .select('id')
+    .eq('creator_id', userId)
+    .eq('spot_id', spotId)
+    .maybeSingle()
+
+  if (ownershipError) {
+    console.error('[matrica/my-spots] ownership check error', ownershipError)
+    return NextResponse.json({ error: 'server_error' }, { status: 500 })
+  }
+
+  if (!ownership) {
+    return NextResponse.json({ error: 'not_allowed' }, { status: 403 })
+  }
+
+  const { data: spot, error: updateError } = await db
+    .from('sticker_spots')
+    .update(updates)
+    .eq('id', spotId)
+    .select('id, title, description, image_url, image_urls, status, spot_type, price_huf, total_quantity, remaining_quantity')
+    .single()
+
+  if (updateError) {
+    console.error('[matrica/my-spots] patch error', updateError)
+    return NextResponse.json({ error: 'server_error' }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true, spot })
 }

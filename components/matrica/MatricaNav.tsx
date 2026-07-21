@@ -27,6 +27,13 @@ type OnlineUserProfile = {
   lng?: number;
 };
 
+type SpotEditDraft = {
+  title: string;
+  description: string;
+  image_url: string;
+  price_huf: string;
+};
+
 export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrentUser = false, reserveRightSpace = 0 }: { onMessageUser?: (user: OnlineUserProfile) => void; pmUnreadCounts?: Record<string, number | undefined>; hideCurrentUser?: boolean; reserveRightSpace?: number }) {
   usePresence()
 
@@ -310,7 +317,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
   )
 }
 
-function MatricaNav() {
+function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolean }) {
   const SECONDARY_NAV_EXTRA_OFFSET = 8
   const CONTROL_RAIL_HEIGHT = 52
   const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
@@ -340,7 +347,16 @@ function MatricaNav() {
   const [myClaimsLoading, setMyClaimsLoading] = useState(false)
   const [myClaimsError, setMyClaimsError] = useState<string | null>(null)
   const [myClaimsDeletingIds, setMyClaimsDeletingIds] = useState<Set<string>>(new Set())
-  const [onlineBarHeight, setOnlineBarHeight] = useState(38)
+  const [editingSpotId, setEditingSpotId] = useState<string | null>(null)
+  const [spotEditDraft, setSpotEditDraft] = useState<SpotEditDraft>({
+    title: '',
+    description: '',
+    image_url: '',
+    price_huf: '0',
+  })
+  const [spotSaveLoadingId, setSpotSaveLoadingId] = useState<string | null>(null)
+  const [spotSaveError, setSpotSaveError] = useState<string | null>(null)
+  const [onlineBarHeight, setOnlineBarHeight] = useState(showOnlineUsersBar ? 38 : 0)
   const [isMobile, setIsMobile] = useState(false)
   const [pmRecipient, setPmRecipient] = useState<OnlineUserProfile | null>(null)
   const [pmUnreadCounts, setPmUnreadCounts] = useState<Record<string, number | undefined>>({})
@@ -446,6 +462,11 @@ function MatricaNav() {
   }, [])
 
   useEffect(() => {
+    if (!showOnlineUsersBar) {
+      setOnlineBarHeight(0)
+      return
+    }
+
     const measureOnlineBar = () => {
       const bar = document.getElementById('matrica-online-users-bar')
       const nextHeight = bar?.getBoundingClientRect().height
@@ -470,7 +491,7 @@ function MatricaNav() {
         resizeObserver.disconnect()
       }
     }
-  }, [])
+  }, [showOnlineUsersBar])
 
   useEffect(() => {
     const updateIsMobile = () => setIsMobile(window.innerWidth < 768)
@@ -680,7 +701,14 @@ function MatricaNav() {
       setSpotsLoading(true)
       setSpotsError(null)
       try {
-        const res = await fetch('/api/matrica/spots')
+        const useAdminSource = Boolean(authToken)
+        const res = await fetch(useAdminSource ? '/api/admin/matrica/spots' : '/api/matrica/spots', {
+          headers: authToken
+            ? {
+                Authorization: `Bearer ${authToken}`,
+              }
+            : undefined,
+        })
         const json = await res.json()
 
         if (cancelled) return
@@ -691,7 +719,9 @@ function MatricaNav() {
           return
         }
 
-        setSpots(Array.isArray(json?.spots) ? json.spots : [])
+        const rawSpots = Array.isArray(json?.spots) ? json.spots : []
+        const activeSpots = rawSpots.filter((spot: any) => spot?.status === 'active')
+        setSpots(activeSpots)
       } catch {
         if (!cancelled) {
           setSpotsError('Nem sikerult betolteni a szpotokat.')
@@ -707,7 +737,7 @@ function MatricaNav() {
     return () => {
       cancelled = true
     }
-  }, [spotsSheetOpen])
+  }, [spotsSheetOpen, authToken])
 
   function startRouteToSpot(spot: StickerSpot) {
     window.dispatchEvent(
@@ -723,7 +753,7 @@ function MatricaNav() {
     setSpotsSheetOpen(false)
   }
 
-  // Fetch the same spots list as admin "Összes szpot" card
+  // Fetch authenticated user's hidden spots
   useEffect(() => {
     if (!myClaimsSheetOpen || !authToken || !user?.id) return
 
@@ -732,7 +762,7 @@ function MatricaNav() {
       setMyClaimsLoading(true)
       setMyClaimsError(null)
       try {
-        const res = await fetch('/api/admin/matrica/spots', {
+        const res = await fetch('/api/matrica/my-spots?type=hidden', {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
@@ -747,7 +777,8 @@ function MatricaNav() {
           return
         }
 
-        setMyClaims(Array.isArray(json?.spots) ? json.spots : [])
+        const ownSpots = Array.isArray(json?.spots) ? json.spots : []
+        setMyClaims(ownSpots)
       } catch {
         if (!cancelled) {
           setMyClaimsError('Nem sikerult betolteni a szpotjaidat.')
@@ -764,6 +795,80 @@ function MatricaNav() {
       cancelled = true
     }
   }, [myClaimsSheetOpen, authToken, user?.id])
+
+  function startEditingSpot(spot: any) {
+    setSpotSaveError(null)
+    setEditingSpotId(spot.id)
+    setSpotEditDraft({
+      title: typeof spot?.title === 'string' ? spot.title : '',
+      description: typeof spot?.description === 'string' ? spot.description : '',
+      image_url: typeof spot?.image_url === 'string' ? spot.image_url : '',
+      price_huf: typeof spot?.price_huf === 'number' ? String(Math.max(0, Math.floor(spot.price_huf))) : '0',
+    })
+  }
+
+  function cancelEditingSpot() {
+    setEditingSpotId(null)
+    setSpotSaveError(null)
+    setSpotSaveLoadingId(null)
+  }
+
+  async function saveSpotEdits(spotId: string) {
+    if (!authToken) return
+
+    const title = spotEditDraft.title.trim()
+    if (!title) {
+      setSpotSaveError('A cim nem lehet ures.')
+      return
+    }
+
+    const parsedPrice = Number(spotEditDraft.price_huf)
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setSpotSaveError('Az ar csak pozitiv szam lehet.')
+      return
+    }
+
+    setSpotSaveLoadingId(spotId)
+    setSpotSaveError(null)
+
+    try {
+      const res = await fetch('/api/matrica/my-spots', {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: spotId,
+          title,
+          description: spotEditDraft.description,
+          image_url: spotEditDraft.image_url,
+          price_huf: Math.floor(parsedPrice),
+        }),
+      })
+
+      const json = await res.json().catch(() => null)
+
+      if (!res.ok || !json?.spot) {
+        setSpotSaveError('Nem sikerult menteni a szpotot.')
+        return
+      }
+
+      setMyClaims((prev) => prev.map((spot) => {
+        if (spot.id !== spotId) return spot
+        return {
+          ...spot,
+          ...json.spot,
+        }
+      }))
+
+      setEditingSpotId(null)
+    } catch {
+      setSpotSaveError('Nem sikerult menteni a szpotot.')
+    } finally {
+      setSpotSaveLoadingId(null)
+    }
+  }
 
   // Delete spot from the same source used by admin page
   async function handleDeleteClaim(spotId: string) {
@@ -814,6 +919,18 @@ function MatricaNav() {
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [menuOpen])
 
+  useEffect(() => {
+    const handleOpenProfileMenu = () => {
+      if (!user) return
+      setMenuOpen(true)
+    }
+
+    window.addEventListener('matrica:open-profile-menu', handleOpenProfileMenu)
+    return () => {
+      window.removeEventListener('matrica:open-profile-menu', handleOpenProfileMenu)
+    }
+  }, [user])
+
   async function handleSignOut() {
     setMenuOpen(false)
     const supabase = createClient()
@@ -825,17 +942,19 @@ function MatricaNav() {
 
   return (
     <>
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1001 }}>
-        <OnlineUsersBar
-          onMessageUser={(selectedUser) => {
-            setPmRecipient(selectedUser)
-            setPmUnreadCounts((prev) => ({ ...prev, [selectedUser.id]: undefined }))
-          }}
-          pmUnreadCounts={pmUnreadCounts}
-          hideCurrentUser
-          reserveRightSpace={profileAvatarSize + 42}
-        />
-      </div>
+      {showOnlineUsersBar ? (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1001 }}>
+          <OnlineUsersBar
+            onMessageUser={(selectedUser) => {
+              setPmRecipient(selectedUser)
+              setPmUnreadCounts((prev) => ({ ...prev, [selectedUser.id]: undefined }))
+            }}
+            pmUnreadCounts={pmUnreadCounts}
+            hideCurrentUser
+            reserveRightSpace={profileAvatarSize + 42}
+          />
+        </div>
+      ) : null}
       <nav
         style={{
           position: 'fixed',
@@ -1162,13 +1281,17 @@ function MatricaNav() {
       >
         <div
           style={{
-            margin: 0,
-            width: '100vw',
+            margin: '0 auto',
+            width: 'min(980px, calc(100vw - 24px))',
+            maxWidth: 980,
             borderRadius: 0,
             borderTop: '1px solid rgba(255,255,255,0.08)',
             background: 'rgba(5, 7, 9, 0.96)',
             boxShadow: '0 24px 42px rgba(0,0,0,0.42)',
             overflow: 'hidden',
+            maxHeight: `calc(100dvh - ${headerOffset + 12}px)`,
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <div
@@ -1350,7 +1473,7 @@ function MatricaNav() {
             </button>
           </div>
 
-          <div style={{ padding: '12px 16px' }}>
+          <div style={{ padding: '12px 16px', overflowY: 'auto' }}>
             {myClaimsLoading ? (
               <div style={{ color: '#a1a1aa', fontSize: 13 }}>Szpotjaid betöltése...</div>
             ) : myClaimsError ? (
@@ -1407,17 +1530,92 @@ function MatricaNav() {
                       <div style={{ padding: 11, display: 'grid', gap: 8 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
                           <div style={{ flex: 1 }}>
-                            <strong style={{ color: '#f4f4f5', fontSize: 13, lineHeight: 1.25 }}>
-                              {spot?.title || 'Ismeretlen szpot'}
-                            </strong>
-                            <p style={{
-                              margin: '4px 0 0 0',
-                              color: '#cbd5e1',
-                              fontSize: 11,
-                              lineHeight: 1.3,
-                            }}>
-                              {spot?.description || 'Nincs leiras ehhez a szpothoz.'}
-                            </p>
+                            {editingSpotId === spot.id ? (
+                              <div style={{ display: 'grid', gap: 7 }}>
+                                <input
+                                  type="text"
+                                  value={spotEditDraft.title}
+                                  onChange={(e) => setSpotEditDraft((prev) => ({ ...prev, title: e.target.value }))}
+                                  placeholder="Szpot cim"
+                                  style={{
+                                    width: '100%',
+                                    border: '1px solid rgba(255,255,255,0.14)',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    color: '#f4f4f5',
+                                    fontSize: 12,
+                                    padding: '7px 8px',
+                                    outline: 'none',
+                                  }}
+                                />
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={spotEditDraft.price_huf}
+                                  onChange={(e) => setSpotEditDraft((prev) => ({ ...prev, price_huf: e.target.value }))}
+                                  placeholder="Ar (HUF)"
+                                  style={{
+                                    width: '100%',
+                                    border: '1px solid rgba(255,255,255,0.14)',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    color: '#f4f4f5',
+                                    fontSize: 12,
+                                    padding: '7px 8px',
+                                    outline: 'none',
+                                  }}
+                                />
+                                <input
+                                  type="text"
+                                  value={spotEditDraft.image_url}
+                                  onChange={(e) => setSpotEditDraft((prev) => ({ ...prev, image_url: e.target.value }))}
+                                  placeholder="Kep URL"
+                                  style={{
+                                    width: '100%',
+                                    border: '1px solid rgba(255,255,255,0.14)',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    color: '#f4f4f5',
+                                    fontSize: 12,
+                                    padding: '7px 8px',
+                                    outline: 'none',
+                                  }}
+                                />
+                                <textarea
+                                  value={spotEditDraft.description}
+                                  onChange={(e) => setSpotEditDraft((prev) => ({ ...prev, description: e.target.value }))}
+                                  placeholder="Leiras"
+                                  rows={3}
+                                  style={{
+                                    width: '100%',
+                                    border: '1px solid rgba(255,255,255,0.14)',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    color: '#f4f4f5',
+                                    fontSize: 12,
+                                    padding: '7px 8px',
+                                    outline: 'none',
+                                    resize: 'vertical',
+                                  }}
+                                />
+                                <p style={{ margin: 0, color: '#a1a1aa', fontSize: 11 }}>
+                                  Ar: {typeof spot?.price_huf === 'number' ? `${spot.price_huf} HUF` : 'n/a'}
+                                </p>
+                              </div>
+                            ) : (
+                              <>
+                                <strong style={{ color: '#f4f4f5', fontSize: 13, lineHeight: 1.25 }}>
+                                  {spot?.title || 'Ismeretlen szpot'}
+                                </strong>
+                                <p style={{
+                                  margin: '4px 0 0 0',
+                                  color: '#cbd5e1',
+                                  fontSize: 11,
+                                  lineHeight: 1.3,
+                                }}>
+                                  {spot?.description || 'Nincs leiras ehhez a szpothoz.'}
+                                </p>
+                                <p style={{ margin: '4px 0 0 0', color: '#a1a1aa', fontSize: 11 }}>
+                                  Ar: {typeof spot?.price_huf === 'number' ? `${spot.price_huf} HUF` : 'n/a'}
+                                </p>
+                              </>
+                            )}
                           </div>
                           <span
                             style={{
@@ -1435,27 +1633,100 @@ function MatricaNav() {
                           </span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => void handleDeleteClaim(spot.id)}
-                          disabled={isDeleting}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 6,
-                            border: '1px solid rgba(252,105,105,0.35)',
-                            background: 'rgba(252,105,105,0.1)',
-                            color: isDeleting ? '#a1a1aa' : '#fda4af',
-                            fontSize: 12,
-                            fontWeight: 700,
-                            padding: '7px 10px',
-                            cursor: isDeleting ? 'not-allowed' : 'pointer',
-                            opacity: isDeleting ? 0.6 : 1,
-                          }}
-                        >
-                          {isDeleting ? 'Torlodes...' : '🗑 Torles'}
-                        </button>
+                        {editingSpotId === spot.id && spotSaveError ? (
+                          <div style={{ color: '#fda4af', fontSize: 12 }}>{spotSaveError}</div>
+                        ) : null}
+
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {editingSpotId === spot.id ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => void saveSpotEdits(spot.id)}
+                                disabled={spotSaveLoadingId === spot.id}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: 6,
+                                  border: '1px solid rgba(200,169,126,0.35)',
+                                  background: 'rgba(200,169,126,0.12)',
+                                  color: '#f3e9d8',
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  padding: '7px 10px',
+                                  cursor: spotSaveLoadingId === spot.id ? 'not-allowed' : 'pointer',
+                                  opacity: spotSaveLoadingId === spot.id ? 0.7 : 1,
+                                }}
+                              >
+                                {spotSaveLoadingId === spot.id ? 'Mentes...' : 'Mentes'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={cancelEditingSpot}
+                                disabled={spotSaveLoadingId === spot.id}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: 6,
+                                  border: '1px solid rgba(255,255,255,0.18)',
+                                  background: 'rgba(255,255,255,0.04)',
+                                  color: '#d4d4d8',
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                  padding: '7px 10px',
+                                  cursor: spotSaveLoadingId === spot.id ? 'not-allowed' : 'pointer',
+                                  opacity: spotSaveLoadingId === spot.id ? 0.7 : 1,
+                                }}
+                              >
+                                Megse
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => startEditingSpot(spot)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 6,
+                                border: '1px solid rgba(200,169,126,0.35)',
+                                background: 'rgba(200,169,126,0.1)',
+                                color: '#f3e9d8',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                padding: '7px 10px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Szerkesztes
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => void handleDeleteClaim(spot.id)}
+                            disabled={isDeleting || spotSaveLoadingId === spot.id}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 6,
+                              border: '1px solid rgba(252,105,105,0.35)',
+                              background: 'rgba(252,105,105,0.1)',
+                              color: isDeleting ? '#a1a1aa' : '#fda4af',
+                              fontSize: 12,
+                              fontWeight: 700,
+                              padding: '7px 10px',
+                              cursor: isDeleting || spotSaveLoadingId === spot.id ? 'not-allowed' : 'pointer',
+                              opacity: isDeleting || spotSaveLoadingId === spot.id ? 0.6 : 1,
+                            }}
+                          >
+                            {isDeleting ? 'Torlodes...' : '🗑 Torles'}
+                          </button>
+                        </div>
                       </div>
                     </article>
                   )

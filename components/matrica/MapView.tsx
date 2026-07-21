@@ -38,6 +38,7 @@ const AUTO_REROUTE_COOLDOWN_MS = 15000
 const BOTTOM_ACTION_BAR_HEIGHT = 84
 const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
 const UI_TOGGLE_SFX_SRC = '/audio/sfx-glitch.WAV'
+const UNIFIED_SPOT_VISIBILITY_RADIUS_METERS = 420
 
 interface UserLocation {
   lat: number
@@ -896,7 +897,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
     }
 
     const d = getDistanceMeters(userLocation.lat, userLocation.lng, spot.lat, spot.lng)
-    if (d <= spot.radius_visibility) {
+    if (d <= UNIFIED_SPOT_VISIBILITY_RADIUS_METERS) {
       clickableSpots.push(spot)
     } else {
       hintSpots.push(spot)
@@ -1153,7 +1154,7 @@ export default function MapView({ chatDisplayName, chatAuthToken }: MapViewProps
               key={spot.id}
               map={mapRef.current!}
               spot={spot}
-              radiusMeters={spot.radius_visibility}
+              radiusMeters={UNIFIED_SPOT_VISIBILITY_RADIUS_METERS}
               onSelect={(selected) => handleOpenPreview(selected)}
             />
           ))}

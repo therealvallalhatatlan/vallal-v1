@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import type { StickerSpot } from '@/lib/matrica'
 import { getUserFromToken, parseBearerToken } from '@/lib/auth'
-import { getActiveSpotUnlock, maskTitleFirstWords, obfuscateCoordinate } from '@/lib/matricaUnlocks'
+import { getActiveSpotUnlock, maskTitleFirstWords, obfuscateSpotCoordinates } from '@/lib/matricaUnlocks'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +38,8 @@ export async function GET(req: NextRequest) {
   const rows = (data ?? []) as SpotRow[]
 
   const spots = await Promise.all(rows.map(async (spot) => {
+    const obfuscated = obfuscateSpotCoordinates(spot.lat, spot.lng, spot.id)
+
     if (spot.spot_type !== 'paid') {
       return {
         ...spot,
@@ -55,8 +57,8 @@ export async function GET(req: NextRequest) {
         description: null,
         image_url: null,
         image_urls: [],
-        lat: obfuscateCoordinate(spot.lat),
-        lng: obfuscateCoordinate(spot.lng),
+        lat: obfuscated.lat,
+        lng: obfuscated.lng,
         is_locked: true,
         unlock_expires_at: null,
       }
@@ -70,8 +72,8 @@ export async function GET(req: NextRequest) {
         description: null,
         image_url: null,
         image_urls: [],
-        lat: obfuscateCoordinate(spot.lat),
-        lng: obfuscateCoordinate(spot.lng),
+        lat: obfuscated.lat,
+        lng: obfuscated.lng,
         is_locked: true,
         unlock_expires_at: null,
       }
