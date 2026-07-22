@@ -18,6 +18,7 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { getDistanceMeters } from '@/lib/matrica'
 import type { StickerSpot } from '@/lib/matrica'
+import { createClient } from '@/lib/browser'
 import SpotCircle from './SpotCircle'
 import SpotMarker from './SpotMarker'
 import SpotPreview from './SpotPreview'
@@ -39,6 +40,7 @@ const BOTTOM_ACTION_BAR_HEIGHT = 84
 const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
 const UI_TOGGLE_SFX_SRC = '/audio/sfx-glitch.WAV'
 const UNIFIED_SPOT_VISIBILITY_RADIUS_METERS = 420
+const AUTO_OPEN_SPOTS_PANEL_DELAY_MS = 900
 
 interface UserLocation {
   lat: number
@@ -119,6 +121,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   const clickSfxRef = useRef<HTMLAudioElement | null>(null)
   const toggleSfxRef = useRef<HTMLAudioElement | null>(null)
   const firstFixRef = useRef(false)
+  const autoOpenedSpotsPanelRef = useRef(false)
   const lastAutoRerouteAtRef = useRef(0)
   const pendingAutoRerouteStatusRef = useRef(false)
   const handledDeepLinkRef = useRef(false)
@@ -145,6 +148,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   const [livePanelOpen, setLivePanelOpen] = useState(false)
   const [spotsListOpen, setSpotsListOpen] = useState(false)
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
+  const [claimingSpotId, setClaimingSpotId] = useState<string | null>(null)
 
   const previewCloseTimerRef = useRef<number | null>(null)
   const unlockToastHandledRef = useRef(false)
@@ -467,6 +471,78 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
 
   useEffect(() => {
     void loadSpots()
+  }, [loadSpots])
+
+  useEffect(() => {
+    if (!mapLoaded || !userLocation) return
+    if (autoOpenedSpotsPanelRef.current) return
+
+    autoOpenedSpotsPanelRef.current = true
+    const timeoutId = window.setTimeout(() => {
+      setSpotsListOpen(true)
+    }, AUTO_OPEN_SPOTS_PANEL_DELAY_MS)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [mapLoaded, userLocation])
+
+  useEffect(() => {
+    const supabase = createClient() as {
+      channel?: (name: string) => {
+        on: (event: string, filter: Record<string, unknown>, callback: (payload: any) => void) => any
+        subscribe: () => { unsubscribe: () => void }
+        unsubscribe: () => void
+      }
+    }
+
+    if (typeof supabase.channel !== 'function') {
+      return
+    }
+
+    const channel = supabase
+      .channel('public:sticker_spots:map-view')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'sticker_spots' },
+        (payload: { new?: Partial<StickerSpot> }) => {
+          const updated = payload?.new as Partial<StickerSpot> | undefined
+          if (!updated?.id || typeof updated.status !== 'string') return
+
+          if (updated.status === 'active') {
+            let hasSpot = false
+            setSpots((prev) => {
+              hasSpot = prev.some((spot) => spot.id === updated.id)
+              return hasSpot
+                ? prev.map((spot) => (spot.id === updated.id ? { ...spot, ...updated } : spot))
+                : prev
+            })
+            setPreviewSpot((prev) => (prev && prev.id === updated.id ? { ...prev, ...updated } as StickerSpot : prev))
+            if (!hasSpot) {
+              void loadSpots()
+            }
+            return
+          }
+
+          setSpots((prev) => prev.filter((spot) => spot.id !== updated.id))
+          setPreviewSpot((prev) => (prev && prev.id === updated.id ? null : prev))
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'sticker_spots' },
+        (payload: { old?: { id?: string } }) => {
+          const deletedId = (payload?.old as { id?: string } | undefined)?.id
+          if (!deletedId) return
+          setSpots((prev) => prev.filter((spot) => spot.id !== deletedId))
+          setPreviewSpot((prev) => (prev && prev.id === deletedId ? null : prev))
+        },
+      )
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
   }, [loadSpots])
 
   useEffect(() => {
@@ -1064,6 +1140,89 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
     startRouteForSpot(spot)
   }, [playUiSound, startRouteForSpot])
 
+  const handleClaimFound = useCallback(async (spot: StickerSpot) => {
+    if (!chatAuthToken) {
+      showToast('Bejelentkezes szukseges a megtalalas jelolesehez.', 'error')
+      return
+    }
+
+    if (!userLocation) {
+      showToast('Kapcsold be a helymeghatarozast a megtalalas jelolesehez.', 'error')
+      return
+    }
+
+    if (isPaidLockedSpot(spot)) {
+      showToast('Ehhez a szpothoz elobb feloldas szukseges.', 'error')
+      return
+    }
+
+    const distance = getDistanceMeters(userLocation.lat, userLocation.lng, spot.lat, spot.lng)
+    if (distance > spot.radius_claim) {
+      showToast(`Meg tul messze vagy (${Math.round(distance)} m).`, 'error')
+      return
+    }
+
+    setClaimingSpotId(spot.id)
+
+    try {
+      const res = await fetch('/api/matrica/claim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${chatAuthToken}`,
+        },
+        body: JSON.stringify({
+          spot_id: spot.id,
+          user_lat: userLocation.lat,
+          user_lng: userLocation.lng,
+          user_image_url: null,
+          comment: null,
+        }),
+      })
+
+      const json = await res.json().catch(() => ({} as Record<string, unknown>))
+      if (!res.ok) {
+        const error = typeof json?.error === 'string' ? json.error : null
+        if (error === 'already_claimed') {
+          showToast('Ezt a szpotot mar korabban jelolted.', 'info')
+        } else if (error === 'too_far') {
+          showToast('Tavolabbi poziciobol nem jelolheto megtalaltnak.', 'error')
+        } else if (error === 'spot_empty' || error === 'spot_unavailable') {
+          setSpots((prev) => prev.filter((item) => item.id !== spot.id))
+          setPreviewSpot((prev) => (prev && prev.id === spot.id ? null : prev))
+          showToast('A szpot mar nem aktiv.', 'info')
+        } else {
+          showToast('Nem sikerult rogziteni a megtalalast.', 'error')
+        }
+        return
+      }
+
+      const spotUpdate = (json?.spot ?? null) as { id?: string; status?: StickerSpot['status']; remaining_quantity?: number } | null
+      if (!spotUpdate?.id) {
+        showToast('Sikeres jeloles, de frissitest kerunk.', 'info')
+        void loadSpots()
+        return
+      }
+
+      if (spotUpdate.status === 'archived' || spotUpdate.status === 'empty') {
+        setSpots((prev) => prev.filter((item) => item.id !== spotUpdate.id))
+        setPreviewSpot((prev) => (prev && prev.id === spotUpdate.id ? null : prev))
+        showToast('Megtalalas rogzitve, a szpot archivba kerult.', 'success')
+      } else {
+        setSpots((prev) => prev.map((item) => (item.id === spotUpdate.id ? { ...item, ...spotUpdate } : item)))
+        setPreviewSpot((prev) => (prev && prev.id === spotUpdate.id ? { ...prev, ...spotUpdate } : prev))
+        showToast('Megtalalas rogzitve.', 'success')
+      }
+
+      window.dispatchEvent(new CustomEvent('matrica:claim-submitted'))
+    } catch (error) {
+      console.error('[MapView] claim failed', error)
+      showToast('Halozati hiba, probald ujra.', 'error')
+    } finally {
+      setClaimingSpotId(null)
+    }
+  }, [chatAuthToken, loadSpots, showToast, userLocation])
+
 
   const handleToggleChatPanel = useCallback(() => {
     playUiSound('toggle')
@@ -1283,6 +1442,30 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         anchor={previewAnchor}
         onClose={handleClosePreview}
         onUnlock={handleUnlockSpot}
+        onClaimFound={handleClaimFound}
+        claimDisabled={(() => {
+          if (!previewSpot) return true
+          if (claimingSpotId === previewSpot.id) return true
+          if (!chatAuthToken || !userLocation) return true
+          if (isPaidLockedSpot(previewSpot)) return true
+          if (previewSpot.remaining_quantity <= 0) return true
+          const distance = getDistanceMeters(userLocation.lat, userLocation.lng, previewSpot.lat, previewSpot.lng)
+          return distance > previewSpot.radius_claim
+        })()}
+        claimLabel={(() => {
+          if (!previewSpot) return 'Megtalaltam'
+          if (claimingSpotId === previewSpot.id) return 'Rogzites...'
+          if (!chatAuthToken) return 'Bejelentkezes szukseges'
+          if (!userLocation) return 'Helymeghatarozas szukseges'
+          if (isPaidLockedSpot(previewSpot)) return 'Elobb feloldas kell'
+          if (previewSpot.remaining_quantity <= 0) return 'Elfogyott'
+          const distance = getDistanceMeters(userLocation.lat, userLocation.lng, previewSpot.lat, previewSpot.lng)
+          if (distance > previewSpot.radius_claim) {
+            return `Menj kozelebb (${Math.round(distance)} m)`
+          }
+          return 'Megtalaltam'
+        })()}
+        claiming={previewSpot?.id === claimingSpotId}
         onStartRoute={(spot) => {
           handleClosePreview()
           startRouteForSpot(spot)
@@ -1574,6 +1757,8 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         onClose={handleCloseSpotsList}
         onSelectSpot={handleSelectSpotFromList}
         onStartRoute={handleStartRouteFromList}
+        onClaimFound={handleClaimFound}
+        claimingSpotId={claimingSpotId}
         canEditSpots={userRole === 'admin'}
         onSaveSpot={handleSaveActiveSpot}
       />

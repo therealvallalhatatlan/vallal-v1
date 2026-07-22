@@ -20,6 +20,8 @@ interface Props {
   onClose: () => void
   onSelectSpot: (spot: StickerSpot) => void
   onStartRoute: (spot: StickerSpot) => void
+  onClaimFound?: (spot: StickerSpot) => void
+  claimingSpotId?: string | null
   canEditSpots?: boolean
   onSaveSpot?: (spotId: string, updates: { title: string; description: string }) => Promise<StickerSpot | void>
 }
@@ -45,6 +47,8 @@ export default function ActiveSpotsPanel({
   onClose,
   onSelectSpot,
   onStartRoute,
+  onClaimFound,
+  claimingSpotId = null,
   canEditSpots = false,
   onSaveSpot,
 }: Props) {
@@ -199,6 +203,26 @@ export default function ActiveSpotsPanel({
             const locked = isPaidLockedSpot(spot)
             const coverImage = spot.image_url ?? spot.image_urls?.[0] ?? null
             const isEditing = canEditSpots && editingSpotId === spot.id
+            const canClaim =
+              !locked &&
+              !!onClaimFound &&
+              spot.remaining_quantity > 0 &&
+              distance !== null &&
+              distance <= spot.radius_claim
+            const claimDisabled = !canClaim || claimingSpotId === spot.id
+
+            let claimLabel = 'Megtalaltam'
+            if (claimingSpotId === spot.id) {
+              claimLabel = 'Rogzites...'
+            } else if (locked) {
+              claimLabel = 'Elobb feloldas kell'
+            } else if (spot.remaining_quantity <= 0) {
+              claimLabel = 'Elfogyott'
+            } else if (distance === null) {
+              claimLabel = 'Helymeghatarozas kell'
+            } else if (distance > spot.radius_claim) {
+              claimLabel = `Menj kozelebb (${Math.round(distance)} m)`
+            }
 
             return (
               <article
@@ -313,7 +337,7 @@ export default function ActiveSpotsPanel({
                     </>
                   )}
 
-                  <div style={{ marginTop: 'auto', display: 'flex', gap: 6 }}>
+                  <div style={{ marginTop: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {canEditSpots ? (
                       isEditing ? (
                         <>
@@ -401,6 +425,31 @@ export default function ActiveSpotsPanel({
                           Szerkesztes
                         </button>
                       )
+                    ) : null}
+                    {onClaimFound ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (claimDisabled) return
+                          onClaimFound(spot)
+                        }}
+                        disabled={claimDisabled}
+                        style={{
+                          flex: 1,
+                          border: '1px solid rgba(200,169,126,0.35)',
+                          background: claimDisabled ? 'rgba(255,255,255,0.04)' : 'rgba(200,169,126,0.14)',
+                          color: claimDisabled ? '#71717a' : '#f3e9d8',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          padding: '6px 4px',
+                          borderRadius: 8,
+                          cursor: claimDisabled ? 'not-allowed' : 'pointer',
+                          opacity: claimingSpotId === spot.id ? 0.72 : 1,
+                        }}
+                      >
+                        {claimLabel}
+                      </button>
                     ) : null}
                     <button
                       type="button"

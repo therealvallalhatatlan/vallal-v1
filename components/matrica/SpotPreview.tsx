@@ -19,6 +19,10 @@ interface Props {
   onClose: () => void
   onStartRoute?: (spot: StickerSpot) => void
   onUnlock?: (spot: StickerSpot) => void
+  onClaimFound?: (spot: StickerSpot) => void
+  claimDisabled?: boolean
+  claimLabel?: string
+  claiming?: boolean
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -37,6 +41,10 @@ export default function SpotPreview({
   onClose,
   onStartRoute,
   onUnlock,
+  onClaimFound,
+  claimDisabled = false,
+  claimLabel = 'Megtalaltam',
+  claiming = false,
 }: Props) {
   if (!spot) return null
 
@@ -191,6 +199,28 @@ export default function SpotPreview({
               Utvonal inditasa
             </button>
           ) : null}
+
+          {onClaimFound && (!isPaid || !isLocked) ? (
+            <button
+              type="button"
+              onClick={() => onClaimFound(spot)}
+              disabled={claimDisabled || claiming}
+              style={{
+                width: '100%',
+                marginTop: 10,
+                border: '1px solid rgba(200,169,126,0.4)',
+                background: claimDisabled || claiming ? 'rgba(255,255,255,0.05)' : 'rgba(200,169,126,0.16)',
+                color: claimDisabled || claiming ? '#71717a' : '#f3e9d8',
+                fontSize: 13,
+                fontWeight: 700,
+                padding: '10px 12px',
+                cursor: claimDisabled || claiming ? 'not-allowed' : 'pointer',
+                opacity: claiming ? 0.72 : 1,
+              }}
+            >
+              {claiming ? 'Rogzites...' : claimLabel}
+            </button>
+          ) : null}
         </section>
       </>
     )
@@ -293,6 +323,28 @@ export default function SpotPreview({
             }}
           >
             Utvonal tervezese
+          </button>
+        ) : null}
+
+        {onClaimFound && (!isPaid || !isLocked) ? (
+          <button
+            type="button"
+            onClick={() => onClaimFound(spot)}
+            disabled={claimDisabled || claiming}
+            style={{
+              width: '100%',
+              marginTop: 10,
+              border: '1px solid rgba(200,169,126,0.4)',
+              background: claimDisabled || claiming ? 'rgba(255,255,255,0.05)' : 'rgba(200,169,126,0.16)',
+              color: claimDisabled || claiming ? '#71717a' : '#f3e9d8',
+              fontSize: 12,
+              fontWeight: 700,
+              padding: '8px 10px',
+              cursor: claimDisabled || claiming ? 'not-allowed' : 'pointer',
+              opacity: claiming ? 0.72 : 1,
+            }}
+          >
+            {claiming ? 'Rogzites...' : claimLabel}
           </button>
         ) : null}
       </div>

@@ -28,7 +28,8 @@ interface ClaimBody {
  *  6. Spot still has remaining_quantity > 0
  *
  * On success inserts a claim with status = 'pending' and reserves one sticker
- * immediately by decrementing remaining_quantity.
+ * immediately by decrementing remaining_quantity. When the last item is claimed,
+ * the spot is archived right away so it disappears from public lists.
  */
 export async function POST(req: NextRequest) {
   // ── 1. Auth ──────────────────────────────────────────────────────────────
@@ -157,7 +158,7 @@ export async function POST(req: NextRequest) {
 
   // ── 7. Reserve one sticker immediately on submission ─────────────────────
   const nextRemaining = spot.remaining_quantity - 1
-  const nextStatus = nextRemaining <= 0 ? 'empty' : 'active'
+  const nextStatus = nextRemaining <= 0 ? 'archived' : 'active'
 
   const { data: reservedSpot, error: reserveError } = await db
     .from('sticker_spots')
