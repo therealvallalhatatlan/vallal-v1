@@ -24,6 +24,7 @@ export default function ZarojelPage() {
         }}
       >
         <section
+          className="zarojel-layout"
           style={{
             display: 'grid',
             gridTemplateColumns: '1.05fr 0.95fr',
@@ -33,6 +34,7 @@ export default function ZarojelPage() {
           }}
         >
           <div
+            className="zarojel-media"
             style={{
               position: 'relative',
               overflow: 'hidden',
@@ -97,6 +99,7 @@ export default function ZarojelPage() {
           </div>
 
           <article
+            className="zarojel-copy"
             style={{
               border: '1px solid rgba(200,169,126,0.22)',
               borderRadius: 24,
@@ -153,6 +156,25 @@ export default function ZarojelPage() {
           </article>
         </section>
       </div>
+
+      <style>{`
+        @media (max-width: 900px) {
+          .zarojel-layout {
+            grid-template-columns: 1fr !important;
+            min-height: auto !important;
+            align-items: stretch !important;
+          }
+
+          .zarojel-media {
+            min-height: 280px !important;
+          }
+
+          .zarojel-copy {
+            max-width: none !important;
+            justify-self: stretch !important;
+          }
+        }
+      `}</style>
     </main>
   )
 }
