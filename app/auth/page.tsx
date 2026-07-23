@@ -24,7 +24,14 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
 
-  const next = searchParams?.get("from") || "/reader";
+  const next = (() => {
+    const explicitNext = searchParams?.get("next") || searchParams?.get("from") || "";
+    if (explicitNext) return explicitNext;
+    if (typeof document !== "undefined" && document.referrer.includes("/zarojel")) {
+      return "/halozat";
+    }
+    return "/reader";
+  })();
 
   const handleGoogleSignIn = async () => {
     setStatus(null);
