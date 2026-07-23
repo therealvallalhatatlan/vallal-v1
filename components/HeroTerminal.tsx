@@ -234,7 +234,7 @@ export default function HeroTerminal() {
               </span>
               <Link
                 href="/tamogatas"
-                className="inline-flex items-center rounded-full border border-red-400/30 bg-black/70 px-2 py-1 text-[10px] font-semibold tracking-[0.18em] text-red-200/90 transition-colors hover:border-red-300/55 hover:bg-red-950/35 hover:text-red-100"
+                className="upload-glow-btn inline-flex items-center rounded-full border border-lime-300/55 bg-lime-400/14 px-2 py-1 text-[10px] font-semibold tracking-[0.18em] text-lime-100 transition-colors hover:border-lime-200 hover:bg-lime-300/20 hover:text-lime-50"
               >
                 FELTÖLTÉS
               </Link>
@@ -461,6 +461,30 @@ export default function HeroTerminal() {
           100% {
             opacity: 0;
             transform: translate3d(-4%, -3px, 0);
+          }
+        }
+
+        .upload-glow-btn {
+          box-shadow:
+            0 0 0 1px rgba(163, 230, 53, 0.24),
+            0 0 18px rgba(163, 230, 53, 0.24),
+            inset 0 0 12px rgba(163, 230, 53, 0.18);
+          animation: uploadGlowPulse 1.9s ease-in-out infinite;
+        }
+
+        @keyframes uploadGlowPulse {
+          0%,
+          100% {
+            box-shadow:
+              0 0 0 1px rgba(163, 230, 53, 0.24),
+              0 0 16px rgba(163, 230, 53, 0.2),
+              inset 0 0 8px rgba(163, 230, 53, 0.14);
+          }
+          50% {
+            box-shadow:
+              0 0 0 1px rgba(190, 242, 100, 0.48),
+              0 0 32px rgba(163, 230, 53, 0.44),
+              inset 0 0 14px rgba(190, 242, 100, 0.28);
           }
         }
       `}</style>

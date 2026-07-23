@@ -23,6 +23,7 @@ export default function HomeActiveSpotsSection() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [userFoundCount, setUserFoundCount] = useState<number | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -112,6 +113,45 @@ export default function HomeActiveSpotsSection() {
     }
   }, [accessToken])
 
+  useEffect(() => {
+    let cancelled = false
+
+    const loadFoundCount = async () => {
+      if (!accessToken) {
+        setUserFoundCount(null)
+        return
+      }
+
+      try {
+        const res = await fetch('/api/matrica/score', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          cache: 'no-store',
+        })
+
+        if (!res.ok) {
+          if (!cancelled) setUserFoundCount(null)
+          return
+        }
+
+        const json = await res.json()
+        if (!cancelled) {
+          const found = Number(json?.found)
+          setUserFoundCount(Number.isFinite(found) && found >= 0 ? found : null)
+        }
+      } catch {
+        if (!cancelled) setUserFoundCount(null)
+      }
+    }
+
+    void loadFoundCount()
+
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken])
+
   const panelSpots = useMemo(() => {
     const activeSpots = spots.filter((spot) => spot.status === 'active')
     if (!userLocation) return activeSpots
@@ -163,6 +203,7 @@ export default function HomeActiveSpotsSection() {
         onSelectSpot={(spot) => openSpot(spot, 'focus')}
         onStartRoute={(spot) => openSpot(spot, 'route')}
         layout="inline"
+        userFoundCount={userFoundCount}
       />
     </section>
   )

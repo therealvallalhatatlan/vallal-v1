@@ -15,6 +15,7 @@ export default function HalozatPage() {
         position: 'fixed',
         inset: 0,
         background: '#09090b',
+        ['--matrica-header-offset' as any]: '90px',
       }}
     >
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 4000 }}>

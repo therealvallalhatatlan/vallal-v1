@@ -24,6 +24,7 @@ interface Props {
   claimingSpotId?: string | null
   canEditSpots?: boolean
   onSaveSpot?: (spotId: string, updates: { title: string; description: string }) => Promise<StickerSpot | void>
+  userFoundCount?: number | null
 }
 
 function isPaidLockedSpot(spot: StickerSpot): boolean {
@@ -51,6 +52,7 @@ export default function ActiveSpotsPanel({
   claimingSpotId = null,
   canEditSpots = false,
   onSaveSpot,
+  userFoundCount = null,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [editingSpotId, setEditingSpotId] = useState<string | null>(null)
@@ -95,10 +97,18 @@ export default function ActiveSpotsPanel({
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
       <div>
         <div style={{ fontSize: 10, color: '#c8a97e', letterSpacing: '0.08em', fontWeight: 700 }}>
-          {inlineMode ? 'Aktiv szpotok - Most indulhatsz is erte' : 'AKTIV SZPOTOK'}
+          {inlineMode ? 'AKTIV LELOHELYEK' : 'AKTIV SZPOTOK'}
+        </div>
+        <div style={{ marginTop: 2, fontSize: 12, color: '#a1a1aa' }}>
+          {inlineMode ? 'Akar most indulhatsz erte' : (hasSpots ? `${sortedSpots.length} db a kornyeken` : 'Nincs aktiv szpot')}
         </div>
         <div style={{ marginTop: 2, fontSize: 12, color: '#a1a1aa' }}>
           {hasSpots ? `${sortedSpots.length} db a kornyeken` : 'Nincs aktiv szpot'}
+          {typeof userFoundCount === 'number' && userFoundCount > 0 ? (
+            <span style={{ marginLeft: 8, color: '#86efac', fontWeight: 700 }}>
+              {userFoundCount} aktivalva
+            </span>
+          ) : null}
         </div>
       </div>
       <button

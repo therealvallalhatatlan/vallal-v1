@@ -37,7 +37,9 @@ const ROUTE_LAYER_ID = 'matrica-route-layer'
 const AUTO_REROUTE_MIN_DISTANCE_METERS = 35
 const AUTO_REROUTE_COOLDOWN_MS = 15000
 const BOTTOM_ACTION_BAR_HEIGHT = 84
+const MATRICA_TOP_SAFE_OFFSET = 'calc(var(--matrica-header-offset, 90px) + 8px)'
 const HALOZAT_ONBOARDING_STORAGE_KEY = 'halozat-onboarding-v1-seen'
+const APPROX_SPOT_PULSE_DURATION_MS = 4600
 const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
 const UI_TOGGLE_SFX_SRC = '/audio/sfx-glitch.WAV'
 const UNIFIED_SPOT_VISIBILITY_RADIUS_METERS = 420
@@ -126,6 +128,8 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   const lastAutoRerouteAtRef = useRef(0)
   const pendingAutoRerouteStatusRef = useRef(false)
   const handledDeepLinkRef = useRef(false)
+  const approxSpotPulseMarkerRef = useRef<mapboxgl.Marker | null>(null)
+  const approxSpotPulseTimeoutRef = useRef<number | null>(null)
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
@@ -157,6 +161,38 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
 
   const { toasts, show: showToast, dismiss: dismissToast } = useToast()
 
+  const clearApproxSpotPulseMarker = useCallback(() => {
+    if (approxSpotPulseTimeoutRef.current !== null) {
+      window.clearTimeout(approxSpotPulseTimeoutRef.current)
+      approxSpotPulseTimeoutRef.current = null
+    }
+
+    if (approxSpotPulseMarkerRef.current) {
+      approxSpotPulseMarkerRef.current.remove()
+      approxSpotPulseMarkerRef.current = null
+    }
+  }, [])
+
+  const showApproxSpotPulseMarker = useCallback((spot: StickerSpot) => {
+    const map = mapRef.current
+    if (!map) return
+
+    clearApproxSpotPulseMarker()
+
+    const el = document.createElement('div')
+    el.className = 'matrica-approx-pulse-marker'
+    el.innerHTML = '<span class="matrica-approx-pulse-ring"></span><span class="matrica-approx-pulse-core"></span>'
+
+    const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+      .setLngLat([spot.lng, spot.lat])
+      .addTo(map)
+
+    approxSpotPulseMarkerRef.current = marker
+    approxSpotPulseTimeoutRef.current = window.setTimeout(() => {
+      clearApproxSpotPulseMarker()
+    }, APPROX_SPOT_PULSE_DURATION_MS)
+  }, [clearApproxSpotPulseMarker])
+
   useEffect(() => {
     if (typeof window === 'undefined') return
 
@@ -182,6 +218,12 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
       }
     }
   }, [])
+
+  useEffect(() => {
+    return () => {
+      clearApproxSpotPulseMarker()
+    }
+  }, [clearApproxSpotPulseMarker])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -1149,7 +1191,19 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
     playUiSound('click')
     setSpotsListOpen(false)
     handleOpenPreview(spot)
-  }, [handleOpenPreview, playUiSound])
+
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [spot.lng, spot.lat],
+        zoom: 15.9,
+        offset: [0, -120],
+        duration: 980,
+        essential: true,
+      })
+    }
+
+    showApproxSpotPulseMarker(spot)
+  }, [handleOpenPreview, playUiSound, showApproxSpotPulseMarker])
 
   const handleStartRouteFromList = useCallback((spot: StickerSpot) => {
     playUiSound('click')
@@ -1327,6 +1381,50 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
           border-top: 6px solid rgba(9, 9, 11, 0.92);
         }
 
+        .matrica-approx-pulse-marker {
+          position: relative;
+          width: 22px;
+          height: 22px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+        }
+
+        .matrica-approx-pulse-ring {
+          position: absolute;
+          inset: -14px;
+          border-radius: 999px;
+          border: 2px solid rgba(200, 169, 126, 0.78);
+          background: rgba(200, 169, 126, 0.14);
+          animation: approxSpotPulse 1.35s ease-out infinite;
+          box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 0 18px rgba(200,169,126,0.38);
+        }
+
+        .matrica-approx-pulse-core {
+          width: 12px;
+          height: 12px;
+          border-radius: 999px;
+          background: #c8a97e;
+          border: 2px solid rgba(255,255,255,0.9);
+          box-shadow: 0 0 12px rgba(200,169,126,0.9);
+        }
+
+        @keyframes approxSpotPulse {
+          0% {
+            transform: scale(0.45);
+            opacity: 0.9;
+          }
+          75% {
+            transform: scale(1.35);
+            opacity: 0.16;
+          }
+          100% {
+            transform: scale(1.5);
+            opacity: 0;
+          }
+        }
+
         @keyframes userPulse {
           0%, 100% { box-shadow: 0 0 0 4px rgba(56,189,248,0.3); }
           50%       { box-shadow: 0 0 0 10px rgba(56,189,248,0.08); }
@@ -1387,7 +1485,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         <div
           style={{
             position: 'absolute',
-            top: 16,
+            top: MATRICA_TOP_SAFE_OFFSET,
             left: '50%',
             transform: 'translateX(-50%)',
             background: 'rgba(24,24,27,0.95)',
@@ -1427,7 +1525,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         <div
           style={{
             position: 'absolute',
-            top: geoError ? 56 : 16,
+            top: geoError
+              ? 'calc(var(--matrica-header-offset, 90px) + 56px)'
+              : MATRICA_TOP_SAFE_OFFSET,
             left: '50%',
             transform: 'translateX(-50%)',
             background: 'rgba(234,179,8,0.9)',
@@ -1672,9 +1772,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             inset: 0,
             zIndex: 4300,
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
-            padding: 14,
+            padding: `calc(var(--matrica-header-offset, 90px) + 14px) 14px 14px`,
             background: 'rgba(3,5,8,0.68)',
             backdropFilter: 'blur(5px)',
           }}

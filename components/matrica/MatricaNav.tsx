@@ -1262,7 +1262,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
       ) : null}
       
       {/* Toast notifications */}
-      <div style={{ position: 'fixed', top: 12, right: 12, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ position: 'fixed', top: 'calc(var(--matrica-header-offset, 90px) + 6px)', right: 12, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {pmToasts.map(toast => (
           <div
             key={toast.id}
