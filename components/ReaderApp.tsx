@@ -585,6 +585,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   return (
     <div
       className={`flex min-h-[100dvh] ${themeMode === 'light' ? 'reader-theme-light' : 'reader-theme-dark'}`}
+      style={{ paddingTop: 'var(--reader-nav-offset, 84px)' }}
     >
       {(
         <div
@@ -595,9 +596,10 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
       {/* Sidebar - tartalomjegyzék (desktop) */}
       <aside 
         data-sidebar-desktop
-        className={`hidden md:flex w-72 flex-col bg-black fixed left-0 top-0 h-[100dvh] z-40 transition-transform duration-300 ${
+        className={`hidden md:flex w-72 flex-col bg-black fixed left-0 h-[calc(100dvh-var(--reader-nav-offset,84px))] z-40 transition-transform duration-300 ${
           isDesktopSidebarVisible ? 'translate-x-0' : '-translate-x-full'
         }`}
+        style={{ top: 'var(--reader-nav-offset, 84px)' }}
       >
         {/* Brand + user blokk */}
         <div className="px-4 py-4 border-b border-neutral-800 space-y-4">
@@ -785,7 +787,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
         {/* Header + mobil TOC Sheet */}
         <Sheet open={mobileTocOpen} onOpenChange={setMobileTocOpen}>
           <header
-            className={`bg-transparent px-4 py-3 flex items-center justify-between fixed top-0 right-0 z-30 transition-all duration-300 ease-out ${
+            className={`bg-transparent px-4 py-3 flex items-center justify-between fixed right-0 z-30 transition-all duration-300 ease-out ${
               isDesktopSidebarVisible 
                 ? 'left-72 w-[calc(100%-18rem)]' 
                 : 'left-0 w-full'
@@ -794,6 +796,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                 ? "opacity-0 -translate-y-3 pointer-events-none"
                 : "opacity-100 translate-y-0"
             }`}
+            style={{ top: 'var(--reader-nav-offset, 84px)' }}
           >
             
             {/* Felső progress bar minden nézetben */}
@@ -846,6 +849,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                 <SheetContent
                   side="right"
                   className="w-72 bg-black text-neutral-100 border-l border-neutral-800"
+                  style={{ top: 'var(--reader-nav-offset, 84px)', bottom: 'auto', height: 'calc(100dvh - var(--reader-nav-offset, 84px))' }}
                 >
                   <SheetHeader className="px-4 pt-4">
                     <SheetTitle className="text-sm text-neutral-200">
@@ -1028,6 +1032,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
                 ? 'bg-white border-neutral-300'
                 : 'bg-neutral-950 border-neutral-800'
             }`}
+            style={{ top: 'var(--reader-nav-offset, 84px)', bottom: 'auto', height: 'calc(100dvh - var(--reader-nav-offset, 84px))' }}
           >
             <SheetHeader className={`px-4 py-3 border-b ${themeMode === 'light' ? 'border-neutral-200' : 'border-neutral-800'}`}>
               <SheetTitle className={`text-sm ${themeMode === 'light' ? 'text-neutral-700' : 'text-neutral-300'}`}>
@@ -1214,7 +1219,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
         >
           {/* Desktop sidebar edge hint */}
           {!isDesktopSidebarVisible && (
-            <div className="hidden md:block fixed left-0 top-0 w-1 h-full bg-gradient-to-b from-lime-500/20 via-lime-500/10 to-transparent pointer-events-none" />
+            <div className="hidden md:block fixed left-0 w-1 bg-gradient-to-b from-lime-500/20 via-lime-500/10 to-transparent pointer-events-none" style={{ top: 'var(--reader-nav-offset, 84px)', height: 'calc(100dvh - var(--reader-nav-offset, 84px))' }} />
           )}
           {currentStory ? (
             <article 
