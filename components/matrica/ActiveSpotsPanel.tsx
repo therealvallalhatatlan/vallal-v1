@@ -23,7 +23,7 @@ interface Props {
   onClaimFound?: (spot: StickerSpot) => void
   claimingSpotId?: string | null
   canEditSpots?: boolean
-  onSaveSpot?: (spotId: string, updates: { title: string; description: string }) => Promise<StickerSpot | void>
+  onSaveSpot?: (spotId: string, updates: { title: string; description: string; price_huf: number }) => Promise<StickerSpot | void>
   userFoundCount?: number | null
 }
 
@@ -58,6 +58,7 @@ export default function ActiveSpotsPanel({
   const [editingSpotId, setEditingSpotId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editDescription, setEditDescription] = useState('')
+  const [editPriceHuf, setEditPriceHuf] = useState('0')
   const [savingSpotId, setSavingSpotId] = useState<string | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
 
@@ -313,6 +314,23 @@ export default function ActiveSpotsPanel({
                           resize: 'vertical',
                         }}
                       />
+                      <input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={editPriceHuf}
+                        onChange={(event) => setEditPriceHuf(event.target.value)}
+                        onClick={(event) => event.stopPropagation()}
+                        style={{
+                          width: '100%',
+                          border: '1px solid rgba(255,255,255,0.14)',
+                          background: 'rgba(255,255,255,0.03)',
+                          color: '#f4f4f5',
+                          fontSize: 12,
+                          padding: '7px 8px',
+                          outline: 'none',
+                        }}
+                      />
                       {editError ? <div style={{ color: '#fda4af', fontSize: 11 }}>{editError}</div> : null}
                     </div>
                   ) : (
@@ -356,12 +374,19 @@ export default function ActiveSpotsPanel({
                             onClick={async (event) => {
                               event.stopPropagation()
                               if (!onSaveSpot) return
+                              const parsedPriceHuf = Number(editPriceHuf)
+                              if (!Number.isFinite(parsedPriceHuf) || parsedPriceHuf < 0) {
+                                setEditError('Az ar csak pozitiv szam lehet.')
+                                return
+                              }
+
                               setSavingSpotId(spot.id)
                               setEditError(null)
                               try {
                                 await onSaveSpot(spot.id, {
                                   title: editTitle.trim(),
                                   description: editDescription.trim(),
+                                  price_huf: Math.floor(parsedPriceHuf),
                                 })
                                 setEditingSpotId(null)
                               } catch (error) {
@@ -418,6 +443,7 @@ export default function ActiveSpotsPanel({
                             setEditingSpotId(spot.id)
                             setEditTitle(spot.title || '')
                             setEditDescription(spot.description || '')
+                            setEditPriceHuf(String(typeof spot.price_huf === 'number' ? Math.max(0, Math.floor(spot.price_huf)) : 0))
                             setEditError(null)
                           }}
                           style={{

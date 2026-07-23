@@ -501,7 +501,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
     }
   }, [chatAuthToken])
 
-  const handleSaveActiveSpot = useCallback(async (spotId: string, updates: { title: string; description: string }) => {
+  const handleSaveActiveSpot = useCallback(async (spotId: string, updates: { title: string; description: string; price_huf: number }) => {
     if (!chatAuthToken) {
       throw new Error('unauthorized')
     }
@@ -516,6 +516,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         id: spotId,
         title: updates.title,
         description: updates.description,
+        price_huf: updates.price_huf,
       }),
     })
 

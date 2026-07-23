@@ -192,7 +192,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
   }
 
-  const { id, status, title, description } = body
+  const { id, status, title, description, price_huf } = body
   if (typeof id !== 'string' || !id.trim()) {
     return NextResponse.json({ error: 'id_required' }, { status: 400 })
   }
@@ -218,6 +218,14 @@ export async function PATCH(req: NextRequest) {
     updates.description = typeof description === 'string' ? description.trim() || null : null
   }
 
+  if (typeof price_huf !== 'undefined') {
+    const parsedPrice = Number(price_huf)
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      return NextResponse.json({ error: 'invalid_price_huf' }, { status: 400 })
+    }
+    updates.price_huf = Math.floor(parsedPrice)
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'no_updates' }, { status: 400 })
   }
@@ -228,10 +236,11 @@ export async function PATCH(req: NextRequest) {
     .update(updates)
     .eq('id', id.trim())
 
-  const { data, error } = (canManageAllSpots
-    ? await patchQuery
-    : await patchQuery.eq('creator_id', user.id)
-  )
+  const scopedPatchQuery = canManageAllSpots
+    ? patchQuery
+    : patchQuery.eq('creator_id', user.id)
+
+  const { data, error } = await scopedPatchQuery
     .select('id, status, title, description, spot_type, price_huf, creator_id')
     .maybeSingle()
 
@@ -275,10 +284,11 @@ export async function DELETE(req: NextRequest) {
     .delete()
     .eq('id', id.trim())
 
-  const { data, error } = (canManageAllSpots
-    ? await deleteQuery
-    : await deleteQuery.eq('creator_id', user.id)
-  )
+  const scopedDeleteQuery = canManageAllSpots
+    ? deleteQuery
+    : deleteQuery.eq('creator_id', user.id)
+
+  const { data, error } = await scopedDeleteQuery
     .select('id')
     .maybeSingle()
 
