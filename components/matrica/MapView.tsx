@@ -37,6 +37,7 @@ const ROUTE_LAYER_ID = 'matrica-route-layer'
 const AUTO_REROUTE_MIN_DISTANCE_METERS = 35
 const AUTO_REROUTE_COOLDOWN_MS = 15000
 const BOTTOM_ACTION_BAR_HEIGHT = 84
+const HALOZAT_ONBOARDING_STORAGE_KEY = 'halozat-onboarding-v1-seen'
 const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
 const UI_TOGGLE_SFX_SRC = '/audio/sfx-glitch.WAV'
 const UNIFIED_SPOT_VISIBILITY_RADIUS_METERS = 420
@@ -149,6 +150,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   const [spotsListOpen, setSpotsListOpen] = useState(false)
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
   const [claimingSpotId, setClaimingSpotId] = useState<string | null>(null)
+  const [showIntroLayer, setShowIntroLayer] = useState(false)
 
   const previewCloseTimerRef = useRef<number | null>(null)
   const unlockToastHandledRef = useRef(false)
@@ -178,6 +180,21 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         toggleSfxRef.current.pause()
         toggleSfxRef.current = null
       }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const hasSeenOnboarding = window.localStorage.getItem(HALOZAT_ONBOARDING_STORAGE_KEY) === '1'
+    if (!hasSeenOnboarding) {
+      setShowIntroLayer(true)
+    }
+  }, [])
+
+  const handleDismissIntroLayer = useCallback(() => {
+    setShowIntroLayer(false)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(HALOZAT_ONBOARDING_STORAGE_KEY, '1')
     }
   }, [])
 
@@ -1645,6 +1662,67 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
       {/* Toasts */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
+      {showIntroLayer ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Halozat bemutato"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 4300,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 14,
+            background: 'rgba(3,5,8,0.68)',
+            backdropFilter: 'blur(5px)',
+          }}
+        >
+          <div
+            style={{
+              width: 'min(560px, 100%)',
+              borderRadius: 16,
+              border: '1px solid rgba(200,169,126,0.3)',
+              background: 'linear-gradient(180deg, rgba(10,13,17,0.98), rgba(6,8,11,0.98))',
+              boxShadow: '0 26px 56px rgba(0,0,0,0.52)',
+              padding: 18,
+              color: '#f4f4f5',
+            }}
+          >
+            <div style={{ fontSize: 11, letterSpacing: '0.08em', fontWeight: 700, color: '#c8a97e' }}>HALOZAT ROVIDEN</div>
+            <h2 style={{ margin: '6px 0 10px', fontSize: 20, lineHeight: 1.2 }}>Igy mukodik a vadaszat</h2>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: '#d4d4d8' }}>
+              Menj a jelolt rejtekek kozelebe, nyisd meg a szpotot, majd a helyszinen jelold, hogy megtalaltad.
+              Fizetos szpotnal elobb feloldas kell.
+            </p>
+            <div style={{ marginTop: 12, display: 'grid', gap: 7, fontSize: 12, color: '#cbd5e1' }}>
+              <div>Rejtek: uj pontok es szerkesztes.</div>
+              <div>Talalok: aktiv szpotok, tavolsag, reszletek.</div>
+              <div>Beszelek: eloben chatelj a tobbi jatekossal.</div>
+            </div>
+            <button
+              type="button"
+              onClick={handleDismissIntroLayer}
+              style={{
+                marginTop: 14,
+                width: '100%',
+                borderRadius: 11,
+                border: '1px solid rgba(200,169,126,0.42)',
+                background: 'rgba(200,169,126,0.16)',
+                color: '#f3e9d8',
+                fontSize: 14,
+                fontWeight: 700,
+                padding: '10px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              Ertem, indulhat
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <nav
         aria-label="Halozat gyors műveletek"
         style={{
@@ -1675,20 +1753,23 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             border: '1px solid rgba(200,169,126,0.4)',
             background: 'rgba(200,169,126,0.14)',
             color: '#f3e9d8',
-            padding: '10px 8px',
+            padding: '8px 8px',
             cursor: 'pointer',
-            minHeight: 44,
+            minHeight: 54,
             minWidth: 0,
             flex: '1 1 0',
             display: 'inline-flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: 4,
             boxShadow: 'inset 0 0 0 1px rgba(200,169,126,0.12)',
           }}
         >
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
             <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em' }}>Rejtek</span>
         </button>
 
         <button
@@ -1702,14 +1783,16 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             background: (previewSpot || spotsListOpen) ? 'rgba(42,35,27,0.96)' : 'rgba(23,26,31,0.92)',
 
             color: '#e5e7eb',
-            padding: '10px 8px',
+            padding: '8px 8px',
             cursor: 'pointer',
-            minHeight: 44,
+            minHeight: 54,
             minWidth: 0,
             flex: '1 1 0',
             display: 'inline-flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: 4,
             boxShadow: 'inset 0 0 0 1px rgba(200,169,126,0.1)',
           }}
         >
@@ -1717,6 +1800,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2" />
             <circle cx="12" cy="12" r="2.2" fill="currentColor" />
           </svg>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em' }}>Talalok</span>
         </button>
 
         <button
@@ -1729,20 +1813,23 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             border: '1px solid rgba(200,169,126,0.35)',
             background: livePanelOpen ? 'rgba(28,36,47,0.96)' : 'rgba(12,16,20,0.94)',
             color: '#e2e8f0',
-            padding: '10px 8px',
+            padding: '8px 8px',
             cursor: 'pointer',
-            minHeight: 44,
+            minHeight: 54,
             minWidth: 0,
             flex: '1 1 0',
             display: 'inline-flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
+            gap: 4,
             boxShadow: 'inset 0 0 0 1px rgba(200,169,126,0.1)',
           }}
         >
           <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
             <path d="M4 6.8a2.8 2.8 0 0 1 2.8-2.8h10.4A2.8 2.8 0 0 1 20 6.8v6.4a2.8 2.8 0 0 1-2.8 2.8H10.5l-3.9 3.1a.7.7 0 0 1-1.1-.55V16A2.8 2.8 0 0 1 4 13.2V6.8Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
           </svg>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em' }}>Beszelek</span>
         </button>
       </nav>
       </div>

@@ -32,11 +32,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
+  const role = getUserRoleByEmail(user.email)
+  const canManageAllSpots = role === 'admin'
+
   const db = supabaseAdmin()
-  const { data, error } = await db
+  const query = db
     .from('sticker_spots')
     .select('*')
     .order('created_at', { ascending: false })
+
+  const { data, error } = canManageAllSpots
+    ? await query
+    : await query.eq('creator_id', user.id)
 
   if (error) {
     console.error('[admin/matrica/spots] GET error', error)
@@ -45,7 +52,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     spots: data ?? [],
-    userRole: getUserRoleByEmail(user.email),
+    userRole: role,
   })
 }
 
@@ -97,7 +104,7 @@ export async function POST(req: NextRequest) {
   const qty = Math.max(1, Number(total_quantity) || 1)
 
   const normalizedImageUrls = Array.isArray(image_urls)
-    ? image_urls.filter((url): url is string => typeof url === 'string' && !!url.trim()).slice(0, 3)
+    ? image_urls.filter((url): url is string => typeof url === 'string' && !!url.trim()).slice(0, 5)
     : []
 
   const primaryImageUrl =
@@ -170,9 +177,13 @@ export async function POST(req: NextRequest) {
 
 // ── PATCH /api/admin/matrica/spots  (update status) ───────────────────────────
 export async function PATCH(req: NextRequest) {
-  if (!(await requireAuthenticatedUser(req))) {
+  const user = await requireAuthenticatedUser(req)
+  if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
+
+  const role = getUserRoleByEmail(user.email)
+  const canManageAllSpots = role === 'admin'
 
   let body: Record<string, unknown>
   try {
@@ -212,16 +223,25 @@ export async function PATCH(req: NextRequest) {
   }
 
   const db = supabaseAdmin()
-  const { data, error } = await db
+  const patchQuery = db
     .from('sticker_spots')
     .update(updates)
     .eq('id', id.trim())
-    .select('id, status, title, description, spot_type, price_huf')
-    .single()
+
+  const { data, error } = (canManageAllSpots
+    ? await patchQuery
+    : await patchQuery.eq('creator_id', user.id)
+  )
+    .select('id, status, title, description, spot_type, price_huf, creator_id')
+    .maybeSingle()
 
   if (error) {
     console.error('[admin/matrica/spots] PATCH error', error)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
+  }
+
+  if (!data) {
+    return NextResponse.json({ error: 'not_allowed' }, { status: 403 })
   }
 
   return NextResponse.json({ spot: data })
@@ -229,9 +249,13 @@ export async function PATCH(req: NextRequest) {
 
 // ── DELETE /api/admin/matrica/spots  (delete a spot) ─────────────────────────
 export async function DELETE(req: NextRequest) {
-  if (!(await requireAuthenticatedUser(req))) {
+  const user = await requireAuthenticatedUser(req)
+  if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
+
+  const role = getUserRoleByEmail(user.email)
+  const canManageAllSpots = role === 'admin'
 
   let body: Record<string, unknown>
   try {
@@ -246,14 +270,25 @@ export async function DELETE(req: NextRequest) {
   }
 
   const db = supabaseAdmin()
-  const { error } = await db
+  const deleteQuery = db
     .from('sticker_spots')
     .delete()
     .eq('id', id.trim())
 
+  const { data, error } = (canManageAllSpots
+    ? await deleteQuery
+    : await deleteQuery.eq('creator_id', user.id)
+  )
+    .select('id')
+    .maybeSingle()
+
   if (error) {
     console.error('[admin/matrica/spots] DELETE error', error)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
+  }
+
+  if (!data) {
+    return NextResponse.json({ error: 'not_allowed' }, { status: 403 })
   }
 
   return NextResponse.json({ ok: true })

@@ -80,7 +80,7 @@ const MAX_SPOT_IMAGE_SIZE_BYTES = 8 * 1024 * 1024
 const TARGET_SPOT_IMAGE_SIZE_BYTES = 120 * 1024
 const MAX_SPOT_IMAGE_DIMENSION = 640
 const MIN_SPOT_IMAGE_DIMENSION = 220
-const MAX_SPOT_IMAGE_COUNT = 3
+const MAX_SPOT_IMAGE_COUNT = 5
 
 async function loadImageForCompression(file: File): Promise<HTMLImageElement> {
   const objectUrl = URL.createObjectURL(file)
@@ -227,7 +227,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
 
     const remainingSlots = MAX_SPOT_IMAGE_COUNT - imageFiles.length
     if (remainingSlots <= 0) {
-      setError('Maximum 3 fotot tolthetsz fel egy rejtekhelyhez.')
+      setError('Maximum 5 fotot tolthetsz fel egy rejtekhelyhez.')
       if (fileRef.current) fileRef.current.value = ''
       return
     }
@@ -255,7 +255,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
       setImagePreviews((prev) => [...prev, ...previewUrls])
 
       if (files.length > filesToProcess.length) {
-        setError('Maximum 3 foto toltheto fel. A tobbit kihagytuk.')
+        setError('Maximum 5 foto toltheto fel. A tobbit kihagytuk.')
       }
     } catch (err) {
       setError(`Kép előkészítési hiba: ${err instanceof Error ? err.message : String(err)}`)
@@ -448,7 +448,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
 
         {/* Image upload */}
         <div>
-          <label style={s.label}>Fotók (max 3)</label>
+          <label style={s.label}>Fotók (max 5)</label>
           {imagePreviews.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 8 }}>
               {imagePreviews.map((preview, index) => (
@@ -487,7 +487,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
             {preparingImage
               ? 'Képek előkészítése…'
               : imageFiles.length >= MAX_SPOT_IMAGE_COUNT
-                ? 'Elérted a maximum 3 képet'
+                ? 'Elerte a maximum 5 kepet'
                 : '+ Képek hozzáadása'}
           </button>
           <p style={{ margin: '6px 0 0 0', fontSize: 11, color: '#6b7280', lineHeight: 1.35 }}>
