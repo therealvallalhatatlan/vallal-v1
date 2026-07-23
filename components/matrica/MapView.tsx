@@ -1826,51 +1826,79 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
 
       <nav
         aria-label="Halozat gyors műveletek"
+        className="matrica-action-rail"
         style={{
           position: 'fixed',
           left: '50%',
           transform: 'translateX(-50%)',
-          width: 'min(520px, calc(100vw - 16px))',
-          bottom: 10,
+          width: 'min(560px, calc(100vw - 10px))',
+          bottom: 8,
           zIndex: 230,
-          borderRadius: 16,
-          border: '1px solid rgba(200,169,126,0.22)',
-          background: 'rgba(4, 6, 8, 0.94)',
-          backdropFilter: 'blur(10px)',
-          boxShadow: '0 18px 34px rgba(0,0,0,0.46)',
+          borderRadius: 12,
+          border: '1px solid rgba(203,213,225,0.2)',
+          background: 'linear-gradient(180deg, rgba(8,11,14,0.92) 0%, rgba(5,8,11,0.98) 100%)',
+          backdropFilter: 'blur(12px) saturate(140%)',
+          boxShadow: '0 18px 34px rgba(0,0,0,0.5), 0 0 0 1px rgba(148,163,184,0.07), inset 0 1px 0 rgba(203,213,225,0.08)',
           display: 'flex',
-          gap: 8,
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
           overflow: 'hidden',
-          padding: '9px 10px calc(9px + env(safe-area-inset-bottom, 0px))',
+          padding: '7px 7px calc(8px + env(safe-area-inset-bottom, 0px))',
         }}
       >
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            backgroundImage: 'repeating-linear-gradient(180deg, rgba(163,230,53,0.055) 0px, rgba(163,230,53,0.055) 1px, transparent 1px, transparent 3px)',
+            mixBlendMode: 'screen',
+            opacity: 0.18,
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="matrica-rail-sweep"
+          style={{
+            position: 'absolute',
+            inset: '-80% -25% auto',
+            height: '160%',
+            pointerEvents: 'none',
+            background: 'radial-gradient(circle at center, rgba(163,230,53,0.18) 0%, rgba(163,230,53,0) 72%)',
+            filter: 'blur(16px)',
+          }}
+        />
         <button
           type="button"
           onClick={handleOpenSpotAdmin}
           aria-label="Szpot hozzáadása"
           title="Szpot hozzáadása"
+          className="matrica-action-btn matrica-action-btn-left"
           style={{
-            borderRadius: 12,
-            border: '1px solid rgba(200,169,126,0.4)',
-            background: 'rgba(200,169,126,0.14)',
-            color: '#f3e9d8',
-            padding: '8px 8px',
+            position: 'relative',
+            clipPath: 'polygon(7% 0%, 96% 0%, 88% 100%, 0% 100%)',
+            border: '1px solid rgba(203,213,225,0.24)',
+            background: 'linear-gradient(180deg, rgba(14,19,25,0.95), rgba(7,11,16,0.96))',
+            color: '#d4d4d8',
+            padding: '8px',
             cursor: 'pointer',
-            minHeight: 54,
-            minWidth: 0,
-            flex: '1 1 0',
+            width: 138,
+            height: 62,
+            flex: '0 0 138px',
             display: 'inline-flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 4,
-            boxShadow: 'inset 0 0 0 1px rgba(200,169,126,0.12)',
+            gap: 3,
+            boxShadow: 'inset 0 0 0 1px rgba(148,163,184,0.1)',
           }}
         >
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
             <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em' }}>Rejtek</span>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.11em' }}>UJ</span>
         </button>
 
         <button
@@ -1878,30 +1906,44 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
           onClick={handleToggleSpotsList}
           aria-label="Aktív szpotok"
           title="Aktív szpotok"
+          className="matrica-action-btn matrica-action-btn-core"
           style={{
-            borderRadius: 12,
-            border: '1px solid rgba(200,169,126,0.4)',
-            background: (previewSpot || spotsListOpen) ? 'rgba(42,35,27,0.96)' : 'rgba(23,26,31,0.92)',
-
-            color: '#e5e7eb',
-            padding: '8px 8px',
+            position: 'relative',
+            clipPath: 'polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)',
+            border: '1px solid rgba(190,242,100,0.85)',
+            background: (previewSpot || spotsListOpen)
+              ? 'linear-gradient(180deg, rgba(55,77,12,0.97), rgba(25,38,8,0.98))'
+              : 'linear-gradient(180deg, rgba(46,67,10,0.96), rgba(20,32,7,0.98))',
+            color: '#f7fee7',
+            padding: '8px 10px',
             cursor: 'pointer',
-            minHeight: 54,
-            minWidth: 0,
-            flex: '1 1 0',
+            width: 206,
+            height: 62,
+            flex: '0 0 206px',
             display: 'inline-flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 4,
-            boxShadow: 'inset 0 0 0 1px rgba(200,169,126,0.1)',
+            gap: 3,
+            boxShadow: '0 0 18px rgba(163,230,53,0.3), 0 14px 24px rgba(3,10,12,0.45), inset 0 0 0 1px rgba(217,249,157,0.26)',
           }}
         >
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
+          <span
+            aria-hidden="true"
+            className="matrica-core-btn-glow"
+            style={{
+              position: 'absolute',
+              inset: '-30% -12%',
+              background: 'radial-gradient(circle at 50% 45%, rgba(163,230,53,0.27), rgba(163,230,53,0) 72%)',
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2" />
             <circle cx="12" cy="12" r="2.2" fill="currentColor" />
           </svg>
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em' }}>Talalok</span>
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textShadow: '0 0 8px rgba(190,242,100,0.9)' }}>TALALOK</span>
         </button>
 
         <button
@@ -1909,28 +1951,32 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
           onClick={handleToggleChatPanel}
           aria-label="Chat panel"
           title="Chat panel"
+          className="matrica-action-btn matrica-action-btn-right"
           style={{
-            borderRadius: 12,
-            border: '1px solid rgba(200,169,126,0.35)',
-            background: livePanelOpen ? 'rgba(28,36,47,0.96)' : 'rgba(12,16,20,0.94)',
-            color: '#e2e8f0',
-            padding: '8px 8px',
+            position: 'relative',
+            clipPath: 'polygon(4% 0%, 93% 0%, 100% 100%, 12% 100%)',
+            border: '1px solid rgba(203,213,225,0.24)',
+            background: livePanelOpen
+              ? 'linear-gradient(180deg, rgba(16,34,44,0.96), rgba(9,18,25,0.98))'
+              : 'linear-gradient(180deg, rgba(11,16,21,0.95), rgba(6,10,14,0.98))',
+            color: '#e4e4e7',
+            padding: '8px',
             cursor: 'pointer',
-            minHeight: 54,
-            minWidth: 0,
-            flex: '1 1 0',
+            width: 138,
+            height: 62,
+            flex: '0 0 138px',
             display: 'inline-flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 4,
-            boxShadow: 'inset 0 0 0 1px rgba(200,169,126,0.1)',
+            gap: 3,
+            boxShadow: 'inset 0 0 0 1px rgba(148,163,184,0.1)',
           }}
         >
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
             <path d="M4 6.8a2.8 2.8 0 0 1 2.8-2.8h10.4A2.8 2.8 0 0 1 20 6.8v6.4a2.8 2.8 0 0 1-2.8 2.8H10.5l-3.9 3.1a.7.7 0 0 1-1.1-.55V16A2.8 2.8 0 0 1 4 13.2V6.8Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
           </svg>
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.04em' }}>Beszelek</span>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em' }}>BESZELEK</span>
         </button>
       </nav>
       </div>
@@ -1958,6 +2004,131 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         onOpenChange={setLivePanelOpen}
         showLauncher={false}
       />
+
+      <style jsx>{`
+        .matrica-action-rail {
+          isolation: isolate;
+        }
+
+        .matrica-action-btn {
+          transition: transform 180ms ease, box-shadow 240ms ease, border-color 200ms ease, filter 200ms ease, color 180ms ease;
+          will-change: transform;
+        }
+
+        .matrica-action-btn:hover {
+          transform: translateY(-1px);
+          border-color: rgba(217, 249, 157, 0.62);
+          color: #f4f4f5;
+          box-shadow: inset 0 0 0 1px rgba(217, 249, 157, 0.18), 0 8px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .matrica-action-btn:active {
+          transform: translateY(0);
+        }
+
+        .matrica-action-btn-core {
+          animation: matricaCorePulse 2.8s ease-in-out infinite;
+        }
+
+        .matrica-action-btn-core:hover {
+          transform: translateY(-1px);
+          border-color: rgba(217, 249, 157, 0.98);
+          box-shadow: 0 0 22px rgba(163, 230, 53, 0.44), 0 16px 26px rgba(3, 10, 12, 0.52), inset 0 0 0 1px rgba(217, 249, 157, 0.3);
+        }
+
+        .matrica-core-btn-glow {
+          animation: matricaCoreGlow 2.2s linear infinite;
+        }
+
+        .matrica-rail-sweep {
+          animation: matricaRailSweep 5.4s ease-in-out infinite;
+        }
+
+        @keyframes matricaCorePulse {
+          0%,
+          100% {
+            filter: saturate(100%);
+          }
+          45% {
+            filter: saturate(122%);
+          }
+          48% {
+            transform: skewX(-0.4deg);
+          }
+          50% {
+            transform: skewX(0.5deg);
+          }
+          52% {
+            transform: skewX(0deg);
+          }
+        }
+
+        @keyframes matricaCoreGlow {
+          0%,
+          100% {
+            opacity: 0.5;
+            transform: scale(0.98);
+          }
+          45% {
+            opacity: 0.82;
+            transform: scale(1.03);
+          }
+          49% {
+            opacity: 0.95;
+            transform: scale(1.06) translateX(-1px);
+          }
+          51% {
+            opacity: 0.7;
+            transform: scale(1) translateX(1px);
+          }
+        }
+
+        @keyframes matricaRailSweep {
+          0% {
+            transform: translateY(0%);
+            opacity: 0.2;
+          }
+          50% {
+            transform: translateY(54%);
+            opacity: 0.38;
+          }
+          100% {
+            transform: translateY(0%);
+            opacity: 0.2;
+          }
+        }
+
+        @media (max-width: 600px) {
+          .matrica-action-rail {
+            width: calc(100vw - 8px) !important;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+            gap: 4px !important;
+          }
+
+          .matrica-action-btn {
+            width: 30vw !important;
+            height: 58px !important;
+            flex-basis: 30vw !important;
+          }
+
+          .matrica-action-btn-core {
+            width: 34vw !important;
+            height: 70px !important;
+            flex-basis: 34vw !important;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .matrica-action-btn,
+          .matrica-action-btn-core,
+          .matrica-core-btn-glow,
+          .matrica-rail-sweep {
+            animation: none !important;
+            transition: none !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
