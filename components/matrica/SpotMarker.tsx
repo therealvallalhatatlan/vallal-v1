@@ -60,7 +60,7 @@ export default function SpotMarker({ map, spot, onSelect, onHoverStart, onHoverE
       width: 38px;
       height: 38px;
       border-radius: 50%;
-      background: rgba(200,169,126,0.22);
+      background: rgba(163,230,53,0.22);
       transform: translateZ(0);
       pointer-events: none;
     `
@@ -71,9 +71,9 @@ export default function SpotMarker({ map, spot, onSelect, onHoverStart, onHoverE
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      background: #c8a97e;
+      background: #a3e635;
       border: 3px solid #fff;
-      box-shadow: 0 0 12px rgba(200,169,126,0.65);
+      box-shadow: 0 0 12px rgba(163,230,53,0.72);
       transition: transform 0.15s ease;
       transform: translateZ(0) scale(1);
       position: relative;
@@ -106,7 +106,7 @@ export default function SpotMarker({ map, spot, onSelect, onHoverStart, onHoverE
             top: 50%;
             width: 38px;
             height: 38px;
-            background: rgba(200,169,126,0.24);
+            background: rgba(163,230,53,0.24);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             animation: spotPulse 1.4s infinite cubic-bezier(0.66, 0, 0, 1);

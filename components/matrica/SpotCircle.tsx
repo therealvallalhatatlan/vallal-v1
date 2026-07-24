@@ -41,8 +41,8 @@ export default function SpotCircle({ map, spot, radiusMeters, onSelect }: Props)
         type: 'fill',
         source: sourceId,
         paint: {
-          'fill-color': '#c8a97e',
-          'fill-opacity': 0.08,
+          'fill-color': '#a3e635',
+          'fill-opacity': 0.1,
         },
       })
     }
@@ -54,9 +54,9 @@ export default function SpotCircle({ map, spot, radiusMeters, onSelect }: Props)
         type: 'line',
         source: sourceId,
         paint: {
-          'line-color': '#c8a97e',
+          'line-color': '#bef264',
           'line-width': 1.5,
-          'line-opacity': 0.5,
+          'line-opacity': 0.62,
           'line-dasharray': [4, 4],
         },
       })

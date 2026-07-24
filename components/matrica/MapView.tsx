@@ -444,9 +444,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             dot.className = 'matrica-user-dot';
             dot.style.cssText = `
               width: 18px; height: 18px; border-radius: 50%;
-              background: radial-gradient(circle at 30% 30%, #f7efe4 0%, #d6ba92 42%, #92795b 100%);
+              background: radial-gradient(circle at 30% 30%, #f7fee7 0%, #bef264 42%, #4d7c0f 100%);
               border: 2px solid rgba(255,255,255,0.92);
-              box-shadow: 0 0 0 6px rgba(200,169,126,0.2), 0 0 24px rgba(200,169,126,0.28);
+              box-shadow: 0 0 0 6px rgba(163,230,53,0.24), 0 0 24px rgba(163,230,53,0.34);
               animation: userPulse 2.4s ease-in-out infinite;
             `;
 
@@ -760,9 +760,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        background: #c8a97e;
+        background: #a3e635;
         border: 3px solid #fff;
-        box-shadow: 0 0 12px rgba(200,169,126,0.55), inset 0 0 6px rgba(200,169,126,0.25);
+        box-shadow: 0 0 12px rgba(163,230,53,0.6), inset 0 0 6px rgba(163,230,53,0.34);
       `
 
       const marker = new mapboxgl.Marker({ element: el })
@@ -777,11 +777,11 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
       if (!popup) return
 
       popup.setHTML(`
-        <div style="min-width:228px;padding:12px;background:linear-gradient(180deg, rgba(9,12,16,0.97), rgba(11,14,19,0.97));color:#f4f4f5;border:1px solid rgba(200,169,126,0.28);border-radius:12px;box-shadow:0 14px 28px rgba(0,0,0,0.42);backdrop-filter: blur(8px);">
+        <div style="min-width:228px;padding:12px;background:linear-gradient(180deg, rgba(9,12,16,0.97), rgba(11,14,19,0.97));color:#f4f4f5;border:1px solid rgba(190,242,100,0.34);border-radius:12px;box-shadow:0 14px 28px rgba(0,0,0,0.42);backdrop-filter: blur(8px);">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
             ${safeAvatar
-              ? `<img src="${safeAvatar}" alt="${safeNickname}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,169,126,0.9);" />`
-              : `<div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#1f2937;color:#dbe1e8;font-weight:700;border:2px solid rgba(200,169,126,0.9);">${initial}</div>`}
+              ? `<img src="${safeAvatar}" alt="${safeNickname}" style="width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid rgba(190,242,100,0.9);" />`
+              : `<div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#1f2937;color:#dbe1e8;font-weight:700;border:2px solid rgba(190,242,100,0.9);">${initial}</div>`}
             <div style="min-width:0;">
               <div style="font-weight:700;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">${safeNickname}</div>
               <div style="font-size:12px;color:#9ca3af;">Online most</div>
@@ -797,7 +797,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
               <span style="color:#e5e7eb;font-weight:700;">${Number.isFinite(accepted) ? accepted : 0} db</span>
             </div>
           </div>
-          ${userId && canChat ? `<button class="matrica-chat-user-btn" data-user-id="${escapeHtml(userId)}" data-nickname="${safeNickname}" data-avatar-url="${safeAvatar || ''}" style="width:100%;padding:9px 12px;background:rgba(200,169,126,0.14);border:1px solid rgba(200,169,126,0.48);border-radius:8px;color:#f3e9d8;font-size:13px;font-weight:700;letter-spacing:0.03em;cursor:pointer;">CHAT</button><div style="font-size:10px;color:#9ca3af;text-align:center;margin-top:5px;line-height:1.35;">ideiglenes privat chat,<br/>amig online vagytok</div>` : ''}
+          ${userId && canChat ? `<button class="matrica-chat-user-btn" data-user-id="${escapeHtml(userId)}" data-nickname="${safeNickname}" data-avatar-url="${safeAvatar || ''}" style="width:100%;padding:9px 12px;background:rgba(163,230,53,0.14);border:1px solid rgba(190,242,100,0.5);border-radius:8px;color:#ecfccb;font-size:13px;font-weight:700;letter-spacing:0.03em;cursor:pointer;">CHAT</button><div style="font-size:10px;color:#9ca3af;text-align:center;margin-top:5px;line-height:1.35;">ideiglenes privat chat,<br/>amig online vagytok</div>` : ''}
         </div>
       `)
       marker.togglePopup()
@@ -907,7 +907,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
               'line-join': 'round',
             },
             paint: {
-              'line-color': '#c8a97e',
+              'line-color': '#a3e635',
               'line-width': 5,
               'line-opacity': 0.9,
             },
@@ -1397,18 +1397,18 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
           inset: -14px;
           border-radius: 999px;
           border: 2px solid rgba(200, 169, 126, 0.78);
-          background: rgba(200, 169, 126, 0.14);
+          background: rgba(163, 230, 53, 0.14);
           animation: approxSpotPulse 1.35s ease-out infinite;
-          box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 0 18px rgba(200,169,126,0.38);
+          box-shadow: 0 0 0 1px rgba(255,255,255,0.2), 0 0 18px rgba(163,230,53,0.45);
         }
 
         .matrica-approx-pulse-core {
           width: 12px;
           height: 12px;
           border-radius: 999px;
-          background: #c8a97e;
+          background: #a3e635;
           border: 2px solid rgba(255,255,255,0.9);
-          box-shadow: 0 0 12px rgba(200,169,126,0.9);
+          box-shadow: 0 0 12px rgba(163,230,53,0.9);
         }
 
         @keyframes approxSpotPulse {
@@ -1600,7 +1600,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             bottom: BOTTOM_ACTION_BAR_HEIGHT + 12,
             zIndex: 35,
             borderRadius: 14,
-            border: '1px solid rgba(200,169,126,0.32)',
+            border: '1px solid rgba(190,242,100,0.34)',
             background: 'rgba(9,9,11,0.93)',
             boxShadow: '0 18px 48px rgba(0,0,0,0.42)',
             padding: 14,
@@ -1609,7 +1609,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'start' }}>
             <div>
-              <div style={{ fontSize: 11, color: '#c8a97e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              <div style={{ fontSize: 11, color: '#bef264', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                 Utvonal aktiv
               </div>
               <div style={{ marginTop: 3, fontSize: 16, fontWeight: 700 }}>{routeState.spot.title}</div>
@@ -1657,9 +1657,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
                 alignItems: 'center',
                 gap: 6,
                 borderRadius: 999,
-                border: '1px solid rgba(200,169,126,0.28)',
-                background: 'rgba(200,169,126,0.14)',
-                color: '#f3e9d8',
+                border: '1px solid rgba(190,242,100,0.34)',
+                background: 'rgba(163,230,53,0.14)',
+                color: '#ecfccb',
                 padding: '5px 9px',
                 fontSize: 11,
                 fontWeight: 700,
@@ -1681,9 +1681,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
               }}
               style={{
                 borderRadius: 10,
-                border: '1px solid rgba(200,169,126,0.4)',
-                background: 'rgba(200,169,126,0.14)',
-                color: '#f3e9d8',
+                border: '1px solid rgba(190,242,100,0.44)',
+                background: 'rgba(163,230,53,0.14)',
+                color: '#ecfccb',
                 fontSize: 12,
                 fontWeight: 700,
                 padding: '8px 12px',
@@ -1700,9 +1700,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
               }}
               style={{
                 borderRadius: 10,
-                border: '1px solid rgba(200,169,126,0.34)',
-                background: 'rgba(200,169,126,0.12)',
-                color: '#ead8bf',
+                border: '1px solid rgba(190,242,100,0.4)',
+                background: 'rgba(163,230,53,0.12)',
+                color: '#ecfccb',
                 fontSize: 12,
                 fontWeight: 700,
                 padding: '8px 12px',
@@ -1784,14 +1784,14 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             style={{
               width: 'min(560px, 100%)',
               borderRadius: 16,
-              border: '1px solid rgba(200,169,126,0.3)',
+              border: '1px solid rgba(190,242,100,0.34)',
               background: 'linear-gradient(180deg, rgba(10,13,17,0.98), rgba(6,8,11,0.98))',
               boxShadow: '0 26px 56px rgba(0,0,0,0.52)',
               padding: 18,
               color: '#f4f4f5',
             }}
           >
-            <div style={{ fontSize: 11, letterSpacing: '0.08em', fontWeight: 700, color: '#c8a97e' }}>HALOZAT ROVIDEN</div>
+            <div style={{ fontSize: 11, letterSpacing: '0.08em', fontWeight: 700, color: '#bef264' }}>HALOZAT ROVIDEN</div>
             <h2 style={{ margin: '6px 0 10px', fontSize: 20, lineHeight: 1.2 }}>Igy mukodik a vadaszat</h2>
             <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: '#d4d4d8' }}>
               Menj a jelolt rejtekek kozelebe, nyisd meg a szpotot, majd a helyszinen jelold, hogy megtalaltad.
@@ -1809,9 +1809,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
                 marginTop: 14,
                 width: '100%',
                 borderRadius: 11,
-                border: '1px solid rgba(200,169,126,0.42)',
-                background: 'rgba(200,169,126,0.16)',
-                color: '#f3e9d8',
+                border: '1px solid rgba(190,242,100,0.5)',
+                background: 'rgba(163,230,53,0.16)',
+                color: '#ecfccb',
                 fontSize: 14,
                 fontWeight: 700,
                 padding: '10px 12px',

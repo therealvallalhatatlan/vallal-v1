@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 // Fallback for missing constant
 // Remove if you have the real import
 const MATRICA_START_ROUTE_EVENT = 'matrica:start-route';
@@ -37,7 +37,7 @@ type SpotEditDraft = {
 export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrentUser = false, reserveRightSpace = 0 }: { onMessageUser?: (user: OnlineUserProfile) => void; pmUnreadCounts?: Record<string, number | undefined>; hideCurrentUser?: boolean; reserveRightSpace?: number }) {
   usePresence()
 
-  const currentUserAccent = '#c8a97e'
+  const currentUserAccent = '#a3e635'
 
   const { session } = useSessionGuard()
   const currentUserId = (session as any)?.user?.id
@@ -156,9 +156,9 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
             marginRight: 10,
             padding: u.id === currentUserId ? (isMobile ? '3px 6px' : '4px 8px') : 0,
             borderRadius: u.id === currentUserId ? (isMobile ? 14 : 999) : 999,
-            background: u.id === currentUserId ? 'rgba(200,169,126,0.16)' : 'transparent',
-            border: u.id === currentUserId ? '1px solid rgba(200,169,126,0.5)' : '1px solid transparent',
-            boxShadow: u.id === currentUserId ? '0 0 0 1px rgba(200,169,126,0.16), 0 4px 12px rgba(0,0,0,0.4)' : 'none',
+            background: u.id === currentUserId ? 'rgba(163,230,53,0.16)' : 'transparent',
+            border: u.id === currentUserId ? '1px solid rgba(190,242,100,0.5)' : '1px solid transparent',
+            boxShadow: u.id === currentUserId ? '0 0 0 1px rgba(163,230,53,0.16), 0 4px 12px rgba(0,0,0,0.4)' : 'none',
           }}
         >
           <div 
@@ -197,11 +197,11 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                     },
                   }))
                 } else {
-                  alert(`${u.nickname} pozíciója nem elérhető.\n\nBiztos, hogy engedélyezted a helymeghatározást?`)
+                  alert(`${u.nickname} pozĂ­ciĂłja nem elĂ©rhetĹ‘.\n\nBiztos, hogy engedĂ©lyezted a helymeghatĂˇrozĂˇst?`)
                 }
               }
             }}
-            title={`${u.nickname} - ${u.lat && u.lng ? 'Kattints a térképen való megjelenítéshez' : 'Nincs pozíció adat'}`}
+            title={`${u.nickname} - ${u.lat && u.lng ? 'Kattints a tĂ©rkĂ©pen valĂł megjelenĂ­tĂ©shez' : 'Nincs pozĂ­ciĂł adat'}`}
           >
             {u.avatarUrl ? (
               <img
@@ -231,7 +231,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                   width: isMobile ? 22 : 20,
                   height: isMobile ? 14 : 16,
                   borderRadius: 999,
-                  background: '#c8a97e',
+                  background: '#a3e635',
                   border: '2px solid #0b1020',
                   lineHeight: 1,
                   display: 'flex',
@@ -251,8 +251,8 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                   e.stopPropagation()
                   onMessageUser(u)
                 }}
-                aria-label={`${u.nickname} üzenete`}
-                title={`${u.nickname} üzenete`}
+                aria-label={`${u.nickname} ĂĽzenete`}
+                title={`${u.nickname} ĂĽzenete`}
                 style={{
                   position: 'absolute',
                   top: -6,
@@ -285,7 +285,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                 ) : null}
               </button>
             ) : null}
-            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#c8a97e' : '#4b5563', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
+            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#a3e635' : '#4b5563', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
           </div>
           <span
             onClick={(e) => {
@@ -305,7 +305,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
               textAlign: 'center',
               cursor: u.id === currentUserId || !onMessageUser ? 'default' : 'pointer',
               textDecoration: u.id === currentUserId || !onMessageUser ? 'none' : 'underline',
-              textDecorationColor: 'rgba(200,169,126,0.5)',
+              textDecorationColor: 'rgba(190,242,100,0.5)',
               textUnderlineOffset: 2,
             }}
           >
@@ -820,9 +820,9 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
           fontWeight: 600,
           lineHeight: 1,
         }}
-        aria-label="HÁLÓZAT"
+        aria-label="HĂLĂ“ZAT"
       >
-        HÁLÓZAT
+        HĂLĂ“ZAT
       </Link>
 
       {/* Right side: links + profile */}
@@ -836,13 +836,13 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                 playUiClick()
                 setMenuOpen(o => !o)
               }}
-              aria-label="Felhasználói menü"
-              title="Profil beállítások"
+              aria-label="FelhasznĂˇlĂłi menĂĽ"
+              title="Profil beĂˇllĂ­tĂˇsok"
               style={{
                 width: profileAvatarSize,
                 height: profileAvatarSize,
                 borderRadius: '50%',
-                border: '2px solid #c8a97e',
+                border: '2px solid #a3e635',
                 background: 'transparent',
                 cursor: 'pointer',
                 padding: 0,
@@ -863,7 +863,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                     borderRadius: '50%',
                     objectFit: 'cover',
                     display: 'block',
-                    border: '2px solid #c8a97e',
+                    border: '2px solid #a3e635',
                   }}
                 />
               ) : (
@@ -875,12 +875,12 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'rgba(200,169,126,0.16)',
+                    background: 'rgba(163,230,53,0.16)',
                     color: '#f4f4f5',
                     fontSize: 11,
                     fontWeight: 700,
                     letterSpacing: '0.02em',
-                    border: '2px solid #c8a97e',
+                    border: '2px solid #a3e635',
                   }}
                 >
                   {(nickname || email || '?').trim().charAt(0).toUpperCase() || '?'}
@@ -892,7 +892,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                   top: -6,
                   left: -5,
                   border: '1px solid rgba(255,255,255,0.18)',
-                  background: '#c8a97e',
+                  background: '#a3e635',
                   color: '#111827',
                   fontSize: 9,
                   fontWeight: 800,
@@ -913,7 +913,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                   right: 0,
                   minWidth: 260,
                   background: 'rgba(5,7,9,0.98)',
-                  border: '1px solid rgba(200,169,126,0.22)',
+                  border: '1px solid rgba(190,242,100,0.22)',
                   boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
                   backdropFilter: 'blur(16px)',
                   WebkitBackdropFilter: 'blur(16px)',
@@ -923,7 +923,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
               >
                 {/* Identity */}
                 <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                  <p style={{ margin: 0, fontSize: 10, color: '#c8a97e', marginBottom: 6, letterSpacing: '0.12em', fontWeight: 700 }}>SESSION ACTIVE</p>
+                  <p style={{ margin: 0, fontSize: 10, color: '#a3e635', marginBottom: 6, letterSpacing: '0.12em', fontWeight: 700 }}>SESSION ACTIVE</p>
                   {nicknameEditing ? (
                     <>
                       <input
@@ -961,9 +961,9 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                           onClick={() => void handleSaveNickname()}
                           disabled={nicknameSaving}
                           style={{
-                            border: '1px solid rgba(200,169,126,0.35)',
-                            background: 'rgba(200,169,126,0.12)',
-                            color: '#f3e9d8',
+                            border: '1px solid rgba(190,242,100,0.35)',
+                            background: 'rgba(163,230,53,0.12)',
+                            color: '#ecfccb',
                             fontSize: 11,
                             fontWeight: 700,
                             padding: '5px 8px',
@@ -1018,7 +1018,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                         style={{
                           border: 'none',
                           background: 'transparent',
-                          color: '#c8a97e',
+                          color: '#a3e635',
                           fontSize: 11,
                           fontWeight: 700,
                           cursor: 'pointer',
@@ -1045,9 +1045,9 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
                   <span style={{ fontSize: 12, color: '#a1a1aa', letterSpacing: '0.08em' }}>PONTSZAM</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#c8a97e', fontWeight: 700, fontSize: 14 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#a3e635', fontWeight: 700, fontSize: 14 }}>
                     <span style={{ fontSize: 15 }}>+</span>
-                    {score !== null ? `${score} pont` : '…'}
+                    {score !== null ? `${score} pont` : 'â€¦'}
                   </span>
                 </div>
 
@@ -1073,7 +1073,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                     display: 'flex', alignItems: 'center', gap: 8,
                   }}
                 >
-                  <span>[00]</span> Kijelentkezés
+                  <span>[00]</span> KijelentkezĂ©s
                 </button>
               </div>
             )}
@@ -1120,7 +1120,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <strong style={{ fontSize: 14, color: '#e5e7eb' }}>Aktív szpotok</strong>
+              <strong style={{ fontSize: 14, color: '#e5e7eb' }}>AktĂ­v szpotok</strong>
               <span style={{ fontSize: 12, color: '#a1a1aa' }}>{spots.length} db</span>
             </div>
             <button
@@ -1135,13 +1135,13 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                 cursor: 'pointer',
               }}
             >
-              Bezár
+              BezĂˇr
             </button>
           </div>
 
           <div style={{ padding: '12px 16px' }}>
             {spotsLoading ? (
-              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Szpotok betöltése...</div>
+              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Szpotok betĂ¶ltĂ©se...</div>
             ) : spotsError ? (
               <div style={{ color: '#fda4af', fontSize: 13 }}>{spotsError}</div>
             ) : spots.length === 0 ? (
@@ -1197,7 +1197,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
                     <div style={{ padding: 11, display: 'grid', gap: 8 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                         <strong style={{ color: '#f4f4f5', fontSize: 14, lineHeight: 1.25 }}>{spot.title}</strong>
-                        <span style={{ color: '#c8a97e', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>
+                        <span style={{ color: '#a3e635', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>
                           {spot.remaining_quantity} maradt
                         </span>
                       </div>
@@ -1268,8 +1268,8 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
             key={toast.id}
             style={{
               animation: 'slideInRight 0.3s ease-out',
-              background: 'linear-gradient(135deg, rgba(200,169,126,0.92), rgba(146,121,91,0.92))',
-              border: '1px solid rgba(200,169,126,0.45)',
+              background: 'linear-gradient(135deg, rgba(163,230,53,0.92), rgba(101,163,13,0.92))',
+              border: '1px solid rgba(190,242,100,0.45)',
               borderRadius: 12,
               padding: '12px 14px',
               color: '#101418',
@@ -1281,8 +1281,8 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 16 }}>💬</span>
-              <span><strong>{toast.nickname}</strong> üzenetet küldött</span>
+              <span style={{ fontSize: 16 }}>đź’¬</span>
+              <span><strong>{toast.nickname}</strong> ĂĽzenetet kĂĽldĂ¶tt</span>
             </div>
           </div>
         ))}

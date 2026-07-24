@@ -97,7 +97,7 @@ export default function ActiveSpotsPanel({
   const header = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
       <div>
-        <div style={{ fontSize: 10, color: '#c8a97e', letterSpacing: '0.08em', fontWeight: 700 }}>
+        <div style={{ fontSize: 10, color: '#bef264', letterSpacing: '0.08em', fontWeight: 700 }}>
           {inlineMode ? 'AKTIV LELOHELYEK' : 'AKTIV SZPOTOK'}
         </div>
         <div style={{ marginTop: 2, fontSize: 12, color: '#a1a1aa' }}>
@@ -154,9 +154,9 @@ export default function ActiveSpotsPanel({
               width: 32,
               height: 32,
               borderRadius: '50%',
-              border: '1px solid rgba(200,169,126,0.4)',
+              border: '1px solid rgba(190,242,100,0.46)',
               background: 'rgba(8,10,12,0.92)',
-              color: '#f3e9d8',
+              color: '#ecfccb',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -178,9 +178,9 @@ export default function ActiveSpotsPanel({
               width: 32,
               height: 32,
               borderRadius: '50%',
-              border: '1px solid rgba(200,169,126,0.4)',
+              border: '1px solid rgba(190,242,100,0.46)',
               background: 'rgba(8,10,12,0.92)',
-              color: '#f3e9d8',
+              color: '#ecfccb',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -243,7 +243,7 @@ export default function ActiveSpotsPanel({
                   flex: '0 0 auto',
                   scrollSnapAlign: 'start',
                   width: isMobile ? 'min(78vw, 260px)' : 220,
-                  border: '1px solid rgba(200,169,126,0.24)',
+                  border: '1px solid rgba(190,242,100,0.3)',
                   borderRadius: 12,
                   background: 'linear-gradient(180deg, rgba(9,12,16,0.96), rgba(11,14,19,0.96))',
                   cursor: 'pointer',
@@ -279,7 +279,7 @@ export default function ActiveSpotsPanel({
                 )}
 
                 <div style={{ padding: '9px 10px 11px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                  <div style={{ fontSize: 9, color: '#c8a97e', letterSpacing: '0.06em', fontWeight: 700 }}>
+                  <div style={{ fontSize: 9, color: '#bef264', letterSpacing: '0.06em', fontWeight: 700 }}>
                     {spot.spot_type === 'paid' ? 'FIZETOS' : 'AKTIV'}
                   </div>
                   {isEditing ? (
@@ -357,7 +357,7 @@ export default function ActiveSpotsPanel({
 
                       <div style={{ fontSize: 11, fontWeight: 700 }}>
                         {typeof spot.price_huf === 'number' && spot.price_huf > 0 ? (
-                          <span style={{ color: '#f3e9d8' }}>{spot.price_huf} HUF</span>
+                          <span style={{ color: '#ecfccb' }}>{spot.price_huf} HUF</span>
                         ) : (
                           <span style={{ color: '#86efac' }}>FREE</span>
                         )}
@@ -398,9 +398,9 @@ export default function ActiveSpotsPanel({
                             disabled={savingSpotId === spot.id}
                             style={{
                               flex: 1,
-                              border: '1px solid rgba(200,169,126,0.35)',
-                              background: 'rgba(200,169,126,0.12)',
-                              color: '#f3e9d8',
+                              border: '1px solid rgba(190,242,100,0.44)',
+                              background: 'rgba(163,230,53,0.12)',
+                              color: '#ecfccb',
                               fontSize: 11,
                               fontWeight: 700,
                               padding: '6px 4px',
@@ -448,9 +448,9 @@ export default function ActiveSpotsPanel({
                           }}
                           style={{
                             flex: 1,
-                            border: '1px solid rgba(200,169,126,0.35)',
-                            background: 'rgba(200,169,126,0.08)',
-                            color: '#f3e9d8',
+                            border: '1px solid rgba(190,242,100,0.4)',
+                            background: 'rgba(163,230,53,0.08)',
+                            color: '#ecfccb',
                             fontSize: 11,
                             fontWeight: 700,
                             padding: '6px 4px',
@@ -473,9 +473,9 @@ export default function ActiveSpotsPanel({
                         disabled={claimDisabled}
                         style={{
                           flex: 1,
-                          border: '1px solid rgba(200,169,126,0.35)',
-                          background: claimDisabled ? 'rgba(255,255,255,0.04)' : 'rgba(200,169,126,0.14)',
-                          color: claimDisabled ? '#71717a' : '#f3e9d8',
+                          border: '1px solid rgba(190,242,100,0.4)',
+                          background: claimDisabled ? 'rgba(255,255,255,0.04)' : 'rgba(163,230,53,0.14)',
+                          color: claimDisabled ? '#71717a' : '#ecfccb',
                           fontSize: 11,
                           fontWeight: 700,
                           padding: '6px 4px',
@@ -495,9 +495,9 @@ export default function ActiveSpotsPanel({
                       }}
                       style={{
                         flex: 1,
-                        border: '1px solid rgba(200,169,126,0.35)',
-                        background: 'rgba(200,169,126,0.12)',
-                        color: '#f3e9d8',
+                        border: '1px solid rgba(190,242,100,0.42)',
+                        background: 'rgba(163,230,53,0.12)',
+                        color: '#ecfccb',
                         fontSize: 11,
                         fontWeight: 700,
                         padding: '6px 4px',
@@ -546,7 +546,7 @@ export default function ActiveSpotsPanel({
           position: 'relative',
           width: '100%',
           borderRadius: 16,
-          border: '1px solid rgba(200,169,126,0.28)',
+          border: '1px solid rgba(190,242,100,0.3)',
           background: 'linear-gradient(180deg, rgba(9,12,16,0.97), rgba(6,8,10,0.97))',
           boxShadow: '0 20px 48px rgba(0,0,0,0.5)',
           padding: '14px 16px 12px',
@@ -583,7 +583,7 @@ export default function ActiveSpotsPanel({
             bottom: bottomOffset,
             zIndex: 45,
             background: 'linear-gradient(180deg, rgba(6,7,9,0.99), rgba(8,11,15,0.99))',
-            borderTop: '1px solid rgba(200,169,126,0.32)',
+            borderTop: '1px solid rgba(190,242,100,0.34)',
             boxShadow: '0 -26px 60px rgba(0,0,0,0.46)',
             padding: '12px 14px 16px',
             maxHeight: '52vh',
@@ -592,7 +592,7 @@ export default function ActiveSpotsPanel({
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-            <div style={{ width: 36, height: 4, background: 'rgba(200,169,126,0.42)', borderRadius: 4 }} />
+            <div style={{ width: 36, height: 4, background: 'rgba(163,230,53,0.5)', borderRadius: 4 }} />
           </div>
           {header}
           {cardsRow}
@@ -611,7 +611,7 @@ export default function ActiveSpotsPanel({
         zIndex: 36,
         width: 'min(760px, calc(100vw - 24px))',
         borderRadius: 16,
-        border: '1px solid rgba(200,169,126,0.28)',
+        border: '1px solid rgba(190,242,100,0.3)',
         background: 'linear-gradient(180deg, rgba(9,12,16,0.97), rgba(6,8,10,0.97))',
         boxShadow: '0 20px 48px rgba(0,0,0,0.5)',
         padding: '14px 16px 12px',

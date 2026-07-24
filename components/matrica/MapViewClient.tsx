@@ -181,7 +181,7 @@ export default function MapViewClient() {
             style={{
               width: 'min(520px, 100%)',
               borderRadius: 12,
-              border: '1px solid rgba(200,169,126,0.3)',
+              border: '1px solid rgba(190,242,100,0.32)',
               background: 'linear-gradient(180deg, rgba(14,17,22,0.96), rgba(8,10,13,0.98))',
               boxShadow: '0 24px 70px rgba(0,0,0,0.55)',
               padding: 18,
@@ -232,9 +232,9 @@ export default function MapViewClient() {
                 disabled={savingNickname || !nicknameInput.trim()}
                 style={{
                   borderRadius: 10,
-                  border: '1px solid rgba(200,169,126,0.4)',
-                  background: 'rgba(200,169,126,0.14)',
-                  color: '#f3e9d8',
+                  border: '1px solid rgba(190,242,100,0.44)',
+                  background: 'rgba(163,230,53,0.14)',
+                  color: '#ecfccb',
                   fontWeight: 700,
                   fontSize: 13,
                   padding: '8px 12px',
