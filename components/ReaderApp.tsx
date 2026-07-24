@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   Sheet,
@@ -37,6 +38,7 @@ export type Story = {
 
 type ReaderAppProps = {
   stories: Story[];
+  initialSlug?: string;
   userEmail?: string | null;
   avatarUrl?: string | null;
   onSignOut?: () => Promise<void> | void;
@@ -90,7 +92,8 @@ function buildPlaylistCandidates(slug: string): string[] {
   return Array.from(out);
 }
 
-export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: ReaderAppProps) {
+export default function ReaderApp({ stories, initialSlug, userEmail, avatarUrl, onSignOut }: ReaderAppProps) {
+  const router = useRouter();
   const firstStory = stories[0];
   const [currentSlug, setCurrentSlug] = useState<string | undefined>(
     firstStory?.slug
@@ -139,6 +142,7 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
   const [playlistLoading, setPlaylistLoading] = useState(false);
   const { activeCount } = usePresence();
+  const isValidInitialSlug = !!initialSlug && stories.some((story) => story.slug === initialSlug);
 
   const currentIndex = useMemo(
     () => stories.findIndex((s) => s.slug === currentSlug),
@@ -171,13 +175,14 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) {
-        if (firstStory) {
+        const initialStorySlug = isValidInitialSlug ? initialSlug : firstStory?.slug;
+        if (initialStorySlug) {
           const initialState: ReaderState = {
-            lastStorySlug: firstStory.slug,
-            finishedStories: [firstStory.slug],
+            lastStorySlug: initialStorySlug,
+            finishedStories: [initialStorySlug],
           };
           setReaderState(initialState);
-          setCurrentSlug(firstStory.slug);
+          setCurrentSlug(initialStorySlug);
           window.localStorage.setItem(
             STORAGE_KEY,
             JSON.stringify(initialState)
@@ -187,6 +192,21 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
       }
 
       const parsed: ReaderState = JSON.parse(raw);
+
+      if (isValidInitialSlug && initialSlug) {
+        const finishedStories = new Set(parsed.finishedStories || []);
+        finishedStories.add(initialSlug);
+        const nextState: ReaderState = {
+          ...parsed,
+          lastStorySlug: initialSlug,
+          finishedStories: Array.from(finishedStories),
+        };
+        setReaderState(nextState);
+        setCurrentSlug(initialSlug);
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+        return;
+      }
+
       setReaderState(parsed);
 
       if (
@@ -198,11 +218,13 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
         setCurrentSlug(firstStory.slug);
       }
     } catch {
-      if (firstStory) {
+      if (isValidInitialSlug && initialSlug) {
+        setCurrentSlug(initialSlug);
+      } else if (firstStory) {
         setCurrentSlug(firstStory.slug);
       }
     }
-  }, [stories, firstStory]);
+  }, [stories, firstStory, initialSlug, isValidInitialSlug]);
 
   // Fetch comments when Kommentek tab is active (all comments, not just current story)
   useEffect(() => {
@@ -402,6 +424,10 @@ export default function ReaderApp({ stories, userEmail, avatarUrl, onSignOut }: 
   const handleSelectStory = (slug: string) => {
     setCurrentSlug(slug);
     markAsFinished(slug);
+    const nextPath = `/reader/${slug}`;
+    if (typeof window !== "undefined" && window.location.pathname !== nextPath) {
+      router.replace(nextPath, { scroll: false });
+    }
     scrollToTop();
   };
 
