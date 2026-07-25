@@ -24,14 +24,35 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const entry = konyv2Novellak.find((e) => e.slug === slug)
   if (!entry) return {}
 
+  const pageUrl = `https://vallalhatatlan.online/konyv-2/${slug}`
+  const ogImageUrl = `${pageUrl}/opengraph-image`
+  const metaTitle = `${entry.title} | Vállalhatatlan`
+  const metaDescription = `Könyv 2 novella: ${entry.title}`
+
   return {
-    title: `${entry.title} | Vállalhatatlan`,
+    title: metaTitle,
+    description: metaDescription,
     alternates: {
-      canonical: `https://vallalhatatlan.online/konyv-2/${slug}`,
+      canonical: pageUrl,
     },
     openGraph: {
-      title: `${entry.title} | Vállalhatatlan`,
-      url: `https://vallalhatatlan.online/konyv-2/${slug}`,
+      title: metaTitle,
+      description: metaDescription,
+      url: pageUrl,
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: metaTitle,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: metaTitle,
+      description: metaDescription,
+      images: [ogImageUrl],
     },
   }
 }
