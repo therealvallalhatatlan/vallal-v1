@@ -7,6 +7,7 @@ import { Facebook, KeyRound, LogOut, Mail, Menu, MessageCircle, Rss, UserRound, 
 
 import { useSessionGuard } from "@/hooks/useSessionGuard";
 import { createClient } from "@/lib/browser";
+import { buildAuthHref, clearStoredAuthReturnTarget } from "@/lib/authRedirect";
 
 const NAV_LINKS = [
   { label: "Shop", href: "/shop", accent: true },
@@ -189,9 +190,20 @@ export default function Navigation() {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      // Continue with local cleanup even if network/global revoke fails.
+    }
+
+    clearStoredAuthReturnTarget();
+
     setIsMenuOpen(false);
-    router.replace("/auth");
+    if (typeof window !== "undefined") {
+      window.location.replace("/auth?logout=1");
+      return;
+    }
+    router.replace("/auth?logout=1");
     setIsLoggingOut(false);
   };
 
@@ -275,7 +287,7 @@ export default function Navigation() {
             ) : null}
             {!userEmail ? (
               <Link
-                href="/auth?from=/reader"
+                href={buildAuthHref(pathname || "/halozat")}
                 onClick={closeMenu}
                 className="inline-flex h-12 items-center gap-2 border border-lime-500/40 bg-lime-500/10 px-4 text-sm font-semibold text-lime-300 transition-colors hover:border-lime-400 hover:bg-lime-500/15"
                 aria-label="Belépés"
@@ -330,7 +342,7 @@ export default function Navigation() {
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
-                  href={link.protected && !userEmail ? `/auth?from=${encodeURIComponent(link.href)}` : link.href}
+                  href={link.protected && !userEmail ? buildAuthHref(link.href) : link.href}
                   onClick={closeMenu}
                   className={`group border px-4 py-4 transition-colors ${
                     link.accent
@@ -391,7 +403,7 @@ export default function Navigation() {
               ) : (
                 <div className="grid gap-3">
                   <Link
-                    href="/auth?from=/reader"
+                    href={buildAuthHref(pathname || "/halozat")}
                     onClick={closeMenu}
                     className="inline-flex items-center justify-between border border-lime-500/40 bg-lime-500/10 px-4 py-3 text-sm font-semibold text-lime-300 transition-colors hover:border-lime-400 hover:bg-lime-500/15"
                   >

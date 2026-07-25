@@ -10,6 +10,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useSessionGuard } from '@/hooks/useSessionGuard.js'
 import { usePresence } from '@/hooks/usePresence'
 import { buildPrivateRoomId, getPrivateRoomSenderRole } from '@/lib/live/privateRooms'
+import { buildAuthHref, clearStoredAuthReturnTarget } from '@/lib/authRedirect'
 import MatricaPrivateMessagePanel from '@/components/matrica/MatricaPrivateMessagePanel'
 // If StickerSpot is not imported from types, define a fallback type
 // Remove this if you have the correct import
@@ -766,8 +767,20 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
   async function handleSignOut() {
     setMenuOpen(false)
     const supabase = createClient()
-    await supabase.auth.signOut()
-    router.replace('/auth')
+    try {
+      await supabase.auth.signOut({ scope: 'local' })
+    } catch {
+      // Continue with local cleanup even if network/global revoke fails.
+    }
+
+    clearStoredAuthReturnTarget()
+
+    const returnTo = pathname || '/halozat'
+    if (typeof window !== 'undefined') {
+      window.location.replace(`${buildAuthHref(returnTo)}&logout=1`)
+      return
+    }
+    router.replace(`${buildAuthHref(returnTo)}&logout=1`)
   }
 
   const profileAvatarSize = isMobile ? 44 : 32

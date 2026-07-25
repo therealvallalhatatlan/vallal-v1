@@ -3,6 +3,7 @@
 import { Suspense, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/browser";
+import { persistAuthReturnTarget, resolveAuthReturnTarget } from "@/lib/authRedirect";
 
 const supabase = createClient();
 const VIDEO_SRC = "/videos/video3.mp4";
@@ -25,12 +26,14 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
   const [oauthLoading, setOauthLoading] = useState(false);
 
   const next = (() => {
-    const explicitNext = searchParams?.get("next") || searchParams?.get("from") || "";
-    if (explicitNext) return explicitNext;
-    if (typeof document !== "undefined" && document.referrer.includes("/zarojel")) {
-      return "/halozat";
-    }
-    return "/reader";
+    const fallback = "/halozat";
+    const currentOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
+    return resolveAuthReturnTarget({
+      nextParam: searchParams?.get("next"),
+      fromParam: searchParams?.get("from"),
+      fallback,
+      currentOrigin,
+    });
   })();
 
   const handleGoogleSignIn = async () => {
@@ -41,13 +44,8 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
       // Ensure OAuth can switch accounts instead of silently reusing an existing local session.
       await supabase.auth.signOut();
 
-      try {
-        window.sessionStorage.setItem("vallal_auth_next", next);
-        window.localStorage.setItem("vallal_auth_next", next);
-      } catch {
-        // ignore
-      }
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      persistAuthReturnTarget(next);
+      const redirectTo = `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -71,7 +69,9 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
     setError(null);
     setLoading(true);
 
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+    persistAuthReturnTarget(next);
+
+    const redirectTo = `${window.location.origin}/auth/callback`;
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {

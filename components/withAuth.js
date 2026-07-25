@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
+import { buildAuthHref } from '@/lib/authRedirect';
 
 function withAuth(WrappedComponent) {
   function WithAuthComponent(props) {
@@ -11,7 +12,8 @@ function withAuth(WrappedComponent) {
 
     useEffect(() => {
       if (!loading && !session) {
-        router.replace('/auth');
+        const returnTo = router.asPath || '/halozat';
+        router.replace(buildAuthHref(returnTo));
       }
     }, [loading, session, router]);
 
