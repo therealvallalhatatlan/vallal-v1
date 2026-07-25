@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import Navigation from '@/components/Navigation'
 import { SupportersTicker } from '@/components/supporters/SupportersTicker'
 import { SUPPORTER_NAMES } from '@/data/supporters'
 
@@ -117,6 +118,10 @@ export default function TamogatasPage() {
     <main className="relative min-h-screen overflow-hidden bg-[#07080c] text-zinc-100">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(87,255,143,0.14),transparent_40%),radial-gradient(circle_at_78%_15%,rgba(61,225,255,0.1),transparent_36%),radial-gradient(circle_at_50%_120%,rgba(0,0,0,0.8),rgba(0,0,0,1))]" />
       <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(to_bottom,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:100%_3px]" />
+
+      <div className="relative z-20">
+        <Navigation />
+      </div>
 
       <section className="relative mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 pb-14 pt-12 sm:px-7">
         <SupportersTicker names={SUPPORTER_NAMES} label="Tamogatok nevei" />

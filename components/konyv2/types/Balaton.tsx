@@ -25,7 +25,9 @@ const HULLAM_LOOP_SRC = '/audio/hullam.wav'
 const KIDS_SFX_SRC = '/audio/kids.wav'
 const KIDS2_SFX_SRC = '/audio/kids2.wav'
 const REGGAE_SFX_SRC = '/audio/reggae.wav'
+const REGGAE2_LOOP_SRC = '/audio/reggae2.wav'
 const SPLASH_SFX_SRC = '/audio/splash.wav'
+const LIGHTER_SFX_SRC = '/audio/sfx-lighter.wav'
 
 const ETTEREM_START_PHRASE = normalizeForMatch('Hozhatok még egy bloody maryt?')
 const ETTEREM_STOP_PHRASE = normalizeForMatch('Nem vagyunk éhesek Hans.')
@@ -49,7 +51,9 @@ const HULLAM_STOP_PHRASE = normalizeForMatch('Hátranézek Beára de elfordítja
 const BOAT_RETURN_START_PHRASE = normalizeForMatch('Tekerni kezdjük a vizibiciklit hogy eltávolodjunk')
 const KIDS2_CUE_PHRASE = normalizeForMatch('kapkodom a levegőt mire végre besiklok')
 const REGGAE_CUE_PHRASE = normalizeForMatch('Rögtön kiszúrom Bea rozsdavörös felhőszerű')
+const REGGAE2_START_PHRASE = normalizeForMatch('Csendben ülünk pár pillanatig, és csak sodródunk a vizibiciklivel.')
 const SPLASH_CUE_PHRASE = normalizeForMatch('A kurva anyádat bazdmeg! - sziszegi a fogai közt,')
+const LIGHTER_CUE_PHRASE = normalizeForMatch('Raszta közben rágyújt, nagyokat szippant a jointból')
 const DAWN_TRANSITION_PHRASE = normalizeForMatch('Már világos van amikor a telefonom csörgésére kinyitom')
 
 const ETTEREM_VOLUME = 0.72
@@ -57,6 +61,7 @@ const TUCSOK_VOLUME = 0.52
 const DRAMA_VOLUME = 0.72
 const AMBIENT_VOLUME = 0.72
 const REGGAE_VOLUME = 0.86
+const REGGAE2_VOLUME = 0.72
 const STORY_UNLOCK_SLUG = 'a-balatonnal'
 
 type AudioPhase = 'etterem' | 'tucsok' | 'tension2' | 'balaton-night' | 'balaton-day' | 'boat' | 'hullam' | 'silent'
@@ -140,13 +145,34 @@ function splitStoryContent(content: string | null, forceSingleSection = false): 
   }
 }
 
+function clamp01(value: number): number {
+  return Math.max(0, Math.min(1, value))
+}
+
+function smoothStep(value: number): number {
+  const t = clamp01(value)
+  return t * t * (3 - 2 * t)
+}
+
+function mixChannel(from: number, to: number, t: number): number {
+  return Math.round(from + (to - from) * clamp01(t))
+}
+
 function NightToDawnBackground({ dawnProgress }: { dawnProgress: number }) {
-  const nightOpacity = Math.max(0, 1 - dawnProgress * 1.6)
-  const dawnOpacity = Math.min(1, dawnProgress * 1.45)
+  const easedProgress = smoothStep(dawnProgress)
+  const dawnBloom = Math.pow(easedProgress, 1.24)
+  const dawnAtmosphere = clamp01(easedProgress * 1.16)
+  const nightOpacity = clamp01(1 - dawnAtmosphere * 1.58)
+  const daySkyOpacity = clamp01(Math.pow(easedProgress, 1.08) * 1.08)
+  const dawnOpacity = clamp01(dawnBloom * 1.16)
+  const dawnVeilOpacity = clamp01(dawnBloom * 0.88)
+  const sunGlowOpacity = clamp01(Math.pow(easedProgress, 1.18) * 0.9)
+  const darkBaseOpacity = clamp01(1 - daySkyOpacity * 0.86)
+  const starVisibility = clamp01(1 - dawnBloom * 1.55)
 
   return (
     <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
-      <div className="absolute inset-0 bg-[#040916]" />
+      <motion.div className="absolute inset-0 bg-[#040916]" style={{ opacity: darkBaseOpacity }} />
 
       <motion.div
         className="absolute inset-0"
@@ -154,6 +180,16 @@ function NightToDawnBackground({ dawnProgress }: { dawnProgress: number }) {
           background:
             'radial-gradient(circle_at_50%_122%,rgba(24,88,158,0.36),transparent_52%),radial-gradient(circle_at_18%_8%,rgba(255,240,180,0.08),transparent_34%),radial-gradient(circle_at_82%_14%,rgba(175,205,255,0.11),transparent_30%),linear-gradient(180deg,#02050f_0%,#071227_45%,#10274a_100%)',
           opacity: nightOpacity,
+        }}
+      />
+
+      <motion.div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(180deg,rgba(224,242,255,0.98)_0%,rgba(188,224,248,0.97)_38%,rgba(150,202,236,0.95)_100%)',
+          opacity: daySkyOpacity,
         }}
       />
 
@@ -169,7 +205,7 @@ function NightToDawnBackground({ dawnProgress }: { dawnProgress: number }) {
             boxShadow: '0 0 10px rgba(255,255,255,0.55)',
           }}
           animate={{
-            opacity: [0.08, star.opacityMax * nightOpacity, 0.12],
+            opacity: [0.08, star.opacityMax * nightOpacity * starVisibility, 0.1],
             scale: [0.9, 1.14, 0.94],
           }}
           transition={{
@@ -186,7 +222,7 @@ function NightToDawnBackground({ dawnProgress }: { dawnProgress: number }) {
         className="absolute inset-0"
         style={{
           background:
-            'radial-gradient(circle_at_50%_108%,rgba(255,221,158,0.9),transparent_42%),linear-gradient(180deg,rgba(255,251,238,0.98)_0%,rgba(223,238,255,0.9)_38%,rgba(176,208,240,0.82)_100%)',
+            'radial-gradient(circle_at_46%_110%,rgba(255,220,154,0.92),transparent_44%),linear-gradient(180deg,rgba(255,250,236,0.94)_0%,rgba(227,242,255,0.72)_35%,rgba(176,208,240,0.42)_100%)',
           opacity: dawnOpacity,
         }}
       />
@@ -195,8 +231,18 @@ function NightToDawnBackground({ dawnProgress }: { dawnProgress: number }) {
         aria-hidden
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(180deg,rgba(255,255,255,0.2)_0%,rgba(255,255,255,0.04)_28%,rgba(255,255,255,0.3)_100%)',
-          opacity: dawnOpacity,
+          background:
+            'radial-gradient(circle_at_74%_18%,rgba(255,241,186,0.88)_0%,rgba(255,238,170,0.52)_16%,rgba(255,237,175,0.12)_34%,transparent_52%)',
+          opacity: sunGlowOpacity,
+        }}
+      />
+
+      <motion.div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(180deg,rgba(255,255,255,0.26)_0%,rgba(255,255,255,0.07)_28%,rgba(255,255,255,0.34)_100%)',
+          opacity: dawnVeilOpacity,
         }}
       />
 
@@ -293,7 +339,9 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
   const kidsAudioRef = useRef<HTMLAudioElement | null>(null)
   const kids2AudioRef = useRef<HTMLAudioElement | null>(null)
   const reggaeAudioRef = useRef<HTMLAudioElement | null>(null)
+  const reggae2AudioRef = useRef<HTMLAudioElement | null>(null)
   const splashAudioRef = useRef<HTMLAudioElement | null>(null)
+  const lighterAudioRef = useRef<HTMLAudioElement | null>(null)
 
   const etteremFadeTimerRef = useRef<number | null>(null)
   const tucsokFadeTimerRef = useRef<number | null>(null)
@@ -303,6 +351,7 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
   const boatFadeTimerRef = useRef<number | null>(null)
   const hullamFadeTimerRef = useRef<number | null>(null)
   const reggaeFadeTimerRef = useRef<number | null>(null)
+  const reggae2FadeTimerRef = useRef<number | null>(null)
 
   const desiredAudioPhaseRef = useRef<AudioPhase>('silent')
   const activeAudioPhaseRef = useRef<AudioPhase | null>(null)
@@ -314,6 +363,8 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
   const hasPlayedKids2CueRef = useRef(false)
   const hasPlayedReggaeCueRef = useRef(false)
   const hasPlayedSplashCueRef = useRef(false)
+  const hasPlayedLighterCueRef = useRef(false)
+  const isReggae2LoopingRef = useRef(false)
 
   const splitStory = useMemo(() => splitStoryContent(content, true), [content])
   const allParagraphs = splitStory.beforeLock
@@ -326,8 +377,11 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
   const afterLockParagraphs = hasLockGate ? allParagraphs.slice(lockParagraphIndex + 1) : []
   const revealAfterLock = !hasLockGate || isUnlocked
 
-  const mixedTextColor = `rgb(${Math.round(164 - 128 * dawnProgress)}, ${Math.round(164 - 118 * dawnProgress)}, ${Math.round(172 - 113 * dawnProgress)})`
-  const mixedHeadingColor = `rgb(${Math.round(236 - 136 * dawnProgress)}, ${Math.round(231 - 136 * dawnProgress)}, ${Math.round(220 - 135 * dawnProgress)})`
+  const skyBaseProgress = smoothStep(dawnProgress / 0.34)
+  const dynamicMainBgColor = `rgb(${mixChannel(4, 226, skyBaseProgress)}, ${mixChannel(9, 241, skyBaseProgress)}, ${mixChannel(22, 255, skyBaseProgress)})`
+  const textDarkenProgress = smoothStep((dawnProgress - 0.02) / 0.9)
+  const dynamicBodyTextColor = `rgb(${mixChannel(164, 48, textDarkenProgress)}, ${mixChannel(164, 50, textDarkenProgress)}, ${mixChannel(172, 56, textDarkenProgress)})`
+  const fixedHeadingColor = 'rgb(236, 231, 220)'
 
   useEffect(() => {
     const etterem = new Audio(ETTEREM_LOOP_SRC)
@@ -389,9 +443,18 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
     reggae.preload = 'auto'
     reggae.volume = REGGAE_VOLUME
 
+    const reggae2 = new Audio(REGGAE2_LOOP_SRC)
+    reggae2.preload = 'auto'
+    reggae2.loop = true
+    reggae2.volume = 0
+
     const splash = new Audio(SPLASH_SFX_SRC)
     splash.preload = 'auto'
     splash.volume = 0.94
+
+    const lighter = new Audio(LIGHTER_SFX_SRC)
+    lighter.preload = 'auto'
+    lighter.volume = 0.9
 
     etteremAudioRef.current = etterem
     tucsokAudioRef.current = tucsok
@@ -406,7 +469,9 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
     kidsAudioRef.current = kids
     kids2AudioRef.current = kids2
     reggaeAudioRef.current = reggae
+    reggae2AudioRef.current = reggae2
     splashAudioRef.current = splash
+    lighterAudioRef.current = lighter
 
     const clearFadeTimer = (timerRef: React.MutableRefObject<number | null>) => {
       if (timerRef.current !== null) {
@@ -575,6 +640,70 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
       })
     }
 
+    const playLighterOnce = () => {
+      const audio = lighterAudioRef.current
+      if (!audio) return
+      audio.loop = false
+      audio.currentTime = 0
+      audio.onended = null
+      void audio.play().catch(() => {
+        // Ignore autoplay blocks.
+      })
+    }
+
+    const playReggae2LoopWithFade = () => {
+      const audio = reggae2AudioRef.current
+      if (!audio || isReggae2LoopingRef.current) return
+
+      clearFadeTimer(reggae2FadeTimerRef)
+      audio.loop = true
+      audio.currentTime = 0
+      audio.volume = 0
+      isReggae2LoopingRef.current = true
+
+      void audio.play().then(() => {
+        const steps = 14
+        let step = 0
+
+        reggae2FadeTimerRef.current = window.setInterval(() => {
+          step += 1
+          const progress = Math.min(1, step / steps)
+          audio.volume = REGGAE2_VOLUME * progress
+
+          if (progress >= 1) {
+            clearFadeTimer(reggae2FadeTimerRef)
+            audio.volume = REGGAE2_VOLUME
+          }
+        }, 80)
+      }).catch(() => {
+        isReggae2LoopingRef.current = false
+      })
+    }
+
+    const stopReggae2LoopWithFade = () => {
+      const audio = reggae2AudioRef.current
+      if (!audio || !isReggae2LoopingRef.current) return
+
+      clearFadeTimer(reggae2FadeTimerRef)
+      const startVolume = audio.volume
+      const steps = 14
+      let step = 0
+
+      reggae2FadeTimerRef.current = window.setInterval(() => {
+        step += 1
+        const progress = Math.min(1, step / steps)
+        audio.volume = Math.max(0, startVolume * (1 - progress))
+
+        if (progress >= 1) {
+          clearFadeTimer(reggae2FadeTimerRef)
+          audio.pause()
+          audio.currentTime = 0
+          audio.volume = 0
+          isReggae2LoopingRef.current = false
+        }
+      }, 80)
+    }
+
     const stopWithFade = (audio: HTMLAudioElement, volume: number, timerRef: React.MutableRefObject<number | null>, durationMs = 120) => {
       if (audio.paused) {
         clearFadeTimer(timerRef)
@@ -669,6 +798,22 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
       if (splashCueLine && !hasPlayedSplashCueRef.current && splashCueLine.getBoundingClientRect().top <= viewportCenter) {
         hasPlayedSplashCueRef.current = true
         playSplashOnce()
+      }
+
+      const lighterCueLine = document.querySelector<HTMLElement>('[data-lighter-cue="true"]')
+      if (lighterCueLine && !hasPlayedLighterCueRef.current && lighterCueLine.getBoundingClientRect().top <= viewportCenter) {
+        hasPlayedLighterCueRef.current = true
+        playLighterOnce()
+      }
+
+      const reggae2StartLine = document.querySelector<HTMLElement>('[data-reggae2-start="true"]')
+      const hasReachedReggae2Start = Boolean(reggae2StartLine && reggae2StartLine.getBoundingClientRect().top <= viewportCenter)
+      const atPageBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 10
+
+      if (hasReachedReggae2Start && !atPageBottom) {
+        playReggae2LoopWithFade()
+      } else {
+        stopReggae2LoopWithFade()
       }
 
       const etteremStartLine = document.querySelector<HTMLElement>('[data-etterem-start="true"]')
@@ -931,7 +1076,9 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
         kids,
         kids2,
         reggae,
+        reggae2,
         splash,
+        lighter,
       ].forEach((audio) => {
         audio.pause()
         audio.currentTime = 0
@@ -940,6 +1087,11 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
       if (reggaeFadeTimerRef.current !== null) {
         window.clearInterval(reggaeFadeTimerRef.current)
         reggaeFadeTimerRef.current = null
+      }
+
+      if (reggae2FadeTimerRef.current !== null) {
+        window.clearInterval(reggae2FadeTimerRef.current)
+        reggae2FadeTimerRef.current = null
       }
 
       etteremAudioRef.current = null
@@ -955,7 +1107,9 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
       kidsAudioRef.current = null
       kids2AudioRef.current = null
       reggaeAudioRef.current = null
+      reggae2AudioRef.current = null
       splashAudioRef.current = null
+      lighterAudioRef.current = null
 
       hasPlayedPhoneCueRef.current = false
       hasPlayedDrama2CueRef.current = false
@@ -965,9 +1119,11 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
       hasPlayedKids2CueRef.current = false
       hasPlayedReggaeCueRef.current = false
       hasPlayedSplashCueRef.current = false
+      hasPlayedLighterCueRef.current = false
+      isReggae2LoopingRef.current = false
       activeAudioPhaseRef.current = null
     }
-  }, [hasEntered, allParagraphs.length, isUnlocked])
+  }, [hasEntered, allParagraphs.length])
 
   useEffect(() => {
     if (!hasEntered) {
@@ -984,7 +1140,7 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
 
       const rect = dawnLine.getBoundingClientRect()
       const viewportCenter = window.innerHeight * 0.56
-      const transitionDistance = window.innerHeight * 0.6
+      const transitionDistance = window.innerHeight * 0.3
       const rawProgress = (viewportCenter - rect.top) / transitionDistance
       const clampedProgress = Math.max(0, Math.min(1, rawProgress))
 
@@ -1042,7 +1198,13 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-black text-zinc-100">
+    <main
+      className="relative min-h-screen overflow-hidden text-zinc-100"
+      style={{
+        backgroundColor: dynamicMainBgColor,
+        transition: 'background-color 220ms linear',
+      }}
+    >
       {!hasEntered && <EntryGate onEnter={handleEnter} />}
 
       <NightToDawnBackground dawnProgress={dawnProgress} />
@@ -1065,7 +1227,7 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
             <p className="mb-2 font-mono text-xs uppercase tracking-[0.28em] text-green-500">terminal_06.log</p>
             <h1
               className="text-[2.65rem] font-bold leading-[0.95] tracking-[-0.03em] text-[#ece7dc] sm:text-[3.65rem]"
-              style={{ fontFamily: 'Trebuchet MS, Verdana, Arial, sans-serif', color: mixedHeadingColor, transition: 'color 450ms ease' }}
+              style={{ fontFamily: 'Trebuchet MS, Verdana, Arial, sans-serif', color: fixedHeadingColor }}
             >
               <span className="relative inline-block">{title}</span>
             </h1>
@@ -1075,9 +1237,8 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
             <div
               className="mx-auto w-full max-w-[20rem] space-y-7 text-left text-[1.13rem] leading-8 sm:max-w-[30.5rem]"
               style={{
-                color: mixedTextColor,
-                textShadow: dawnProgress < 0.52 ? '0 1px 2px rgba(0,0,0,0.45)' : '0 1px 0 rgba(255,255,255,0.35)',
-                transition: 'color 450ms ease, text-shadow 450ms ease',
+                color: dynamicBodyTextColor,
+                transition: 'color 180ms linear',
               }}
             >
               {beforeLockParagraphs.map((paragraph, idx) => (
@@ -1098,7 +1259,9 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
                   data-kids-cue={isKidsCueLine(paragraph.text) ? 'true' : undefined}
                   data-kids2-cue={isKids2CueLine(paragraph.text) ? 'true' : undefined}
                   data-reggae-cue={isReggaeCueLine(paragraph.text) ? 'true' : undefined}
+                  data-reggae2-start={isReggae2StartLine(paragraph.text) ? 'true' : undefined}
                   data-splash-cue={isSplashCueLine(paragraph.text) ? 'true' : undefined}
+                  data-lighter-cue={isLighterCueLine(paragraph.text) ? 'true' : undefined}
                   data-dawn-trigger={isDawnTransitionLine(paragraph.text) ? 'true' : undefined}
                   data-balaton-night-start={isBalatonNightStartLine(paragraph.text) ? 'true' : undefined}
                   data-balaton-night-stop={isBalatonNightStopLine(paragraph.text) ? 'true' : undefined}
@@ -1143,9 +1306,8 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
                 transition={{ duration: 0.7 }}
                 className="mx-auto mt-10 w-full max-w-[18rem] space-y-7 pt-8 text-left text-[1.13rem] leading-8 sm:max-w-[30.5rem]"
                 style={{
-                  color: mixedTextColor,
-                  textShadow: dawnProgress < 0.52 ? '0 1px 2px rgba(0,0,0,0.45)' : '0 1px 0 rgba(255,255,255,0.35)',
-                  transition: 'color 450ms ease, text-shadow 450ms ease',
+                  color: dynamicBodyTextColor,
+                  transition: 'color 180ms linear',
                 }}
               >
                 {afterLockParagraphs.map((paragraph, idx) => (
@@ -1166,7 +1328,9 @@ export default function Balaton({ title, content }: Konyv2PageProps) {
                     data-kids-cue={isKidsCueLine(paragraph.text) ? 'true' : undefined}
                     data-kids2-cue={isKids2CueLine(paragraph.text) ? 'true' : undefined}
                     data-reggae-cue={isReggaeCueLine(paragraph.text) ? 'true' : undefined}
+                    data-reggae2-start={isReggae2StartLine(paragraph.text) ? 'true' : undefined}
                     data-splash-cue={isSplashCueLine(paragraph.text) ? 'true' : undefined}
+                    data-lighter-cue={isLighterCueLine(paragraph.text) ? 'true' : undefined}
                     data-dawn-trigger={isDawnTransitionLine(paragraph.text) ? 'true' : undefined}
                     data-balaton-night-start={isBalatonNightStartLine(paragraph.text) ? 'true' : undefined}
                     data-balaton-night-stop={isBalatonNightStopLine(paragraph.text) ? 'true' : undefined}
@@ -1307,8 +1471,16 @@ function isReggaeCueLine(text: string): boolean {
   return normalizeForMatch(text).includes(REGGAE_CUE_PHRASE)
 }
 
+function isReggae2StartLine(text: string): boolean {
+  return normalizeForMatch(text).includes(REGGAE2_START_PHRASE)
+}
+
 function isSplashCueLine(text: string): boolean {
   return normalizeForMatch(text).includes(SPLASH_CUE_PHRASE)
+}
+
+function isLighterCueLine(text: string): boolean {
+  return normalizeForMatch(text).includes(LIGHTER_CUE_PHRASE)
 }
 
 function isDawnTransitionLine(text: string): boolean {
