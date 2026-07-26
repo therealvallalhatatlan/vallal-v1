@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import MapPicker from './MapPicker'
 
 interface PhantomProfile {
@@ -61,16 +61,6 @@ interface Props {
   }) => Promise<void>
 }
 
-function formatCountdown(iso: string | null): string {
-  if (!iso) return '--'
-  const diff = new Date(iso).getTime() - Date.now()
-  if (!Number.isFinite(diff) || diff <= 0) return '0:00'
-  const totalSec = Math.floor(diff / 1000)
-  const minutes = Math.floor(totalSec / 60)
-  const seconds = totalSec % 60
-  return `${minutes}:${String(seconds).padStart(2, '0')}`
-}
-
 export default function PhantomPanel({
   isOpen,
   variant = 'floating',
@@ -104,6 +94,7 @@ export default function PhantomPanel({
   const [authSubmitting, setAuthSubmitting] = useState(false)
   const [creditAmount, setCreditAmount] = useState(300)
   const [creditCheckoutLoading, setCreditCheckoutLoading] = useState(false)
+  const [editorOpen, setEditorOpen] = useState(false)
 
   useEffect(() => {
     setSessionInput(shadowSessionId ?? '')
@@ -115,12 +106,6 @@ export default function PhantomPanel({
     setPublishLat(userLocation.lat)
     setPublishLng(userLocation.lng)
   }, [publishLat, publishLng, userLocation])
-
-  const ownDrops = useMemo(() => {
-    const rows = drops.filter((drop) => !!drop.is_mine)
-    rows.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    return rows
-  }, [drops])
 
   if (!isOpen) return null
 
@@ -201,6 +186,8 @@ export default function PhantomPanel({
         top: isOffcanvas ? 0 : 'calc(var(--matrica-header-offset, 90px) + 8px)',
         right: isOffcanvas ? undefined : 10,
         width: isOffcanvas ? '100%' : 'min(390px, calc(100vw - 20px))',
+        maxWidth: isOffcanvas ? '940px' : undefined,
+        margin: isOffcanvas ? '0 auto' : undefined,
         maxHeight: isOffcanvas ? 'none' : 'calc(100vh - 180px)',
         overflowY: 'auto',
         borderRadius: isOffcanvas ? '0' : 0,
@@ -321,6 +308,69 @@ export default function PhantomPanel({
             </button>
           </div>
           {!authToken ? <div style={{ fontSize: 11, color: panelLimeMuted }}>Bejelentkezes szukseges.</div> : null}
+          <div
+            style={{
+              marginTop: 2,
+              border: `1px solid ${panelLimeBorder}`,
+              background: panelBlack,
+              padding: '8px 9px',
+              fontSize: 22,
+              color: panelLimeMuted,
+              lineHeight: 1.5,
+              display: 'grid',
+              gap: 8,
+            }}
+          >
+            <div style={{ color: panelText, fontWeight: 700 }}>Elmondom, hogy működik.</div>
+            <div>Az egész város a játékterünk.</div>
+            <div>
+              De a játéknak van egy szupertitkos, felnőttesebb rétege is, amihez csak egy nagyon ügyes trükkel lehet csatlakozni.
+            </div>
+
+            <div style={{ color: panelText, fontWeight: 700 }}>1. A BOLT</div>
+            <ul style={{ margin: 0, paddingLeft: 16, display: 'grid', gap: 6 }}>
+              <li>
+                Mit csinálsz? Elmész egy sima, mezei weboldalra, és veszel egy tök cool pólót, vagy egy sorszámozott matricát. Egy túlárazott Támogatói Csomagot. Ez teljesen legális. Kifizeted pénzzel.
+              </li>
+              <li>
+                Mi történik utána? Az eladó küld neked emailben egy Titkos Jelszót (egy hosszú kódot). Itt még senki sem tudja, hogy te a kincsvadászat titkos részén is játszol. Ez a vásárlás teljesen olyan, mint bárki másé.
+              </li>
+            </ul>
+
+            <div style={{ color: panelText, fontWeight: 700 }}>2. A JÁTÉK</div>
+            <ul style={{ margin: 0, paddingLeft: 16, display: 'grid', gap: 6 }}>
+              <li>
+                Megnyitod a térképes oldalt a telefonodon. De ez a sima térkép még unalmas. Ha hosszan nyomod a középső gombot - hoppá, megjelenik egy rejtett doboz.
+              </li>
+              <li>
+                Beírod a saját titkos becenevedet (a Session ID-dat), hogy a rendszer felismerje: „Jé, hát te egy belsős vagy!” Miért Session? Szükségem van egy azonosítóra ami nem köthető a személyedhez. Nem emailcím, nem név, nem telefonszám de mégis permanens, és hozzád kötődik. A Session erre tökéletes.
+              </li>
+            </ul>
+
+            <div style={{ color: panelText, fontWeight: 700 }}>3. A VARÁZSLAT</div>
+            <ul style={{ margin: 0, paddingLeft: 16, display: 'grid', gap: 6 }}>
+              <li>
+                Beírod a Titkos Jelszót, amit az emailben kaptál a Támogatói Csomagodért cserébe.
+              </li>
+              <li>
+                Mi történik a háttérben? A gép ellenőrzi: „Aha, ezt a kódot tényleg kifizették.” De a gép <strong>soha</strong> nem köti össze a te nevedet vagy a bankkártyádat a titkos beceneveddel (ami a Session ID-d). A két dolog teljesen külön fut. Olyan, mintha az egyik zsebedbe tennéd a blokkot, a másikba meg a kincsesláda kulcsát, és a kettő soha nem találkozhatna.
+              </li>
+            </ul>
+
+            <div style={{ color: panelText, fontWeight: 700 }}>4. A VADÁSZAT</div>
+            <ul style={{ margin: 0, paddingLeft: 16, display: 'grid', gap: 6 }}>
+              <li>
+                Mi történik most? A gép jóváír neked egy Drop Kredit pontot. A térkép megmutat egy zónát a városban. Odasétálsz a zónába a telefonoddal. Amikor odaérsz, a GPS-ed jelez, és a térkép megmutatja a pontos helyet: „Ott van a pad alatt egy kis csomag!” Ez egy újabb védvonal (Geofencing) ami a védelmünket szolgálja.
+              </li>
+              <li>
+                És a végén a tűzijáték: Odamész, elhozod a csomagot (amiben benne van a könyv, póló, meg a meglepi cucc) és ráklikkelsz a telefonon, hogy megvan. Ekkor a gép egy belső órával elszámol: 10 perc múlva az egész helyszín nyom nélkül eltűnik a térképről, mintha ott sem lett volna.
+              </li>
+            </ul>
+
+            <div>
+              Senki sem tudja, ki vette el, ki tette oda, és hogy ki fizetett érte. Csak annyit látnak, hogy volt egy merch-vásárlás, meg egy titkos játékos a térképen, de a kettő között elvágták a drótot.
+            </div>
+          </div>
         </div>
 
         <div
@@ -412,12 +462,39 @@ export default function PhantomPanel({
 
         {canPublishDrops ? (
           <div style={{ borderTop: `1px solid ${panelLimeBorder}`, paddingTop: 10 }}>
-            <div style={{ fontSize: 11, letterSpacing: '0.08em', color: panelTitle, fontWeight: 700 }}>EDITOR - FANTOM SZPOT LETREHOZASA</div>
-            <div style={{ marginTop: 6, fontSize: 12, color: panelLimeMuted }}>
-              Uj fantom szpot letrehozasa keppel, leirassal es valasztott helyponttal.
-            </div>
+            <button
+              type="button"
+              onClick={() => setEditorOpen((prev) => !prev)}
+              style={{
+                width: '100%',
+                border: `1px solid ${panelLimeBorder}`,
+                borderRadius: 0,
+                background: panelBlackSoft,
+                color: panelTitle,
+                padding: '8px 10px',
+                fontSize: 11,
+                letterSpacing: '0.08em',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
+              }}
+              aria-expanded={editorOpen}
+              aria-controls="phantom-editor-panel"
+            >
+              <span>EDITOR - FANTOM SZPOT LETREHOZASA</span>
+              <span aria-hidden="true" style={{ color: panelLime }}>{editorOpen ? '−' : '+'}</span>
+            </button>
 
-            <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+            {editorOpen ? (
+              <>
+                <div style={{ marginTop: 8, fontSize: 12, color: panelLimeMuted }}>
+                  Uj fantom szpot letrehozasa keppel, leirassal es valasztott helyponttal.
+                </div>
+
+                <div id="phantom-editor-panel" style={{ display: 'grid', gap: 8, marginTop: 8 }}>
               <input
                 value={publishTitle}
                 onChange={(event) => setPublishTitle(event.target.value)}
@@ -588,68 +665,21 @@ export default function PhantomPanel({
               >
                 {publishing ? 'Publikalas...' : 'Fantom szpot publikasa'}
               </button>
-            </div>
+                </div>
 
-            {!canUsePhantom ? (
-              <div style={{ marginTop: 6, fontSize: 11, color: panelLimeMuted }}>
-                A Phantom jelenleg nem hasznalhato ezzel a sessionnel.
-              </div>
-            ) : Number(profile?.drop_credits ?? 0) <= 0 ? (
-              <div style={{ marginTop: 6, fontSize: 11, color: panelLimeMuted }}>
-                Nincs eleg drop credited az uj szpot publikalasahoz.
-              </div>
+                {!canUsePhantom ? (
+                  <div style={{ marginTop: 6, fontSize: 11, color: panelLimeMuted }}>
+                    A Phantom jelenleg nem hasznalhato ezzel a sessionnel.
+                  </div>
+                ) : Number(profile?.drop_credits ?? 0) <= 0 ? (
+                  <div style={{ marginTop: 6, fontSize: 11, color: panelLimeMuted }}>
+                    Nincs eleg drop credited az uj szpot publikalasahoz.
+                  </div>
+                ) : null}
+              </>
             ) : null}
           </div>
         ) : null}
-
-        <div style={{ borderTop: `1px solid ${panelLimeBorder}`, paddingTop: 10 }}>
-          <div style={{ fontSize: 11, letterSpacing: '0.08em', color: panelTitle, fontWeight: 700, marginBottom: 8 }}>
-            SAJAT DROPOK
-          </div>
-
-          {ownDrops.length === 0 ? (
-            <div style={{ fontSize: 12, color: panelLimeMuted }}>Meg nincs sajat dropod.</div>
-          ) : (
-            <div style={{ display: 'grid', gap: 8 }}>
-              {ownDrops.map((drop) => {
-                return (
-                  <article
-                    key={drop.id}
-                    style={{
-                      border: `1px solid ${panelLimeBorder}`,
-                      borderRadius: 0,
-                      background: panelBlackSoft,
-                      padding: 9,
-                      display: 'grid',
-                      gap: 6,
-                    }}
-                  >
-                    {drop.image_url ? (
-                      <img
-                        src={drop.image_url}
-                        alt={drop.title || drop.code_name}
-                        style={{ width: '100%', height: 120, objectFit: 'cover', border: `1px solid ${panelLimeBorder}` }}
-                      />
-                    ) : null}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                      <strong style={{ fontSize: 12, color: panelText }}>{drop.title || drop.code_name}</strong>
-                      <span style={{ fontSize: 11, color: panelLimeMuted }}>{drop.is_claimed ? 'claimed' : 'active'}</span>
-                    </div>
-                    <div style={{ fontSize: 11, color: panelLimeMuted }}>{drop.code_name}</div>
-                    {drop.description ? <div style={{ fontSize: 12, color: panelText, lineHeight: 1.45 }}>{drop.description}</div> : null}
-                    {drop.location_hint ? <div style={{ fontSize: 11, color: panelLimeMuted }}>Hint: {drop.location_hint}</div> : null}
-                    <div style={{ fontSize: 11, color: panelLimeMuted }}>
-                      Geo: {drop.geofence_meters} m | {drop.lat.toFixed(5)}, {drop.lng.toFixed(5)}
-                    </div>
-                    {drop.is_claimed ? (
-                      <div style={{ fontSize: 11, color: panelLimeMuted }}>Burn: {formatCountdown(drop.burn_after)}</div>
-                    ) : null}
-                  </article>
-                )
-              })}
-            </div>
-          )}
-        </div>
       </div>
       <style jsx>{`
         .phantom-credit-range {
