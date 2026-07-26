@@ -184,6 +184,8 @@ stripe trigger checkout.session.completed
 
 **Produkciós webhook:** Stripe Dashboard → Webhooks → \`https://YOUR_DOMAIN/api/webhook/stripe\` → esemény: \`checkout.session.completed\`
 
+Fontos: a webhook URL a vegso, redirect nelkuli hostra mutasson. Ha a fo domain 307/308-cal atdob \`www\`-re, akkor Stripe-ban is a \`www\` URL-t add meg (pl. \`https://www.YOUR_DOMAIN/api/webhook/stripe\`).
+
 ---
 
 ## Irodalmi korpusz ingestálása
