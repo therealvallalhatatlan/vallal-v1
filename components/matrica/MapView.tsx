@@ -48,6 +48,8 @@ const AUTO_OPEN_SPOTS_PANEL_DELAY_MS = 900
 const TALALOK_LONG_PRESS_MS = 1650
 const PHANTOM_SHADOW_SESSION_STORAGE_KEY = 'phantom:shadow-session-id:v1'
 const PHANTOM_SPONSOR_STORAGE_KEY = 'phantom:sponsor-session-id:v1'
+const PHANTOM_PANEL_OPEN_STORAGE_KEY = 'phantom:panel-open:v1'
+const PHANTOM_PIN_VERIFIED_STORAGE_KEY = 'phantom:pin-verified:v1'
 const PHANTOM_PIN_LENGTH = 4
 
 interface UserLocation {
@@ -326,7 +328,27 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
       const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`
       window.history.replaceState({}, '', nextUrl)
     }
+
+    const restoredPinVerified = window.localStorage.getItem(PHANTOM_PIN_VERIFIED_STORAGE_KEY) === '1'
+    if (restoredPinVerified) {
+      setPhantomPinVerified(true)
+    }
+
+    const restoredPanelOpen = window.localStorage.getItem(PHANTOM_PANEL_OPEN_STORAGE_KEY) === '1'
+    if (restoredPanelOpen && restoredPinVerified) {
+      setPhantomPanelOpen(true)
+    }
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(PHANTOM_PANEL_OPEN_STORAGE_KEY, phantomPanelOpen ? '1' : '0')
+  }, [phantomPanelOpen])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(PHANTOM_PIN_VERIFIED_STORAGE_KEY, phantomPinVerified ? '1' : '0')
+  }, [phantomPinVerified])
 
   const handleDismissIntroLayer = useCallback(() => {
     setShowIntroLayer(false)
