@@ -2494,6 +2494,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
           isOpen={phantomPanelOpen}
           variant="offcanvas"
           showCloseButton={false}
+          canPublishDrops={userRole === 'admin' || userRole === 'editor'}
           authToken={chatAuthToken}
           shadowSessionId={phantomSessionId}
           profile={phantomProfile}

@@ -164,8 +164,16 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
         >
           <div 
             style={{ position: 'relative', width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, cursor: 'pointer' }}
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation()
+
+              // Primary action on top online avatars: open private chat immediately.
+              if (u.id !== currentUserId && onMessageUser) {
+                onMessageUser(u)
+                return
+              }
               
               // If location data exists, use it
               if (u.lat && u.lng && Number.isFinite(u.lat) && Number.isFinite(u.lng)) {
@@ -200,6 +208,22 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                 } else {
                   alert(`${u.nickname} pozĂ­ciĂłja nem elĂ©rhetĹ‘.\n\nBiztos, hogy engedĂ©lyezted a helymeghatĂˇrozĂˇst?`)
                 }
+              }
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation()
+
+              if (u.id !== currentUserId && onMessageUser) {
+                onMessageUser(u)
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' && e.key !== ' ') return
+              e.preventDefault()
+              e.stopPropagation()
+
+              if (u.id !== currentUserId && onMessageUser) {
+                onMessageUser(u)
               }
             }}
             title={`${u.nickname} - ${u.lat && u.lng ? 'Kattints a tĂ©rkĂ©pen valĂł megjelenĂ­tĂ©shez' : 'Nincs pozĂ­ciĂł adat'}`}
@@ -784,6 +808,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
   }
 
   const profileAvatarSize = isMobile ? 44 : 32
+  const pmDisplayName = (nickname && nickname.trim()) || (email && email.split('@')[0]) || 'user'
 
   return (
     <>
@@ -1248,11 +1273,11 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
       </div>
 
 
-      {pmRecipient && user?.id && nickname ? (
+      {pmRecipient && user?.id && authToken ? (
         <MatricaPrivateMessagePanel
           recipient={{ id: pmRecipient.id, nickname: pmRecipient.nickname, avatarUrl: pmRecipient.avatarUrl }}
           currentUserId={user.id}
-          displayName={nickname}
+          displayName={pmDisplayName}
           authToken={authToken}
           onClose={() => setPmRecipient(null)}
           onUnreadChange={(count, userId) => {

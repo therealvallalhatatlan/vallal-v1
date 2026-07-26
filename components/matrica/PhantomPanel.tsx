@@ -37,6 +37,7 @@ interface Props {
   isOpen: boolean
   variant?: 'floating' | 'offcanvas'
   showCloseButton?: boolean
+  canPublishDrops?: boolean
   authToken: string | null
   shadowSessionId: string | null
   profile: PhantomProfile | null
@@ -70,6 +71,7 @@ export default function PhantomPanel({
   isOpen,
   variant = 'floating',
   showCloseButton = true,
+  canPublishDrops = false,
   authToken,
   shadowSessionId,
   profile,
@@ -79,9 +81,12 @@ export default function PhantomPanel({
   onClose,
   onRefresh,
   onClaimDrop,
-  onPublishDrop: _onPublishDrop,
+  onPublishDrop,
   onRedeemVoucher,
 }: Props) {
+  const [publishCodeName, setPublishCodeName] = useState('')
+  const [publishRadius, setPublishRadius] = useState('120')
+  const [publishing, setPublishing] = useState(false)
   const [voucherCode, setVoucherCode] = useState('')
   const [redeeming, setRedeeming] = useState(false)
   const [claimingDropId, setClaimingDropId] = useState<string | null>(null)
@@ -101,6 +106,7 @@ export default function PhantomPanel({
   if (!isOpen) return null
 
   const canUsePhantom = !!authToken && !!shadowSessionId && !profile?.banned_at
+  const canPublish = canPublishDrops && canUsePhantom && Number(profile?.drop_credits ?? 0) > 0
   const sessionShort = shadowSessionId ? `${shadowSessionId.slice(0, 8)}...` : 'nincs'
   const isOffcanvas = variant === 'offcanvas'
 
@@ -333,8 +339,88 @@ export default function PhantomPanel({
           ) : null}
         </div>
 
+        {canPublishDrops ? (
+          <div style={{ borderTop: '1px solid rgba(148,163,184,0.2)', paddingTop: 10 }}>
+            <div style={{ fontSize: 11, letterSpacing: '0.08em', color: '#86efac', fontWeight: 700 }}>2) EDITOR - FANTOM SZPOT LETREHOZASA</div>
+            <div style={{ marginTop: 6, fontSize: 12, color: '#cbd5e1' }}>
+              Uj fantom szpot letrehozasa a sajat aktualis poziciodon.
+            </div>
+
+            <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
+              <input
+                value={publishCodeName}
+                onChange={(event) => setPublishCodeName(event.target.value)}
+                placeholder="Kodnev (pl. ghost-01)"
+                style={{
+                  border: '1px solid rgba(148,163,184,0.3)',
+                  borderRadius: 0,
+                  background: 'rgba(2,6,23,0.82)',
+                  color: '#e2e8f0',
+                  padding: '8px 9px',
+                  fontSize: 12,
+                }}
+              />
+              <input
+                value={publishRadius}
+                onChange={(event) => setPublishRadius(event.target.value)}
+                placeholder="Geofence meter (pl. 120)"
+                inputMode="numeric"
+                style={{
+                  border: '1px solid rgba(148,163,184,0.3)',
+                  borderRadius: 0,
+                  background: 'rgba(2,6,23,0.82)',
+                  color: '#e2e8f0',
+                  padding: '8px 9px',
+                  fontSize: 12,
+                }}
+              />
+              <button
+                type="button"
+                disabled={!canPublish || publishing || !publishCodeName.trim()}
+                onClick={async () => {
+                  setPublishing(true)
+                  try {
+                    const geofence = Number(publishRadius)
+                    await onPublishDrop({
+                      code_name: publishCodeName.trim(),
+                      geofence_meters: Number.isFinite(geofence) ? geofence : 120,
+                    })
+                    setPublishCodeName('')
+                  } finally {
+                    setPublishing(false)
+                  }
+                }}
+                style={{
+                  border: '1px solid rgba(34,197,94,0.35)',
+                  borderRadius: 0,
+                  background: 'rgba(8,29,17,0.9)',
+                  color: '#bbf7d0',
+                  padding: '8px 10px',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  opacity: !canPublish || publishing || !publishCodeName.trim() ? 0.5 : 1,
+                }}
+              >
+                {publishing ? 'Publikalas...' : 'Fantom szpot publikasa'}
+              </button>
+            </div>
+
+            {!canUsePhantom ? (
+              <div style={{ marginTop: 6, fontSize: 11, color: '#fca5a5' }}>
+                A Phantom jelenleg nem hasznalhato ezzel a sessionnel.
+              </div>
+            ) : Number(profile?.drop_credits ?? 0) <= 0 ? (
+              <div style={{ marginTop: 6, fontSize: 11, color: '#fca5a5' }}>
+                Nincs eleg drop credited az uj szpot publikalasahoz.
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         <div style={{ borderTop: '1px solid rgba(148,163,184,0.2)', paddingTop: 10 }}>
-          <div style={{ fontSize: 11, letterSpacing: '0.08em', color: '#86efac', fontWeight: 700, marginBottom: 8 }}>2) KOZELI DROPOK</div>
+          <div style={{ fontSize: 11, letterSpacing: '0.08em', color: '#86efac', fontWeight: 700, marginBottom: 8 }}>
+            {canPublishDrops ? '3) KOZELI DROPOK' : '2) KOZELI DROPOK'}
+          </div>
           <div style={{ marginBottom: 8, fontSize: 12, color: '#fef3c7' }}>
             Claimhez a tavolsagnak a geofence-en belul kell lennie.
           </div>
