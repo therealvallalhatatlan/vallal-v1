@@ -144,7 +144,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
     <div style={{ width: '100%', background: 'rgba(6,7,9,0.96)', color: '#9ca3af', fontSize: 12, letterSpacing: '0.04em', textAlign: 'center', padding: 6, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>NINCS ONLINE FELHASZNALO</div>
   )
   return (
-    <div id="matrica-online-users-bar" style={{ width: '100%', background: 'rgba(6,7,9,0.96)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: isMobile ? `4px ${reserveRightSpace}px 4px 0` : `6px ${reserveRightSpace}px 6px 0`, display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.04)' }}>
+    <div id="matrica-online-users-bar" style={{ width: '100%', position: 'relative', zIndex: 1, pointerEvents: 'auto', background: 'rgba(6,7,9,0.96)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: isMobile ? `4px ${reserveRightSpace}px 4px 0` : `6px ${reserveRightSpace}px 6px 0`, display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.04)' }}>
       {visibleUsers.map(u => (
         <div
           key={u.id}
@@ -162,10 +162,20 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
             boxShadow: u.id === currentUserId ? '0 0 0 1px rgba(163,230,53,0.16), 0 4px 12px rgba(0,0,0,0.4)' : 'none',
           }}
         >
-          <div 
-            style={{ position: 'relative', width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, cursor: 'pointer' }}
+          <button
+            type="button"
+            style={{ position: 'relative', width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, cursor: 'pointer', touchAction: 'manipulation', padding: 0, border: 'none', background: 'transparent' }}
             role="button"
             tabIndex={0}
+            onPointerDown={(e) => {
+              // In a horizontally scrollable rail click events can be swallowed.
+              // Open PM early on pointer down for reliable interaction.
+              if (u.id !== currentUserId && onMessageUser) {
+                e.preventDefault()
+                e.stopPropagation()
+                onMessageUser(u)
+              }
+            }}
             onClick={(e) => {
               e.stopPropagation()
 
@@ -239,11 +249,12 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                   objectFit: 'cover',
                   border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #4b5563',
                   background: '#23232a',
+                  cursor: 'pointer',
                 }}
               />
             ) : (
 
-              <div style={{ width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#dbe1e8' : '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: isMobile ? 17 : 15, border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #4b5563' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
+              <div style={{ width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#dbe1e8' : '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: isMobile ? 17 : 15, border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #4b5563', cursor: 'pointer' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
             )}
             {u.id === currentUserId ? (
               <span
@@ -262,6 +273,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  pointerEvents: 'none',
                 }}
                 title="Te vagy"
                 aria-label="Te vagy"
@@ -310,8 +322,8 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                 ) : null}
               </button>
             ) : null}
-            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#a3e635' : '#4b5563', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px' }}>{u.badge}</span>
-          </div>
+            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#a3e635' : '#4b5563', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px', pointerEvents: 'none' }}>{u.badge}</span>
+          </button>
           <span
             onClick={(e) => {
               if (u.id === currentUserId || !onMessageUser) return
@@ -813,7 +825,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
   return (
     <>
       {showOnlineUsersBar ? (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1001 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 5200, pointerEvents: 'auto' }}>
           <OnlineUsersBar
             onMessageUser={(selectedUser) => {
               setPmRecipient(selectedUser)

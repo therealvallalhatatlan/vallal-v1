@@ -66,7 +66,7 @@ export default function MatricaPrivateMessagePanel({
         left: isMobile ? 0 : 'auto',
         bottom: bottomRailOffset,
         top: 'var(--matrica-header-offset, 90px)',
-        zIndex: 260,
+        zIndex: 5400,
         width: isMobile ? '100vw' : 'min(380px, calc(100vw - 28px))',
         display: 'flex',
         flexDirection: 'column',
