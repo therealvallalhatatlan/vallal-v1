@@ -15,7 +15,12 @@ interface ListQuery {
 
 interface PublishBody {
   shadow_session_id?: unknown
+  title?: unknown
+  description?: unknown
   code_name?: unknown
+  image_url?: unknown
+  image_urls?: unknown
+  location_hint?: unknown
   lat?: unknown
   lng?: unknown
   geofence_meters?: unknown
@@ -47,7 +52,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await db
     .from('shadow_drops')
-    .select('id, code_name, lat, lng, geofence_meters, is_claimed, claimed_at, claimed_by_session_id, burn_after, created_at')
+    .select('*')
     .order('created_at', { ascending: false })
     .limit(100)
 
@@ -58,7 +63,12 @@ export async function GET(req: NextRequest) {
 
   const rows = (data ?? []) as Array<{
     id: string
+    title: string | null
+    description: string | null
     code_name: string
+    image_url: string | null
+    image_urls: string[] | null
+    location_hint: string | null
     lat: number
     lng: number
     geofence_meters: number
@@ -66,6 +76,7 @@ export async function GET(req: NextRequest) {
     claimed_at: string | null
     claimed_by_session_id: string | null
     burn_after: string | null
+    metadata: Record<string, unknown> | null
     created_at: string
   }>
 
@@ -76,14 +87,23 @@ export async function GET(req: NextRequest) {
       ? getDistanceMeters(query.lat as number, query.lng as number, drop.lat, drop.lng)
       : null
 
+    const creatorShadowSessionId = typeof drop.metadata?.creator_shadow_session_id === 'string'
+      ? drop.metadata.creator_shadow_session_id
+      : null
+
+    const normalizedImageUrls = Array.isArray(drop.image_urls)
+      ? drop.image_urls.filter((url): url is string => typeof url === 'string' && !!url.trim())
+      : []
+
     return {
       ...drop,
+      image_urls: normalizedImageUrls,
       distance_meters: distanceMeters,
       can_claim: !drop.is_claimed &&
         query.shadow_session_id !== null &&
         distanceMeters !== null &&
         distanceMeters <= drop.geofence_meters,
-      is_mine: query.shadow_session_id !== null && drop.claimed_by_session_id === query.shadow_session_id,
+      is_mine: query.shadow_session_id !== null && creatorShadowSessionId === query.shadow_session_id,
     }
   })
 
@@ -112,10 +132,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_shadow_session_id' }, { status: 400 })
   }
 
+  const title = typeof body.title === 'string' ? body.title.trim().slice(0, 120) : ''
+  if (!title) {
+    return NextResponse.json({ error: 'missing_title' }, { status: 400 })
+  }
+
   const codeName = typeof body.code_name === 'string' ? body.code_name.trim().slice(0, 64) : ''
   if (!codeName) {
     return NextResponse.json({ error: 'missing_code_name' }, { status: 400 })
   }
+
+  const description = typeof body.description === 'string'
+    ? body.description.trim().slice(0, 5000)
+    : ''
+
+  const locationHint = typeof body.location_hint === 'string'
+    ? body.location_hint.trim().slice(0, 280)
+    : ''
+
+  const imageUrls = Array.isArray(body.image_urls)
+    ? body.image_urls.filter((value): value is string => typeof value === 'string' && !!value.trim()).slice(0, 6)
+    : []
+
+  const primaryImageUrl = typeof body.image_url === 'string' && body.image_url.trim()
+    ? body.image_url.trim()
+    : imageUrls[0] ?? null
 
   const point = parseLatLng({ lat: body.lat, lng: body.lng })
   if (!point) {
@@ -175,7 +216,12 @@ export async function POST(req: NextRequest) {
   const { data: created, error: createError } = await db
     .from('shadow_drops')
     .insert({
+      title,
+      description: description || null,
       code_name: codeName,
+      image_url: primaryImageUrl,
+      image_urls: imageUrls,
+      location_hint: locationHint || null,
       lat: point.lat,
       lng: point.lng,
       geofence_meters: geofenceMeters,
@@ -184,10 +230,25 @@ export async function POST(req: NextRequest) {
         creator_shadow_session_id: sessionId,
       },
     })
-    .select('id, code_name, lat, lng, geofence_meters, is_claimed, claimed_at, claimed_by_session_id, burn_after, created_at')
+    .select('*')
     .single()
 
   if (createError) {
+    if (typeof createError.message === 'string' && (
+      createError.message.toLowerCase().includes('title') ||
+      createError.message.toLowerCase().includes('description') ||
+      createError.message.toLowerCase().includes('image_url') ||
+      createError.message.toLowerCase().includes('image_urls') ||
+      createError.message.toLowerCase().includes('location_hint')
+    )) {
+      await db
+        .from('shadow_profiles')
+        .update({ drop_credits: profile.drop_credits })
+        .eq('session_id', sessionId)
+
+      return NextResponse.json({ error: 'phantom_schema_not_migrated' }, { status: 409 })
+    }
+
     await db
       .from('shadow_profiles')
       .update({ drop_credits: profile.drop_credits })

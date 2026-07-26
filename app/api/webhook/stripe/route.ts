@@ -88,6 +88,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
     return;
   }
 
+  if (metadata?.type === 'phantom_credits') {
+    await handlePhantomCreditsCheckoutCompleted(session);
+    return;
+  }
+
   const orderType = metadata?.orderType ?? metadata?.type;
 
   if (orderType === 'merch') {
@@ -297,5 +302,72 @@ async function handleSpotUnlockCheckoutCompleted(session: Stripe.Checkout.Sessio
   }
 
   console.log(`✅ Spot unlock granted user=${userId} spot=${spotId} until ${nextExpiresAt}`);
+  revalidatePath('/halozat');
+}
+
+async function handlePhantomCreditsCheckoutCompleted(session: Stripe.Checkout.Session) {
+  if (session.payment_status !== 'paid') {
+    console.log(`ℹ️ Phantom credit session ${session.id} is not paid yet, skipping`);
+    return;
+  }
+
+  const metadata = session.metadata ?? {};
+  const shadowSessionId = metadata.shadow_session_id;
+  const creditsRaw = Number.parseInt(metadata.credits ?? '0', 10);
+  const creditsToAdd = Number.isFinite(creditsRaw) && creditsRaw > 0 ? creditsRaw : 0;
+
+  if (!shadowSessionId || creditsToAdd <= 0) {
+    console.error('❌ Missing/invalid metadata for phantom credit checkout', session.id);
+    return;
+  }
+
+  const db = supabaseAdmin();
+  const { data: profile, error: profileError } = await db
+    .from('shadow_profiles')
+    .select('session_id, drop_credits, metadata')
+    .eq('session_id', shadowSessionId)
+    .maybeSingle<{ session_id: string; drop_credits: number; metadata: Record<string, unknown> | null }>();
+
+  if (profileError) {
+    console.error('❌ Failed to read shadow profile for phantom credit checkout:', profileError);
+    return;
+  }
+
+  if (!profile?.session_id) {
+    console.error('❌ Shadow profile not found for phantom credit checkout', shadowSessionId);
+    return;
+  }
+
+  const metadataObj = (profile.metadata && typeof profile.metadata === 'object')
+    ? profile.metadata
+    : {};
+
+  if (metadataObj.last_credit_checkout_session_id === session.id) {
+    console.log(`✅ Phantom credits already granted for session ${session.id}`);
+    return;
+  }
+
+  const nextCredits = Math.max(0, Number(profile.drop_credits || 0)) + creditsToAdd;
+  const nextMetadata = {
+    ...metadataObj,
+    last_credit_checkout_session_id: session.id,
+    last_credit_checkout_at: new Date().toISOString(),
+    last_credit_checkout_added: creditsToAdd,
+  };
+
+  const { error: updateError } = await db
+    .from('shadow_profiles')
+    .update({
+      drop_credits: nextCredits,
+      metadata: nextMetadata,
+    })
+    .eq('session_id', shadowSessionId);
+
+  if (updateError) {
+    console.error('❌ Failed to apply phantom credits:', updateError);
+    return;
+  }
+
+  console.log(`✅ Phantom credits granted session=${shadowSessionId} +${creditsToAdd}`);
   revalidatePath('/halozat');
 }

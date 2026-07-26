@@ -91,7 +91,12 @@ interface PhantomProfile {
 
 interface PhantomDrop {
   id: string
+  title?: string | null
+  description?: string | null
   code_name: string
+  image_url?: string | null
+  image_urls?: string[] | null
+  location_hint?: string | null
   lat: number
   lng: number
   geofence_meters: number
@@ -1408,8 +1413,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
     }
   }, [chatAuthToken, loadSpots, showToast, userLocation])
 
-  const refreshPhantom = useCallback(async () => {
-    if (!chatAuthToken || !phantomSessionId) return
+  const refreshPhantom = useCallback(async (sessionIdOverride?: string) => {
+    const effectiveSessionId = sessionIdOverride ?? phantomSessionId
+    if (!chatAuthToken || !effectiveSessionId) return
 
     setPhantomLoading(true)
     try {
@@ -1424,7 +1430,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
           Authorization: `Bearer ${chatAuthToken}`,
         },
         body: JSON.stringify({
-          shadow_session_id: phantomSessionId,
+          shadow_session_id: effectiveSessionId,
           sponsor_session_id: sponsorSessionId,
         }),
       })
@@ -1437,7 +1443,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
       setPhantomProfile(sessionJson.profile as PhantomProfile)
 
       const dropsUrl = new URL('/api/phantom/drops', window.location.origin)
-      dropsUrl.searchParams.set('shadow_session_id', phantomSessionId)
+      dropsUrl.searchParams.set('shadow_session_id', effectiveSessionId)
       if (userLocation) {
         dropsUrl.searchParams.set('lat', String(userLocation.lat))
         dropsUrl.searchParams.set('lng', String(userLocation.lng))
@@ -1468,6 +1474,29 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
     if (!phantomPanelOpen) return
     void refreshPhantom()
   }, [phantomPanelOpen, refreshPhantom])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+      const data = event.data as { type?: string; status?: string } | null
+      if (!data || data.type !== 'phantom-credit-checkout-status') return
+
+      if (data.status === 'success') {
+        showToast('Sikeres fizetes. Kreditek frissitese...', 'success')
+      } else if (data.status === 'cancelled') {
+        showToast('Fizetes megszakitva.', 'info')
+      }
+
+      void refreshPhantom()
+    }
+
+    window.addEventListener('message', onMessage)
+    return () => {
+      window.removeEventListener('message', onMessage)
+    }
+  }, [refreshPhantom, showToast])
 
   const handleClaimPhantomDrop = useCallback(async (dropId: string) => {
     if (!chatAuthToken || !phantomSessionId) {
@@ -1512,14 +1541,24 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
     await refreshPhantom()
   }, [chatAuthToken, phantomSessionId, refreshPhantom, showToast, userLocation])
 
-  const handlePublishPhantomDrop = useCallback(async (payload: { code_name: string; geofence_meters: number }) => {
+  const handlePublishPhantomDrop = useCallback(async (payload: {
+    title: string
+    description: string
+    code_name: string
+    image_url: string | null
+    image_urls: string[]
+    location_hint: string
+    lat: number
+    lng: number
+    geofence_meters: number
+  }) => {
     if (!chatAuthToken || !phantomSessionId) {
       showToast('Bejelentkezes szukseges.', 'error')
       return
     }
 
-    if (!userLocation) {
-      showToast('Helymeghatarozas szukseges a publikaloz.', 'error')
+    if (!Number.isFinite(payload.lat) || !Number.isFinite(payload.lng)) {
+      showToast('Ervenyes koordinata szukseges a publikaloz.', 'error')
       return
     }
 
@@ -1531,9 +1570,14 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
       },
       body: JSON.stringify({
         shadow_session_id: phantomSessionId,
+        title: payload.title,
+        description: payload.description,
         code_name: payload.code_name,
-        lat: userLocation.lat,
-        lng: userLocation.lng,
+        image_url: payload.image_url,
+        image_urls: payload.image_urls,
+        location_hint: payload.location_hint,
+        lat: payload.lat,
+        lng: payload.lng,
         geofence_meters: payload.geofence_meters,
       }),
     })
@@ -1541,7 +1585,13 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
     const json = await res.json().catch(() => ({} as Record<string, unknown>))
     if (!res.ok) {
       const code = typeof json?.error === 'string' ? json.error : 'publish_failed'
-      if (code === 'insider_required') {
+      if (code === 'missing_title') {
+        showToast('A cim kotelezo.', 'error')
+      } else if (code === 'invalid_coordinates') {
+        showToast('Ervenyes helypontot valassz.', 'error')
+      } else if (code === 'phantom_schema_not_migrated') {
+        showToast('A Phantom rich schema migracioja meg nincs fent az adatbazisban.', 'error')
+      } else if (code === 'insider_required') {
         showToast('Insider jog kell a drop publishhez.', 'error')
       } else if (code === 'insufficient_drop_credits') {
         showToast('Nincs eleg drop credited.', 'info')
@@ -1554,13 +1604,19 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
 
     showToast('Drop publikaltad.', 'success')
     await refreshPhantom()
-  }, [chatAuthToken, phantomSessionId, refreshPhantom, showToast, userLocation])
+  }, [chatAuthToken, phantomSessionId, refreshPhantom, showToast])
 
-  const handleRedeemPhantomVoucher = useCallback(async (voucherCode: string) => {
-    if (!chatAuthToken || !phantomSessionId) {
+  const handleAuthenticatePhantom = useCallback(async (payload: { sessionId: string; voucherCode: string }) => {
+    const sessionId = payload.sessionId.trim()
+    if (!chatAuthToken || !sessionId) {
       showToast('Bejelentkezes szukseges.', 'error')
       return
     }
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(PHANTOM_SHADOW_SESSION_STORAGE_KEY, sessionId)
+    }
+    setPhantomSessionId(sessionId)
 
     const res = await fetch('/api/phantom/vouchers/redeem', {
       method: 'POST',
@@ -1569,28 +1625,78 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         Authorization: `Bearer ${chatAuthToken}`,
       },
       body: JSON.stringify({
-        shadow_session_id: phantomSessionId,
-        voucher_code: voucherCode,
+        shadow_session_id: sessionId,
+        voucher_code: payload.voucherCode,
       }),
     })
 
     const json = await res.json().catch(() => ({} as Record<string, unknown>))
     if (!res.ok || !json?.ok) {
       const code = typeof json?.error === 'string' ? json.error : 'voucher_failed'
-      if (code === 'voucher_already_redeemed') {
+      if (code === 'invalid_shadow_session_id') {
+        showToast('Ervenytelen Session ID formatum.', 'error')
+      } else if (code === 'voucher_already_redeemed') {
         showToast('Voucher mar bevaltva.', 'info')
       } else if (code === 'invalid_voucher_code') {
         showToast('Ervenytelen voucher kod.', 'error')
       } else {
         showToast('Voucher redeem sikertelen.', 'error')
       }
-      await refreshPhantom()
+      await refreshPhantom(sessionId)
       return
     }
 
     const creditsAdded = Number(json.credits_added || 0)
     showToast(`Voucher bevaltva (+${creditsAdded} credit).`, 'success')
-    await refreshPhantom()
+    await refreshPhantom(sessionId)
+    await loadSpots()
+  }, [chatAuthToken, loadSpots, refreshPhantom, showToast])
+
+  const handleStartPhantomCreditPurchase = useCallback(async (credits: number) => {
+    if (!chatAuthToken || !phantomSessionId) {
+      showToast('Session ID es bejelentkezes szukseges.', 'error')
+      throw new Error('missing_session_or_auth')
+    }
+
+    const normalizedCredits = Math.max(1, Math.floor(credits))
+    const res = await fetch('/api/phantom/credits/checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${chatAuthToken}`,
+      },
+      body: JSON.stringify({
+        shadow_session_id: phantomSessionId,
+        credits: normalizedCredits,
+      }),
+    })
+
+    const json = await res.json().catch(() => ({} as Record<string, unknown>))
+    const checkoutUrl = typeof json?.url === 'string' ? json.url : null
+    if (!res.ok || !checkoutUrl) {
+      const code = typeof json?.error === 'string' ? json.error : 'checkout_failed'
+      if (code === 'invalid_shadow_session_id') {
+        showToast('Ervenytelen Session ID formatum.', 'error')
+      } else {
+        showToast('Nem sikerult elinditani a fizetest.', 'error')
+      }
+      throw new Error(code)
+    }
+
+    if (typeof window !== 'undefined') {
+      let attempts = 0
+      const maxAttempts = 60
+      const intervalId = window.setInterval(() => {
+        attempts += 1
+        void refreshPhantom()
+        if (attempts >= maxAttempts) {
+          window.clearInterval(intervalId)
+        }
+      }, 3000)
+    }
+
+    showToast('Fizetesi ablak megnyitva.', 'info')
+    return checkoutUrl
   }, [chatAuthToken, phantomSessionId, refreshPhantom, showToast])
 
   const openPhantomPinPrompt = useCallback(() => {
@@ -2447,10 +2553,11 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         aria-hidden={!phantomPanelOpen}
         style={{
           position: 'fixed',
+          top: 'var(--matrica-header-offset, 90px)',
           left: 0,
           right: 0,
           bottom: 0,
-          maxHeight: 'min(84vh, calc(100vh - 64px))',
+          maxHeight: 'calc(100dvh - var(--matrica-header-offset, 90px))',
           overflowY: 'auto',
           transform: phantomPanelOpen ? 'translateY(0)' : 'translateY(106%)',
           transition: 'transform 320ms cubic-bezier(.2,.9,.2,1)',
@@ -2465,7 +2572,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             zIndex: 2,
             display: 'flex',
             justifyContent: 'flex-end',
-            padding: '10px 10px 0',
+            padding: '6px 8px 0',
             pointerEvents: 'none',
           }}
         >
@@ -2475,14 +2582,17 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             aria-label="Phantom bezarasa"
             style={{
               pointerEvents: 'auto',
-              width: 34,
-              height: 34,
-              borderRadius: 10,
-              border: '1px solid rgba(253,224,71,0.45)',
-              background: 'rgba(10,12,16,0.82)',
-              color: '#fde68a',
-              fontSize: 18,
+              width: 48,
+              height: 48,
+              borderRadius: 0,
+              border: '1px solid rgba(163,230,53,0.45)',
+              background: 'rgba(5,5,5,0.92)',
+              color: '#a3e635',
+              fontSize: 22,
               lineHeight: 1,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               cursor: 'pointer',
             }}
           >
@@ -2502,12 +2612,10 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
           userLocation={userLocation}
           loading={phantomLoading}
           onClose={() => setPhantomPanelOpen(false)}
-          onRefresh={() => {
-            void refreshPhantom()
-          }}
+          onAuthenticate={handleAuthenticatePhantom}
+          onStartCreditPurchase={handleStartPhantomCreditPurchase}
           onClaimDrop={handleClaimPhantomDrop}
           onPublishDrop={handlePublishPhantomDrop}
-          onRedeemVoucher={handleRedeemPhantomVoucher}
         />
 
         <div
@@ -2516,7 +2624,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             bottom: 0,
             zIndex: 2,
             padding: '10px 12px calc(12px + env(safe-area-inset-bottom, 0px))',
-            background: 'linear-gradient(180deg, rgba(10,8,7,0), rgba(10,8,7,0.95) 35%)',
+            background: 'linear-gradient(180deg, rgba(5,5,5,0), rgba(5,5,5,0.95) 35%)',
           }}
         >
           <button
@@ -2524,10 +2632,10 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
             onClick={() => setPhantomPanelOpen(false)}
             style={{
               width: '100%',
-              borderRadius: 12,
-              border: '1px solid rgba(253,224,71,0.5)',
-              background: 'rgba(253,224,71,0.12)',
-              color: '#fde68a',
+              borderRadius: 0,
+              border: '1px solid rgba(163,230,53,0.45)',
+              background: 'rgba(163,230,53,0.16)',
+              color: '#a3e635',
               padding: '11px 12px',
               fontSize: 13,
               fontWeight: 700,
