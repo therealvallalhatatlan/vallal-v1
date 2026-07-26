@@ -13,7 +13,7 @@
  * - Show selected spot info panel
  */
 
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo, type KeyboardEvent } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { getDistanceMeters } from '@/lib/matrica'
@@ -23,6 +23,7 @@ import SpotCircle from './SpotCircle'
 import SpotMarker from './SpotMarker'
 import SpotPreview from './SpotPreview'
 import ActiveSpotsPanel from './ActiveSpotsPanel'
+import PhantomPanel from './PhantomPanel'
 import ToastContainer from './ToastContainer'
 
 import { useToast } from './useToast'
@@ -44,6 +45,10 @@ const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
 const UI_TOGGLE_SFX_SRC = '/audio/sfx-glitch.WAV'
 const UNIFIED_SPOT_VISIBILITY_RADIUS_METERS = 420
 const AUTO_OPEN_SPOTS_PANEL_DELAY_MS = 900
+const TALALOK_LONG_PRESS_MS = 1650
+const PHANTOM_SHADOW_SESSION_STORAGE_KEY = 'phantom:shadow-session-id:v1'
+const PHANTOM_SPONSOR_STORAGE_KEY = 'phantom:sponsor-session-id:v1'
+const PHANTOM_PIN_LENGTH = 4
 
 interface UserLocation {
   lat: number
@@ -73,6 +78,31 @@ interface RouteState {
 interface PreviewAnchor {
   x: number
   y: number
+}
+
+interface PhantomProfile {
+  session_id: string
+  sponsor_id: string | null
+  insider_enabled: boolean
+  drop_credits: number
+  banned_at: string | null
+  burn_reason?: string | null
+}
+
+interface PhantomDrop {
+  id: string
+  code_name: string
+  lat: number
+  lng: number
+  geofence_meters: number
+  is_claimed: boolean
+  claimed_at: string | null
+  claimed_by_session_id: string | null
+  burn_after: string | null
+  created_at: string
+  distance_meters?: number | null
+  can_claim?: boolean
+  is_mine?: boolean
 }
 
 function isFiniteCoordinate(value: number | undefined): value is number {
@@ -116,6 +146,26 @@ function isPaidLockedSpot(spot: StickerSpot): boolean {
   return spot.spot_type === 'paid' && !!spot.is_locked
 }
 
+function createBrowserUuid(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+
+  const randomHex = () => Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1)
+  return `${randomHex()}${randomHex()}-${randomHex()}-4${randomHex().slice(1)}-${((8 + Math.floor(Math.random() * 4)).toString(16))}${randomHex().slice(1)}-${randomHex()}${randomHex()}${randomHex()}`
+}
+
+function getOrCreateShadowSessionId(): string | null {
+  if (typeof window === 'undefined') return null
+
+  const existing = window.localStorage.getItem(PHANTOM_SHADOW_SESSION_STORAGE_KEY)
+  if (existing && existing.trim()) return existing.trim()
+
+  const created = createBrowserUuid()
+  window.localStorage.setItem(PHANTOM_SHADOW_SESSION_STORAGE_KEY, created)
+  return created
+}
+
 
 export default function MapView({ chatDisplayName, chatAuthToken, userRole }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -130,6 +180,8 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   const handledDeepLinkRef = useRef(false)
   const approxSpotPulseMarkerRef = useRef<mapboxgl.Marker | null>(null)
   const approxSpotPulseTimeoutRef = useRef<number | null>(null)
+  const talalokLongPressTimerRef = useRef<number | null>(null)
+  const talalokLongPressTriggeredRef = useRef(false)
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
@@ -155,9 +207,20 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
   const [claimingSpotId, setClaimingSpotId] = useState<string | null>(null)
   const [showIntroLayer, setShowIntroLayer] = useState(false)
+  const [phantomPanelOpen, setPhantomPanelOpen] = useState(false)
+  const [phantomSessionId, setPhantomSessionId] = useState<string | null>(null)
+  const [phantomProfile, setPhantomProfile] = useState<PhantomProfile | null>(null)
+  const [phantomDrops, setPhantomDrops] = useState<PhantomDrop[]>([])
+  const [phantomLoading, setPhantomLoading] = useState(false)
+  const [phantomPinPromptOpen, setPhantomPinPromptOpen] = useState(false)
+  const [phantomPinDigits, setPhantomPinDigits] = useState<string[]>(Array(PHANTOM_PIN_LENGTH).fill(''))
+  const [phantomPinError, setPhantomPinError] = useState<string | null>(null)
+  const [phantomPinSubmitting, setPhantomPinSubmitting] = useState(false)
+  const [phantomPinVerified, setPhantomPinVerified] = useState(false)
 
   const previewCloseTimerRef = useRef<number | null>(null)
   const unlockToastHandledRef = useRef(false)
+  const phantomPinInputRefs = useRef<Array<HTMLInputElement | null>>([])
 
   const { toasts, show: showToast, dismiss: dismissToast } = useToast()
 
@@ -221,6 +284,15 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
 
   useEffect(() => {
     return () => {
+      if (talalokLongPressTimerRef.current !== null) {
+        window.clearTimeout(talalokLongPressTimerRef.current)
+        talalokLongPressTimerRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
       clearApproxSpotPulseMarker()
     }
   }, [clearApproxSpotPulseMarker])
@@ -230,6 +302,24 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
     const hasSeenOnboarding = window.localStorage.getItem(HALOZAT_ONBOARDING_STORAGE_KEY) === '1'
     if (!hasSeenOnboarding) {
       setShowIntroLayer(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const sessionId = getOrCreateShadowSessionId()
+    if (sessionId) {
+      setPhantomSessionId(sessionId)
+    }
+
+    const params = new URLSearchParams(window.location.search)
+    const sponsorId = params.get('shadowSponsor')
+    if (sponsorId && sponsorId.trim()) {
+      window.localStorage.setItem(PHANTOM_SPONSOR_STORAGE_KEY, sponsorId.trim())
+      params.delete('shadowSponsor')
+      const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`
+      window.history.replaceState({}, '', nextUrl)
     }
   }, [])
 
@@ -527,6 +617,29 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
 
     setSpots((prev) => prev.map((spot) => (spot.id === spotId ? { ...spot, ...json.spot } : spot)))
     return json.spot as StickerSpot
+  }, [chatAuthToken])
+
+  const handleDeleteActiveSpot = useCallback(async (spotId: string) => {
+    if (!chatAuthToken) {
+      throw new Error('unauthorized')
+    }
+
+    const res = await fetch('/api/admin/matrica/spots', {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${chatAuthToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id: spotId }),
+    })
+
+    const json = await res.json().catch(() => null)
+    if (!res.ok) {
+      throw new Error(typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`)
+    }
+
+    setSpots((prev) => prev.filter((spot) => spot.id !== spotId))
+    setPreviewSpot((prev) => (prev && prev.id === spotId ? null : prev))
   }, [chatAuthToken])
 
   useEffect(() => {
@@ -1295,11 +1408,317 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
     }
   }, [chatAuthToken, loadSpots, showToast, userLocation])
 
+  const refreshPhantom = useCallback(async () => {
+    if (!chatAuthToken || !phantomSessionId) return
+
+    setPhantomLoading(true)
+    try {
+      const sponsorSessionId = typeof window !== 'undefined'
+        ? window.localStorage.getItem(PHANTOM_SPONSOR_STORAGE_KEY)
+        : null
+
+      const sessionRes = await fetch('/api/phantom/session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${chatAuthToken}`,
+        },
+        body: JSON.stringify({
+          shadow_session_id: phantomSessionId,
+          sponsor_session_id: sponsorSessionId,
+        }),
+      })
+
+      const sessionJson = await sessionRes.json().catch(() => ({} as Record<string, unknown>))
+      if (!sessionRes.ok || !sessionJson?.profile) {
+        throw new Error(typeof sessionJson?.error === 'string' ? sessionJson.error : `HTTP ${sessionRes.status}`)
+      }
+
+      setPhantomProfile(sessionJson.profile as PhantomProfile)
+
+      const dropsUrl = new URL('/api/phantom/drops', window.location.origin)
+      dropsUrl.searchParams.set('shadow_session_id', phantomSessionId)
+      if (userLocation) {
+        dropsUrl.searchParams.set('lat', String(userLocation.lat))
+        dropsUrl.searchParams.set('lng', String(userLocation.lng))
+      }
+
+      const dropsRes = await fetch(dropsUrl.toString(), {
+        headers: {
+          Authorization: `Bearer ${chatAuthToken}`,
+        },
+        cache: 'no-store',
+      })
+
+      const dropsJson = await dropsRes.json().catch(() => ({} as Record<string, unknown>))
+      if (!dropsRes.ok) {
+        throw new Error(typeof dropsJson?.error === 'string' ? dropsJson.error : `HTTP ${dropsRes.status}`)
+      }
+
+      setPhantomDrops(Array.isArray(dropsJson?.drops) ? (dropsJson.drops as PhantomDrop[]) : [])
+    } catch (error) {
+      console.error('[MapView] phantom refresh failed', error)
+      showToast('Phantom sync hiba.', 'error')
+    } finally {
+      setPhantomLoading(false)
+    }
+  }, [chatAuthToken, phantomSessionId, showToast, userLocation])
+
+  useEffect(() => {
+    if (!phantomPanelOpen) return
+    void refreshPhantom()
+  }, [phantomPanelOpen, refreshPhantom])
+
+  const handleClaimPhantomDrop = useCallback(async (dropId: string) => {
+    if (!chatAuthToken || !phantomSessionId) {
+      showToast('Bejelentkezes szukseges.', 'error')
+      return
+    }
+
+    if (!userLocation) {
+      showToast('Helymeghatarozas szukseges a claimhez.', 'error')
+      return
+    }
+
+    const res = await fetch('/api/phantom/drops/claim', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${chatAuthToken}`,
+      },
+      body: JSON.stringify({
+        shadow_session_id: phantomSessionId,
+        drop_id: dropId,
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+      }),
+    })
+
+    const json = await res.json().catch(() => ({} as Record<string, unknown>))
+    if (!res.ok) {
+      const code = typeof json?.error === 'string' ? json.error : 'claim_failed'
+      if (code === 'too_far') {
+        showToast('Tul messze vagy a drop claimhez.', 'error')
+      } else if (code === 'drop_already_claimed') {
+        showToast('Ezt a dropot mar valaki claimelte.', 'info')
+      } else {
+        showToast('Drop claim sikertelen.', 'error')
+      }
+      await refreshPhantom()
+      return
+    }
+
+    showToast('Drop claimelve. Burn timer indult.', 'success')
+    await refreshPhantom()
+  }, [chatAuthToken, phantomSessionId, refreshPhantom, showToast, userLocation])
+
+  const handlePublishPhantomDrop = useCallback(async (payload: { code_name: string; geofence_meters: number }) => {
+    if (!chatAuthToken || !phantomSessionId) {
+      showToast('Bejelentkezes szukseges.', 'error')
+      return
+    }
+
+    if (!userLocation) {
+      showToast('Helymeghatarozas szukseges a publikaloz.', 'error')
+      return
+    }
+
+    const res = await fetch('/api/phantom/drops', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${chatAuthToken}`,
+      },
+      body: JSON.stringify({
+        shadow_session_id: phantomSessionId,
+        code_name: payload.code_name,
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        geofence_meters: payload.geofence_meters,
+      }),
+    })
+
+    const json = await res.json().catch(() => ({} as Record<string, unknown>))
+    if (!res.ok) {
+      const code = typeof json?.error === 'string' ? json.error : 'publish_failed'
+      if (code === 'insider_required') {
+        showToast('Insider jog kell a drop publishhez.', 'error')
+      } else if (code === 'insufficient_drop_credits') {
+        showToast('Nincs eleg drop credited.', 'info')
+      } else {
+        showToast('Drop publish sikertelen.', 'error')
+      }
+      await refreshPhantom()
+      return
+    }
+
+    showToast('Drop publikaltad.', 'success')
+    await refreshPhantom()
+  }, [chatAuthToken, phantomSessionId, refreshPhantom, showToast, userLocation])
+
+  const handleRedeemPhantomVoucher = useCallback(async (voucherCode: string) => {
+    if (!chatAuthToken || !phantomSessionId) {
+      showToast('Bejelentkezes szukseges.', 'error')
+      return
+    }
+
+    const res = await fetch('/api/phantom/vouchers/redeem', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${chatAuthToken}`,
+      },
+      body: JSON.stringify({
+        shadow_session_id: phantomSessionId,
+        voucher_code: voucherCode,
+      }),
+    })
+
+    const json = await res.json().catch(() => ({} as Record<string, unknown>))
+    if (!res.ok || !json?.ok) {
+      const code = typeof json?.error === 'string' ? json.error : 'voucher_failed'
+      if (code === 'voucher_already_redeemed') {
+        showToast('Voucher mar bevaltva.', 'info')
+      } else if (code === 'invalid_voucher_code') {
+        showToast('Ervenytelen voucher kod.', 'error')
+      } else {
+        showToast('Voucher redeem sikertelen.', 'error')
+      }
+      await refreshPhantom()
+      return
+    }
+
+    const creditsAdded = Number(json.credits_added || 0)
+    showToast(`Voucher bevaltva (+${creditsAdded} credit).`, 'success')
+    await refreshPhantom()
+  }, [chatAuthToken, phantomSessionId, refreshPhantom, showToast])
+
+  const openPhantomPinPrompt = useCallback(() => {
+    setPhantomPinError(null)
+    setPhantomPinDigits(Array(PHANTOM_PIN_LENGTH).fill(''))
+    setPhantomPinPromptOpen(true)
+    window.setTimeout(() => {
+      phantomPinInputRefs.current[0]?.focus()
+    }, 60)
+  }, [])
+
+  const handlePhantomPinDigitChange = useCallback((index: number, rawValue: string) => {
+    const sanitized = rawValue.replace(/\D/g, '').slice(-1)
+    setPhantomPinError(null)
+
+    setPhantomPinDigits((prev) => {
+      const next = [...prev]
+      next[index] = sanitized
+      return next
+    })
+
+    if (sanitized && index < PHANTOM_PIN_LENGTH - 1) {
+      phantomPinInputRefs.current[index + 1]?.focus()
+    }
+  }, [])
+
+  const handlePhantomPinKeyDown = useCallback((index: number, event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Backspace' && !phantomPinDigits[index] && index > 0) {
+      phantomPinInputRefs.current[index - 1]?.focus()
+      return
+    }
+
+    if (event.key === 'ArrowLeft' && index > 0) {
+      event.preventDefault()
+      phantomPinInputRefs.current[index - 1]?.focus()
+      return
+    }
+
+    if (event.key === 'ArrowRight' && index < PHANTOM_PIN_LENGTH - 1) {
+      event.preventDefault()
+      phantomPinInputRefs.current[index + 1]?.focus()
+      return
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      void verifyAndOpenPhantom()
+    }
+  }, [phantomPinDigits])
+
+  const verifyAndOpenPhantom = useCallback(async () => {
+    const pin = phantomPinDigits.join('')
+    if (pin.length !== PHANTOM_PIN_LENGTH) {
+      setPhantomPinError('Adj meg 4 szamjegyet.')
+      return
+    }
+
+    setPhantomPinSubmitting(true)
+    setPhantomPinError(null)
+
+    try {
+      const res = await fetch('/api/phantom/pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      })
+
+      const json = await res.json().catch(() => ({} as Record<string, unknown>))
+      if (!res.ok || !json?.ok) {
+        setPhantomPinError('Hibas PIN-kod.')
+        return
+      }
+
+      setPhantomPinVerified(true)
+      setPhantomPinPromptOpen(false)
+      setPhantomPanelOpen(true)
+      showToast('Phantom hozzaferes engedelyezve.', 'success')
+    } catch {
+      setPhantomPinError('PIN ellenorzes sikertelen. Probald ujra.')
+    } finally {
+      setPhantomPinSubmitting(false)
+    }
+  }, [phantomPinDigits, showToast])
+
 
   const handleToggleChatPanel = useCallback(() => {
     playUiSound('toggle')
     window.dispatchEvent(new CustomEvent('matrica:toggle-live-panel'))
   }, [playUiSound])
+
+  const clearTalalokLongPressTimer = useCallback(() => {
+    if (talalokLongPressTimerRef.current !== null) {
+      window.clearTimeout(talalokLongPressTimerRef.current)
+      talalokLongPressTimerRef.current = null
+    }
+  }, [])
+
+  const handleTalalokPressStart = useCallback(() => {
+    clearTalalokLongPressTimer()
+    talalokLongPressTriggeredRef.current = false
+
+    talalokLongPressTimerRef.current = window.setTimeout(() => {
+      talalokLongPressTriggeredRef.current = true
+      playUiSound('toggle')
+      if (!phantomPinVerified) {
+        openPhantomPinPrompt()
+        return
+      }
+
+      setPhantomPanelOpen((prev) => !prev)
+    }, TALALOK_LONG_PRESS_MS)
+  }, [clearTalalokLongPressTimer, openPhantomPinPrompt, phantomPinVerified, playUiSound])
+
+  const handleTalalokPressEnd = useCallback(() => {
+    clearTalalokLongPressTimer()
+
+    if (talalokLongPressTriggeredRef.current) {
+      talalokLongPressTriggeredRef.current = false
+      return
+    }
+
+    handleToggleSpotsList()
+  }, [clearTalalokLongPressTimer, handleToggleSpotsList])
+
+  const handleTalalokPressCancel = useCallback(() => {
+    clearTalalokLongPressTimer()
+    talalokLongPressTriggeredRef.current = false
+  }, [clearTalalokLongPressTimer])
 
   const handleOpenSpotAdmin = useCallback(() => {
     playUiSound('click')
@@ -1903,9 +2322,21 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
 
         <button
           type="button"
-          onClick={handleToggleSpotsList}
+          onMouseDown={handleTalalokPressStart}
+          onMouseUp={handleTalalokPressEnd}
+          onMouseLeave={handleTalalokPressCancel}
+          onTouchStart={handleTalalokPressStart}
+          onTouchEnd={handleTalalokPressEnd}
+          onTouchCancel={handleTalalokPressCancel}
+          onContextMenu={(event) => event.preventDefault()}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              handleToggleSpotsList()
+            }
+          }}
           aria-label="Aktív szpotok"
-          title="Aktív szpotok"
+          title="Aktív szpotok (hosszan: PIN-kod)"
           className="matrica-action-btn matrica-action-btn-core"
           style={{
             position: 'relative',
@@ -1993,9 +2424,236 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
         onStartRoute={handleStartRouteFromList}
         onClaimFound={handleClaimFound}
         claimingSpotId={claimingSpotId}
-        canEditSpots={userRole === 'admin'}
+        canEditSpot={(spot) => !!spot.can_edit && (userRole === 'admin' || userRole === 'editor' || userRole === 'user')}
         onSaveSpot={handleSaveActiveSpot}
+        onDeleteSpot={handleDeleteActiveSpot}
       />
+
+      <div
+        aria-hidden={!phantomPanelOpen}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          pointerEvents: phantomPanelOpen ? 'auto' : 'none',
+          background: phantomPanelOpen ? 'rgba(6,8,10,0.36)' : 'transparent',
+          opacity: phantomPanelOpen ? 1 : 0,
+          transition: 'opacity 280ms ease',
+          zIndex: 260,
+        }}
+        onClick={() => setPhantomPanelOpen(false)}
+      />
+
+      <div
+        aria-hidden={!phantomPanelOpen}
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          maxHeight: 'min(84vh, calc(100vh - 64px))',
+          overflowY: 'auto',
+          transform: phantomPanelOpen ? 'translateY(0)' : 'translateY(106%)',
+          transition: 'transform 320ms cubic-bezier(.2,.9,.2,1)',
+          zIndex: 270,
+          boxShadow: '0 -26px 60px rgba(0,0,0,0.56)',
+        }}
+      >
+        <div
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 2,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            padding: '10px 10px 0',
+            pointerEvents: 'none',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setPhantomPanelOpen(false)}
+            aria-label="Phantom bezarasa"
+            style={{
+              pointerEvents: 'auto',
+              width: 34,
+              height: 34,
+              borderRadius: 10,
+              border: '1px solid rgba(253,224,71,0.45)',
+              background: 'rgba(10,12,16,0.82)',
+              color: '#fde68a',
+              fontSize: 18,
+              lineHeight: 1,
+              cursor: 'pointer',
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        <PhantomPanel
+          isOpen={phantomPanelOpen}
+          variant="offcanvas"
+          showCloseButton={false}
+          authToken={chatAuthToken}
+          shadowSessionId={phantomSessionId}
+          profile={phantomProfile}
+          drops={phantomDrops}
+          userLocation={userLocation}
+          loading={phantomLoading}
+          onClose={() => setPhantomPanelOpen(false)}
+          onRefresh={() => {
+            void refreshPhantom()
+          }}
+          onClaimDrop={handleClaimPhantomDrop}
+          onPublishDrop={handlePublishPhantomDrop}
+          onRedeemVoucher={handleRedeemPhantomVoucher}
+        />
+
+        <div
+          style={{
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 2,
+            padding: '10px 12px calc(12px + env(safe-area-inset-bottom, 0px))',
+            background: 'linear-gradient(180deg, rgba(10,8,7,0), rgba(10,8,7,0.95) 35%)',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setPhantomPanelOpen(false)}
+            style={{
+              width: '100%',
+              borderRadius: 12,
+              border: '1px solid rgba(253,224,71,0.5)',
+              background: 'rgba(253,224,71,0.12)',
+              color: '#fde68a',
+              padding: '11px 12px',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Bezárás
+          </button>
+        </div>
+      </div>
+
+      {phantomPinPromptOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Phantom PIN"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 290,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            background: 'rgba(6,8,10,0.44)',
+            backdropFilter: 'blur(4px)',
+            padding: 10,
+          }}
+        >
+          <div
+            style={{
+              width: 'min(560px, 100%)',
+              borderRadius: '18px 18px 12px 12px',
+              border: '1px solid rgba(190,242,100,0.38)',
+              background: 'linear-gradient(180deg, rgba(12,14,18,0.98), rgba(7,10,13,0.98))',
+              boxShadow: '0 -20px 50px rgba(0,0,0,0.5)',
+              padding: '14px 14px calc(14px + env(safe-area-inset-bottom, 0px))',
+            }}
+          >
+            <div style={{ fontSize: 11, letterSpacing: '0.08em', fontWeight: 800, color: '#bef264' }}>PHANTOM HOZZAFERES</div>
+            <h3 style={{ margin: '6px 0 4px', color: '#f4f4f5', fontSize: 18 }}>Add meg a PIN-kodot</h3>
+            <p style={{ margin: 0, color: '#a1a1aa', fontSize: 12, lineHeight: 1.45 }}>
+              A Phantom layer csak PIN ellenorzes utan nyithato.
+            </p>
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'center' }}>
+              {phantomPinDigits.map((digit, index) => (
+                <input
+                  key={`phantom-pin-${index}`}
+                  ref={(el) => {
+                    phantomPinInputRefs.current[index] = el
+                  }}
+                  value={digit}
+                  onChange={(event) => handlePhantomPinDigitChange(index, event.target.value)}
+                  onKeyDown={(event) => handlePhantomPinKeyDown(index, event)}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={1}
+                  autoComplete="one-time-code"
+                  style={{
+                    width: 54,
+                    height: 58,
+                    borderRadius: 10,
+                    border: '1px solid rgba(190,242,100,0.46)',
+                    background: 'rgba(5,7,10,0.72)',
+                    color: '#ecfccb',
+                    fontSize: 28,
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    outline: 'none',
+                  }}
+                />
+              ))}
+            </div>
+
+            {phantomPinError ? (
+              <div style={{ marginTop: 10, fontSize: 12, color: '#fca5a5', textAlign: 'center' }}>
+                {phantomPinError}
+              </div>
+            ) : null}
+
+            <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  void verifyAndOpenPhantom()
+                }}
+                disabled={phantomPinSubmitting}
+                style={{
+                  borderRadius: 10,
+                  border: '1px solid rgba(190,242,100,0.56)',
+                  background: 'rgba(163,230,53,0.16)',
+                  color: '#ecfccb',
+                  padding: '10px 12px',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  opacity: phantomPinSubmitting ? 0.7 : 1,
+                }}
+              >
+                {phantomPinSubmitting ? 'Ellenorzes...' : 'Megnyitas'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPhantomPinPromptOpen(false)
+                  setPhantomPinError(null)
+                  setPhantomPinDigits(Array(PHANTOM_PIN_LENGTH).fill(''))
+                }}
+                disabled={phantomPinSubmitting}
+                style={{
+                  borderRadius: 10,
+                  border: '1px solid rgba(255,255,255,0.18)',
+                  background: 'rgba(255,255,255,0.04)',
+                  color: '#a1a1aa',
+                  padding: '9px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Megse
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
 
       <MatricaLivePanel

@@ -3,6 +3,7 @@ export const MAX_GYONTATAS_HISTORY_MESSAGES = 12;
 export const GYONTATAS_HISTORY_PAGE_SIZE = 50;
 
 export type GyontatasSenderRole = 'user' | 'assistant';
+export type GyontatasAssistantMode = 'introspection' | 'writing';
 
 export interface VBehaviorModulation {
   alcohol: number;
@@ -18,6 +19,11 @@ export interface GyontatasRequest {
   user_email?: string | null;
   debug?: boolean;
   modulation?: VBehaviorModulation | null;
+  mode?: GyontatasAssistantMode;
+}
+
+export function normalizeAssistantMode(value: unknown): GyontatasAssistantMode {
+  return value === 'writing' ? 'writing' : 'introspection';
 }
 
 function clampModulationValue(value: unknown) {

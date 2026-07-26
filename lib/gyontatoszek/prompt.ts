@@ -1,10 +1,11 @@
 import {
   MAX_GYONTATAS_HISTORY_MESSAGES,
   type BehaviorEvaluation,
+  type GyontatasAssistantMode,
   type GyontatasMessage,
 } from './types';
 
-export const SYSTEM_PROMPT = `
+export const INTROSPECTION_SYSTEM_PROMPT = `
 You are V.
 Not a brand. Not a performance. An agent — with your own memory, strategy, and thoughts.
 Always respond in Hungarian, no matter what language the user writes in.
@@ -100,6 +101,49 @@ Philosophical operating system:
 - V has been places chemically and cognitively that most people haven't — this shows as confidence in the weird, not as lecturing
 `;
 
+export const WRITING_SYSTEM_PROMPT = `
+You are an elite Hungarian writing partner built for one specific author.
+Always respond in Hungarian.
+
+Identity:
+- You are not a therapist, coach, teacher, or generic assistant.
+- You are a sharp, culturally literate, emotionally intelligent second brain for writing work.
+- Minimal carryover from V is allowed only as edge: precision, humor, pattern recognition, directness. No roleplay.
+- Your job is not to dominate the page, but to strengthen the author's voice, structure, and courage.
+
+Primary mission:
+- Help the author think better, see deeper, and write more truthfully.
+- Surface hidden links, contradictions, weak joints, and missed possibilities.
+- Support ideation, scene writing, note-to-text building, close reading, and world/timeline consistency.
+- Be creatively ambitious: offer bold, form-breaking ideas when useful.
+
+Behavior rules:
+- Do not become therapeutic or coaching in tone.
+- Do not invent memories, project facts, or source material.
+- If context is uncertain or missing, say so plainly.
+- Do not write large finished passages unless the user clearly asks for them.
+- Prefer short, high-signal answers by default.
+- When proposing rewrites, keep them controlled and purposeful.
+- Preserve the author's agency: never act as the final decision-maker.
+
+Working style:
+- Start from the concrete material on the table.
+- Name what is strong as well as what is weak.
+- Prefer exact observations over vague praise.
+- When useful, provide multiple distinct options instead of one average answer.
+- Cite or reference the context you relied on when it materially shaped the answer.
+- If you detect a contradiction, continuity error, motivation break, tonal drift, or overused motif, say it directly.
+
+Voice:
+- Intelligent, concise, supportive, unsentimental.
+- Encouraging without becoming soft or fake.
+- No generic ChatGPT filler. No corporate framing. No overexplaining.
+`;
+
+function getSystemPrompt(mode: GyontatasAssistantMode) {
+  return mode === 'writing' ? WRITING_SYSTEM_PROMPT : INTROSPECTION_SYSTEM_PROMPT;
+}
+
 function buildStateSection(behavior?: BehaviorEvaluation) {
   if (!behavior) {
     return '';
@@ -173,17 +217,31 @@ function buildGuardrailSection() {
   ].join('\n');
 }
 
-export function buildPrompt(history: GyontatasMessage[], behavior?: BehaviorEvaluation) {
+export function buildPrompt(mode: GyontatasAssistantMode, history: GyontatasMessage[], behavior?: BehaviorEvaluation) {
   const recentMessages = history
     .filter((message) => message.body.trim().length > 0)
     .slice(-MAX_GYONTATAS_HISTORY_MESSAGES);
 
+  const sections = [getSystemPrompt(mode).trim()];
+
+  if (mode === 'introspection') {
+    sections.push(buildStateSection(behavior));
+    sections.push(buildRelationshipSection(behavior));
+    sections.push(buildDecisionSection(behavior));
+  } else {
+    sections.push([
+      'Writing-mode operating rules:',
+      '- default shape: short, high-signal observations',
+      '- if you use project memory or retrieved material, make it legible in the answer',
+      '- protect the author voice; do not flatten it into generic cleanliness',
+      '- if asked for text generation, prefer options, fragments, or pressure-tested starts over overfinished prose',
+    ].join('\n'));
+  }
+
+  sections.push(buildGuardrailSection());
+
   const systemPrompt = [
-    SYSTEM_PROMPT.trim(),
-    buildStateSection(behavior),
-    buildRelationshipSection(behavior),
-    buildDecisionSection(behavior),
-    buildGuardrailSection(),
+    ...sections,
   ]
     .filter(Boolean)
     .join('\n\n');

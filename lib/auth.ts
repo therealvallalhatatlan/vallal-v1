@@ -49,3 +49,7 @@ export function getUserRoleByEmail(email: string | null | undefined): UserRole {
 export function canCreatePaidSpots(role: UserRole): boolean {
   return role === 'admin' || role === 'editor'
 }
+
+export function canManageAllSpots(role: UserRole): boolean {
+  return role === 'admin' || role === 'editor'
+}

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import type { FormEvent, KeyboardEvent } from 'react';
 import {
   MAX_GYONTATAS_MESSAGE_LENGTH,
+  type GyontatasAssistantMode,
   type GyontatasHistoryResponse,
   type GyontatasMessage,
   type VBehaviorModulation,
@@ -21,6 +22,7 @@ import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { sendMessagesAsJsonl } from '@/utils/exportFineTuning';
 
 const SESSION_STORAGE_KEY = 'gyontatoszek-session-id';
+const MODE_STORAGE_KEY = 'gyontatoszek-mode';
 
 const DEFAULT_V_MODULATION: VBehaviorModulation = {
   alcohol: 0.48,
@@ -143,6 +145,11 @@ const V_TRIGGER_LABELS: Record<string, string> = {
   insight: 'egy felismerés megmozdította',
   repetition: 'az ismétlődés felhúzta',
   control: 'a kontrollharc élesítette',
+};
+
+const MODE_LABELS: Record<GyontatasAssistantMode, string> = {
+  introspection: 'Introspekció',
+  writing: 'Writer mode',
 };
 
 const TRAIT_LABELS: Record<string, string> = {
@@ -445,6 +452,15 @@ export default function ConfessionalPanel() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [sending, setSending] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [assistantMode, setAssistantMode] = useState<GyontatasAssistantMode>(() => {
+    if (typeof window === 'undefined') return 'introspection';
+
+    try {
+      return window.localStorage.getItem(MODE_STORAGE_KEY) === 'writing' ? 'writing' : 'introspection';
+    } catch {
+      return 'introspection';
+    }
+  });
   const [error, setError] = useState<string | null>(null);
   const [showReading, setShowReading] = useState(false);
   const [modulation, setModulation] = useState<VBehaviorModulation>(DEFAULT_V_MODULATION);
@@ -666,7 +682,7 @@ export default function ConfessionalPanel() {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ confession: trimmed, session_id: sessionId, modulation }),
+        body: JSON.stringify({ confession: trimmed, session_id: sessionId, modulation, mode: assistantMode }),
       });
 
       const returnedSessionId = res.headers.get('x-session-id');
@@ -807,6 +823,13 @@ export default function ConfessionalPanel() {
     try { return window.localStorage.getItem('v3_support_dismissed') !== '1'; } catch { return true; }
   });
 
+  function handleModeChange(nextMode: GyontatasAssistantMode) {
+    setAssistantMode(nextMode);
+    try {
+      window.localStorage.setItem(MODE_STORAGE_KEY, nextMode);
+    } catch {}
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -877,6 +900,9 @@ export default function ConfessionalPanel() {
                 <h1 className="text-balance text-2xl text-neutral-700 md:text-3xl">
                   v3.0
                 </h1>
+                <span className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-neutral-400">
+                  {MODE_LABELS[assistantMode]}
+                </span>
                 {depthTier > 0 && (
                   <div className="mb-0.5 flex self-end items-center gap-[3px]" title={`mélységi szint: ${depthTier}`}>
                     {[1, 2, 3, 4].map((t) => (
@@ -889,6 +915,25 @@ export default function ConfessionalPanel() {
                     ))}
                   </div>
                 )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                {(['introspection', 'writing'] as GyontatasAssistantMode[]).map((mode) => {
+                  const active = assistantMode === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => handleModeChange(mode)}
+                      className={`rounded-full border px-3 py-1.5 text-[10px] uppercase tracking-[0.18em] transition ${
+                        active
+                          ? 'border-lime-300/45 bg-lime-300/10 text-lime-200'
+                          : 'border-white/10 bg-white/[0.02] text-neutral-500 hover:border-white/20 hover:text-neutral-300'
+                      }`}
+                    >
+                      {MODE_LABELS[mode]}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -944,6 +989,7 @@ export default function ConfessionalPanel() {
         composer={
           <form onSubmit={handleSubmit}>
             <Composer
+              mode={assistantMode}
               value={confession}
               sending={sending || loggingOut}
               loading={loadingHistory || loadingSession || loggingOut}

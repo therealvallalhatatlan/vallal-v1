@@ -1,4 +1,10 @@
-import type { BehaviorEvaluation, GyontatasMessage, PersistentRelationshipMemory, VBehaviorModulation } from '../types';
+import type {
+  BehaviorEvaluation,
+  GyontatasAssistantMode,
+  GyontatasMessage,
+  PersistentRelationshipMemory,
+  VBehaviorModulation,
+} from '../types';
 
 export type HiddenTraitName =
   | 'impulsive'
@@ -157,6 +163,7 @@ export interface DistortionState {
 }
 
 export interface AgentTurnContext {
+  mode: GyontatasAssistantMode;
   input: string;
   history: GyontatasMessage[];
   modulation?: VBehaviorModulation | null;

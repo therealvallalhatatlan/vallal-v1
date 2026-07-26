@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import type { SpotStatus, SpotType } from '@/lib/matrica'
-import { canCreatePaidSpots, getUserRoleByEmail } from '@/lib/auth'
+import { canCreatePaidSpots, canManageAllSpots, getUserRoleByEmail } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   }
 
   const role = getUserRoleByEmail(user.email)
-  const canManageAllSpots = role === 'admin'
+  const canManageAll = canManageAllSpots(role)
 
   const db = supabaseAdmin()
   const query = db
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     .select('*')
     .order('created_at', { ascending: false })
 
-  const { data, error } = canManageAllSpots
+  const { data, error } = canManageAll
     ? await query
     : await query.eq('creator_id', user.id)
 
@@ -183,7 +183,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   const role = getUserRoleByEmail(user.email)
-  const canManageAllSpots = role === 'admin'
+  const canManageAll = canManageAllSpots(role)
 
   let body: Record<string, unknown>
   try {
@@ -236,7 +236,7 @@ export async function PATCH(req: NextRequest) {
     .update(updates)
     .eq('id', id.trim())
 
-  const scopedPatchQuery = canManageAllSpots
+  const scopedPatchQuery = canManageAll
     ? patchQuery
     : patchQuery.eq('creator_id', user.id)
 
@@ -264,7 +264,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   const role = getUserRoleByEmail(user.email)
-  const canManageAllSpots = role === 'admin'
+  const canManageAll = canManageAllSpots(role)
 
   let body: Record<string, unknown>
   try {
@@ -284,7 +284,7 @@ export async function DELETE(req: NextRequest) {
     .delete()
     .eq('id', id.trim())
 
-  const scopedDeleteQuery = canManageAllSpots
+  const scopedDeleteQuery = canManageAll
     ? deleteQuery
     : deleteQuery.eq('creator_id', user.id)
 

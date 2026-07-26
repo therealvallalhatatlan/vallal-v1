@@ -4,6 +4,7 @@ import { handleGyontatas } from '@/lib/gyontatoszek/service';
 import {
   GYONTATAS_HISTORY_PAGE_SIZE,
   MAX_GYONTATAS_MESSAGE_LENGTH,
+  normalizeAssistantMode,
   normalizeBehaviorModulation,
 } from '@/lib/gyontatoszek/types';
 import { getConversationForHistory, listConversationMessages } from '@/lib/gyontatoszek/repository';
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
 
   const debug = req.nextUrl.searchParams.get('debug') === 'true' || data.debug === true;
   const modulation = normalizeBehaviorModulation(data.modulation);
+  const mode = normalizeAssistantMode(data.mode);
 
   let session_id =
     (typeof data.session_id === 'string' && data.session_id.trim()) ||
@@ -90,5 +92,6 @@ export async function POST(req: NextRequest) {
     user_email: user.email ?? null,
     debug,
     modulation,
+    mode,
   });
 }

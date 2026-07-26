@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { StickerSpot } from '@/lib/matrica'
 import { getDistanceMeters } from '@/lib/matrica'
 
@@ -23,9 +23,13 @@ interface Props {
   onClaimFound?: (spot: StickerSpot) => void
   claimingSpotId?: string | null
   canEditSpots?: boolean
+  canEditSpot?: (spot: StickerSpot) => boolean
   onSaveSpot?: (spotId: string, updates: { title: string; description: string; price_huf: number }) => Promise<StickerSpot | void>
+  onDeleteSpot?: (spotId: string) => Promise<void>
   userFoundCount?: number | null
 }
+
+type SpotsTab = 'free' | 'paid'
 
 function isPaidLockedSpot(spot: StickerSpot): boolean {
   return spot.spot_type === 'paid' && !!spot.is_locked
@@ -51,15 +55,19 @@ export default function ActiveSpotsPanel({
   onClaimFound,
   claimingSpotId = null,
   canEditSpots = false,
+  canEditSpot,
   onSaveSpot,
+  onDeleteSpot,
   userFoundCount = null,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [activeTab, setActiveTab] = useState<SpotsTab>('free')
   const [editingSpotId, setEditingSpotId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editDescription, setEditDescription] = useState('')
   const [editPriceHuf, setEditPriceHuf] = useState('0')
   const [savingSpotId, setSavingSpotId] = useState<string | null>(null)
+  const [deletingSpotId, setDeletingSpotId] = useState<string | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
 
   const sortedSpots = useMemo(() => {
@@ -82,6 +90,18 @@ export default function ActiveSpotsPanel({
     return withDistance
   }, [spots, userLocation])
 
+  const freeSpots = useMemo(
+    () => sortedSpots.filter(({ spot }) => spot.spot_type !== 'paid'),
+    [sortedSpots],
+  )
+
+  const paidSpots = useMemo(
+    () => sortedSpots.filter(({ spot }) => spot.spot_type === 'paid'),
+    [sortedSpots],
+  )
+
+  const visibleSpots = activeTab === 'paid' ? paidSpots : freeSpots
+
   const scrollByCard = useCallback((direction: 1 | -1) => {
     const container = scrollRef.current
     if (!container) return
@@ -89,10 +109,19 @@ export default function ActiveSpotsPanel({
     container.scrollBy({ left: direction * cardWidth, behavior: 'smooth' })
   }, [])
 
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+    container.scrollTo({ left: 0, behavior: 'smooth' })
+    setEditingSpotId(null)
+    setEditError(null)
+  }, [activeTab])
+
   if (!isOpen) return null
 
-  const hasSpots = sortedSpots.length > 0
+  const hasSpots = visibleSpots.length > 0
   const inlineMode = layout === 'inline'
+  const activeCountLabel = hasSpots ? `${visibleSpots.length} db a kornyeken` : 'Nincs aktiv szpot'
 
   const header = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -100,11 +129,51 @@ export default function ActiveSpotsPanel({
         <div style={{ fontSize: 10, color: '#bef264', letterSpacing: '0.08em', fontWeight: 700 }}>
           {inlineMode ? 'AKTIV LELOHELYEK' : 'AKTIV SZPOTOK'}
         </div>
-        <div style={{ marginTop: 2, fontSize: 12, color: '#a1a1aa' }}>
-          {inlineMode ? 'Akar most indulhatsz erte' : (hasSpots ? `${sortedSpots.length} db a kornyeken` : 'Nincs aktiv szpot')}
+        {inlineMode ? (
+          <div style={{ marginTop: 2, fontSize: 12, color: '#a1a1aa' }}>
+            Akar most indulhatsz erte
+          </div>
+        ) : null}
+        <div style={{ marginTop: 6, display: 'flex', gap: 6 }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('free')}
+            aria-pressed={activeTab === 'free'}
+            style={{
+              border: activeTab === 'free' ? '1px solid rgba(190,242,100,0.5)' : '1px solid rgba(255,255,255,0.18)',
+              background: activeTab === 'free' ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
+              color: activeTab === 'free' ? '#ecfccb' : '#a1a1aa',
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              padding: '5px 9px',
+              borderRadius: 999,
+              cursor: 'pointer',
+            }}
+          >
+            Kozossegi Cuccok ({freeSpots.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('paid')}
+            aria-pressed={activeTab === 'paid'}
+            style={{
+              border: activeTab === 'paid' ? '1px solid rgba(190,242,100,0.5)' : '1px solid rgba(255,255,255,0.18)',
+              background: activeTab === 'paid' ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
+              color: activeTab === 'paid' ? '#ecfccb' : '#a1a1aa',
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              padding: '5px 9px',
+              borderRadius: 999,
+              cursor: 'pointer',
+            }}
+          >
+            Vallalhatatlan Cuccok ({paidSpots.length})
+          </button>
         </div>
-        <div style={{ marginTop: 2, fontSize: 12, color: '#a1a1aa' }}>
-          {hasSpots ? `${sortedSpots.length} db a kornyeken` : 'Nincs aktiv szpot'}
+        <div style={{ marginTop: 4, fontSize: 12, color: '#a1a1aa' }}>
+          {activeCountLabel}
           {typeof userFoundCount === 'number' && userFoundCount > 0 ? (
             <span style={{ marginLeft: 8, color: '#86efac', fontWeight: 700 }}>
               {userFoundCount} aktivalva
@@ -207,13 +276,16 @@ export default function ActiveSpotsPanel({
       >
         {!hasSpots ? (
           <div style={{ padding: '18px 4px', color: '#71717a', fontSize: 13 }}>
-            Meg nincs aktiv szpot a kornyeken.
+            {activeTab === 'paid'
+              ? 'Meg nincs aktiv fizetos szpot a kornyeken.'
+              : 'Meg nincs aktiv kozossegi szpot a kornyeken.'}
           </div>
         ) : (
-          sortedSpots.map(({ spot, distance }) => {
+          visibleSpots.map(({ spot, distance }) => {
             const locked = isPaidLockedSpot(spot)
             const coverImage = spot.image_url ?? spot.image_urls?.[0] ?? null
-            const isEditing = canEditSpots && editingSpotId === spot.id
+            const canEditThisSpot = canEditSpot ? canEditSpot(spot) : canEditSpots
+            const isEditing = canEditThisSpot && editingSpotId === spot.id
             const canClaim =
               !locked &&
               !!onClaimFound &&
@@ -366,7 +438,7 @@ export default function ActiveSpotsPanel({
                   )}
 
                   <div style={{ marginTop: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {canEditSpots ? (
+                    {canEditThisSpot ? (
                       isEditing ? (
                         <>
                           <button
@@ -436,30 +508,69 @@ export default function ActiveSpotsPanel({
                           </button>
                         </>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            setEditingSpotId(spot.id)
-                            setEditTitle(spot.title || '')
-                            setEditDescription(spot.description || '')
-                            setEditPriceHuf(String(typeof spot.price_huf === 'number' ? Math.max(0, Math.floor(spot.price_huf)) : 0))
-                            setEditError(null)
-                          }}
-                          style={{
-                            flex: 1,
-                            border: '1px solid rgba(190,242,100,0.4)',
-                            background: 'rgba(163,230,53,0.08)',
-                            color: '#ecfccb',
-                            fontSize: 11,
-                            fontWeight: 700,
-                            padding: '6px 4px',
-                            borderRadius: 8,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Szerkesztes
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              setEditingSpotId(spot.id)
+                              setEditTitle(spot.title || '')
+                              setEditDescription(spot.description || '')
+                              setEditPriceHuf(String(typeof spot.price_huf === 'number' ? Math.max(0, Math.floor(spot.price_huf)) : 0))
+                              setEditError(null)
+                            }}
+                            style={{
+                              flex: 1,
+                              border: '1px solid rgba(190,242,100,0.4)',
+                              background: 'rgba(163,230,53,0.08)',
+                              color: '#ecfccb',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding: '6px 4px',
+                              borderRadius: 8,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Szerkesztes
+                          </button>
+                          {onDeleteSpot ? (
+                            <button
+                              type="button"
+                              disabled={deletingSpotId === spot.id}
+                              onClick={async (event) => {
+                                event.stopPropagation()
+                                const confirmed = window.confirm('Biztosan torlod ezt a spotot? Ez nem visszavonhato.')
+                                if (!confirmed) return
+                                setDeletingSpotId(spot.id)
+                                setEditError(null)
+                                try {
+                                  await onDeleteSpot(spot.id)
+                                  if (editingSpotId === spot.id) {
+                                    setEditingSpotId(null)
+                                  }
+                                } catch (error) {
+                                  setEditError(error instanceof Error ? error.message : 'Nem sikerult torolni a szpotot.')
+                                } finally {
+                                  setDeletingSpotId(null)
+                                }
+                              }}
+                              style={{
+                                flex: 1,
+                                border: '1px solid rgba(248,113,113,0.36)',
+                                background: 'rgba(127,29,29,0.2)',
+                                color: '#fecaca',
+                                fontSize: 11,
+                                fontWeight: 700,
+                                padding: '6px 4px',
+                                borderRadius: 8,
+                                cursor: deletingSpotId === spot.id ? 'not-allowed' : 'pointer',
+                                opacity: deletingSpotId === spot.id ? 0.7 : 1,
+                              }}
+                            >
+                              {deletingSpotId === spot.id ? 'Torles...' : 'Torles'}
+                            </button>
+                          ) : null}
+                        </>
                       )
                     ) : null}
                     {onClaimFound ? (

@@ -20,9 +20,11 @@ interface PrepareAgentTurnInput {
   userId?: string;
   userEmail?: string | null;
   modulation?: AgentTurnContext['modulation'];
+  mode?: AgentTurnContext['mode'];
 }
 
 export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<AgentTurnContext> {
+  const mode = input.mode ?? 'introspection';
   const interpretation = interpretTurn(input.input, input.history);
   const draftState = analyzeInput(input.input, input.history, interpretation);
   const memory = buildMemoryContext({
@@ -110,6 +112,7 @@ export async function prepareAgentTurn(input: PrepareAgentTurnInput): Promise<Ag
   });
 
   return {
+    mode,
     input: input.input,
     history: input.history,
     modulation: input.modulation ?? null,

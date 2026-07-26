@@ -249,7 +249,7 @@ function trimContextForTokenBudget(context: AgentTurnContext): AgentTurnContext 
 }
 
 export function buildResponseMessages(context: AgentTurnContext) {
-  const baseMessages = buildPrompt(context.history, context.behavior);
+  const baseMessages = buildPrompt(context.mode, context.history, context.behavior);
   const [systemMessage, ...rest] = baseMessages;
 
   // Apply token budget: trim lower-priority context layers if prompt is getting large

@@ -160,6 +160,7 @@ export async function handleGyontatas(req: GyontatasRequest) {
     userId: req.user_id,
     userEmail: req.user_email ?? null,
     modulation: req.modulation ?? null,
+    mode: req.mode,
   });
   const textStream = await executeAgentResponse(agentTurn);
   const shadowStream = generateShadowStream(agentTurn);
@@ -224,6 +225,7 @@ export async function handleGyontatas(req: GyontatasRequest) {
             metadata: {
               source: 'gyontatoszek',
               timestamp: new Date().toISOString(),
+              mode: agentTurn.mode,
               behavior: behaviorMetadata,
             },
           });
@@ -253,6 +255,7 @@ export async function handleGyontatas(req: GyontatasRequest) {
             metadata: {
               source: 'gyontatoszek',
               timestamp: new Date().toISOString(),
+              mode: agentTurn.mode,
               behavior: behaviorMetadata,
             },
           });

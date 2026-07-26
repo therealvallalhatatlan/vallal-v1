@@ -15,6 +15,7 @@ export interface StickerSpot {
   description: string | null
   image_url: string | null
   image_urls?: string[] | null
+  can_edit?: boolean
   lat: number
   lng: number
   spot_type?: SpotType

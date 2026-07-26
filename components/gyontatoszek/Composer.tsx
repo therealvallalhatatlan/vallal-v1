@@ -2,9 +2,10 @@
 
 import { SendHorizonal } from 'lucide-react';
 import type { KeyboardEvent, RefObject } from 'react';
-import { MAX_GYONTATAS_MESSAGE_LENGTH } from '@/lib/gyontatoszek/types';
+import { MAX_GYONTATAS_MESSAGE_LENGTH, type GyontatasAssistantMode } from '@/lib/gyontatoszek/types';
 
 interface ComposerProps {
+  mode: GyontatasAssistantMode;
   value: string;
   sending: boolean;
   loading: boolean;
@@ -16,6 +17,7 @@ interface ComposerProps {
 }
 
 export function Composer({
+  mode,
   value,
   sending,
   loading,
@@ -26,6 +28,14 @@ export function Composer({
   onKeyDown,
 }: ComposerProps) {
   const isDisabled = sending || loading;
+  const placeholder =
+    mode === 'writing'
+      ? 'Írj jelenetet, jegyzetet, kérdést vagy részletet…'
+      : 'Írj ide';
+  const helper =
+    mode === 'writing'
+      ? 'Enter küld • Shift+Enter új sor • writing mód'
+      : 'Enter küld • Shift+Enter új sor';
 
   return (
     <div className="border-t border-white/8 bg-gradient-to-t from-black via-black/95 to-black/70 px-3 pb-3 pt-3 md:px-6 md:pb-5">
@@ -40,7 +50,7 @@ export function Composer({
               maxLength={MAX_GYONTATAS_MESSAGE_LENGTH}
               disabled={isDisabled}
               rows={1}
-              placeholder="Írj ide"
+              placeholder={placeholder}
               className="max-h-48 min-h-[52px] flex-1 resize-none bg-transparent px-3 py-3 font-mono text-[17px] leading-7 text-neutral-100 outline-none placeholder:text-neutral-500 md:text-[19px] md:leading-8"
             />
             <button
@@ -55,7 +65,7 @@ export function Composer({
           </div>
 
           <div className="mt-2 flex items-center justify-between px-2 pb-1 text-[10px] uppercase tracking-[0.2em] text-neutral-500">
-            <span>Enter kuld • Shift+Enter uj sor</span>
+            <span>{helper}</span>
             <span>
               {value.length}/{MAX_GYONTATAS_MESSAGE_LENGTH}
             </span>
