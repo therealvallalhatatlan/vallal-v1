@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-export default function PhantomCheckoutReturnPage() {
+function PhantomCheckoutReturnContent() {
   const params = useSearchParams()
   const status = params?.get('status') || 'unknown'
 
@@ -48,5 +48,36 @@ export default function PhantomCheckoutReturnPage() {
         </p>
       </div>
     </main>
+  )
+}
+
+function PhantomCheckoutReturnFallback() {
+  return (
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        background: '#050505',
+        color: '#a3e635',
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+        padding: 24,
+        textAlign: 'center',
+      }}
+    >
+      <div style={{ border: '1px solid rgba(163,230,53,0.45)', padding: 20, background: '#0a0a0a' }}>
+        <p style={{ margin: 0, fontSize: 12, letterSpacing: '0.08em' }}>
+          Fizetes allapot ellenorzese...
+        </p>
+      </div>
+    </main>
+  )
+}
+
+export default function PhantomCheckoutReturnPage() {
+  return (
+    <Suspense fallback={<PhantomCheckoutReturnFallback />}>
+      <PhantomCheckoutReturnContent />
+    </Suspense>
   )
 }
