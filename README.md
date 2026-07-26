@@ -176,13 +176,13 @@ NEXT_PUBLIC_PAYMENT_MODE=
 brew install stripe/stripe-cli/stripe
 
 stripe login
-stripe listen --forward-to localhost:3000/api/stripe/webhook
+stripe listen --forward-to localhost:3000/api/webhook/stripe
 # másold a whsec_*** kulcsot .env.local-ba STRIPE_WEBHOOK_SECRET-ként
 
 stripe trigger checkout.session.completed
 \`\`\`
 
-**Produkciós webhook:** Stripe Dashboard → Webhooks → \`https://YOUR_DOMAIN/api/stripe/webhook\` → esemény: \`checkout.session.completed\`
+**Produkciós webhook:** Stripe Dashboard → Webhooks → \`https://YOUR_DOMAIN/api/webhook/stripe\` → esemény: \`checkout.session.completed\`
 
 ---
 

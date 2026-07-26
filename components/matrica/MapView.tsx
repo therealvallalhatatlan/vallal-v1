@@ -1484,7 +1484,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
       if (!data || data.type !== 'phantom-credit-checkout-status') return
 
       if (data.status === 'success') {
-        showToast('Sikeres fizetes. Kreditek frissitese...', 'success')
+        showToast('Sikeres fizetes. A Titkos Jelszot emailben kuldtuk.', 'success')
       } else if (data.status === 'cancelled') {
         showToast('Fizetes megszakitva.', 'info')
       }
@@ -1683,19 +1683,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
       throw new Error(code)
     }
 
-    if (typeof window !== 'undefined') {
-      let attempts = 0
-      const maxAttempts = 60
-      const intervalId = window.setInterval(() => {
-        attempts += 1
-        void refreshPhantom()
-        if (attempts >= maxAttempts) {
-          window.clearInterval(intervalId)
-        }
-      }, 3000)
-    }
-
-    showToast('Fizetesi ablak megnyitva.', 'info')
+    showToast('Fizetesi ablak megnyitva. A kodot emailben kuldjuk.', 'info')
     return checkoutUrl
   }, [chatAuthToken, phantomSessionId, refreshPhantom, showToast])
 

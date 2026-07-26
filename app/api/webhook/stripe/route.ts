@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import Stripe from 'stripe';
+import { Resend } from 'resend';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { DEFAULT_PREORDER_CAMPAIGN_SLUG } from '@/lib/shop/preorder';
 import { PAID_SPOT_UNLOCK_HOURS } from '@/lib/matricaUnlocks';
@@ -10,6 +11,48 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const resendApiKey = process.env.RESEND_API_KEY;
+const emailFrom = process.env.EMAIL_FROM;
+
+function generateVoucherCode(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const pick = () => alphabet[Math.floor(Math.random() * alphabet.length)] ?? 'X';
+  return `PH-${pick()}${pick()}${pick()}${pick()}-${pick()}${pick()}${pick()}${pick()}`;
+}
+
+async function sendPhantomVoucherEmail(input: {
+  to: string;
+  voucherCode: string;
+  credits: number;
+  shadowSessionId: string;
+}) {
+  if (!resendApiKey || !emailFrom) {
+    console.warn('⚠️ Phantom voucher email skipped: RESEND_API_KEY or EMAIL_FROM missing');
+    return false;
+  }
+
+  const resend = new Resend(resendApiKey);
+  await resend.emails.send({
+    from: emailFrom,
+    to: [input.to],
+    subject: `Phantom Titkos Jelszo (+${input.credits} kredit)`,
+    text: [
+      'Sikeres volt a Phantom kredit vasarlasod.',
+      '',
+      `Titkos Jelszo: ${input.voucherCode}`,
+      `Kredit: ${input.credits}`,
+      '',
+      'Hasznalat:',
+      '1) Nyisd meg a Halozat / Phantom Layert.',
+      `2) Session ID: ${input.shadowSessionId}`,
+      '3) Titkos Jelszo mezo: masold be a kodot, majd Kuldes.',
+      '',
+      'A kod egyszer hasznalhato.',
+    ].join('\n'),
+  });
+
+  return true;
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -315,6 +358,7 @@ async function handlePhantomCreditsCheckoutCompleted(session: Stripe.Checkout.Se
   const shadowSessionId = metadata.shadow_session_id;
   const creditsRaw = Number.parseInt(metadata.credits ?? '0', 10);
   const creditsToAdd = Number.isFinite(creditsRaw) && creditsRaw > 0 ? creditsRaw : 0;
+  const customerEmail = session.customer_details?.email ?? session.customer_email ?? null;
 
   if (!shadowSessionId || creditsToAdd <= 0) {
     console.error('❌ Missing/invalid metadata for phantom credit checkout', session.id);
@@ -322,11 +366,13 @@ async function handlePhantomCreditsCheckoutCompleted(session: Stripe.Checkout.Se
   }
 
   const db = supabaseAdmin();
+
+  // Ensure profile exists so the later redeem has a valid target session.
   const { data: profile, error: profileError } = await db
     .from('shadow_profiles')
-    .select('session_id, drop_credits, metadata')
+    .select('session_id')
     .eq('session_id', shadowSessionId)
-    .maybeSingle<{ session_id: string; drop_credits: number; metadata: Record<string, unknown> | null }>();
+    .maybeSingle<{ session_id: string }>();
 
   if (profileError) {
     console.error('❌ Failed to read shadow profile for phantom credit checkout:', profileError);
@@ -334,40 +380,149 @@ async function handlePhantomCreditsCheckoutCompleted(session: Stripe.Checkout.Se
   }
 
   if (!profile?.session_id) {
-    console.error('❌ Shadow profile not found for phantom credit checkout', shadowSessionId);
-    return;
+    const { error: createProfileError } = await db
+      .from('shadow_profiles')
+      .insert({
+        session_id: shadowSessionId,
+        insider_enabled: false,
+        drop_credits: 0,
+        metadata: {
+          seeded_by: 'phantom_credit_checkout',
+          stripe_checkout_session_id: session.id,
+        },
+      });
+
+    if (createProfileError) {
+      console.error('❌ Failed to seed shadow profile for phantom checkout:', createProfileError);
+      return;
+    }
   }
 
-  const metadataObj = (profile.metadata && typeof profile.metadata === 'object')
-    ? profile.metadata
-    : {};
-
-  if (metadataObj.last_credit_checkout_session_id === session.id) {
-    console.log(`✅ Phantom credits already granted for session ${session.id}`);
-    return;
-  }
-
-  const nextCredits = Math.max(0, Number(profile.drop_credits || 0)) + creditsToAdd;
-  const nextMetadata = {
-    ...metadataObj,
-    last_credit_checkout_session_id: session.id,
-    last_credit_checkout_at: new Date().toISOString(),
-    last_credit_checkout_added: creditsToAdd,
+  type VoucherRow = {
+    id: string;
+    voucher_code: string;
+    metadata: Record<string, unknown> | null;
   };
 
-  const { error: updateError } = await db
-    .from('shadow_profiles')
-    .update({
-      drop_credits: nextCredits,
-      metadata: nextMetadata,
-    })
-    .eq('session_id', shadowSessionId);
+  let voucher: VoucherRow | null = null;
 
-  if (updateError) {
-    console.error('❌ Failed to apply phantom credits:', updateError);
+  const { data: existingVoucher, error: existingVoucherError } = await db
+    .from('vouchers')
+    .select('id, voucher_code, metadata')
+    .eq('stripe_checkout_session_id', session.id)
+    .maybeSingle<VoucherRow>();
+
+  if (existingVoucherError) {
+    console.error('❌ Failed to check existing phantom voucher:', existingVoucherError);
     return;
   }
 
-  console.log(`✅ Phantom credits granted session=${shadowSessionId} +${creditsToAdd}`);
+  if (existingVoucher?.id) {
+    voucher = existingVoucher;
+  } else {
+    const paymentIntentId = typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null;
+
+    // Retry voucher_code generation on collision.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const voucherCode = generateVoucherCode();
+
+      const { data: createdVoucher, error: createVoucherError } = await db
+        .from('vouchers')
+        .insert({
+          voucher_code: voucherCode,
+          source: 'phantom_credit_checkout',
+          credits: creditsToAdd,
+          stripe_checkout_session_id: session.id,
+          stripe_payment_intent_id: paymentIntentId,
+          metadata: {
+            shadow_session_id: shadowSessionId,
+            customer_email: customerEmail,
+            stripe_checkout_session_id: session.id,
+          },
+        })
+        .select('id, voucher_code, metadata')
+        .single<VoucherRow>();
+
+      if (!createVoucherError && createdVoucher?.id) {
+        voucher = createdVoucher;
+        break;
+      }
+
+      const errorMessage = String(createVoucherError?.message || '').toLowerCase();
+      const isDuplicateCode = errorMessage.includes('voucher_code') && errorMessage.includes('unique');
+      const isDuplicateSession = errorMessage.includes('stripe_checkout_session_id') && errorMessage.includes('unique');
+
+      if (isDuplicateSession) {
+        const { data: voucherBySession } = await db
+          .from('vouchers')
+          .select('id, voucher_code, metadata')
+          .eq('stripe_checkout_session_id', session.id)
+          .maybeSingle<VoucherRow>();
+        if (voucherBySession?.id) {
+          voucher = voucherBySession;
+          break;
+        }
+      }
+
+      if (!isDuplicateCode) {
+        console.error('❌ Failed to create phantom voucher:', createVoucherError);
+        return;
+      }
+    }
+  }
+
+  if (!voucher?.id) {
+    console.error('❌ Could not create or load phantom voucher for session', session.id);
+    return;
+  }
+
+  const voucherMeta = (voucher.metadata && typeof voucher.metadata === 'object')
+    ? voucher.metadata
+    : {};
+
+  const alreadySent = typeof voucherMeta.email_sent_at === 'string' && voucherMeta.email_sent_at.length > 0;
+  if (alreadySent) {
+    console.log(`✅ Phantom voucher email already sent for checkout session ${session.id}`);
+    return;
+  }
+
+  if (!customerEmail) {
+    console.warn(`⚠️ Phantom voucher created but customer email missing for session ${session.id}`);
+    return;
+  }
+
+  try {
+    const sent = await sendPhantomVoucherEmail({
+      to: customerEmail,
+      voucherCode: voucher.voucher_code,
+      credits: creditsToAdd,
+      shadowSessionId,
+    });
+
+    if (!sent) return;
+
+    const nextVoucherMeta = {
+      ...voucherMeta,
+      email_sent_at: new Date().toISOString(),
+      email_sent_to: customerEmail,
+    };
+
+    const { error: updateVoucherError } = await db
+      .from('vouchers')
+      .update({ metadata: nextVoucherMeta })
+      .eq('id', voucher.id);
+
+    if (updateVoucherError) {
+      console.error('⚠️ Phantom voucher email sent but metadata update failed:', updateVoucherError);
+    }
+
+    console.log(`✅ Phantom voucher emailed to ${customerEmail} for checkout session ${session.id}`);
+  } catch (mailError) {
+    console.error('❌ Failed to send phantom voucher email:', mailError);
+    return;
+  }
+
   revalidatePath('/halozat');
 }
