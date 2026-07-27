@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
-// 5 perc aktivitás számít online-nak
-const ONLINE_WINDOW_MS = 5 * 60 * 1000
+// 2 perc aktivitás számít online-nak (gyorsabb, pontosabb jelenlét)
+const ONLINE_WINDOW_MS = 2 * 60 * 1000
 
 export const dynamic = 'force-dynamic'
 

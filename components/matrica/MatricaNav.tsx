@@ -75,13 +75,13 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
             lat: u.lat,
             lng: u.lng,
           }))
-          .filter((u: { id?: string; email?: string }) => !!u.id && !!u.email)
+          .filter((u: { id?: string }) => !!u.id)
           .sort((a: { id: string }, b: { id: string }) => {
             if (!currentUserId) return 0
             if (a.id === currentUserId) return -1
             if (b.id === currentUserId) return 1
             return 0
-          }) as Array<{ id: string; email: string; lat?: number; lng?: number }>
+          }) as Array<{ id: string; email?: string; lat?: number; lng?: number }>
 
         if (onlineUsers.length === 0) {
           setUsers([])
@@ -91,15 +91,16 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
 
         // 2. For each user, fetch profile (nickname, avatar, badge)
         const profiles: OnlineUserProfile[] = await Promise.all(
-          onlineUsers.map(async (u: { id: string; email: string; lat?: number; lng?: number }) => {
+          onlineUsers.map(async (u: { id: string; email?: string; lat?: number; lng?: number }) => {
             try {
               const pres = await fetch(`/api/user/profile?userId=${encodeURIComponent(u.id)}`)
               const pjson = await pres.json()
+              const fallbackName = u.email || `user-${u.id.slice(0, 6)}`
               if (pres.ok && pjson?.ok && pjson?.profile) {
                 return {
                   id: u.id,
-                  email: u.email,
-                  nickname: pjson.profile.nickname || u.email,
+                  email: u.email || '',
+                  nickname: pjson.profile.nickname || fallbackName,
                   avatarUrl: pjson.profile.avatar_url || null,
                   badge: pjson.profile.accepted ?? pjson.profile.badge ?? 0,
                   score: pjson.profile.score ?? 0,
@@ -111,8 +112,8 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
             } catch {}
             return {
               id: u.id,
-              email: u.email,
-              nickname: u.email,
+              email: u.email || '',
+              nickname: u.email || `user-${u.id.slice(0, 6)}`,
               avatarUrl: null,
               badge: 0,
               score: 0,
@@ -131,7 +132,7 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
       }
     }
     fetchOnlineUsers()
-    const interval = setInterval(fetchOnlineUsers, 60000)
+    const interval = setInterval(fetchOnlineUsers, 8000)
     return () => { cancelled = true; clearInterval(interval) }
   }, [currentUserId])
 

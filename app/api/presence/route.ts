@@ -94,12 +94,13 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     const supabase = supabaseAdmin()
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+    const onlineWindowMs = 2 * 60 * 1000
+    const onlineSince = new Date(Date.now() - onlineWindowMs).toISOString()
 
     const { count, error } = await supabase
       .from('reader_presence')
       .select('user_id', { count: 'exact', head: true })
-      .gte('last_heartbeat', fiveMinutesAgo)
+      .gte('last_heartbeat', onlineSince)
 
     if (error) {
       console.error('Presence count error:', error)

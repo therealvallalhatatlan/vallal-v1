@@ -5,6 +5,9 @@ export function usePresence() {
   const [activeCount, setActiveCount] = useState(0)
   const supabaseRef = useRef(createClient())
 
+  const HEARTBEAT_INTERVAL_MS = 25_000
+  const ACTIVE_COUNT_POLL_MS = 30_000
+
   // Helper to get current location if available
   const getCurrentPosition = (): Promise<{ lat: number; lng: number } | null> => {
     return new Promise((resolve) => {
@@ -28,9 +31,23 @@ export function usePresence() {
     })
   }
 
-  // Helper to send heartbeat with optional location
-  const sendHeartbeat = async (accessToken: string) => {
+  const getAccessToken = async (): Promise<string | null> => {
     try {
+      const {
+        data: { session },
+      } = await supabaseRef.current.auth.getSession()
+      return session?.access_token ?? null
+    } catch {
+      return null
+    }
+  }
+
+  // Helper to send heartbeat with optional location
+  const sendHeartbeat = async () => {
+    try {
+      const accessToken = await getAccessToken()
+      if (!accessToken) return
+
       // Try to get location from multiple sources
       let location: { lat: number; lng: number } | null = null
 
@@ -67,6 +84,8 @@ export function usePresence() {
     let mounted = true
     let heartbeatInterval: NodeJS.Timeout
     let pollInterval: NodeJS.Timeout
+    let visibilityHandler: (() => void) | null = null
+    let focusHandler: (() => void) | null = null
 
     const setupPresence = async () => {
       const {
@@ -77,13 +96,13 @@ export function usePresence() {
         return
       }
 
-      // Send heartbeat every 3 minutes
+      // Send heartbeat frequently for near real-time presence
       heartbeatInterval = setInterval(async () => {
         if (!mounted) return
-        await sendHeartbeat(session.access_token)
-      }, 180000)
+        await sendHeartbeat()
+      }, HEARTBEAT_INTERVAL_MS)
 
-      // Poll active count every 3 minutes
+      // Poll active count as a lightweight indicator
       pollInterval = setInterval(async () => {
         if (!mounted) return
         try {
@@ -97,10 +116,24 @@ export function usePresence() {
         } catch (error) {
           // Silent fail - reduces console spam
         }
-      }, 180000)
+      }, ACTIVE_COUNT_POLL_MS)
 
       // Send initial heartbeat immediately
-      await sendHeartbeat(session.access_token)
+      await sendHeartbeat()
+
+      // Send heartbeat when tab/app becomes active again
+      visibilityHandler = () => {
+        if (!mounted) return
+        if (document.visibilityState === 'visible') {
+          void sendHeartbeat()
+        }
+      }
+      focusHandler = () => {
+        if (!mounted) return
+        void sendHeartbeat()
+      }
+      document.addEventListener('visibilitychange', visibilityHandler)
+      window.addEventListener('focus', focusHandler)
 
       // Poll active count immediately
       try {
@@ -122,6 +155,8 @@ export function usePresence() {
       mounted = false
       if (heartbeatInterval) clearInterval(heartbeatInterval)
       if (pollInterval) clearInterval(pollInterval)
+      if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler)
+      if (focusHandler) window.removeEventListener('focus', focusHandler)
     }
   }, [])
 
