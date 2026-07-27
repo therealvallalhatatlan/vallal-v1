@@ -149,7 +149,13 @@ export default function ZarojelTerminalClient() {
       await sleep(line.tone === 'ok' ? 560 : 380)
     }
 
+    setFollowupLoaderLabel('átirányítás folyamatban')
+    await sleep(2400)
+    setFollowupLoaderLabel(null)
     setAuthStage('complete')
+    if (typeof window !== 'undefined') {
+      window.location.assign('/halozat')
+    }
     flowRunningRef.current = false
   }, [appendFollowupLine, sleep])
 
@@ -390,9 +396,16 @@ export default function ZarojelTerminalClient() {
 
   return (
     <main className="zr-page">
-      <div className="zr-bg-noise" aria-hidden="true" />
-      <div className="zr-bg-glow" aria-hidden="true" />
-      <div className="zr-rgb-distort" aria-hidden="true" />
+      <video
+        className="zr-bg-video"
+        src="/videos/zarojel.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+      />
+      <div className="zr-bg-dim" aria-hidden="true" />
 
       <section className="zr-shell" aria-label="zarojel terminal">
         <header className="zr-header">
@@ -475,15 +488,6 @@ export default function ZarojelTerminalClient() {
             </p>
           )}
 
-          {authStage === 'complete' && (
-            <div className="zr-line zr-network-cta-wrap">
-              <span className="zr-prefix">[{String(21 + followupLines.length).padStart(2, '0')}]</span>
-              <Link href="/halozat" className="zr-network-cta">
-                Tovább a Hálózatra
-              </Link>
-            </div>
-          )}
-
           {!done && <p className="zr-cursor">_</p>}
         </div>
       </section>
@@ -531,66 +535,43 @@ export default function ZarojelTerminalClient() {
           min-height: 100dvh;
           position: relative;
           overflow: hidden;
-          padding: 4px;
+          background: #000;
           background: linear-gradient(180deg, var(--zr-bg-soft) 0%, var(--zr-bg) 100%);
           color: var(--zr-dirty);
           font-family: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace;
           display: block;
         }
-
-        .zr-page::before {
+        .zr-bg-video {
+          position: absolute;
           content: '';
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          position: absolute;
+          inset: 0;
+        }
+
+        .zr-bg-dim {
           position: absolute;
           inset: 0;
           pointer-events: none;
-          z-index: 0;
-          background:
-            radial-gradient(ellipse at 50% 46%, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 34%, rgba(0, 0, 0, 0.72) 100%),
-            radial-gradient(ellipse at 50% 52%, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.84) 100%);
-          box-shadow:
-            inset 0 0 180px rgba(0, 0, 0, 0.9),
-            inset 0 0 42px rgba(0, 0, 0, 0.88),
+          z-index: 1;
+          background: rgba(0, 0, 0, 0.52);
             inset 0 0 10px rgba(255, 255, 255, 0.07);
           transform: scale(1.015, 0.99);
         }
-
-        .zr-bg-noise {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          opacity: 0.2;
-          background-image: radial-gradient(rgba(255, 255, 255, 0.18) 0.4px, transparent 0.8px);
-          background-size: 3px 3px;
+          display: none;
           mix-blend-mode: screen;
           animation: zr-noise-jump 240ms steps(2, end) infinite;
         }
-
-        .zr-bg-glow {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background:
-            repeating-linear-gradient(
-              to bottom,
-              rgba(255, 255, 255, 0.18) 0px,
-              rgba(255, 255, 255, 0.18) 1px,
-              rgba(0, 0, 0, 0.24) 2px,
-              rgba(0, 0, 0, 0.24) 3px
-            ),
-            linear-gradient(
-              to bottom,
-              rgba(255, 255, 255, 0) 0%,
-              rgba(255, 255, 255, 0.15) 48%,
-              rgba(255, 255, 255, 0) 100%
-            );
-          opacity: 0.68;
+          display: none;
           background-size: 100% 4px, 100% 220px;
           animation: zr-scan 4.2s linear infinite;
         }
 
         .zr-shell {
           position: relative;
-          z-index: 1;
+          z-index: 2;
           width: 100%;
           min-height: 100dvh;
           margin: 0;
@@ -600,33 +581,18 @@ export default function ZarojelTerminalClient() {
           box-shadow: none;
           backdrop-filter: none;
           overflow: hidden;
-          animation: zr-shell-flicker 5.5s steps(1, end) infinite;
         }
 
         .zr-shell::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.02) 62%);
-          mix-blend-mode: soft-light;
+          display: none;
         }
 
         .zr-shell::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background: radial-gradient(ellipse at 50% 48%, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0) 58%);
-          mix-blend-mode: screen;
+          display: none;
         }
 
         .zr-rgb-distort {
-          position: absolute;
-          inset: 0;
-          z-index: 2;
-          pointer-events: none;
-          mix-blend-mode: screen;
+          display: none;
         }
 
         .zr-rgb-distort::before,
@@ -857,34 +823,6 @@ export default function ZarojelTerminalClient() {
           border: 0;
           background: transparent;
           box-shadow: none;
-        }
-
-        .zr-network-cta-wrap {
-          margin-top: 8px;
-        }
-
-        .zr-network-cta {
-          min-height: 38px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid rgba(134, 255, 159, 0.72);
-          padding: 0 14px;
-          background: rgba(134, 255, 159, 0.16);
-          color: #86ff9f;
-          text-decoration: none;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          transition: background 140ms ease, border-color 140ms ease;
-        }
-
-        .zr-network-cta:hover,
-        .zr-network-cta:focus-visible {
-          background: rgba(134, 255, 159, 0.24);
-          border-color: #86ff9f;
-          outline: none;
         }
 
         .zr-auth-layer {
