@@ -396,16 +396,9 @@ export default function ZarojelTerminalClient() {
 
   return (
     <main className="zr-page">
-      <video
-        className="zr-bg-video"
-        src="/videos/zarojel.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        aria-hidden="true"
-      />
-      <div className="zr-bg-dim" aria-hidden="true" />
+      <div className="zr-bg-noise" aria-hidden="true" />
+      <div className="zr-bg-glow" aria-hidden="true" />
+      <div className="zr-rgb-distort" aria-hidden="true" />
 
       <section className="zr-shell" aria-label="zarojel terminal">
         <header className="zr-header">
@@ -535,43 +528,66 @@ export default function ZarojelTerminalClient() {
           min-height: 100dvh;
           position: relative;
           overflow: hidden;
-          background: #000;
+          padding: 4px;
           background: linear-gradient(180deg, var(--zr-bg-soft) 0%, var(--zr-bg) 100%);
           color: var(--zr-dirty);
           font-family: 'JetBrains Mono', 'IBM Plex Mono', 'Courier New', monospace;
           display: block;
         }
-        .zr-bg-video {
-          position: absolute;
-          content: '';
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          position: absolute;
-          inset: 0;
-        }
 
-        .zr-bg-dim {
+        .zr-page::before {
+          content: '';
           position: absolute;
           inset: 0;
           pointer-events: none;
-          z-index: 1;
-          background: rgba(0, 0, 0, 0.52);
+          z-index: 0;
+          background:
+            radial-gradient(ellipse at 50% 46%, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 34%, rgba(0, 0, 0, 0.72) 100%),
+            radial-gradient(ellipse at 50% 52%, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.84) 100%);
+          box-shadow:
+            inset 0 0 180px rgba(0, 0, 0, 0.9),
+            inset 0 0 42px rgba(0, 0, 0, 0.88),
             inset 0 0 10px rgba(255, 255, 255, 0.07);
           transform: scale(1.015, 0.99);
         }
-          display: none;
+
+        .zr-bg-noise {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          opacity: 0.2;
+          background-image: radial-gradient(rgba(255, 255, 255, 0.18) 0.4px, transparent 0.8px);
+          background-size: 3px 3px;
           mix-blend-mode: screen;
           animation: zr-noise-jump 240ms steps(2, end) infinite;
         }
-          display: none;
+
+        .zr-bg-glow {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background:
+            repeating-linear-gradient(
+              to bottom,
+              rgba(255, 255, 255, 0.18) 0px,
+              rgba(255, 255, 255, 0.18) 1px,
+              rgba(0, 0, 0, 0.24) 2px,
+              rgba(0, 0, 0, 0.24) 3px
+            ),
+            linear-gradient(
+              to bottom,
+              rgba(255, 255, 255, 0) 0%,
+              rgba(255, 255, 255, 0.15) 48%,
+              rgba(255, 255, 255, 0) 100%
+            );
+          opacity: 0.68;
           background-size: 100% 4px, 100% 220px;
           animation: zr-scan 4.2s linear infinite;
         }
 
         .zr-shell {
           position: relative;
-          z-index: 2;
+          z-index: 1;
           width: 100%;
           min-height: 100dvh;
           margin: 0;
@@ -581,18 +597,33 @@ export default function ZarojelTerminalClient() {
           box-shadow: none;
           backdrop-filter: none;
           overflow: hidden;
+          animation: zr-shell-flicker 5.5s steps(1, end) infinite;
         }
 
         .zr-shell::before {
-          display: none;
+          content: '';
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.02) 62%);
+          mix-blend-mode: soft-light;
         }
 
         .zr-shell::after {
-          display: none;
+          content: '';
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background: radial-gradient(ellipse at 50% 48%, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0) 58%);
+          mix-blend-mode: screen;
         }
 
         .zr-rgb-distort {
-          display: none;
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          pointer-events: none;
+          mix-blend-mode: screen;
         }
 
         .zr-rgb-distort::before,
