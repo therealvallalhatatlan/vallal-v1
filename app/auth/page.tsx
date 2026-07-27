@@ -6,7 +6,7 @@ import { createClient } from "@/lib/browser";
 import { persistAuthReturnTarget, resolveAuthReturnTarget } from "@/lib/authRedirect";
 
 const supabase = createClient();
-const VIDEO_SRC = "/videos/video3.mp4";
+const VIDEO_SRC = "/videos/0420.mp4";
 
 export default function AuthPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -178,7 +178,7 @@ function AuthStatus({
       {/* CONTENT */}
       <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-10">
         <section className="mx-auto w-full max-w-lg">
-        <div className="rounded-none border border-neutral-800 bg-black/60 p-6 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
+        <div className="rounded-none border-0 bg-transparent p-6 shadow-none backdrop-blur-0">
           <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">Zárt Közösség</p>
           <h1 className="text-3xl font-semibold text-lime-400">Azonosítás</h1>
           <p className="mt-2 text-[13px] leading-relaxed text-neutral-300">
@@ -195,7 +195,7 @@ function AuthStatus({
         </div>
 
         {showPurchaseCTA && (
-          <div className="mt-6 rounded-none border border-neutral-800 bg-black/60 p-6 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
+          <div className="mt-6 rounded-none border-0 bg-transparent p-6 shadow-none backdrop-blur-0">
             <a
               href="https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j"
               target="_blank"
