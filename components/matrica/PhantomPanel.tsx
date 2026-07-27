@@ -333,17 +333,17 @@ export default function PhantomPanel({
                 Mit csinálsz? Elmész egy sima, mezei weboldalra, és veszel egy tök cool pólót, vagy egy sorszámozott matricát. Egy túlárazott Támogatói Csomagot. Ez teljesen legális. Kifizeted pénzzel.
               </li>
               <li>
-                Mi történik utána? Az eladó küld neked emailben egy Titkos Jelszót (egy hosszú kódot). Itt még senki sem tudja, hogy te a kincsvadászat titkos részén is játszol. Ez a vásárlás teljesen olyan, mint bárki másé.
+                Mi történik utána? Az eladó küld neked emailben egy Titkos Jelszót (egy hosszú kódot) és egy Session ID-t. Ez a vásárlás teljesen olyan, mint bárki másé.
               </li>
             </ul>
 
             <div style={{ color: panelText, fontWeight: 700 }}>2. A JÁTÉK</div>
             <ul style={{ margin: 0, paddingLeft: 16, display: 'grid', gap: 6 }}>
               <li>
-                Megnyitod a térképes oldalt a telefonodon. De ez a sima térkép még unalmas. Ha hosszan nyomod a középső gombot - hoppá, megjelenik egy rejtett doboz.
+                Megnyitod a térképes oldalt a telefonodon. Ha hosszan nyomod a középső gombot - hoppá, megjelenik egy rejtett doboz. A PIN-kódot foyamatosan rotáljuk.
               </li>
               <li>
-                Beírod a saját titkos becenevedet (a Session ID-dat), hogy a rendszer felismerje: „Jé, hát te egy belsős vagy!” Miért Session? Szükségem van egy azonosítóra ami nem köthető a személyedhez. Nem emailcím, nem név, nem telefonszám de mégis permanens, és hozzád kötődik. A Session erre tökéletes.
+                Beírod a saját titkos becenevedet (a Session ID-dat), hogy a rendszer felismerje: „Jé, hát te egy belsős vagy!” Miért kell ez? Szükségem van egy azonosítóra ami nem köthető a személyedhez. Nem emailcím, nem név, nem telefonszám de mégis permanens, és hozzád kötődik.
               </li>
             </ul>
 
