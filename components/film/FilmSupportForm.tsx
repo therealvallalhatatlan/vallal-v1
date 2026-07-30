@@ -46,6 +46,12 @@ export default function FilmSupportForm() {
     setIsSubmitting(true);
     setMessage(null);
 
+    if (amount === 0) {
+      setIsSubmitting(false);
+      setMessage("Köszönjük a szavazatodat — a pilot csapatát értesítjük!");
+      return;
+    }
+
     try {
       const response = await fetch("/api/film-support", {
         method: "POST",
