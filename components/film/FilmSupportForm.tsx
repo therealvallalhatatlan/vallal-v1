@@ -12,6 +12,7 @@ export default function FilmSupportForm() {
   const [supporterName, setSupporterName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageTone, setMessageTone] = useState<"success" | "error" | null>(null);
 
   const isZeroSupport = amount === 0;
 
@@ -45,10 +46,12 @@ export default function FilmSupportForm() {
 
     setIsSubmitting(true);
     setMessage(null);
+    setMessageTone(null);
 
     if (amount === 0) {
       setIsSubmitting(false);
-      setMessage("Köszönjük a szavazatodat — a pilot csapatát értesítjük!");
+      setMessage("Sikeres szavazás — a pilot csapatát értesítjük!");
+      setMessageTone("success");
       return;
     }
 
@@ -74,6 +77,7 @@ export default function FilmSupportForm() {
     } catch (err) {
       console.error(err);
       setMessage("Nem sikerült létrehozni a fizetést. Próbáld újra később.");
+      setMessageTone("error");
     } finally {
       setIsSubmitting(false);
     }

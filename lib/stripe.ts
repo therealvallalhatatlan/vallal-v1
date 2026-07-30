@@ -32,7 +32,7 @@ function createStripeClient(): Stripe | null {
   return cachedStripe
 }
 
-const stripe = createStripeClient()
+export const stripe = createStripeClient()
 
 export function getSiteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
@@ -59,7 +59,6 @@ export async function createCheckoutSession(
   }
 
   try {
-    const amountInFiller = Math.round(params.amount * 100)
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -69,7 +68,7 @@ export async function createCheckoutSession(
             product_data: {
               name: params.productName || "Vállalhatatlan pilot",
             },
-            unit_amount: amountInFiller,
+            unit_amount: Math.round(params.amount * 100),
           },
           quantity: 1,
         },
