@@ -140,9 +140,9 @@ export default function FilmSupportForm() {
             onChange={handleAmountChange}
             className="w-full rounded-2xl border border-white/20 bg-black/40 px-4 py-3 text-white focus:border-lime-300 focus:outline-none"
           />
-          <p className="text-sm text-white/70">
-            Minimum 0 Ft, maximum ~ Ft. A támogatásod a pilot megvalósítását segíti.
-          </p>
+          <div className="text-sm text-white/70">
+            Minimum 0 Ft, maximum 500 000 Ft. A támogatásod a pilot megvalósítását segíti.
+          </div>
         </div>
       </div>
 
