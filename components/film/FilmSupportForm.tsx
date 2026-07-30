@@ -48,13 +48,6 @@ export default function FilmSupportForm() {
     setMessage(null);
     setMessageTone(null);
 
-    if (amount === 0) {
-      setIsSubmitting(false);
-      setMessage("Sikeres szavazás — a pilot csapatát értesítjük!");
-      setMessageTone("success");
-      return;
-    }
-
     try {
       const response = await fetch("/api/film-support", {
         method: "POST",
@@ -73,7 +66,19 @@ export default function FilmSupportForm() {
         throw new Error(payload.error || "Hiba történt a fizetés indításakor.");
       }
 
-      window.location.href = payload.url;
+      if (payload.skipPayment) {
+        setMessage(payload.message || "Sikeres szavazás — a pilot csapatát értesítjük!");
+        setMessageTone("success");
+        return;
+      }
+
+      if (payload.url) {
+        window.location.href = payload.url;
+        return;
+      }
+
+      setMessage("Sikeresen rögzítettük a támogatásod.");
+      setMessageTone("success");
     } catch (err) {
       console.error(err);
       setMessage("Nem sikerült létrehozni a fizetést. Próbáld újra később.");
@@ -172,9 +177,21 @@ export default function FilmSupportForm() {
           disabled={isSubmitting}
           className="w-full rounded-3xl bg-gradient-to-r from-lime-400 to-emerald-400 px-6 py-4 text-lg font-semibold text-black shadow-[0_10px_40px_rgba(0,0,0,0.45)] transition hover:shadow-[0_15px_60px_rgba(0,0,0,0.55)] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? "Fizetés előkészítése…" : "Támogatom a pilotot"}
+          {isSubmitting
+            ? "Fizetés előkészítése…"
+            : isZeroSupport
+            ? "Szavazok"
+            : "Támogatom a pilotot"}
         </button>
-        {message && <p className="text-sm text-red-400">{message}</p>}
+        {message && (
+          <p
+            className={`text-sm ${
+              messageTone === "success" ? "text-lime-300" : "text-red-400"
+            }`}
+          >
+            {message}
+          </p>
+        )}
       </div>
 
       {selectedNovella && (
