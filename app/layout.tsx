@@ -16,6 +16,7 @@ import BgVideoGate from "@/components/BgVideoGate";
 import TrafficSourceHeuristics from "@/components/TrafficSourceHeuristics";
 import StatusBanner from "@/components/StatusBanner";
 import FacebookSDK from "@/components/FacebookSDK";
+import NotificationOrchestrator from "@/components/notifications/NotificationOrchestrator";
 
 
 const crimson = Crimson_Pro({
@@ -153,6 +154,7 @@ export default function RootLayout({
             <Analytics />
             <div id="glitch-root"></div>
 
+            <NotificationOrchestrator />
             <ServiceWorkerRegister />
           </div>
 

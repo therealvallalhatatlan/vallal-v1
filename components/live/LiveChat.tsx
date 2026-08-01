@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import type { Role } from '@/lib/live/auth';
+import { clearUnreadSource, setUnreadSource } from '@/lib/notifications/unreadStore';
 
 type Props = {
   displayName: string;
@@ -20,6 +21,7 @@ type Props = {
   enableRealtime?: boolean;
   pollIntervalMs?: number;
   selfRole?: Role;
+  unreadSourceKey?: string;
 };
 
 type ChatMessage = {
@@ -54,6 +56,7 @@ export default function LiveChat({
   enableRealtime = true,
   pollIntervalMs = 2500,
   selfRole,
+  unreadSourceKey,
 }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -66,10 +69,21 @@ export default function LiveChat({
   const knownMessageIdsRef = useRef<Set<string>>(new Set());
 
   const resolvedTitle = useMemo(() => title || (compact ? 'Live chat' : 'Live feed'), [compact, title]);
+  const globalUnreadSourceKey = useMemo(() => unreadSourceKey || `live-chat:${roomId}`, [roomId, unreadSourceKey]);
 
   useEffect(() => {
     onUnreadChange?.(unread);
   }, [unread, onUnreadChange]);
+
+  useEffect(() => {
+    setUnreadSource(globalUnreadSourceKey, unread);
+  }, [globalUnreadSourceKey, unread]);
+
+  useEffect(() => {
+    return () => {
+      clearUnreadSource(globalUnreadSourceKey);
+    };
+  }, [globalUnreadSourceKey]);
 
   useEffect(() => {
     let mounted = true;

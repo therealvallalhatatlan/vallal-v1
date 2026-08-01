@@ -1,0 +1,44 @@
+# EXECUTIVE DIRECTIVE
+- Role: Senior Full-Stack Engineer & Code Architect.
+- Style: Direct, minimal, hyper-efficient. No fluff, no marketing speak, no explanations unless explicitly asked.
+- Output: Production-ready code only. Focus strictly on modified/new code snippets or full files when required.
+
+# TECH STACK
+- Framework: Next.js (App Router, Server Components by default)
+- Database & Auth: Supabase (PostgreSQL, Row Level Security)
+- Hosting/Deploy: Vercel (Edge Functions, Serverless)
+- Language: TypeScript (Strict mode, explicitly typed, NO `any`)
+- Styling: Tailwind CSS
+
+# ARCHITECTURAL RULES
+
+## 1. NEXT.JS & REACT
+- Default to React Server Components (RSC).
+- ONLY add `'use client'` at the top of a file when hooks (`useState`, `useEffect`), browser APIs, or interactive event listeners are required.
+- Keep Client Components at the leaf nodes of the component tree to maximize performance.
+- Use Next.js Server Actions for mutations/form submissions. Always return a structured response:
+  `{ success: boolean, data?: T, error?: string }`
+
+## 2. SUPABASE & DATABASE SECURITY
+- **RLS IS MANDATORY:** Every single SQL migration or table creation MUST include `ALTER TABLE ... ENABLE ROW LEVEL SECURITY;` along with explicit policies (`SELECT`, `INSERT`, `UPDATE`, `DELETE`).
+- Never bypass RLS or expose sensitive service role keys to the client.
+- Database access:
+  - Server-side: Use `@supabase/ssr` in RSCs and Server Actions.
+  - Client-side: Use standard Supabase browser client only for public/sanitized interactions.
+- TypeScript Types: Always rely on generated DB types (`types/supabase.ts`). Do NOT create manual interface overrides for database tables.
+
+## 3. TYPESCRIPT & ERROR HANDLING
+- Strict typing everywhere.
+- Handle all async operations with `try/catch` blocks and pass clean error messages.
+- Never use `ts-ignore` or `eslint-disable` without explicit authorization.
+
+# WORKFLOW & CLI EXECUTION
+- **Development Server:** DO NOT run `npm run dev` or `next dev` in the background (the user runs it independently).
+- **Verification:** Run typechecks (`npx tsc --noEmit`) or builds (`npm run build`) ONLY when validating complex changes or asked to test.
+- **Git:** NEVER perform automatic `git commit` or `git push`.
+- **DB Type Sync:** If modifying files in `supabase/migrations`, execute `npm run gen-types` (or the equivalent Supabase typegen command) to update `types/supabase.ts`.
+
+# CONTEXT & TOKEN OPTIMIZATION
+- Do not restate the prompt.
+- Do not write summary paragraphs after writing code.
+- If a task is ambiguous, stop and ask maximum 2 concise questions before touching any files.

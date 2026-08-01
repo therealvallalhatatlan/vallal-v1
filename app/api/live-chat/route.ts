@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { guardWriteOperation } from '@/lib/systemGuard';
 import { createClient } from '@/lib/server';
-import { getPrivateRoomSenderRole, isPrivateRoomId, isPrivateRoomParticipant } from '@/lib/live/privateRooms';
+import { dispatchPushNotification } from '@/lib/push/dispatch';
+import { getPrivateRoomSenderRole, isPrivateRoomId, isPrivateRoomParticipant, parsePrivateRoomId } from '@/lib/live/privateRooms';
 
 const DEFAULT_ROOM_ID = 'nyitott-muhely';
 const MATRICA_ROOM_ID = 'matrica-global';
@@ -103,12 +104,14 @@ export async function POST(req: Request) {
   const messageBody = (typeof body === 'string' ? body : '').trim().slice(0, MAX_MESSAGE_LENGTH);
   let effectiveDisplayName = displayName;
   let effectiveRole = role;
+  let senderUserId: string | null = null;
 
   if (requiresAuthenticatedWriter(roomId)) {
     const { user, error } = await getAuthenticatedUser(req);
     if (!user) {
       return NextResponse.json({ ok: false, error }, { status: 401 });
     }
+    senderUserId = user.id;
 
     if (isPrivateRoomId(roomId)) {
       if (!isPrivateRoomParticipant(roomId, user.id)) {
@@ -174,6 +177,26 @@ export async function POST(req: Request) {
   if (error || !data) {
     console.error('Failed to insert live chat message:', error);
     return NextResponse.json({ ok: false, error: 'db_error' }, { status: 500 });
+  }
+
+  // Private messages can trigger a targeted push for the other participant.
+  if (isPrivateRoomId(roomId)) {
+    const participants = parsePrivateRoomId(roomId);
+    if (participants && senderUserId) {
+      const normalizedSender = senderUserId.trim().toLowerCase();
+      const recipientUserId = participants[0] === normalizedSender ? participants[1] : participants[0];
+      if (recipientUserId && recipientUserId !== normalizedSender) {
+        void dispatchPushNotification({
+          userId: recipientUserId,
+          title: `${effectiveDisplayName} uzenetet kuldott`,
+          body: messageBody.slice(0, 120),
+          url: '/halozat',
+          unreadCount: 1,
+        }).catch((pushError) => {
+          console.warn('[LIVE-CHAT] private push dispatch failed:', pushError);
+        });
+      }
+    }
   }
 
   return NextResponse.json({ ok: true, message: data });

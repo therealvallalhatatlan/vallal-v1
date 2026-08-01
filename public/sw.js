@@ -1,5 +1,27 @@
 const VERSION = 'v1'
 
+async function broadcastToClients(payload) {
+  const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  for (const client of clients) {
+    client.postMessage(payload);
+  }
+}
+
+async function setWorkerAppBadge(unreadCount) {
+  const count = Number.isFinite(unreadCount) ? Math.max(0, Math.floor(unreadCount)) : 0;
+  try {
+    if (typeof self.registration?.setAppBadge === 'function') {
+      if (count > 0) {
+        await self.registration.setAppBadge(count);
+      } else if (typeof self.registration?.clearAppBadge === 'function') {
+        await self.registration.clearAppBadge();
+      }
+    }
+  } catch {
+    // Best-effort: badging support is browser-dependent.
+  }
+}
+
 // public/sw.js
 
 // Nagyon minimál SW – csak azért létezik, hogy a PWA feltétele teljesüljön.
@@ -43,41 +65,62 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('push', (event) => {
   if (!event.data) return;
-  let payload = { title: 'V.', body: '...', url: '/v3' };
+  let payload = { title: 'V.', body: '...', url: '/v3', unread_count: 1 };
   try {
     payload = event.data.json();
   } catch {
     payload.body = event.data.text();
   }
 
+  const unreadCount = Number.isFinite(payload?.unread_count)
+    ? Number(payload.unread_count)
+    : 1;
+
   event.waitUntil(
-    self.registration.showNotification(payload.title ?? 'V.', {
-      body: payload.body ?? '',
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
-      data: { url: payload.url ?? '/v3' },
-    })
+    Promise.all([
+      self.registration.showNotification(payload.title ?? 'V.', {
+        body: payload.body ?? '',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/icon-192.png',
+        data: {
+          url: payload.url ?? '/v3',
+          unreadCount,
+        },
+      }),
+      setWorkerAppBadge(unreadCount),
+      broadcastToClients({
+        type: 'PUSH_RECEIVED',
+        unreadCount,
+      }),
+    ])
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.url ?? '/v3';
+  const unreadCount = Number.isFinite(event.notification.data?.unreadCount)
+    ? Number(event.notification.data.unreadCount)
+    : 0;
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      // If app already open, focus it and navigate
-      for (const client of clients) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.focus();
-          client.navigate(url);
-          return;
+    Promise.all([
+      setWorkerAppBadge(0),
+      broadcastToClients({ type: 'PUSH_CLICKED', unreadCount }),
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        // If app already open, focus it and navigate
+        for (const client of clients) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            client.focus();
+            client.navigate(url);
+            return;
+          }
         }
-      }
-      // Otherwise open a new window
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(url);
-      }
-    })
+        // Otherwise open a new window
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(url);
+        }
+      }),
+    ])
   );
 });
 

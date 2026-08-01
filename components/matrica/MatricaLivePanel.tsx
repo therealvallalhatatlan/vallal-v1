@@ -58,6 +58,8 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
   const [pmRecipientName, setPmRecipientName] = useState<string | null>(null)
   const [pmRecipientData, setPmRecipientData] = useState<{ id: string; nickname: string; avatarUrl: string | null } | null>(null)
 
+  const normalizeNickname = useCallback((value: string) => value.trim().toLocaleLowerCase('hu-HU'), [])
+
   useEffect(() => {
     const updateMobileState = () => setIsMobile(window.innerWidth < 768)
     updateMobileState()
@@ -69,6 +71,7 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
     if (!pmRecipientName || !authToken) return
 
     let cancelled = false
+    setPmRecipientData(null)
 
     const fetchUserData = async () => {
       try {
@@ -79,13 +82,34 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
         })
         const json = await res.json()
         if (!cancelled && json.ok && Array.isArray(json.users)) {
-          const user = json.users.find((u: any) => u.nickname === pmRecipientName)
+          const targetName = normalizeNickname(pmRecipientName)
+          const user = json.users.find((u: any) => {
+            if (!u || typeof u.nickname !== 'string') return false
+            return normalizeNickname(u.nickname) === targetName
+          })
           if (user) {
             setPmRecipientData({
               id: user.id,
               nickname: user.nickname,
               avatarUrl: user.avatarUrl || null,
             })
+          } else {
+            const fallbackRes = await fetch(`/api/matrica/user-by-nickname?nickname=${encodeURIComponent(pmRecipientName)}`, {
+              headers: {
+                Authorization: `Bearer ${authToken}`,
+              },
+            })
+            const fallbackJson = await fallbackRes.json().catch(() => null)
+
+            if (!cancelled && fallbackRes.ok && fallbackJson?.ok && fallbackJson?.user?.id) {
+              setPmRecipientData({
+                id: fallbackJson.user.id,
+                nickname: typeof fallbackJson.user.nickname === 'string' ? fallbackJson.user.nickname : pmRecipientName,
+                avatarUrl: typeof fallbackJson.user.avatarUrl === 'string' ? fallbackJson.user.avatarUrl : null,
+              })
+            } else {
+              console.warn('[MatricaLivePanel] PM target not found among online users or nickname lookup:', pmRecipientName)
+            }
           }
         }
       } catch (error) {
@@ -98,7 +122,7 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
     return () => {
       cancelled = true
     }
-  }, [pmRecipientName, authToken])
+  }, [authToken, normalizeNickname, pmRecipientName])
 
   const unreadTotal = chatUnread
 
@@ -351,7 +375,10 @@ export default function MatricaLivePanel({ displayName, authToken, onOpenChange,
               compact
               active={open && activeTab === 'chat'}
               onUnreadChange={setChatUnread}
-              onUserNameClick={(username) => setPmRecipientName(username)}
+              onUserNameClick={(username) => {
+                if (!username || normalizeNickname(username) === normalizeNickname(displayName)) return
+                setPmRecipientName(username)
+              }}
               authToken={authToken}
               requireAuth
             />

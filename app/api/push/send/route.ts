@@ -27,14 +27,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'vapid_not_configured' }, { status: 500 });
   }
 
-  let body: { userId?: string; title?: string; body?: string; url?: string };
+  let body: { userId?: string; title?: string; body?: string; url?: string; unreadCount?: number };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const { userId, title, body: msgBody, url } = body;
+  const { userId, title, body: msgBody, url, unreadCount } = body;
   if (!userId || !title || !msgBody) {
     return NextResponse.json({ error: 'missing_fields' }, { status: 400 });
   }
@@ -54,7 +54,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, sent: 0, reason: 'no_active_subscriptions' });
   }
 
-  const payload = JSON.stringify({ title, body: msgBody, url: url ?? '/v3' });
+  const normalizedUnreadCount = Number.isFinite(unreadCount)
+    ? Math.max(0, Math.floor(unreadCount as number))
+    : undefined;
+
+  const payload = JSON.stringify({
+    title,
+    body: msgBody,
+    url: url ?? '/v3',
+    unread_count: normalizedUnreadCount,
+  });
   let sent = 0;
 
   for (const sub of subscriptions) {

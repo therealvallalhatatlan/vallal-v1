@@ -25,6 +25,7 @@ import SpotPreview from './SpotPreview'
 import ActiveSpotsPanel from './ActiveSpotsPanel'
 import PhantomPanel from './PhantomPanel'
 import ToastContainer from './ToastContainer'
+import HalozatWalkthrough, { type HalozatWalkthroughStep } from './HalozatWalkthrough'
 
 import { useToast } from './useToast'
 import MatricaLivePanel from './MatricaLivePanel'
@@ -39,12 +40,11 @@ const AUTO_REROUTE_MIN_DISTANCE_METERS = 35
 const AUTO_REROUTE_COOLDOWN_MS = 15000
 const BOTTOM_ACTION_BAR_HEIGHT = 84
 const MATRICA_TOP_SAFE_OFFSET = 'calc(var(--matrica-header-offset, 90px) + 8px)'
-const HALOZAT_ONBOARDING_STORAGE_KEY = 'halozat-onboarding-v1-seen'
+const HALOZAT_WALKTHROUGH_STORAGE_KEY = 'halozat-onboarding-v2-seen'
 const APPROX_SPOT_PULSE_DURATION_MS = 4600
 const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
 const UI_TOGGLE_SFX_SRC = '/audio/sfx-glitch.WAV'
 const UNIFIED_SPOT_VISIBILITY_RADIUS_METERS = 420
-const AUTO_OPEN_SPOTS_PANEL_DELAY_MS = 900
 const TALALOK_LONG_PRESS_MS = 1650
 const PHANTOM_SHADOW_SESSION_STORAGE_KEY = 'phantom:shadow-session-id:v1'
 const PHANTOM_SPONSOR_STORAGE_KEY = 'phantom:sponsor-session-id:v1'
@@ -80,6 +80,12 @@ interface RouteState {
 interface PreviewAnchor {
   x: number
   y: number
+}
+
+type WalkthroughStepId = 'nav' | 'map' | 'talalok' | 'spots' | 'chat'
+
+type WalkthroughStep = HalozatWalkthroughStep & {
+  id: WalkthroughStepId
 }
 
 interface PhantomProfile {
@@ -173,6 +179,81 @@ function getOrCreateShadowSessionId(): string | null {
   return created
 }
 
+function buildWalkthroughSteps(isMobile: boolean): WalkthroughStep[] {
+  const navHeight = isMobile ? '96px' : '88px'
+  const mapHeight = isMobile ? '240px' : '260px'
+
+  return [
+    {
+      id: 'nav',
+      badge: 'LÉPÉS 1',
+      title: 'Itt láthatod kik vannak épp online',
+      body: 'Jobb oldalon pedig egy menüt találsz, semmi extra.',
+      spotlightStyle: {
+        top: 0,
+        left: 0,
+        right: 0,
+        height: navHeight,
+      },
+    },
+    {
+      id: 'map',
+      badge: 'LÉPÉS 2',
+      title: 'A Hálózat térképe',
+      body: 'A zöld pötty a saját pozíciód, a körök pedig lelőhelyeket jelölnek. Publikus (azaz ingyenes) szpotoknál pontos pozíciót jelülünk, fizetős szpotoknál csak körülbelülit, amit fizetés után oldunk fel.',
+      spotlightStyle: {
+        top: 'calc(var(--matrica-header-offset, 90px) + 90px)',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 'min(360px, 76vw)',
+        height: mapHeight,
+        borderRadius: 28,
+      },
+    },
+    {
+      id: 'talalok',
+      badge: 'LÉPÉS 3',
+      title: 'A középső TALÁLOK gomb',
+      body: 'Ez nyitja az aktív szpotok panelt, itt láthatod az összes aktív, felfedezésre váró lelőhelyet.',
+      spotlightStyle: {
+        bottom: '8px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: '220px',
+        height: '78px',
+        borderRadius: 26,
+      },
+    },
+    {
+      id: 'spots',
+      badge: 'LÉPÉS 4',
+      title: 'Új rejtekhely létrehozása',
+      body: 'rejts el valamit a környékeden, vagy csak jelöld be és írd meg miért fontos neked.',
+      spotlightStyle: {
+        bottom: '8px',
+        left: '50%',
+        transform: isMobile ? 'translateX(calc(-32vw))' : 'translateX(-172px)',
+        width: isMobile ? '32vw' : '148px',
+        height: isMobile ? '72px' : '74px',
+        borderRadius: 20,
+      },
+    },
+    {
+      id: 'chat',
+      badge: 'LÉPÉS 5',
+      title: 'Publikus chat',
+      body: 'A hálózat telepeseinek',
+      spotlightStyle: {
+        right: 0,
+        bottom: '8px',
+        width: isMobile ? '170px' : '190px',
+        height: '84px',
+        borderRadius: 28,
+      },
+    },
+  ]
+}
+
 
 export default function MapView({ chatDisplayName, chatAuthToken, userRole }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -181,7 +262,6 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   const clickSfxRef = useRef<HTMLAudioElement | null>(null)
   const toggleSfxRef = useRef<HTMLAudioElement | null>(null)
   const firstFixRef = useRef(false)
-  const autoOpenedSpotsPanelRef = useRef(false)
   const lastAutoRerouteAtRef = useRef(0)
   const pendingAutoRerouteStatusRef = useRef(false)
   const handledDeepLinkRef = useRef(false)
@@ -214,6 +294,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
   const [claimingSpotId, setClaimingSpotId] = useState<string | null>(null)
   const [showIntroLayer, setShowIntroLayer] = useState(false)
+  const [walkthroughStepIndex, setWalkthroughStepIndex] = useState(0)
   const [phantomPanelOpen, setPhantomPanelOpen] = useState(false)
   const [phantomSessionId, setPhantomSessionId] = useState<string | null>(null)
   const [phantomProfile, setPhantomProfile] = useState<PhantomProfile | null>(null)
@@ -230,6 +311,56 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   const phantomPinInputRefs = useRef<Array<HTMLInputElement | null>>([])
 
   const { toasts, show: showToast, dismiss: dismissToast } = useToast()
+  const walkthroughSteps = useMemo(() => buildWalkthroughSteps(isMobile), [isMobile])
+
+  const openWalkthrough = useCallback((startIndex = 0) => {
+    setWalkthroughStepIndex(startIndex)
+    setShowIntroLayer(true)
+    setSpotsListOpen(false)
+    setLivePanelOpen(false)
+    setPreviewSpot(null)
+    setPhantomPanelOpen(false)
+    setPhantomPinPromptOpen(false)
+    setRouteStatus(null)
+  }, [])
+
+  const closeWalkthrough = useCallback(() => {
+    setShowIntroLayer(false)
+    setWalkthroughStepIndex(0)
+    setSpotsListOpen(false)
+    setPhantomPanelOpen(false)
+    setPhantomPinPromptOpen(false)
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(HALOZAT_WALKTHROUGH_STORAGE_KEY, '1')
+    }
+  }, [])
+
+  const handleWalkthroughPrev = useCallback(() => {
+    setWalkthroughStepIndex((prev) => Math.max(0, prev - 1))
+  }, [])
+
+  const handleWalkthroughNext = useCallback(() => {
+    if (walkthroughStepIndex >= walkthroughSteps.length - 1) {
+      closeWalkthrough()
+      return
+    }
+
+    setWalkthroughStepIndex((prev) => Math.min(prev + 1, walkthroughSteps.length - 1))
+  }, [closeWalkthrough, walkthroughStepIndex, walkthroughSteps.length])
+
+  useEffect(() => {
+    if (!showIntroLayer) {
+      return
+    }
+
+    if (walkthroughSteps[walkthroughStepIndex]?.id === 'talalok') {
+      setSpotsListOpen(true)
+      return
+    }
+
+    setSpotsListOpen(false)
+  }, [showIntroLayer, walkthroughStepIndex, walkthroughSteps])
 
   const clearApproxSpotPulseMarker = useCallback(() => {
     if (approxSpotPulseTimeoutRef.current !== null) {
@@ -306,11 +437,13 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const hasSeenOnboarding = window.localStorage.getItem(HALOZAT_ONBOARDING_STORAGE_KEY) === '1'
-    if (!hasSeenOnboarding) {
-      setShowIntroLayer(true)
+    if (!mapLoaded) return
+
+    const hasSeenWalkthrough = window.localStorage.getItem(HALOZAT_WALKTHROUGH_STORAGE_KEY) === '1'
+    if (!hasSeenWalkthrough) {
+      openWalkthrough(0)
     }
-  }, [])
+  }, [mapLoaded, openWalkthrough])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -351,11 +484,8 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   }, [phantomPinVerified])
 
   const handleDismissIntroLayer = useCallback(() => {
-    setShowIntroLayer(false)
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(HALOZAT_ONBOARDING_STORAGE_KEY, '1')
-    }
-  }, [])
+    closeWalkthrough()
+  }, [closeWalkthrough])
 
   const playUiSound = useCallback((kind: 'click' | 'toggle' = 'click') => {
     const audio = kind === 'toggle' ? toggleSfxRef.current : clickSfxRef.current
@@ -672,20 +802,6 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   useEffect(() => {
     void loadSpots()
   }, [loadSpots])
-
-  useEffect(() => {
-    if (!mapLoaded || !userLocation) return
-    if (autoOpenedSpotsPanelRef.current) return
-
-    autoOpenedSpotsPanelRef.current = true
-    const timeoutId = window.setTimeout(() => {
-      setSpotsListOpen(true)
-    }, AUTO_OPEN_SPOTS_PANEL_DELAY_MS)
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [mapLoaded, userLocation])
 
   useEffect(() => {
     const supabase = createClient() as {
@@ -2298,66 +2414,40 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
       {/* Toasts */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      {showIntroLayer ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Halozat bemutato"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 4300,
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            padding: `calc(var(--matrica-header-offset, 90px) + 14px) 14px 14px`,
-            background: 'rgba(3,5,8,0.68)',
-            backdropFilter: 'blur(5px)',
-          }}
-        >
-          <div
-            style={{
-              width: 'min(560px, 100%)',
-              borderRadius: 16,
-              border: '1px solid rgba(190,242,100,0.34)',
-              background: 'linear-gradient(180deg, rgba(10,13,17,0.98), rgba(6,8,11,0.98))',
-              boxShadow: '0 26px 56px rgba(0,0,0,0.52)',
-              padding: 18,
-              color: '#f4f4f5',
-            }}
-          >
-            <div style={{ fontSize: 11, letterSpacing: '0.08em', fontWeight: 700, color: '#bef264' }}>HALOZAT ROVIDEN</div>
-            <h2 style={{ margin: '6px 0 10px', fontSize: 20, lineHeight: 1.2 }}>Igy mukodik a vadaszat</h2>
-            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: '#d4d4d8' }}>
-              Menj a jelolt rejtekek kozelebe, nyisd meg a szpotot, majd a helyszinen jelold, hogy megtalaltad.
-              Fizetos szpotnal elobb feloldas kell.
-            </p>
-            <div style={{ marginTop: 12, display: 'grid', gap: 7, fontSize: 12, color: '#cbd5e1' }}>
-              <div>Rejtek: uj pontok es szerkesztes.</div>
-              <div>Talalok: aktiv szpotok, tavolsag, reszletek.</div>
-              <div>Beszelek: eloben chatelj a tobbi jatekossal.</div>
-            </div>
-            <button
-              type="button"
-              onClick={handleDismissIntroLayer}
-              style={{
-                marginTop: 14,
-                width: '100%',
-                borderRadius: 11,
-                border: '1px solid rgba(190,242,100,0.5)',
-                background: 'rgba(163,230,53,0.16)',
-                color: '#ecfccb',
-                fontSize: 14,
-                fontWeight: 700,
-                padding: '10px 12px',
-                cursor: 'pointer',
-              }}
-            >
-              Ertem, indulhat
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <button
+        type="button"
+        onClick={() => openWalkthrough(0)}
+        aria-label="Halozat bemutato ujrainditasa"
+        title="Bemutató újraindítása"
+        style={{
+          position: 'fixed',
+          right: 12,
+          top: 'calc(var(--matrica-action-rail-offset, 100px) + 10px)',
+          zIndex: 260,
+          minHeight: 36,
+          padding: '0 12px',
+          borderRadius: 999,
+          border: '1px solid rgba(190,242,100,0.16)',
+          background: 'rgba(6,9,12,0.84)',
+          color: '#ccc',
+          fontSize: 12,
+          fontWeight: 800,
+          letterSpacing: '0.09em',
+          cursor: 'pointer',
+          boxShadow: '0 10px 24px rgba(0,0,0,0.35)',
+        }}
+      >
+        ? Segítség
+      </button>
+
+      <HalozatWalkthrough
+        open={showIntroLayer}
+        stepIndex={walkthroughStepIndex}
+        steps={walkthroughSteps}
+        onPrev={handleWalkthroughPrev}
+        onNext={handleWalkthroughNext}
+        onClose={handleDismissIntroLayer}
+      />
 
       <nav
         aria-label="Halozat gyors műveletek"
