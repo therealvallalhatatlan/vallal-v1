@@ -28,6 +28,7 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
 export default function ZarojelVideoClient() {
   const router = useRouter()
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const [audioEnabled, setAudioEnabled] = useState(false)
   const [showConfirmLayer, setShowConfirmLayer] = useState(false)
   const [videoFailed, setVideoFailed] = useState(false)
@@ -61,38 +62,44 @@ export default function ZarojelVideoClient() {
     return () => document.removeEventListener('visibilitychange', onVisibilityChange)
   }, [playMutedVideo])
 
+  useEffect(() => {
+    return () => {
+      const audio = audioRef.current
+      if (!audio) return
+      audio.pause()
+    }
+  }, [])
+
   const toggleAudio = useCallback(async () => {
-    const video = videoRef.current
-    if (!video) return
+    const audio = audioRef.current
+    if (!audio) return
 
     try {
       if (audioEnabled) {
-        video.muted = true
+        audio.pause()
         setAudioEnabled(false)
         return
       }
 
-      video.muted = false
-      video.volume = 1
-      await video.play()
+      audio.volume = 1
+      await audio.play()
       setAudioEnabled(true)
     } catch {
-      video.muted = true
+      audio.pause()
       setAudioEnabled(false)
     }
   }, [audioEnabled])
 
   const enableAudio = useCallback(async () => {
-    const video = videoRef.current
-    if (!video || audioEnabled) return
+    const audio = audioRef.current
+    if (!audio || audioEnabled) return
 
     try {
-      video.muted = false
-      video.volume = 1
-      await video.play()
+      audio.volume = 1
+      await audio.play()
       setAudioEnabled(true)
     } catch {
-      video.muted = true
+      audio.pause()
       setAudioEnabled(false)
     }
   }, [audioEnabled])
@@ -115,7 +122,7 @@ export default function ZarojelVideoClient() {
       <video
         ref={videoRef}
         className="absolute inset-0 h-full w-full object-cover"
-        src="/videos/zarojel.mp4"
+        src="/videos/zarojel-vid2.mp4"
         autoPlay
         muted
         loop
@@ -124,6 +131,7 @@ export default function ZarojelVideoClient() {
         onError={() => setVideoFailed(true)}
         aria-hidden="true"
       />
+      <audio ref={audioRef} src="/videos/zarojel_hang.MP3" preload="auto" loop aria-hidden="true" />
 
       <div className="absolute inset-0" />
       <div className="zr-scanlines absolute inset-0 pointer-events-none" aria-hidden="true" />
