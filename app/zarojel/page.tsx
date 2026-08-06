@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import ZarojelTerminalClient from './ZarojelTerminalClient'
+import ZarojelVideoClient from './ZarojelVideoClient'
 
 export const metadata: Metadata = {
   title: 'Zárójel',
-  description: 'Belépés a Hálózat kiállításmegnyitóhoz.',
+  description: 'Teljes képernyős, videó-alapú Zárójel élmény.',
 }
 
 export default function ZarojelPage() {
-  return <ZarojelTerminalClient />
+  return <ZarojelVideoClient />
 }

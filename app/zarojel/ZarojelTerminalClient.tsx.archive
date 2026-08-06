@@ -1,0 +1,9 @@
+# Archived Zárójel implementation
+
+The original terminal-based `/zarojel` experience has been superseded by `ZarojelVideoClient`.
+
+- Original source file: `app/zarojel/ZarojelTerminalClient.tsx`
+- Replacement entrypoint: `app/zarojel/page.tsx`
+- New client: `app/zarojel/ZarojelVideoClient.tsx`
+
+Keep this file as the archive marker for the old implementation.

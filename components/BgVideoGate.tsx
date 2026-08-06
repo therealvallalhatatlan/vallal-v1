@@ -21,6 +21,8 @@ export default function BgVideoGate() {
     // Keep selected routes lightweight and disable global background video on homepage.
     return !(
       pathname === "/" ||
+      pathname === "/zarojel" ||
+      pathname.startsWith("/zarojel/") ||
       pathname === "/reader" || 
       pathname.startsWith("/reader/") || 
       pathname.startsWith("/konyv-2/") ||
