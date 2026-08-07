@@ -98,6 +98,24 @@ export const products: Product[] = [
     price: 10000,
     stock: 100,
   },
+  {
+    id: 'toxic-bunny-1',
+    type: 'pin',
+    name: 'Toxic Bunny',
+    description: 'A szétvarrt nyúl. Medál + lánc',
+    images: ['/ny1.png', '/ny2.png'],
+    price: 5000,
+    stock: 100,
+  },
+  {
+    id: 'red-eye-bunny-1',
+    type: 'pin',
+    name: 'Red Eye Bunny',
+    description: 'A látom a lelked nyúl. Medál + lánc',
+    images: ['/ny3.png', '/ny4.png'],
+    price: 5000,
+    stock: 100,
+  },
   // Room for future drops
 ];
 

@@ -167,7 +167,7 @@ export default function ZarojelVideoClient() {
                   A kapcsolat létrejött.
                 </p>
                 <p className="zr-glitch mt-2 text-[clamp(1.15rem,2.9vw,2.2rem)] leading-[0.9] text-lime-200" data-text="Kíván továbblépni?">
-                  Kíván továbblépni?
+                  Továbblépsz a Hálózatra?
                 </p>
               </div>
 
