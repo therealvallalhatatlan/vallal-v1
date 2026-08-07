@@ -82,6 +82,7 @@ self.addEventListener('push', (event) => {
         body: payload.body ?? '',
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
+        tag: typeof payload.tag === 'string' ? payload.tag : undefined,
         data: {
           url: payload.url ?? '/v3',
           unreadCount,

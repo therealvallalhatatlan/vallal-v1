@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSessionGuard } from '@/hooks/useSessionGuard'
+import HalozatPermissionCenter from './HalozatPermissionCenter'
 
 const MapView = dynamic(() => import('./MapView'), {
   ssr: false,
@@ -36,6 +37,7 @@ export default function MapViewClient() {
   const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [nicknameInput, setNicknameInput] = useState('')
   const [savingNickname, setSavingNickname] = useState(false)
+  const [geolocationEnabled, setGeolocationEnabled] = useState(false)
 
   const nicknamePattern = useMemo(() => /^[\p{L}\p{N}_-]+$/u, [])
 
@@ -162,7 +164,12 @@ export default function MapViewClient() {
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
-      <MapView chatDisplayName={chatDisplayName} chatAuthToken={accessToken} userRole={userRole} />
+      <MapView
+        chatDisplayName={chatDisplayName}
+        chatAuthToken={accessToken}
+        userRole={userRole}
+        geolocationEnabled={geolocationEnabled}
+      />
 
       {needsNickname && (
         <div
@@ -248,6 +255,13 @@ export default function MapViewClient() {
           </div>
         </div>
       )}
+
+      {!needsNickname ? (
+        <HalozatPermissionCenter
+          accessToken={accessToken}
+          onEnableGeolocation={() => setGeolocationEnabled(true)}
+        />
+      ) : null}
     </div>
   )
 }

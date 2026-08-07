@@ -186,12 +186,26 @@ export async function POST(req: Request) {
       const normalizedSender = senderUserId.trim().toLowerCase();
       const recipientUserId = participants[0] === normalizedSender ? participants[1] : participants[0];
       if (recipientUserId && recipientUserId !== normalizedSender) {
+        let unreadCountForRecipient = 1;
+
+        const { data: unreadResult, error: unreadError } = await supabaseAdmin.rpc('increment_pm_unread', {
+          p_recipient_user_id: recipientUserId,
+          p_other_user_id: normalizedSender,
+        });
+
+        if (unreadError) {
+          console.warn('[LIVE-CHAT] increment_pm_unread failed:', unreadError);
+        } else if (typeof unreadResult === 'number' && Number.isFinite(unreadResult)) {
+          unreadCountForRecipient = Math.max(1, Math.floor(unreadResult));
+        }
+
         void dispatchPushNotification({
           userId: recipientUserId,
           title: `${effectiveDisplayName} uzenetet kuldott`,
           body: messageBody.slice(0, 120),
-          url: '/halozat',
-          unreadCount: 1,
+          url: `/halozat?pm=${encodeURIComponent(normalizedSender)}`,
+          unreadCount: unreadCountForRecipient,
+          tag: `pm:${recipientUserId}:${normalizedSender}`,
         }).catch((pushError) => {
           console.warn('[LIVE-CHAT] private push dispatch failed:', pushError);
         });

@@ -33,6 +33,8 @@ type ChatMessage = {
   created_at: string;
 };
 
+type ReplyTarget = Pick<ChatMessage, 'id' | 'display_name' | 'body'>;
+
 const MAX_MESSAGE_LENGTH = 200;
 
 const supabase = createClient(
@@ -60,16 +62,26 @@ export default function LiveChat({
 }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
+  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unread, setUnread] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const knownMessageIdsRef = useRef<Set<string>>(new Set());
 
   const resolvedTitle = useMemo(() => title || (compact ? 'Live chat' : 'Live feed'), [compact, title]);
   const globalUnreadSourceKey = useMemo(() => unreadSourceKey || `live-chat:${roomId}`, [roomId, unreadSourceKey]);
+  const replyPrefix = useMemo(() => (replyTo ? `@${replyTo.display_name} ` : ''), [replyTo]);
+  const maxInputLength = Math.max(0, MAX_MESSAGE_LENGTH - replyPrefix.length);
+
+  const getReplyPreview = (body: string) => {
+    const collapsed = body.replace(/\s+/g, ' ').trim();
+    if (collapsed.length <= 60) return collapsed;
+    return `${collapsed.slice(0, 57)}...`;
+  };
 
   useEffect(() => {
     onUnreadChange?.(unread);
@@ -211,8 +223,15 @@ export default function LiveChat({
   }, [messages]);
 
   async function sendMessage() {
-    const body = input.trim();
-    if (!body || sending) return;
+    const messageText = input.trim();
+    if (!messageText || sending) return;
+
+    const body = `${replyPrefix}${messageText}`.trim();
+    if (!body || body.length > MAX_MESSAGE_LENGTH) {
+      setError(`Az uzenet maximum ${MAX_MESSAGE_LENGTH} karakter lehet.`);
+      return;
+    }
+
     if (requireAuth && !authToken) {
       setError('Bejelentkezes szukseges az uzenetkuldeshez.');
       return;
@@ -251,6 +270,7 @@ export default function LiveChat({
         return;
       }
       setInput('');
+      setReplyTo(null);
     } catch {
       setError('Nem sikerult elkuldeni az uzenetet.');
     } finally {
@@ -310,7 +330,19 @@ export default function LiveChat({
                   >
                     {message.display_name}
                   </span>
-                  <span>{new Date(message.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReplyTo({ id: message.id, display_name: message.display_name, body: message.body });
+                        textareaRef.current?.focus();
+                      }}
+                      className="border border-white/15 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.08em] text-zinc-300 hover:border-[#c8a97e]/45 hover:text-[#f3e9d8]"
+                    >
+                      Valasz
+                    </button>
+                    <span>{new Date(message.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
                 </div>
                 <p className="mt-1 whitespace-pre-wrap break-words text-zinc-100">{message.body}</p>
               </div>
@@ -323,7 +355,23 @@ export default function LiveChat({
         {onUserNameClick ? (
           <div className="text-[11px] uppercase tracking-[0.08em] text-zinc-500">Tipp: koppints egy nevre privat uzenethez.</div>
         ) : null}
+        {replyTo ? (
+          <div className="flex items-start justify-between gap-2 border border-[#c8a97e]/30 bg-[#c8a97e]/10 px-2 py-1.5 text-xs text-[#f3e9d8]">
+            <div className="min-w-0">
+              <div className="uppercase tracking-[0.08em] text-[#d7c2a3]">Valasz: {replyTo.display_name}</div>
+              <div className="truncate text-zinc-200">"{getReplyPreview(replyTo.body)}"</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReplyTo(null)}
+              className="border border-white/20 px-2 py-0.5 text-[10px] uppercase tracking-[0.08em] text-zinc-300 hover:text-zinc-100"
+            >
+              Megse
+            </button>
+          </div>
+        ) : null}
         <textarea
+          ref={textareaRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
@@ -333,13 +381,13 @@ export default function LiveChat({
             }
           }}
           placeholder={placeholder}
-          maxLength={MAX_MESSAGE_LENGTH}
+          maxLength={maxInputLength}
           rows={2}
           disabled={sending || (requireAuth && !authToken)}
           className="w-full resize-none border border-white/12 bg-black px-3 py-2 text-sm text-white outline-none focus:border-[#c8a97e]"
         />
         <div className="flex items-center justify-between">
-          <span className="text-xs text-zinc-500">{input.length}/{MAX_MESSAGE_LENGTH}</span>
+          <span className="text-xs text-zinc-500">{(replyPrefix + input).trim().length}/{MAX_MESSAGE_LENGTH}</span>
           <button
             type="button"
             onClick={sendMessage}

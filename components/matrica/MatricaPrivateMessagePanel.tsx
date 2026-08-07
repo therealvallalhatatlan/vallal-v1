@@ -17,6 +17,7 @@ interface Props {
   authToken: string | null
   onClose: () => void
   onUnreadChange?: (unreadCount: number, userId: string) => void
+  onOpenConversation?: (userId: string) => void
 }
 
 export default function MatricaPrivateMessagePanel({
@@ -26,6 +27,7 @@ export default function MatricaPrivateMessagePanel({
   authToken,
   onClose,
   onUnreadChange,
+  onOpenConversation,
 }: Props) {
   const [isMobile, setIsMobile] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -46,6 +48,10 @@ export default function MatricaPrivateMessagePanel({
   useEffect(() => {
     onUnreadChange?.(unreadCount, recipient.id)
   }, [unreadCount, recipient.id, onUnreadChange])
+
+  useEffect(() => {
+    onOpenConversation?.(recipient.id)
+  }, [recipient.id, onOpenConversation])
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {

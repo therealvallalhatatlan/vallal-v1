@@ -6,10 +6,9 @@ const MATRICA_START_ROUTE_EVENT = 'matrica:start-route';
 import { createClient } from '@/lib/browser'
 import Link from 'next/link'
 import { useCallback, useEffect, useState, useRef } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useSessionGuard } from '@/hooks/useSessionGuard.js'
 import { usePresence } from '@/hooks/usePresence'
-import { buildPrivateRoomId, getPrivateRoomSenderRole } from '@/lib/live/privateRooms'
 import { buildAuthHref, clearStoredAuthReturnTarget } from '@/lib/authRedirect'
 import MatricaPrivateMessagePanel from '@/components/matrica/MatricaPrivateMessagePanel'
 // If StickerSpot is not imported from types, define a fallback type
@@ -361,6 +360,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
   const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
   const pathname = usePathname()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const isAdmin = pathname?.startsWith('/admin/matrica')
   const { session } = useSessionGuard()
   const user = (session as any)?.user ?? null
@@ -385,8 +385,8 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
   const [pmRecipient, setPmRecipient] = useState<OnlineUserProfile | null>(null)
   const [pmUnreadCounts, setPmUnreadCounts] = useState<Record<string, number | undefined>>({})
   const [pmToasts, setPmToasts] = useState<Array<{ id: string; userId: string; nickname: string }>>([])
-  const pmLastMessageByUserRef = useRef<Record<string, string>>({})
   const pmUnreadStorageReadyRef = useRef(false)
+  const pmDeepLinkHandledRef = useRef<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const clickSfxRef = useRef<HTMLAudioElement | null>(null)
   const headerOffset = onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET + CONTROL_RAIL_HEIGHT
@@ -461,6 +461,89 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
   }, [user?.id, pmUnreadCounts])
 
   useEffect(() => {
+    if (!authToken || !user?.id) return
+
+    let cancelled = false
+
+    const loadUnreadFromServer = async () => {
+      try {
+        const res = await fetch('/api/matrica/pm-unread', {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        })
+        const json = await res.json().catch(() => null)
+        if (cancelled || !res.ok || !json?.ok || typeof json?.unreadByUserId !== 'object') return
+
+        const next: Record<string, number | undefined> = {}
+        for (const [key, value] of Object.entries(json.unreadByUserId as Record<string, unknown>)) {
+          if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+            next[key] = Math.floor(value)
+          }
+        }
+        setPmUnreadCounts(next)
+      } catch {
+        // Keep local fallback if server sync fails.
+      }
+    }
+
+    void loadUnreadFromServer()
+    const timer = setInterval(() => {
+      void loadUnreadFromServer()
+    }, 10000)
+
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+    }
+  }, [authToken, user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    const pmTargetUserId = searchParams?.get('pm')?.trim() || ''
+    if (!pmTargetUserId || pmTargetUserId === user.id) return
+    if (pmDeepLinkHandledRef.current === pmTargetUserId) return
+
+    let cancelled = false
+    pmDeepLinkHandledRef.current = pmTargetUserId
+
+    const openPmFromDeepLink = async () => {
+      try {
+        const res = await fetch(`/api/user/profile?userId=${encodeURIComponent(pmTargetUserId)}`)
+        const json = await res.json().catch(() => null)
+
+        if (cancelled) return
+
+        const nickname = typeof json?.profile?.nickname === 'string' && json.profile.nickname.trim()
+          ? json.profile.nickname.trim()
+          : `user-${pmTargetUserId.slice(0, 6)}`
+
+        const avatarUrl = typeof json?.profile?.avatar_url === 'string' ? json.profile.avatar_url : null
+
+        setPmRecipient({
+          id: pmTargetUserId,
+          email: '',
+          nickname,
+          avatarUrl,
+          badge: 0,
+          score: 0,
+          accepted: 0,
+        })
+        setPmUnreadCounts((prev) => ({ ...prev, [pmTargetUserId]: undefined }))
+      } catch {
+        // Deep-link open is best effort.
+      }
+    }
+
+    void openPmFromDeepLink()
+
+    return () => {
+      cancelled = true
+    }
+  }, [searchParams, user?.id])
+
+  useEffect(() => {
     const handleOpenPM = (event: Event) => {
       const customEvent = event as CustomEvent<{
         userId: string
@@ -523,69 +606,6 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
     window.addEventListener('resize', updateIsMobile)
     return () => window.removeEventListener('resize', updateIsMobile)
   }, [])
-
-    useEffect(() => {
-      if (!authToken || !user?.id) return
-
-      let cancelled = false
-
-      const pollPrivateRooms = async () => {
-        try {
-          const onlineRes = await fetch('/api/presence/online')
-          const onlineJson = await onlineRes.json()
-          if (!onlineRes.ok || !Array.isArray(onlineJson?.users) || cancelled) return
-
-          const onlineUsers = onlineJson.users
-            .map((u: { id?: string; user_id?: string; email?: string }) => ({
-              id: u.id ?? u.user_id,
-              email: u.email,
-            }))
-            .filter((u: { id?: string; email?: string }) => !!u.id && !!u.email && u.id !== user.id)
-
-          await Promise.all(
-            onlineUsers.map(async (onlineUser: { id: string; email: string }) => {
-              const roomId = buildPrivateRoomId(user.id, onlineUser.id)
-              const selfRole = getPrivateRoomSenderRole(roomId, user.id)
-              if (!selfRole) return
-
-              const res = await fetch(`/api/live-chat?room_id=${encodeURIComponent(roomId)}&limit=1`, {
-                headers: {
-                  Authorization: `Bearer ${authToken}`,
-                },
-              })
-              const json = await res.json()
-              if (!res.ok || !json?.ok || !Array.isArray(json?.messages) || json.messages.length === 0 || cancelled) return
-
-              const latestMessage = json.messages[0]
-              const lastKnownId = pmLastMessageByUserRef.current[onlineUser.id]
-              pmLastMessageByUserRef.current[onlineUser.id] = latestMessage.id
-
-              if (!lastKnownId) return
-              if (lastKnownId === latestMessage.id) return
-              if (pmRecipient?.id === onlineUser.id) return
-              if (latestMessage.sender_role === selfRole) return
-
-              setPmUnreadCounts((prev) => ({
-                ...prev,
-                [onlineUser.id]: (prev[onlineUser.id] || 0) + 1,
-              }))
-            })
-          )
-        } catch {
-          // Silence polling errors to keep nav responsive.
-        }
-      }
-
-      void pollPrivateRooms()
-      const timer = setInterval(() => {
-        void pollPrivateRooms()
-      }, 4000)
-
-      return () => {
-        cancelled = true
-        clearInterval(timer)
-      }
-    }, [authToken, user?.id, pmRecipient?.id])
 
   useEffect(() => {
     document.documentElement.style.setProperty('--matrica-header-offset', `${headerOffset}px`)
@@ -1293,6 +1313,20 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
           displayName={pmDisplayName}
           authToken={authToken}
           onClose={() => setPmRecipient(null)}
+          onOpenConversation={(recipientUserId) => {
+            setPmUnreadCounts((prev) => ({ ...prev, [recipientUserId]: undefined }))
+
+            void fetch('/api/matrica/pm-unread', {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${authToken}`,
+              },
+              body: JSON.stringify({ otherUserId: recipientUserId }),
+            }).catch(() => {
+              // Keep optimistic clear to avoid blocking UX.
+            })
+          }}
           onUnreadChange={(count, userId) => {
             const prevCount = pmUnreadCounts[userId] || 0
             setPmUnreadCounts((prev) => ({
@@ -1351,6 +1385,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
         }
       `}</style>
     </nav>
+
     </>
   )
 }

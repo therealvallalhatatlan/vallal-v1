@@ -27,14 +27,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'vapid_not_configured' }, { status: 500 });
   }
 
-  let body: { userId?: string; title?: string; body?: string; url?: string; unreadCount?: number };
+  let body: { userId?: string; title?: string; body?: string; url?: string; unreadCount?: number; tag?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const { userId, title, body: msgBody, url, unreadCount } = body;
+  const { userId, title, body: msgBody, url, unreadCount, tag } = body;
   if (!userId || !title || !msgBody) {
     return NextResponse.json({ error: 'missing_fields' }, { status: 400 });
   }
@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
     body: msgBody,
     url: url ?? '/v3',
     unread_count: normalizedUnreadCount,
+    tag: typeof tag === 'string' && tag.trim() ? tag.trim().slice(0, 120) : undefined,
   });
   let sent = 0;
 

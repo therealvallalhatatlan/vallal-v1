@@ -61,6 +61,7 @@ interface MapViewProps {
   chatDisplayName: string
   chatAuthToken: string | null
   userRole: 'user' | 'editor' | 'admin'
+  geolocationEnabled?: boolean
 }
 
 interface FocusSpotDetail {
@@ -255,7 +256,7 @@ function buildWalkthroughSteps(isMobile: boolean): WalkthroughStep[] {
 }
 
 
-export default function MapView({ chatDisplayName, chatAuthToken, userRole }: MapViewProps) {
+export default function MapView({ chatDisplayName, chatAuthToken, userRole, geolocationEnabled = false }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const userMarkerRef = useRef<mapboxgl.Marker | null>(null)
@@ -650,6 +651,10 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
   }
 
   useEffect(() => {
+    if (!geolocationEnabled) {
+      return
+    }
+
     if (!navigator.geolocation) {
       setGeoError('A böngésző nem támogatja a helymeghatározást.');
       return;
@@ -725,7 +730,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole }: Ma
     };
     // geoRetry and spots changes when the user clicks Retry or spots update
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geoRetry, spots]);
+  }, [geoRetry, spots, geolocationEnabled]);
 
   // ── Fetch spots ─────────────────────────────────────────────────────────────
   const loadSpots = useCallback(async () => {

@@ -4,6 +4,7 @@ type DispatchPushInput = {
   body: string
   url?: string
   unreadCount?: number
+  tag?: string
 }
 
 export async function dispatchPushNotification(input: DispatchPushInput): Promise<void> {
@@ -19,6 +20,7 @@ export async function dispatchPushNotification(input: DispatchPushInput): Promis
     unreadCount: Number.isFinite(input.unreadCount)
       ? Math.max(0, Math.floor(input.unreadCount as number))
       : undefined,
+    tag: typeof input.tag === 'string' && input.tag.trim() ? input.tag.trim().slice(0, 120) : undefined,
   }
 
   const response = await fetch(`${siteUrl}/api/push/send`, {
