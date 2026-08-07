@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import MapViewClient from '@/components/matrica/MapViewClient'
 import MatricaNav from '@/components/matrica/MatricaNav'
 import Navigation from '@/components/Navigation'
@@ -21,7 +22,9 @@ export default function HalozatPage() {
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 4000 }}>
         <Navigation />
       </div>
-      <MatricaNav showOnlineUsersBar={false} />
+      <Suspense fallback={null}>
+        <MatricaNav showOnlineUsersBar={false} />
+      </Suspense>
       <div style={{ position: 'absolute', inset: 0 }}>
         <MapViewClient />
       </div>
