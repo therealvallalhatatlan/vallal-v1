@@ -92,7 +92,7 @@ export default function PhantomPanel({
   const [sessionInput, setSessionInput] = useState(shadowSessionId ?? '')
   const [voucherCode, setVoucherCode] = useState('')
   const [authSubmitting, setAuthSubmitting] = useState(false)
-  const [creditAmount, setCreditAmount] = useState(300)
+  const [creditAmount, setCreditAmount] = useState(6000)
   const [creditCheckoutLoading, setCreditCheckoutLoading] = useState(false)
   const [editorOpen, setEditorOpen] = useState(false)
 
@@ -121,8 +121,8 @@ export default function PhantomPanel({
   const panelLimeMuted = 'rgba(163,230,53,0.72)'
   const panelText = '#e4e4e7'
 
-  const normalizedCredits = Number.isFinite(creditAmount) ? Math.max(1, Math.floor(creditAmount)) : 1
-  const sliderCredits = Math.min(50000, Math.max(1000, Math.round(normalizedCredits / 1000) * 1000))
+  const normalizedCredits = Number.isFinite(creditAmount) ? Math.max(6000, Math.floor(creditAmount)) : 6000
+  const sliderCredits = Math.min(100000, Math.max(6000, Math.round(normalizedCredits / 1000) * 1000))
 
   function resetPublishForm() {
     setPublishTitle('')
@@ -323,53 +323,15 @@ export default function PhantomPanel({
           >
             <div style={{ color: panelText, fontWeight: 700 }}>Elmondom, hogy működik.</div>
             <div>Az egész város a játékterünk.</div>
-            <div>
-              De a játéknak van egy szupertitkos, felnőttesebb rétege is, amihez csak egy nagyon ügyes trükkel lehet csatlakozni.
-            </div>
-
-            <div style={{ color: panelText, fontWeight: 700 }}>1. A BOLT</div>
             <ul style={{ margin: 0, paddingLeft: 16, display: 'grid', gap: 6 }}>
-              <li>
-                Mit csinálsz? Elmész egy sima, mezei weboldalra, és veszel egy tök cool pólót, vagy egy sorszámozott matricát. Egy túlárazott Támogatói Csomagot. Ez teljesen legális. Kifizeted pénzzel.
-              </li>
-              <li>
-                Mi történik utána? Az eladó küld neked emailben egy Titkos Jelszót (egy hosszú kódot) és egy Session ID-t. Ez a vásárlás teljesen olyan, mint bárki másé.
-              </li>
+              <li>Session ID = az anonim azonosítód. Nem név, nem email, nem telefonszám.</li>
+              <li>Titkos Jelszót emailben kapsz. Ezzel lépsz be a belső rétegbe.</li>
+              <li>A rendszer a vásárlást és a játékos azonosítót külön kezeli. A kettő között nincs direkt kapcsolat.</li>
+              <li>A drop csak geofence zónában, GPS alapján válik elérhetővé.</li>
+              <li>Claim után a hely 10 perc múlva eltűnik a térképről.</li>
+              <li>Minél kevesebb személyes adatot osztasz meg, annál nagyobb a biztonságod.</li>
             </ul>
-
-            <div style={{ color: panelText, fontWeight: 700 }}>2. A JÁTÉK</div>
-            <ul style={{ margin: 0, paddingLeft: 16, display: 'grid', gap: 6 }}>
-              <li>
-                Megnyitod a térképes oldalt a telefonodon. Ha hosszan nyomod a középső gombot - hoppá, megjelenik egy rejtett doboz. A PIN-kódot foyamatosan rotáljuk.
-              </li>
-              <li>
-                Beírod a saját titkos becenevedet (a Session ID-dat), hogy a rendszer felismerje: „Jé, hát te egy belsős vagy!” Miért kell ez? Szükségem van egy azonosítóra ami nem köthető a személyedhez. Nem emailcím, nem név, nem telefonszám de mégis permanens, és hozzád kötődik.
-              </li>
-            </ul>
-
-            <div style={{ color: panelText, fontWeight: 700 }}>3. A VARÁZSLAT</div>
-            <ul style={{ margin: 0, paddingLeft: 16, display: 'grid', gap: 6 }}>
-              <li>
-                Beírod a Titkos Jelszót, amit az emailben kaptál a Támogatói Csomagodért cserébe.
-              </li>
-              <li>
-                Mi történik a háttérben? A gép ellenőrzi: „Aha, ezt a kódot tényleg kifizették.” De a gép <strong>soha</strong> nem köti össze a te nevedet vagy a bankkártyádat a titkos beceneveddel (ami a Session ID-d). A két dolog teljesen külön fut. Olyan, mintha az egyik zsebedbe tennéd a blokkot, a másikba meg a kincsesláda kulcsát, és a kettő soha nem találkozhatna.
-              </li>
-            </ul>
-
-            <div style={{ color: panelText, fontWeight: 700 }}>4. A VADÁSZAT</div>
-            <ul style={{ margin: 0, paddingLeft: 16, display: 'grid', gap: 6 }}>
-              <li>
-                Mi történik most? A gép jóváír neked egy Drop Kredit pontot. A térkép megmutat egy zónát a városban. Odasétálsz a zónába a telefonoddal. Amikor odaérsz, a GPS-ed jelez, és a térkép megmutatja a pontos helyet: „Ott van a pad alatt egy kis csomag!” Ez egy újabb védvonal (Geofencing) ami a védelmünket szolgálja.
-              </li>
-              <li>
-                És a végén a tűzijáték: Odamész, elhozod a csomagot (amiben benne van a könyv, póló, meg a meglepi cucc) és ráklikkelsz a telefonon, hogy megvan. Ekkor a gép egy belső órával elszámol: 10 perc múlva az egész helyszín nyom nélkül eltűnik a térképről, mintha ott sem lett volna.
-              </li>
-            </ul>
-
-            <div>
-              Senki sem tudja, ki vette el, ki tette oda, és hogy ki fizetett érte. Csak annyit látnak, hogy volt egy merch-vásárlás, meg egy titkos játékos a térképen, de a kettő között elvágták a drótot.
-            </div>
+            <div style={{ color: panelText, fontWeight: 700 }}>Semmi nyom. Tiszta terep.</div>
           </div>
         </div>
 
@@ -389,23 +351,23 @@ export default function PhantomPanel({
           <input
             className="phantom-credit-range"
             type="range"
-            min={1000}
-            max={50000}
+            min={6000}
+            max={100000}
             step={1000}
             value={sliderCredits}
-            onChange={(event) => setCreditAmount(Number(event.target.value) || 1)}
+            onChange={(event) => setCreditAmount(Number(event.target.value) || 6000)}
             style={{ width: '100%' }}
           />
 
           <div style={{ display: 'flex', gap: 8 }}>
             <input
               type="number"
-              min={1}
-              step={1}
+              min={6000}
+              step={1000}
               value={normalizedCredits}
               onChange={(event) => {
                 const next = Number(event.target.value)
-                setCreditAmount(Number.isFinite(next) ? next : 1)
+                setCreditAmount(Number.isFinite(next) ? next : 6000)
               }}
               style={{
                 flex: 1,
@@ -419,7 +381,7 @@ export default function PhantomPanel({
             />
             <button
               type="button"
-              disabled={!authToken || creditCheckoutLoading || !shadowSessionId || normalizedCredits < 1}
+              disabled={!authToken || creditCheckoutLoading || !shadowSessionId || normalizedCredits < 6000}
               onClick={async () => {
                 if (typeof window === 'undefined') return
 
@@ -452,7 +414,7 @@ export default function PhantomPanel({
                 padding: '8px 10px',
                 fontSize: 12,
                 cursor: 'pointer',
-                opacity: !authToken || creditCheckoutLoading || !shadowSessionId || normalizedCredits < 1 ? 0.5 : 1,
+                opacity: !authToken || creditCheckoutLoading || !shadowSessionId || normalizedCredits < 6000 ? 0.5 : 1,
               }}
             >
               {creditCheckoutLoading ? '...' : 'Fizetes'}
