@@ -45,7 +45,6 @@ const APPROX_SPOT_PULSE_DURATION_MS = 4600
 const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
 const UI_TOGGLE_SFX_SRC = '/audio/sfx-glitch.WAV'
 const UNIFIED_SPOT_VISIBILITY_RADIUS_METERS = 420
-const TALALOK_LONG_PRESS_MS = 1650
 const PHANTOM_SHADOW_SESSION_STORAGE_KEY = 'phantom:shadow-session-id:v1'
 const PHANTOM_SPONSOR_STORAGE_KEY = 'phantom:sponsor-session-id:v1'
 const PHANTOM_PANEL_OPEN_STORAGE_KEY = 'phantom:panel-open:v1'
@@ -268,8 +267,6 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
   const handledDeepLinkRef = useRef(false)
   const approxSpotPulseMarkerRef = useRef<mapboxgl.Marker | null>(null)
   const approxSpotPulseTimeoutRef = useRef<number | null>(null)
-  const talalokLongPressTimerRef = useRef<number | null>(null)
-  const talalokLongPressTriggeredRef = useRef(false)
 
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
@@ -417,15 +414,6 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       if (toggleSfxRef.current) {
         toggleSfxRef.current.pause()
         toggleSfxRef.current = null
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (talalokLongPressTimerRef.current !== null) {
-        window.clearTimeout(talalokLongPressTimerRef.current)
-        talalokLongPressTimerRef.current = null
       }
     }
   }, [])
@@ -1918,44 +1906,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
     window.dispatchEvent(new CustomEvent('matrica:toggle-live-panel'))
   }, [playUiSound])
 
-  const clearTalalokLongPressTimer = useCallback(() => {
-    if (talalokLongPressTimerRef.current !== null) {
-      window.clearTimeout(talalokLongPressTimerRef.current)
-      talalokLongPressTimerRef.current = null
-    }
-  }, [])
-
-  const handleTalalokPressStart = useCallback(() => {
-    clearTalalokLongPressTimer()
-    talalokLongPressTriggeredRef.current = false
-
-    talalokLongPressTimerRef.current = window.setTimeout(() => {
-      talalokLongPressTriggeredRef.current = true
-      playUiSound('toggle')
-      if (!phantomPinVerified) {
-        openPhantomPinPrompt()
-        return
-      }
-
-      setPhantomPanelOpen((prev) => !prev)
-    }, TALALOK_LONG_PRESS_MS)
-  }, [clearTalalokLongPressTimer, openPhantomPinPrompt, phantomPinVerified, playUiSound])
-
-  const handleTalalokPressEnd = useCallback(() => {
-    clearTalalokLongPressTimer()
-
-    if (talalokLongPressTriggeredRef.current) {
-      talalokLongPressTriggeredRef.current = false
-      return
-    }
-
+  const handleTalalokPress = useCallback(() => {
     handleToggleSpotsList()
-  }, [clearTalalokLongPressTimer, handleToggleSpotsList])
-
-  const handleTalalokPressCancel = useCallback(() => {
-    clearTalalokLongPressTimer()
-    talalokLongPressTriggeredRef.current = false
-  }, [clearTalalokLongPressTimer])
+  }, [handleToggleSpotsList])
 
   const handleOpenSpotAdmin = useCallback(() => {
     playUiSound('click')
@@ -2533,21 +2486,15 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
 
         <button
           type="button"
-          onMouseDown={handleTalalokPressStart}
-          onMouseUp={handleTalalokPressEnd}
-          onMouseLeave={handleTalalokPressCancel}
-          onTouchStart={handleTalalokPressStart}
-          onTouchEnd={handleTalalokPressEnd}
-          onTouchCancel={handleTalalokPressCancel}
-          onContextMenu={(event) => event.preventDefault()}
+          onClick={handleTalalokPress}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault()
-              handleToggleSpotsList()
+              handleTalalokPress()
             }
           }}
           aria-label="Aktív szpotok"
-          title="Aktív szpotok (hosszan: PIN-kod)"
+          title="Aktív szpotok"
           className="matrica-action-btn matrica-action-btn-core"
           style={{
             position: 'relative',

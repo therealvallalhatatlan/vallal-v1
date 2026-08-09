@@ -375,7 +375,7 @@ export default function Navigation() {
 
                   <div className="mt-5 grid gap-3">
                     <Link
-                      href={userId ? `/user/${userId}` : "/dashboard"}
+                      href="/dashboard"
                       onClick={closeMenu}
                       className="inline-flex items-center justify-between border border-white/10 px-4 py-3 text-sm text-white/80 transition-colors hover:border-white/25 hover:bg-white/[0.05]"
                     >
