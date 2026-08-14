@@ -1,4 +1,4 @@
-import { POST } from '../../webhook/stripe/route'
+import { PATCH, POST } from '../../webhook/stripe/route'
 
 // Legacy compatibility route: keep old Stripe dashboard endpoints working.
-export { POST }
+export { PATCH, POST }

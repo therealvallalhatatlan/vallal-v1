@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 import { DEFAULT_PREORDER_CAMPAIGN_SLUG } from '@/lib/shop/preorder';
 import { PAID_SPOT_UNLOCK_HOURS } from '@/lib/matricaUnlocks';
+import { formatTerminalTelegramMessage, sendTelegramMessage } from '@/lib/telegram';
+import { hashTelegramId } from '@/lib/security/hash';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',
@@ -13,6 +16,194 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 const resendApiKey = process.env.RESEND_API_KEY;
 const emailFrom = process.env.EMAIL_FROM;
+const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+
+let cachedWebhookSupabase: SupabaseClient | null = null;
+
+function getWebhookSupabase(): SupabaseClient | null {
+  if (cachedWebhookSupabase) return cachedWebhookSupabase;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY for orders webhook logging');
+    return null;
+  }
+
+  cachedWebhookSupabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      detectSessionInUrl: false,
+      autoRefreshToken: false,
+    },
+  });
+
+  return cachedWebhookSupabase;
+}
+
+async function sendTelegramCompletionMessage(input: {
+  chatId: string;
+  packageLabel: string;
+  amount: number;
+  currency: string;
+  stripeSessionId: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!telegramBotToken) {
+    console.log('ℹ️ Telegram completion message skipped: TELEGRAM_BOT_TOKEN is not set');
+    return { ok: false, error: 'missing_telegram_bot_token' };
+  }
+
+  try {
+    await sendTelegramMessage({
+      token: telegramBotToken,
+      chatId: input.chatId,
+      text: formatTerminalTelegramMessage({
+        statuses: ['SYS_OK', 'DATA_ENCRYPTED'],
+        lines: [
+          `Package: ${input.packageLabel}`,
+          `Amount: ${input.amount} ${input.currency.toUpperCase()}`,
+          `Receipt Ref: ${input.stripeSessionId}`,
+        ],
+        cleanupPrompt: '[AUTO_CLEANUP] Clear local chat excerpt after delivery coordination.',
+      }),
+    });
+
+    console.log(`✅ Telegram completion message sent for Stripe session ${input.stripeSessionId}`);
+    return { ok: true };
+  } catch (error) {
+    console.error('⚠️ Telegram completion message error:', error);
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'telegram_send_failed',
+    };
+  }
+}
+
+function sanitizeOrderMetadata(metadata: Record<string, string>) {
+  const {
+    telegram_chat_id: _telegramChatId,
+    telegram_user_id: _telegramUserId,
+    telegram_user_ephemeral: _telegramUserEphemeral,
+    ...safeMetadata
+  } = metadata;
+
+  return safeMetadata;
+}
+
+async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
+  const db = getWebhookSupabase();
+  if (!db) return;
+
+  const metadata = session.metadata ?? {};
+  const productId = metadata.product_id ?? metadata.productId ?? 'unknown';
+  if (productId === 'unknown') {
+    console.warn(`⚠️ Missing product_id metadata for Stripe session ${session.id}`);
+  }
+
+  const telegramChatId = metadata.telegram_chat_id ?? null;
+  const rawTelegramIdentity = metadata.telegram_user_ephemeral ?? metadata.telegram_user_id ?? telegramChatId ?? null;
+  const anonymizedUserHash = rawTelegramIdentity ? hashTelegramId(String(rawTelegramIdentity)) : null;
+  const deliveryType = metadata.delivery_type === 'anonymous_locker' ? 'anonymous_locker' : 'dead_drop';
+  const packageLabel = metadata.package_label ?? metadata.product_alias ?? productId;
+  const amount = typeof session.amount_total === 'number' ? session.amount_total : 0;
+  const currency = (session.currency ?? 'huf').toLowerCase();
+  const safeMetadata = sanitizeOrderMetadata(metadata);
+  const shippingDetails = (session as Stripe.Checkout.Session & {
+    shipping_details?: {
+      name?: string | null;
+      phone?: string | null;
+      address?: Stripe.Address | null;
+    } | null;
+  }).shipping_details;
+
+  const shippingAddress = shippingDetails
+    ? {
+        name: shippingDetails.name ?? null,
+        phone: shippingDetails.phone ?? null,
+        address: shippingDetails.address ?? null,
+      }
+    : null;
+
+  const { data: upsertedOrder, error } = await db
+    .from('orders')
+    .upsert(
+      {
+        stripe_session_id: session.id,
+        anonymized_user_hash: anonymizedUserHash,
+        product_id: productId,
+        delivery_type: deliveryType,
+        amount,
+        currency,
+        status: 'paid',
+        customer_email: session.customer_details?.email ?? null,
+        customer_name: session.customer_details?.name ?? null,
+        shipping_address: shippingAddress,
+        metadata: safeMetadata,
+      },
+      { onConflict: 'stripe_session_id' },
+    )
+    .select('id, telegram_sent_at, telegram_send_attempts')
+    .single<{
+      id: string;
+      telegram_sent_at: string | null;
+      telegram_send_attempts: number;
+    }>();
+
+  if (error) {
+    console.error(`❌ Failed to upsert order for Stripe session ${session.id}:`, error);
+    return;
+  }
+
+  console.log(`✅ Orders table upserted for Stripe session ${session.id}`);
+
+  if (!telegramChatId || !telegramBotToken) {
+    return;
+  }
+
+  if (upsertedOrder?.telegram_sent_at) {
+    console.log(`ℹ️ Telegram confirmation already sent for Stripe session ${session.id}`);
+    return;
+  }
+
+  const sendResult = await sendTelegramCompletionMessage({
+    chatId: telegramChatId,
+    packageLabel,
+    amount,
+    currency,
+    stripeSessionId: session.id,
+  });
+
+  const nextAttempts = Number(upsertedOrder?.telegram_send_attempts ?? 0) + 1;
+
+  if (sendResult.ok) {
+    const { error: sentUpdateError } = await db
+      .from('orders')
+      .update({
+        telegram_sent_at: new Date().toISOString(),
+        telegram_send_error: null,
+        telegram_send_attempts: nextAttempts,
+      })
+      .eq('stripe_session_id', session.id);
+
+    if (sentUpdateError) {
+      console.error(`⚠️ Telegram sent, but orders update failed for ${session.id}:`, sentUpdateError);
+    }
+    return;
+  }
+
+  const { error: failedUpdateError } = await db
+    .from('orders')
+    .update({
+      telegram_send_error: sendResult.error,
+      telegram_send_attempts: nextAttempts,
+    })
+    .eq('stripe_session_id', session.id);
+
+  if (failedUpdateError) {
+    console.error(`⚠️ Failed to persist Telegram error for ${session.id}:`, failedUpdateError);
+  }
+}
 
 function generateVoucherCode(): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -239,6 +430,8 @@ async function handleMerchCheckoutCompleted(session: Stripe.Checkout.Session, st
     console.error('❌ Failed to finalize merch order payment:', error);
     return;
   }
+
+  await upsertPaidOrderFromSession(session);
 
   console.log('✅ Merch order payment finalized', data);
   revalidatePath('/shop');
