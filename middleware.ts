@@ -82,17 +82,26 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = req.method;
 
-  // Next statikus cuccok menjenek szabadon
+  // 🔴 KRITIKUS: TELEGRAM ÉS STRIPE WEBHOOKOK AZONNALI KIVÉTELE (Bypass)
+  // Ezeknek mindig át kell menniük, POST kérésként is, tiltások nélkül!
+  if (
+    pathname.startsWith("/api/telegram") ||
+    pathname.startsWith("/api/stripe")
+  ) {
+    return NextResponse.next();
+  }
+
+  // Next statikus cuccok és API-k menjenek szabadon
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" || 
     pathname === "/manifest.webmanifest" ||      // ⬅️ KELL
-  pathname.startsWith("/icons") ||             // ⬅️ ikonok is kellenek
-  pathname.endsWith(".png") ||                 // ⬅️ ha máshol hívjuk az ikonokat
-  pathname.endsWith(".mp4") ||
-  pathname.endsWith(".webmanifest") ||          // ⬅️ ha máshol hívjuk a manifestet
+    pathname.startsWith("/icons") ||             // ⬅️ ikonok is kellenek
+    pathname.endsWith(".png") ||                 // ⬅️ ha máshol hívjuk az ikonokat
+    pathname.endsWith(".mp4") ||
+    pathname.endsWith(".webmanifest") ||          // ⬅️ ha máshol hívjuk a manifestet
     pathname.startsWith("/api/") ||
     pathname.startsWith("/static/") ||
     pathname.startsWith("/icons/") ||
