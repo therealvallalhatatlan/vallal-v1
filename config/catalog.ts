@@ -3,7 +3,7 @@ export interface Product {
   code: string;
   name: string;
   priceHuf: number;
-  maxPerOrder: number;
+  minPerOrder: number;
   description: string;
   stripePriceId: string;
   active: boolean;
@@ -15,7 +15,7 @@ export const CATALOG: Record<string, Product> = {
     code: "Amnezia Haze",
     name: "Sativa domináns hibrid",
     priceHuf: 4000,
-    maxPerOrder: 30,
+    minPerOrder: 5,
     description: "A legendás Holland Amnesia Haze, a sativa domináns hibrid, amely a világ egyik legnépszerűbb kannabisz fajtája. Kiváló minőségű, erős hatású és aromás.",
     stripePriceId: "price_1U4VQ8FL4KlHxxuRivEaBrfD",
     active: true,
@@ -25,7 +25,7 @@ export const CATALOG: Record<string, Product> = {
     code: "DATA_PACKAGE_02",
     name: "Glitch Audio Cassette",
     priceHuf: 8990,
-    maxPerOrder: 3,
+    minPerOrder: 3,
     description: "[AUDIO_FRAGMENT] Magnetic noise artifact with hidden channel markers.",
     stripePriceId: "price_XXXXXXXXXXXX02",
     active: true,
@@ -35,7 +35,7 @@ export const CATALOG: Record<string, Product> = {
     code: "DATA_PACKAGE_03",
     name: "Dead Drop Coordinates",
     priceHuf: 24990,
-    maxPerOrder: 1,
+    minPerOrder: 1,
     description: "[FIELD_OP] Physical coordinate envelope for one-time retrieval.",
     stripePriceId: "price_XXXXXXXXXXXX03",
     active: true,

@@ -5,7 +5,6 @@ import TelegramBot from "node-telegram-bot-api";
 import { CATALOG, type Product } from "@/config/catalog";
 import { hashTelegramId } from "@/lib/security/hash";
 import { getSiteUrl } from "@/lib/stripe";
-import { formatTerminalTelegramMessage } from "@/lib/telegram";
 
 type TelegramUser = {
     id: number;
@@ -101,10 +100,13 @@ function buildCatalogKeyboard(items: Product[]) {
 }
 
 function buildQuantityKeyboard(product: Product) {
-    const quantityButtons = Array.from({ length: product.maxPerOrder }, (_, idx) => ({
-        text: `x${idx + 1}`,
-        callback_data: toQtyCallback(product.id, idx + 1),
-    }));
+    const quantityButtons = Array.from({ length: 5 }, (_, idx) => {
+        const count = product.minPerOrder + idx;
+        return {
+            text: `x${count}`,
+            callback_data: toQtyCallback(product.id, count),
+        };
+    });
 
     return {
         inline_keyboard: [quantityButtons, [{ text: "Back", callback_data: "back_to_menu" }]],
@@ -118,10 +120,7 @@ async function sendCatalogMenu(chatId: number) {
     if (activeProducts.length === 0) {
         await bot.sendMessage(
             chatId,
-            formatTerminalTelegramMessage({
-                statuses: ["SYSTEM_OVERRIDE", "CATALOG_EMPTY"],
-                lines: ["No active catalog entities.", "Retry /bolt after uplink refresh."],
-            }),
+            "Jelenleg nincs aktív csomag a piacon. Kérlek próbáld meg később újra.",
             { parse_mode: "HTML" },
         );
         return;
@@ -129,13 +128,7 @@ async function sendCatalogMenu(chatId: number) {
 
     await bot.sendMessage(
         chatId,
-        formatTerminalTelegramMessage({
-            statuses: ["SYSTEM_OVERRIDE", "CATALOG_RENDER"],
-            lines: [
-                "Select a package node.",
-                "Quantity selection occurs in the next step.",
-            ],
-        }),
+        "Üdvözöllek a piacon. Válassz az alábbi elérhető csomagok közül a rendelés megkezdéséhez:",
         {
             parse_mode: "HTML",
             reply_markup: {
@@ -211,18 +204,7 @@ async function handleMessage(update: TelegramUpdate) {
     if (command === "/segitseg") {
         await bot.sendMessage(
             message.chat.id,
-            formatTerminalTelegramMessage({
-                statuses: ["SYSTEM_HELP", "UPLINK_INFO"],
-                lines: [
-                    "VÁLLALHATATLAN C2 TERMINAL v1.0",
-                    "Azonosítás: Anonim csatorna.",
-                    "",
-                    "Elérhető parancsok:",
-                    "/bolt - Katalógus és adatcsomagok kérése",
-                    "/start - Rendszer újraindítása",
-                    "/segitseg - Terminiál súgó leírása",
-                ],
-            }),
+            "Elérhető parancsok:\n/bolt - Katalógus megnyitása\n/start - Kezdőmenü\n/segitseg - Súgó",
             { parse_mode: "HTML" }
         );
         return;
@@ -231,10 +213,7 @@ async function handleMessage(update: TelegramUpdate) {
     if (command === "/start") {
         await bot.sendMessage(
             message.chat.id,
-            formatTerminalTelegramMessage({
-                statuses: ["SYSTEM_OVERRIDE", "BOOT_SEQUENCE"],
-                lines: ["Node terminal link active.", "System command accepted. Executing /bolt..."],
-            }),
+            "Kapcsolódás sikeres. Megnyitom a piacot...",
             { parse_mode: "HTML" },
         );
     }
@@ -263,7 +242,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
     if (payload === "back_to_menu") {
         await sendCatalogMenu(chatId);
         await bot.answerCallbackQuery(callbackQueryId, {
-            text: "[SYSTEM_OVERRIDE] Menu restored.",
+            text: "Menü visszaállítva.",
             show_alert: false,
         });
         return;
@@ -274,7 +253,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
         const product = findActiveProductById(buyAction.productId);
         if (!product) {
             await bot.answerCallbackQuery(callbackQueryId, {
-                text: "[SYS_WARN] Product unavailable.",
+                text: "A kiválasztott csomag nem elérhető.",
                 show_alert: true,
             });
             return;
@@ -282,14 +261,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
 
         await bot.sendMessage(
             chatId,
-            formatTerminalTelegramMessage({
-                statuses: ["SYS_QUANTITY_SELECT", "SYSTEM_OVERRIDE"],
-                lines: [
-                    `Code: ${product.code}`,
-                    `Name: ${product.name}`,
-                    `Max per order: ${product.maxPerOrder}`,
-                ],
-            }),
+            `Válaszd ki a mennyiséget ehhez: ${product.name} (${product.code}). Minimum rendelés: ${product.minPerOrder} db.`,
             {
                 parse_mode: "HTML",
                 reply_markup: buildQuantityKeyboard(product),
@@ -297,7 +269,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
         );
 
         await bot.answerCallbackQuery(callbackQueryId, {
-            text: "[SYS_QUANTITY_SELECT] Choose amount.",
+            text: "Mennyiség kiválasztása...",
             show_alert: false,
         });
         return;
@@ -306,7 +278,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
     const qtyAction = parseQtyCallback(payload);
     if (!qtyAction) {
         await bot.answerCallbackQuery(callbackQueryId, {
-            text: "[SYS_WARN] Unknown operation.",
+            text: "Ismeretlen művelet.",
             show_alert: false,
         });
         return;
@@ -315,15 +287,15 @@ async function handleCallbackQuery(update: TelegramUpdate) {
     const product = findActiveProductById(qtyAction.productId);
     if (!product) {
         await bot.answerCallbackQuery(callbackQueryId, {
-            text: "[SYS_WARN] Product unavailable.",
+            text: "A kiválasztott csomag nem elérhető.",
             show_alert: true,
         });
         return;
     }
 
-    if (qtyAction.count > product.maxPerOrder) {
+    if (qtyAction.count < product.minPerOrder) {
         await bot.answerCallbackQuery(callbackQueryId, {
-            text: "[SYS_WARN] Quantity out of bounds.",
+            text: `A minimális rendelési mennyiség: ${product.minPerOrder}.`,
             show_alert: true,
         });
         return;
@@ -339,15 +311,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
 
         await bot.sendMessage(
             chatId,
-            formatTerminalTelegramMessage({
-                statuses: ["SYS_CHECKOUT_ARMED", "SESSION_TIMEOUT_30M"],
-                lines: [
-                    `Code: ${product.code}`,
-                    `Quantity: ${qtyAction.count}`,
-                    `Total: ${session.totalAmountHuf.toLocaleString("hu-HU")} HUF`,
-                    "Checkout link primed.",
-                ],
-            }),
+            `Rendelés összesítés:\n• Csomag: ${product.name} (${product.code})\n• Mennyiség: ${qtyAction.count} db\n• Végösszeg: ${session.totalAmountHuf.toLocaleString("hu-HU")} HUF\n\nA fizetéshez nyisd meg az alábbi linket:`,
             {
                 parse_mode: "HTML",
                 reply_markup: {
@@ -357,14 +321,14 @@ async function handleCallbackQuery(update: TelegramUpdate) {
         );
 
         await bot.answerCallbackQuery(callbackQueryId, {
-            text: "[SYS_OK] Checkout tunnel ready.",
+            text: "Fizetési link elkészült.",
             show_alert: false,
         });
     } catch (checkoutError) {
         const errorMessage = checkoutError instanceof Error ? checkoutError.message : "checkout_failed";
         console.error("[telegram.webhook] checkout_create_failed", { error: errorMessage });
         await bot.answerCallbackQuery(callbackQueryId, {
-            text: "[SYS_ERR] Checkout tunnel failed.",
+            text: "A fizetési link létrehozása sikertelen.",
             show_alert: true,
         });
     }
