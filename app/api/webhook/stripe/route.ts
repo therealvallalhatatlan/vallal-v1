@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import crypto from 'crypto';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -19,6 +20,23 @@ const emailFrom = process.env.EMAIL_FROM;
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
 
 let cachedWebhookSupabase: SupabaseClient | null = null;
+
+function toDeterministicUuid(seed: string): string {
+  const hex = crypto.createHash('sha256').update(seed).digest('hex').slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
+
+function resolveLegacyOrderUserId(rawValue: string | null): string | null {
+  if (!rawValue) return null;
+
+  const trimmed = rawValue.trim();
+  if (!trimmed) return null;
+
+  const uuidLike = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  if (uuidLike.test(trimmed)) return trimmed;
+
+  return toDeterministicUuid(`telegram:${trimmed}`);
+}
 
 function getWebhookSupabase(): SupabaseClient | null {
   if (cachedWebhookSupabase) return cachedWebhookSupabase;
@@ -123,7 +141,8 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
   }
 
   const telegramChatId = metadata.telegram_chat_id ?? null;
-  const legacyUserId = metadata.telegram_user_id ?? telegramChatId ?? null;
+  const legacyUserIdRaw = metadata.user_uuid ?? metadata.telegram_user_id ?? telegramChatId ?? null;
+  const legacyUserId = resolveLegacyOrderUserId(legacyUserIdRaw);
   const rawTelegramIdentity = metadata.telegram_user_ephemeral ?? metadata.telegram_user_id ?? telegramChatId ?? null;
   const anonymizedUserHash = rawTelegramIdentity ? hashTelegramId(String(rawTelegramIdentity)) : null;
   const deliveryType = metadata.delivery_type === 'anonymous_locker' ? 'anonymous_locker' : 'dead_drop';
@@ -235,7 +254,8 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
   const metadata = paymentIntent.metadata ?? {};
   const productId = metadata.product_id ?? metadata.telegram_product_id ?? 'multi_cart';
   const telegramChatId = metadata.telegram_chat_id ?? null;
-  const legacyUserId = metadata.telegram_user_id ?? telegramChatId ?? null;
+  const legacyUserIdRaw = metadata.user_uuid ?? metadata.telegram_user_id ?? telegramChatId ?? null;
+  const legacyUserId = resolveLegacyOrderUserId(legacyUserIdRaw);
   const orderId = metadata.order_id ?? null;
   const amount = typeof paymentIntent.amount_received === 'number'
     ? paymentIntent.amount_received

@@ -27,6 +27,11 @@ type NormalizedItem = {
   quantity: number;
 };
 
+function toDeterministicUuid(seed: string): string {
+  const hex = crypto.createHash("sha256").update(seed).digest("hex").slice(0, 32);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
+
 function extractMissingColumn(errorMessage: string | undefined): string | null {
   if (!errorMessage) return null;
   const match = errorMessage.match(/Could not find the '([^']+)' column/);
@@ -147,6 +152,7 @@ export async function POST(request: NextRequest) {
     }
 
     const orderId = crypto.randomUUID();
+    const legacyOrderUserId = toDeterministicUuid(`telegram:${telegramUserId}`);
     const cartSummary = cart.map((item) => `${item.product.code} x${item.quantity}`).join(", ");
     const anonymizedUserHash = process.env.HASH_SALT?.trim()
       ? hashTelegramId(String(telegramUserId))
@@ -161,6 +167,7 @@ export async function POST(request: NextRequest) {
         order_id: orderId,
         telegram_chat_id: String(telegramUserId),
         telegram_user_id: String(telegramUserId),
+        user_uuid: legacyOrderUserId,
         telegram_user_hash: anonymizedUserHash,
         telegram_auth_date: String(telegramAuthDate),
         telegram_query_id: telegramQueryId,
@@ -187,7 +194,7 @@ export async function POST(request: NextRequest) {
 
     const fullOrderPayload: Record<string, unknown> = {
       id: orderId,
-      user_id: String(telegramUserId),
+      user_id: legacyOrderUserId,
       stripe_session_id: paymentIntent.id,
       anonymized_user_hash: anonymizedUserHash,
       product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
@@ -212,7 +219,7 @@ export async function POST(request: NextRequest) {
       } else {
         const minimalFallbackPayload: Record<string, unknown> = {
           id: orderId,
-          user_id: String(telegramUserId),
+          user_id: legacyOrderUserId,
           stripe_session_id: paymentIntent.id,
           product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
           amount: totalAmountMinor,
