@@ -366,16 +366,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: true, skipped: "missing_telegram_bot_token" });
     }
 
-    if (!stripe) {
-        return NextResponse.json({ ok: true, skipped: "missing_stripe_secret_key" });
-    }
-
     if (!bot) {
         return NextResponse.json({ ok: true, skipped: "missing_telegram_bot_token" });
     }
 
     try {
         const update = (await req.json()) as TelegramUpdate;
+        console.log("[telegram.webhook] update received", {
+            hasMessage: Boolean(update.message),
+            hasCallbackQuery: Boolean(update.callback_query),
+        });
 
         if (update.message) {
             await handleMessage(update);
