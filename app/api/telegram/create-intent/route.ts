@@ -24,10 +24,30 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = (await request.json()) as CreateIntentBody;
-    const validation = validateTelegramInitData(body.initData ?? "");
+    const rawInitData = String(body.initData ?? "").trim();
 
-    if (!validation.ok) {
-      return NextResponse.json({ error: validation.error }, { status: 401 });
+    let telegramUserId: number;
+    let telegramAuthDate: number;
+    let telegramQueryId = "";
+    let isDevBypass = false;
+
+    if (rawInitData) {
+      const validation = validateTelegramInitData(rawInitData);
+      if (!validation.ok) {
+        return NextResponse.json({ error: validation.error }, { status: 401 });
+      }
+
+      telegramUserId = validation.payload.user.id;
+      telegramAuthDate = validation.payload.authDate;
+      telegramQueryId = validation.payload.queryId ?? "";
+    } else if (process.env.NODE_ENV !== "production") {
+      const fallbackUserIdRaw = Number.parseInt(process.env.TELEGRAM_DEV_USER_ID ?? "900000001", 10);
+      telegramUserId = Number.isFinite(fallbackUserIdRaw) ? fallbackUserIdRaw : 900000001;
+      telegramAuthDate = Math.floor(Date.now() / 1000);
+      telegramQueryId = "dev-localhost";
+      isDevBypass = true;
+    } else {
+      return NextResponse.json({ error: "missing_init_data" }, { status: 401 });
     }
 
     const productId = String(body.productId ?? "").trim();
@@ -43,7 +63,6 @@ export async function POST(request: NextRequest) {
     }
 
     const totalAmountHuf = product.priceHuf * quantity;
-    const telegramUserId = validation.payload.user.id;
     const anonymizedUserHash = process.env.HASH_SALT?.trim()
       ? hashTelegramId(String(telegramUserId))
       : `raw_${telegramUserId}`;
@@ -57,8 +76,9 @@ export async function POST(request: NextRequest) {
         telegram_chat_id: String(telegramUserId),
         telegram_user_id: String(telegramUserId),
         telegram_user_hash: anonymizedUserHash,
-        telegram_auth_date: String(validation.payload.authDate),
-        telegram_query_id: validation.payload.queryId ?? "",
+        telegram_auth_date: String(telegramAuthDate),
+        telegram_query_id: telegramQueryId,
+        telegram_init_bypass: isDevBypass ? "1" : "0",
         telegram_product_id: product.id,
         telegram_product_code: product.code,
         telegram_quantity: String(quantity),
