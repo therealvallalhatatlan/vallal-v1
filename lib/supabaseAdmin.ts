@@ -8,14 +8,14 @@ if (typeof window !== 'undefined') {
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables')
-}
-
 let cachedAdminClient: SupabaseClient | null = null
 
 export function supabaseAdmin(): SupabaseClient {
   if (cachedAdminClient) return cachedAdminClient
+
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables')
+  }
 
   cachedAdminClient = createClient(
     SUPABASE_URL as string,

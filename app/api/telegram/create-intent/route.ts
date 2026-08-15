@@ -6,6 +6,7 @@ import { hashTelegramId } from "@/lib/security/hash";
 import { validateTelegramInitData } from "@/lib/security/telegram";
 import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 type CreateIntentBody = {
   initData?: string;
@@ -25,6 +26,46 @@ type NormalizedItem = {
   productId: string;
   quantity: number;
 };
+
+function extractMissingColumn(errorMessage: string | undefined): string | null {
+  if (!errorMessage) return null;
+  const match = errorMessage.match(/Could not find the '([^']+)' column/);
+  return match?.[1] ?? null;
+}
+
+async function insertOrderWithSchemaFallback(
+  db: SupabaseClient,
+  payload: Record<string, unknown>,
+): Promise<{ ok: boolean }> {
+  const candidatePayload: Record<string, unknown> = { ...payload };
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const { error } = await db.from("orders").insert(candidatePayload);
+    if (!error) return { ok: true };
+
+    console.error("[telegram.create-intent] order insert attempt failed", {
+      attempt: attempt + 1,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      payloadKeys: Object.keys(candidatePayload),
+    });
+
+    if (error.code !== "PGRST204") {
+      break;
+    }
+
+    const missingColumn = extractMissingColumn(error.message);
+    if (!missingColumn || !(missingColumn in candidatePayload)) {
+      break;
+    }
+
+    delete candidatePayload[missingColumn];
+  }
+
+  return { ok: false };
+}
 
 function normalizeItems(items: CreateIntentBody["items"]): NormalizedItem[] {
   if (!Array.isArray(items) || items.length === 0) {
@@ -133,11 +174,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "missing_client_secret" }, { status: 500 });
     }
 
-    const db = supabaseAdmin();
+    let db: SupabaseClient | null = null;
+    try {
+      db = supabaseAdmin();
+    } catch (dbInitError) {
+      console.error("[telegram.create-intent] supabase init failed, continuing without order persistence", {
+        error: dbInitError instanceof Error ? dbInitError.message : String(dbInitError),
+      });
+    }
 
     let orderPersisted = false;
 
-    const fullOrderPayload = {
+    const fullOrderPayload: Record<string, unknown> = {
       id: orderId,
       stripe_session_id: paymentIntent.id,
       anonymized_user_hash: anonymizedUserHash,
@@ -156,47 +204,25 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const { error: orderInsertError } = await db.from("orders").insert(fullOrderPayload);
-
-    if (orderInsertError) {
-      console.error("[telegram.create-intent] order insert failed (full payload)", {
-        code: orderInsertError.code,
-        message: orderInsertError.message,
-        details: orderInsertError.details,
-        hint: orderInsertError.hint,
-      });
-
-      const legacyFallbackPayload = {
-        id: orderId,
-        stripe_session_id: paymentIntent.id,
-        product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
-        amount: totalAmountMinor,
-        currency: paymentIntent.currency,
-        status: "pending",
-        metadata: {
-          source: "telegram-mini-app",
-          cart_summary: cartSummary,
-          item_count: cart.length,
-        },
-      };
-
-      const { error: fallbackOrderInsertError } = await db.from("orders").insert(legacyFallbackPayload);
-
-      if (fallbackOrderInsertError) {
-        console.error("[telegram.create-intent] order insert failed (fallback payload)", {
-          code: fallbackOrderInsertError.code,
-          message: fallbackOrderInsertError.message,
-          details: fallbackOrderInsertError.details,
-          hint: fallbackOrderInsertError.hint,
-        });
-      } else {
+    if (db) {
+      const fullInsert = await insertOrderWithSchemaFallback(db, fullOrderPayload);
+      if (fullInsert.ok) {
         orderPersisted = true;
+      } else {
+        const minimalFallbackPayload: Record<string, unknown> = {
+          id: orderId,
+          stripe_session_id: paymentIntent.id,
+          product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
+          amount: totalAmountMinor,
+          status: "pending",
+        };
+
+        const fallbackInsert = await insertOrderWithSchemaFallback(db, minimalFallbackPayload);
+        orderPersisted = fallbackInsert.ok;
       }
-    } else {
-      orderPersisted = true;
     }
 
-    if (orderPersisted) {
+    if (db && orderPersisted) {
       const { error: itemInsertError } = await db
         .from("order_items")
         .insert(
