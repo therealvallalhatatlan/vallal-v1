@@ -80,6 +80,22 @@ async function sendTelegramCompletionMessage(input: {
   }
 }
 
+async function sendTelegramPaymentIntentCompletionMessage(input: {
+  chatId: string;
+  packageLabel: string;
+  amount: number;
+  currency: string;
+  stripePaymentIntentId: string;
+}) {
+  return sendTelegramCompletionMessage({
+    chatId: input.chatId,
+    packageLabel: input.packageLabel,
+    amount: input.amount,
+    currency: input.currency,
+    stripeSessionId: input.stripePaymentIntentId,
+  });
+}
+
 function sanitizeOrderMetadata(metadata: Record<string, string>) {
   const {
     telegram_chat_id: _telegramChatId,
@@ -205,6 +221,91 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
   }
 }
 
+async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentIntent) {
+  const db = getWebhookSupabase();
+  if (!db) return;
+
+  const metadata = paymentIntent.metadata ?? {};
+  const productId = metadata.product_id ?? metadata.telegram_product_id ?? 'unknown';
+  const telegramChatId = metadata.telegram_chat_id ?? null;
+  const amount = typeof paymentIntent.amount_received === 'number'
+    ? paymentIntent.amount_received
+    : typeof paymentIntent.amount === 'number'
+      ? paymentIntent.amount
+      : 0;
+  const currency = (paymentIntent.currency ?? 'huf').toLowerCase();
+  const packageLabel = metadata.product_code ?? metadata.telegram_product_code ?? productId;
+  const safeMetadata = sanitizeOrderMetadata(metadata);
+
+  const { data: upsertedOrder, error } = await db
+    .from('orders')
+    .upsert(
+      {
+        stripe_session_id: paymentIntent.id,
+        anonymized_user_hash: metadata.telegram_user_hash ?? null,
+        product_id: productId,
+        delivery_type: 'dead_drop',
+        amount,
+        currency,
+        status: 'paid',
+        customer_email: null,
+        customer_name: null,
+        shipping_address: null,
+        metadata: safeMetadata,
+      },
+      { onConflict: 'stripe_session_id' },
+    )
+    .select('id, telegram_sent_at, telegram_send_attempts')
+    .single<{
+      id: string;
+      telegram_sent_at: string | null;
+      telegram_send_attempts: number;
+    }>();
+
+  if (error) {
+    console.error(`❌ Failed to upsert Telegram order for PaymentIntent ${paymentIntent.id}:`, error);
+    return;
+  }
+
+  if (!telegramChatId || !telegramBotToken) {
+    return;
+  }
+
+  if (upsertedOrder?.telegram_sent_at) {
+    return;
+  }
+
+  const sendResult = await sendTelegramPaymentIntentCompletionMessage({
+    chatId: telegramChatId,
+    packageLabel,
+    amount,
+    currency,
+    stripePaymentIntentId: paymentIntent.id,
+  });
+
+  const nextAttempts = Number(upsertedOrder?.telegram_send_attempts ?? 0) + 1;
+
+  if (sendResult.ok) {
+    await db
+      .from('orders')
+      .update({
+        telegram_sent_at: new Date().toISOString(),
+        telegram_send_error: null,
+        telegram_send_attempts: nextAttempts,
+      })
+      .eq('stripe_session_id', paymentIntent.id);
+    return;
+  }
+
+  await db
+    .from('orders')
+    .update({
+      telegram_send_error: sendResult.error,
+      telegram_send_attempts: nextAttempts,
+    })
+    .eq('stripe_session_id', paymentIntent.id);
+}
+
 function generateVoucherCode(): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const pick = () => alphabet[Math.floor(Math.random() * alphabet.length)] ?? 'X';
@@ -267,6 +368,10 @@ export async function POST(request: NextRequest) {
       console.log('🎯 Processing checkout.session.completed event');
       const session = event.data.object as Stripe.Checkout.Session;
       await handleCheckoutCompleted(session, event.id);
+      break;
+    case 'payment_intent.succeeded':
+      console.log('🎯 Processing payment_intent.succeeded event');
+      await handleTelegramMiniAppPayment(event.data.object as Stripe.PaymentIntent);
       break;
     default:
       console.log(`ℹ️ Unhandled event type ${event.type}`);
@@ -718,4 +823,19 @@ async function handlePhantomCreditsCheckoutCompleted(session: Stripe.Checkout.Se
   }
 
   revalidatePath('/halozat');
+}
+
+async function handleTelegramMiniAppPayment(paymentIntent: Stripe.PaymentIntent) {
+  if (paymentIntent.status !== 'succeeded') {
+    console.log(`ℹ️ PaymentIntent ${paymentIntent.id} is not succeeded, skipping`);
+    return;
+  }
+
+  const metadata = paymentIntent.metadata ?? {};
+  if (metadata.source !== 'telegram-mini-app') {
+    console.log(`ℹ️ PaymentIntent ${paymentIntent.id} is not a Telegram Mini App order`);
+    return;
+  }
+
+  await upsertPaidOrderFromPaymentIntent(paymentIntent);
 }

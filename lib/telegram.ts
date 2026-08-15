@@ -4,6 +4,9 @@ export type TelegramInlineKeyboardButton = {
   text: string;
   callback_data?: string;
   url?: string;
+  web_app?: {
+    url: string;
+  };
 };
 
 export type TelegramReplyMarkup = {

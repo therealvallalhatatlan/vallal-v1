@@ -10,9 +10,10 @@ import { createClient } from "@/lib/browser";
 import { buildAuthHref, clearStoredAuthReturnTarget } from "@/lib/authRedirect";
 
 const NAV_LINKS = [
-  { label: "Shop", href: "/shop", accent: true },
-  { label: "Reader", href: "/reader", protected: true },
+  { label: "Könyv", href: "/konyv-2", accent: true },
   { label: "Hálózat", href: "/halozat", protected: true },
+  { label: "Shop", href: "/shop" },
+  { label: "Reader", href: "/reader", protected: true },
   { label: "Támogatás", href: "/tamogatas" },
 ];
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import ActiveSpotsPanel from '@/components/matrica/ActiveSpotsPanel'
 import { useSessionGuard } from '@/hooks/useSessionGuard'
@@ -174,13 +175,29 @@ export default function HomeActiveSpotsSection() {
 
   return (
     <section className="relative z-20 mx-4 mb-8 md:mx-8">
+      <div className="mb-3 flex flex-col gap-3 border border-lime-500/20 bg-black/35 px-4 py-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.28em] text-lime-300/75">[ HÁLÓZAT // AKTÍV HELYEK ]</p>
+          <p className="mt-1 text-sm leading-relaxed text-white/55">
+            Itt mindig van valami: közösségi szpotok, olcsóbb merch, rejtett megállók és visszatérő érdekességek.
+          </p>
+        </div>
+
+        <Link
+          href="/halozat"
+          className="inline-flex items-center justify-center border border-lime-400/40 bg-lime-400/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-lime-200 transition-colors hover:border-lime-300 hover:bg-lime-400/15 hover:text-lime-100"
+        >
+          Hálózat megnyitása
+        </Link>
+      </div>
+
       {!isOpen ? (
         <button
           type="button"
           onClick={() => setIsOpen(true)}
           className="inline-flex items-center justify-center border border-[#c8a97e66] bg-[#11161d] px-4 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[#f3e9d8]"
         >
-          Aktiv szpotok megnyitasa
+          Aktív szpotok megnyitása
         </button>
       ) : null}
 

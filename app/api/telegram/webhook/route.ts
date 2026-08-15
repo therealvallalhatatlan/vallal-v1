@@ -4,6 +4,7 @@ import TelegramBot from "node-telegram-bot-api";
 
 import { CATALOG, type Product } from "@/config/catalog";
 import { hashTelegramId } from "@/lib/security/hash";
+import { getTelegramMiniAppUrl } from "@/lib/security/telegram";
 import { getSiteUrl } from "@/lib/stripe";
 
 type TelegramUser = {
@@ -12,6 +13,10 @@ type TelegramUser = {
 
 type TelegramChat = {
     id: number;
+};
+
+type TelegramWebAppInfo = {
+    url: string;
 };
 
 type TelegramMessage = {
@@ -113,6 +118,28 @@ function buildQuantityKeyboard(product: Product) {
     };
 }
 
+function buildMiniAppKeyboard() {
+    return {
+        inline_keyboard: [[{
+            text: "⚡ MEGNYITÁS A MINIAU-BAN",
+            web_app: { url: getTelegramMiniAppUrl() } satisfies TelegramWebAppInfo,
+        }]],
+    };
+}
+
+async function sendMiniAppLaunchMessage(chatId: number, reason: string) {
+    if (!bot) return;
+
+    await bot.sendMessage(
+        chatId,
+        reason,
+        {
+            parse_mode: "HTML",
+            reply_markup: buildMiniAppKeyboard(),
+        },
+    );
+}
+
 async function sendCatalogMenu(chatId: number) {
     if (!bot) return;
     const activeProducts = getActiveProducts();
@@ -197,28 +224,28 @@ async function handleMessage(update: TelegramUpdate) {
 
     const command = parseCommand(message.text);
 
-    // KIBŐVÍTETT PARANCSKÉSZLET (/bolt, /segitseg, /merch, /start)
-    const validCommands = ["/start", "/merch", "/bolt", "/segitseg"];
+    const validCommands = ["/start", "/bolt", "/segitseg", "/merch"];
     if (!command || !validCommands.includes(command)) return;
 
     if (command === "/segitseg") {
         await bot.sendMessage(
             message.chat.id,
-            "Elérhető parancsok:\n/bolt - Katalógus megnyitása\n/start - Kezdőmenü\n/segitseg - Súgó",
+            "Elérhető parancsok:\n/start - Mini App megnyitása\n/bolt - Mini App megnyitása\n/segitseg - Súgó",
             { parse_mode: "HTML" }
         );
         return;
     }
 
-    if (command === "/start") {
-        await bot.sendMessage(
+    if (command === "/start" || command === "/bolt") {
+        await sendMiniAppLaunchMessage(
             message.chat.id,
-            "Kapcsolódás sikeres. Megnyitom a piacot...",
-            { parse_mode: "HTML" },
+            command === "/start"
+                ? "Kapcsolódás sikeres. Megnyitom a Miniaut..."
+                : "⚡ A Mini App közvetlen belépési pontja itt van."
         );
+        return;
     }
 
-    // A /start, /merch és /bolt mind kirakják a katalógust
     await sendCatalogMenu(message.chat.id);
 }
 
@@ -346,8 +373,6 @@ export async function POST(req: NextRequest) {
     if (!bot) {
         return NextResponse.json({ ok: true, skipped: "missing_telegram_bot_token" });
     }
-
-    // A hiányzó HASH_SALT már NEM állítja le az egész kód futását!
 
     try {
         const update = (await req.json()) as TelegramUpdate;

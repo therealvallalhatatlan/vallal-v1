@@ -13,34 +13,37 @@ export default function HeroTerminal() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasMountedShopTabsRef = useRef(false);
 
-  const shopTabs = [
+  const accessTabs = [
     {
       id: "01",
-      title: "VÁLLALHATATLAN PÓLÓ",
-      image: "/ny1.jpg",
-      alt: "VÁLLALHATATLAN PÓLÓ",
-      description: "Szitanyomott mintával elöl-hátul, kézzel varrt fényvisszaverő szalaggal. Utcai ruházat, ami azonnal felismerhető.",
-      cta: "PÓLÓ KATALÓGUS",
+      title: "SZÁMOZOTT KÖNYV",
+      image: "/cover.png",
+      alt: "Vállalhatatlan könyv borító",
+      description: "Újranyomásra érkező első és második könyv, dead drop logikával. A példányt meg kell szerezni, nem csak megrendelni.",
+      cta: "KÖNYV MEGNYITÁSA",
+      href: "/konyv-2",
     },
     {
       id: "02",
-      title: "VÁLLALHATATLAN TÁSKA",
-      image: "/ny2.jpg",
-      alt: "VÁLLALHATATLAN TÁSKA",
-      description: "Erős vászontáska, tartós szitanyomattal és kézzel varrott fényvisszaverő csíkkal. Napi használatra és rejtett küldetésekhez.",
-      cta: "TÁSKA KATALÓGUS",
+      title: "HÁLÓZAT",
+      image: "/map-base.png",
+      alt: "Hálózati térkép",
+      description: "/halozat alatt mindig van valami: aktív szpotok, közösségi helyek, olcsóbb merch és visszatérő meglepetések.",
+      cta: "HÁLÓZAT MEGNYITÁSA",
+      href: "/halozat",
     },
     {
       id: "03",
-      title: "RENDSZER KITŰZŐ",
+      title: "MELLÉKCSATORNÁK",
       image: "/s1.jpg",
-      alt: "RENDSZER KITŰZŐ",
-      description: "Kézzel készített, limitált kitűző. Kicsi, de jelzésértékű tárgy azoknak, akik a rendszer peremén mozognak.",
-      cta: "KITŰZŐ KATALÓGUS",
+      alt: "Limitált kiegészítő",
+      description: "Kézzel készített merch, kitűzők és más mellékes, de fontos tárgyak. Ha a könyv már megvan, innen lehet tovább mozogni.",
+      cta: "CUCCOK MEGNYITÁSA",
+      href: "/shop",
     },
   ];
 
-  const currentShopItem = shopTabs[activeShopTab];
+  const currentAccessItem = accessTabs[activeShopTab];
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -61,11 +64,11 @@ export default function HeroTerminal() {
     }
 
     const tabInterval = setInterval(() => {
-      setActiveShopTab((prev) => (prev + 1) % shopTabs.length);
+      setActiveShopTab((prev) => (prev + 1) % accessTabs.length);
     }, 3000);
 
     return () => clearInterval(tabInterval);
-  }, [isShopHovered, shopTabs.length]);
+  }, [isShopHovered, accessTabs.length]);
 
   useEffect(() => {
     if (!hasMountedShopTabsRef.current) {
@@ -128,8 +131,8 @@ export default function HeroTerminal() {
               <span className="text-lime-400 font-bold">ACTIVE ]</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/50">[ Könyv II</span>
-              <span className="text-lime-400 font-bold">AVAILABLE ]</span>
+              <span className="text-white/50">[ Könyv</span>
+              <span className="text-lime-400 font-bold">REPRINT ACTIVE ]</span>
             </div>
           </div>
         </div>
@@ -163,12 +166,12 @@ export default function HeroTerminal() {
             </p>
 
             <p className="text-xs text-red-200/65 italic">
-              Az első könyv ELFOGYOTT —{" "}
+              Az első könyv elfogyott, az újranyomás és a számozott példányok viszont indulnak —{" "}
               <Link
-                href="/konyv"
+                href="/konyv-2"
                 className="text-white/50 underline underline-offset-2 hover:text-lime-400 transition-colors"
               >
-                Nyomtass egyet magadnak!
+                szerezz egyet dead dropból!
               </Link>
             </p>
 
@@ -194,18 +197,29 @@ export default function HeroTerminal() {
               </span>
             </div>
 
-            <Link
-              href="/konyv-2"
-              className="cta-mission cta-mission--brutal group relative overflow-hidden flex items-center justify-center border border-lime-300/90 bg-lime-400 px-5 py-3 transition-all"
-            >
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-[3px] border border-black/35 group-hover:border-black/50 transition-colors"
-              />
-              <span className="relative z-[1] text-lg font-bold tracking-[0.35em] uppercase text-neutral-950/95">
-                START
-              </span>
-            </Link>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Link
+                href="/konyv-2"
+                className="cta-mission cta-mission--brutal group relative overflow-hidden flex items-center justify-center border border-lime-300/90 bg-lime-400 px-5 py-3 transition-all"
+              >
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-[3px] border border-black/35 group-hover:border-black/50 transition-colors"
+                />
+                <span className="relative z-[1] text-lg font-bold tracking-[0.35em] uppercase text-neutral-950/95">
+                  START
+                </span>
+              </Link>
+
+              <Link
+                href="/halozat"
+                className="group relative overflow-hidden flex items-center justify-center border border-white/20 bg-white/[0.03] px-5 py-3 transition-all hover:border-lime-300/60 hover:bg-lime-400/5"
+              >
+                <span className="relative z-[1] text-sm font-bold tracking-[0.28em] uppercase text-white/80 group-hover:text-lime-200">
+                  HÁLÓZAT
+                </span>
+              </Link>
+            </div>
 
             {/* Dead drop section */}
             <div className="border-t border-white/10 pt-6 space-y-3">
@@ -226,7 +240,7 @@ export default function HeroTerminal() {
         <div className="flex flex-col font-mono bg-black/30">
           {/* System header bar */}
           <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-2.5 text-[11px] uppercase tracking-[0.14em]">
-            <span className="text-neutral-400">[ INFRASTRUCTURE // SELF-SUSTENANCE ]</span>
+            <span className="text-neutral-400">[ INFRASTRUCTURE // ACCESS POINTS ]</span>
             <div className="flex items-center gap-2">
               <span className="inline-flex animate-pulse items-center gap-1.5 rounded-full border border-red-500/35 bg-red-950/55 px-2 py-1 text-red-300">
                 <BatteryWarning className="h-3.5 w-3.5" />
@@ -245,7 +259,7 @@ export default function HeroTerminal() {
             {/* Manifesto */}
             <section className="border border-neutral-800 bg-black/40 p-3.5 space-y-2">
               <p className="text-xl italic leading-tight text-lime-300/90">
-                Ez a projekt tisztán a könyv bevételeiből és az alábbi három, egyedileg, kézzel készített cuccból tartja fenn magát. 
+                A projektet a könyv újranyomása, a dead drop és a /halozat tartja mozgásban. A cuccok mellékcsatornák, de fontosak.
               </p>
             </section>
 
@@ -256,7 +270,7 @@ export default function HeroTerminal() {
               onMouseLeave={() => setIsShopHovered(false)}
             >
               <div className="grid grid-cols-3 border-b border-neutral-800 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent)]">
-                {shopTabs.map((tab, index) => {
+                {accessTabs.map((tab, index) => {
                   const isActive = index === activeShopTab;
                   return (
                     <button
@@ -306,31 +320,31 @@ export default function HeroTerminal() {
                   <div className="relative w-full aspect-square sm:w-[150px]">
                     <Link href="/shop" className="block h-full w-full">
                       <img
-                        src={currentShopItem.image}
-                        alt={currentShopItem.alt}
+                        src={currentAccessItem.image}
+                        alt={currentAccessItem.alt}
                         className="h-full w-full border border-neutral-700 object-cover grayscale transition-all hover:grayscale-0"
                       />
                     </Link>
                     <span className="absolute left-2 top-2 border border-neutral-700 bg-black/70 px-1.5 py-0.5 text-[10px] tracking-[0.2em] text-lime-300">
-                      {currentShopItem.id}
+                      {currentAccessItem.id}
                     </span>
                   </div>
 
                   <div className="space-y-3">
                     <div className="space-y-1.5">
                       <h3 className="text-sm uppercase tracking-[0.22em] text-neutral-100">
-                        {currentShopItem.title}
+                        {currentAccessItem.title}
                       </h3>
                       <p className="text-[14px] leading-relaxed text-neutral-300">
-                        {currentShopItem.description}
+                        {currentAccessItem.description}
                       </p>
                     </div>
 
                     <Link
-                      href="/shop"
+                      href={currentAccessItem.href}
                       className="inline-flex min-h-10 w-full items-center justify-center border border-neutral-700 bg-black/65 px-4 py-2 text-center text-[11px] uppercase tracking-[0.24em] text-neutral-100 transition-colors hover:border-lime-400/60 hover:text-lime-300 hover:bg-lime-500/5"
                     >
-                      {currentShopItem.cta}
+                      {currentAccessItem.cta}
                     </Link>
                   </div>
                 </div>

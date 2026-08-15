@@ -8,8 +8,8 @@ export default function Page() {
   return (
     <MainContent>
       <Navigation />
-      <HomeActiveSpotsSection />
       <HeroTerminal />
+      <HomeActiveSpotsSection />
       <Footer />
     </MainContent>
   );
