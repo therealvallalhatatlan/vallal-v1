@@ -57,6 +57,16 @@ async function insertOrderWithSchemaFallback(
       payloadKeys: Object.keys(candidatePayload),
     });
 
+    if (error.code === "23514" && error.message.includes("orders_status_check") && "status" in candidatePayload) {
+      delete candidatePayload.status;
+      continue;
+    }
+
+    if (error.code === "23502" && error.message.includes('column "currency"') && !("currency" in candidatePayload)) {
+      candidatePayload.currency = "huf";
+      continue;
+    }
+
     if (error.code !== "PGRST204") {
       break;
     }
@@ -181,16 +191,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "missing_client_secret" }, { status: 500 });
     }
 
-    let db: SupabaseClient | null = null;
-    try {
-      db = supabaseAdmin();
-    } catch (dbInitError) {
-      console.error("[telegram.create-intent] supabase init failed, continuing without order persistence", {
-        error: dbInitError instanceof Error ? dbInitError.message : String(dbInitError),
-      });
-    }
-
     let orderPersisted = false;
+
+    const persistPendingOrders = process.env.TELEGRAM_PERSIST_PENDING_ORDER === "1";
+
+    let db: SupabaseClient | null = null;
+    if (persistPendingOrders) {
+      try {
+        db = supabaseAdmin();
+      } catch (dbInitError) {
+        console.error("[telegram.create-intent] supabase init failed, continuing without order persistence", {
+          error: dbInitError instanceof Error ? dbInitError.message : String(dbInitError),
+        });
+      }
+    }
 
     const fullOrderPayload: Record<string, unknown> = {
       id: orderId,
@@ -223,7 +237,8 @@ export async function POST(request: NextRequest) {
           stripe_session_id: paymentIntent.id,
           product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
           amount: totalAmountMinor,
-          status: "pending",
+          currency: paymentIntent.currency,
+          delivery_type: "dead_drop",
         };
 
         const fallbackInsert = await insertOrderWithSchemaFallback(db, minimalFallbackPayload);

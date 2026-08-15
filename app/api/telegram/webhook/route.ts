@@ -396,7 +396,7 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return NextResponse.json({ 
     status: "online", 
-    system: "VÁLLALHATATLAN C2 TERMINAL", 
+    system: "C2 TERMINAL", 
     time: new Date().toISOString() 
   });
 }
