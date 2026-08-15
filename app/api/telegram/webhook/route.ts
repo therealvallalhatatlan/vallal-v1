@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import TelegramBot from "node-telegram-bot-api";
 
 import { CATALOG, type Product } from "@/config/catalog";
-import { getTelegramMiniAppUrl } from "@/lib/security/telegram";
 
 type TelegramUser = {
   id: number;
@@ -11,10 +10,6 @@ type TelegramUser = {
 
 type TelegramChat = {
   id: number;
-};
-
-type TelegramWebAppInfo = {
-  url: string;
 };
 
 type TelegramMessage = {
@@ -60,8 +55,8 @@ const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
 const telegramAdminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
 const adminDashboardPin = process.env.ADMIN_DASHBOARD_PIN;
 
-const revtag = "@c2node";
-const revolutBaseUrl = "https://revolut.me/c2node";
+const revtag = "@vallalhatatlan";
+const revolutBaseUrl = "https://revolut.me/vallalhatatlan";
 const pendingOrderTtlMs = 24 * 60 * 60 * 1000;
 
 const bot = telegramBotToken ? new TelegramBot(telegramBotToken) : null;
@@ -142,6 +137,13 @@ function parseRejectCallback(payload: string | undefined): { buyerChatId: number
   return { buyerChatId, ref };
 }
 
+function parseShowRefCallback(payload: string | undefined): { ref: string } | null {
+  if (!payload || !payload.startsWith("showref:")) return null;
+  const ref = payload.slice(8).trim();
+  if (!ref) return null;
+  return { ref };
+}
+
 function escapeHtml(input: string): string {
   return input
     .replaceAll("&", "&amp;")
@@ -206,24 +208,6 @@ function buildQuantityKeyboard(product: Product) {
   };
 }
 
-function buildMiniAppKeyboard() {
-  return {
-    inline_keyboard: [[{
-      text: "⚡ MEGNYITÁS A MINIAU-BAN",
-      web_app: { url: getTelegramMiniAppUrl() } satisfies TelegramWebAppInfo,
-    }]],
-  };
-}
-
-async function sendMiniAppLaunchMessage(chatId: number, reason: string) {
-  if (!bot) return;
-
-  await bot.sendMessage(chatId, reason, {
-    parse_mode: "HTML",
-    reply_markup: buildMiniAppKeyboard(),
-  });
-}
-
 async function sendCatalogMenu(chatId: number) {
   if (!bot) return;
   const activeProducts = getActiveProducts();
@@ -262,19 +246,26 @@ async function handleMessage(update: TelegramUpdate) {
   if (command === "/segitseg") {
     await bot.sendMessage(
       message.chat.id,
-      "Elérhető parancsok:\n/start - Mini App megnyitása\n/bolt - Mini App megnyitása\n/segitseg - Súgó",
+      "Elérhető parancsok:\n/start - Revolut vásárlás indítása\n/bolt - Revolut vásárlás indítása\n/segitseg - Súgó",
       { parse_mode: "HTML" },
     );
     return;
   }
 
   if (command === "/start" || command === "/bolt") {
-    await sendMiniAppLaunchMessage(
+    await bot.sendMessage(
       message.chat.id,
-      command === "/start"
-        ? "Kapcsolódás sikeres. Megnyitom a Miniaut..."
-        : "⚡ A Mini App közvetlen belépési pontja itt van.",
+      [
+        "<b>[NODE_MARKET_ONLINE]</b>",
+        "",
+        "Mobilbarát vásárlási mód: közvetlen Revolut fizetés a chatből.",
+        `<b>Fogadó revtag:</b> <code>${escapeHtml(revtag)}</code>`,
+        "",
+        "Válassz csomagot és mennyiséget, a bot automatikusan ad egy fizetési linket és kötelező referencia kódot.",
+      ].join("\n"),
+      { parse_mode: "HTML" },
     );
+    await sendCatalogMenu(message.chat.id);
     return;
   }
 
@@ -388,12 +379,14 @@ async function handleCallbackQuery(update: TelegramUpdate) {
           "",
           `<b>Kötelező megjegyzés / NOTE:</b> <code>${escapeHtml(ref)}</code>`,
           "<b>FONTOS:</b> A fenti referencia kód pontos beírása a Revolut utalás megjegyzésébe KÖTELEZŐ.",
+          "<b>Mobil tipp:</b> Nyisd meg a Revolut appot a gombbal, fizess, majd térj vissza ide és nyomd meg a FIZETTEM gombot.",
         ].join("\n"),
         {
           parse_mode: "HTML",
           reply_markup: {
             inline_keyboard: [
               [{ text: "💸 OPEN REVOLUT", url: paymentUrl }],
+              [{ text: "📋 REFERENCE KÓD ÚJRA", callback_data: `showref:${ref}` }],
               [{ text: "✅ I HAVE PAID / FIZETTEM", callback_data: `verify:${ref}` }],
             ],
           },
@@ -415,6 +408,43 @@ async function handleCallbackQuery(update: TelegramUpdate) {
       });
       return;
     }
+  }
+
+  const showRefAction = parseShowRefCallback(payload);
+  if (showRefAction) {
+    const pending = pendingOrders.get(showRefAction.ref);
+    if (!pending) {
+      await bot.answerCallbackQuery(callbackQueryId, {
+        text: "Ismeretlen vagy lejárt referencia.",
+        show_alert: true,
+      });
+      return;
+    }
+
+    if (pending.buyerChatId !== chatId) {
+      await bot.answerCallbackQuery(callbackQueryId, {
+        text: "Ez a referencia nem ehhez a csatornához tartozik.",
+        show_alert: true,
+      });
+      return;
+    }
+
+    await bot.sendMessage(
+      pending.buyerChatId,
+      [
+        "<b>[REFERENCE_REPLAY]</b>",
+        "",
+        "Ezt másold be pontosan a Revolut fizetés megjegyzésébe:",
+        `<code>${escapeHtml(pending.ref)}</code>`,
+      ].join("\n"),
+      { parse_mode: "HTML" },
+    );
+
+    await bot.answerCallbackQuery(callbackQueryId, {
+      text: "Referencia újraküldve.",
+      show_alert: false,
+    });
+    return;
   }
 
   const verifyAction = parseVerifyCallback(payload);
