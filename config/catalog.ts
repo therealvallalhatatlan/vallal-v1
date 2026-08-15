@@ -11,13 +11,13 @@ export interface Product {
 
 export const CATALOG: Record<string, Product> = {
   limited_book_01: {
-    id: "limited_book_01",
-    code: "DATA_PACKAGE_01",
-    name: "Limited Edition Book",
-    priceHuf: 12990,
-    maxPerOrder: 2,
-    description: "[ARCHIVE_NODE] Numbered physical print from the underground sequence.",
-    stripePriceId: "price_XXXXXXXXXXXX01",
+    id: "zold_01",
+    code: "Amnezia Haze",
+    name: "Sativa domináns hibrid",
+    priceHuf: 4000,
+    maxPerOrder: 30,
+    description: "A legendás Holland Amnesia Haze, a sativa domináns hibrid, amely a világ egyik legnépszerűbb kannabisz fajtája. Kiváló minőségű, erős hatású és aromás.",
+    stripePriceId: "price_1U4VQ8FL4KlHxxuRivEaBrfD",
     active: true,
   },
   glitch_cassette_02: {
