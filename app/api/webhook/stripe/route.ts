@@ -240,7 +240,7 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
       ? paymentIntent.amount
       : 0;
   const currency = (paymentIntent.currency ?? 'huf').toLowerCase();
-  const fallbackLabel = metadata.product_code ?? metadata.telegram_product_code ?? productId;
+  const fallbackLabel = metadata.cart_summary ?? metadata.product_code ?? metadata.telegram_product_code ?? productId;
   const safeMetadata = sanitizeOrderMetadata(metadata);
 
   type OrderRow = {

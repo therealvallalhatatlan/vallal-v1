@@ -133,52 +133,95 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "missing_client_secret" }, { status: 500 });
     }
 
-    const { error: orderInsertError } = await supabaseAdmin()
-      .from("orders")
-      .insert({
+    const db = supabaseAdmin();
+
+    let orderPersisted = false;
+
+    const fullOrderPayload = {
+      id: orderId,
+      stripe_session_id: paymentIntent.id,
+      anonymized_user_hash: anonymizedUserHash,
+      product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
+      delivery_type: "dead_drop",
+      amount: totalAmountMinor,
+      currency: paymentIntent.currency,
+      status: "pending",
+      customer_email: null,
+      customer_name: null,
+      shipping_address: null,
+      metadata: {
+        source: "telegram-mini-app",
+        cart_summary: cartSummary,
+        item_count: cart.length,
+      },
+    };
+
+    const { error: orderInsertError } = await db.from("orders").insert(fullOrderPayload);
+
+    if (orderInsertError) {
+      console.error("[telegram.create-intent] order insert failed (full payload)", {
+        code: orderInsertError.code,
+        message: orderInsertError.message,
+        details: orderInsertError.details,
+        hint: orderInsertError.hint,
+      });
+
+      const legacyFallbackPayload = {
         id: orderId,
         stripe_session_id: paymentIntent.id,
-        anonymized_user_hash: anonymizedUserHash,
         product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
-        delivery_type: "dead_drop",
         amount: totalAmountMinor,
         currency: paymentIntent.currency,
         status: "pending",
-        customer_email: null,
-        customer_name: null,
-        shipping_address: null,
         metadata: {
           source: "telegram-mini-app",
           cart_summary: cartSummary,
           item_count: cart.length,
         },
-      });
+      };
 
-    if (orderInsertError) {
-      console.error("[telegram.create-intent] order insert failed", orderInsertError);
-      return NextResponse.json({ error: "order_insert_failed" }, { status: 500 });
+      const { error: fallbackOrderInsertError } = await db.from("orders").insert(legacyFallbackPayload);
+
+      if (fallbackOrderInsertError) {
+        console.error("[telegram.create-intent] order insert failed (fallback payload)", {
+          code: fallbackOrderInsertError.code,
+          message: fallbackOrderInsertError.message,
+          details: fallbackOrderInsertError.details,
+          hint: fallbackOrderInsertError.hint,
+        });
+      } else {
+        orderPersisted = true;
+      }
+    } else {
+      orderPersisted = true;
     }
 
-    const { error: itemInsertError } = await supabaseAdmin()
-      .from("order_items")
-      .insert(
-        cart.map((item) => ({
-          order_id: orderId,
-          product_id: item.product.id,
-          product_code: item.product.code,
-          product_name: item.product.name,
-          unit_price: item.unitAmountMinor,
-          quantity: item.quantity,
-          line_total: item.lineTotalMinor,
-          metadata: {
-            min_per_order: item.product.minPerOrder,
-          },
-        })),
-      );
+    if (orderPersisted) {
+      const { error: itemInsertError } = await db
+        .from("order_items")
+        .insert(
+          cart.map((item) => ({
+            order_id: orderId,
+            product_id: item.product.id,
+            product_code: item.product.code,
+            product_name: item.product.name,
+            unit_price: item.unitAmountMinor,
+            quantity: item.quantity,
+            line_total: item.lineTotalMinor,
+            metadata: {
+              min_per_order: item.product.minPerOrder,
+            },
+          })),
+        );
 
-    if (itemInsertError) {
-      console.error("[telegram.create-intent] order_items insert failed", itemInsertError);
-      return NextResponse.json({ error: "order_items_insert_failed" }, { status: 500 });
+      if (itemInsertError) {
+        console.error("[telegram.create-intent] order_items insert failed", {
+          code: itemInsertError.code,
+          message: itemInsertError.message,
+          details: itemInsertError.details,
+          hint: itemInsertError.hint,
+        });
+      }
     }
 
     return NextResponse.json({
@@ -186,6 +229,7 @@ export async function POST(request: NextRequest) {
       orderId,
       currency: paymentIntent.currency,
       amount: paymentIntent.amount,
+      orderPersisted,
       items: cart.map((item) => ({
         productId: item.product.id,
         code: item.product.code,
