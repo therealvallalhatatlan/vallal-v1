@@ -10,6 +10,16 @@ export interface Product {
 }
 
 export const CATALOG: Record<string, Product> = {
+  teszt_00: {
+    id: "teszt_00",
+    code: "Teszt terméknév",
+    name: "Leírás szöveg",
+    priceHuf: 1000,
+    minPerOrder: 1,
+    description: "A legendás Holland Amnesia Haze, a sativa domináns hibrid, amely a világ egyik legnépszerűbb kannabisz fajtája. Kiváló minőségű, erős hatású és aromás.",
+    stripePriceId: "price_1U4mzlFL4KlHxxuRzibDCWQV",
+    active: true,
+  },
   zold_01: {
     id: "zold_01",
     code: "Amnezia Haze",

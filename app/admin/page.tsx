@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Container } from "@/components/Container"
 import { Card } from "@/components/Card"
@@ -175,13 +176,21 @@ export default function AdminPage() {
         <Card>
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-green-400">Admin Panel</h1>
-            <Button
-              onClick={() => setIsAuthenticated(false)}
-              variant="outline"
-              className="border-gray-600 text-green-300 hover:bg-gray-800"
-            >
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/admin/orders"
+                className="inline-flex items-center rounded border border-cyan-500/50 px-3 py-2 text-sm text-cyan-300 hover:bg-cyan-500/10"
+              >
+                Orders Queue
+              </Link>
+              <Button
+                onClick={() => setIsAuthenticated(false)}
+                variant="outline"
+                className="border-gray-600 text-green-300 hover:bg-gray-800"
+              >
+                Logout
+              </Button>
+            </div>
           </div>
 
           {/* Kill Switch Control */}

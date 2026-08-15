@@ -159,28 +159,6 @@ function buildThankYouEmailHtml(customerEmail: string, orderReference: string) {
   `;
 }
 
-function buildAccessCodeEmailHtml(pin: string, customerEmail: string, orderReference: string) {
-  const safePin = escapeHtml(pin);
-  const safeEmail = escapeHtml(customerEmail);
-  const safeOrderReference = escapeHtml(orderReference);
-
-  return `
-    <div style="margin:0;background:#050505;color:#f4f4f4;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;padding:32px;line-height:1.65;">
-      <div style="max-width:640px;margin:0 auto;border:1px solid #2a2a2a;background:#090909;padding:28px;">
-        <div style="color:#8dff7a;font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px;">[ACCESS_GRANTED]</div>
-        <h1 style="margin:0 0 16px;font-size:24px;color:#ffffff;">Rendszer Hozzáférési Kulcs</h1>
-        <p style="margin:0 0 18px;color:#d6d6d6;">A tranzakció sikeres volt. A terminál belépéshez használd az alábbi kulcsot.</p>
-        <pre style="margin:0 0 18px;padding:18px;border:1px solid #2f2f2f;background:#000;color:#8dff7a;font-size:20px;letter-spacing:.12em;overflow:auto;">${safePin}</pre>
-        <p style="margin:0 0 14px;color:#cfcfcf;">Használat: add meg a kódot a terminal login felületen.</p>
-        <div style="border-top:1px solid #222;padding-top:14px;color:#9f9f9f;font-size:12px;">
-          <div>Email: ${safeEmail}</div>
-          <div>Referencia: ${safeOrderReference}</div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
 async function sendCheckoutSessionEmail(session: Stripe.Checkout.Session, subject: string, html: string) {
   const customerEmail = session.customer_details?.email;
 
@@ -212,7 +190,6 @@ async function sendCheckoutSessionEmail(session: Stripe.Checkout.Session, subjec
 
 async function sendTelegramAccessGrantMessage(input: {
   chatId: string;
-  pin: string;
   sessionId: string;
   email?: string | null;
 }) {
@@ -228,9 +205,8 @@ async function sendTelegramAccessGrantMessage(input: {
       text: [
         '[ACCESS_GRANTED]',
         'Tranzakció sikeres.',
-        `Hozzáférési PIN: ${input.pin}`,
+        `Hozzáférési PIN: ${process.env.ADMIN_DASHBOARD_PIN?.trim() ?? 'n/a'}`,
         'Használd a PIN-kódot a terminal login felületen.',
-        input.email ? `Email: ${input.email}` : 'Email: nem érkezett meg a checkoutból.',
         `Referencia: ${input.sessionId}`,
       ].join('\n'),
     });
@@ -255,20 +231,11 @@ async function handleCheckoutSessionNotifications(session: Stripe.Checkout.Sessi
       return;
     }
 
-    const customerEmail = session.customer_details?.email ?? null;
-    await sendCheckoutSessionEmail(
-      session,
-      '[ACCESS_GRANTED] Rendszer Hozzáférési Kulcs',
-      buildAccessCodeEmailHtml(pin, customerEmail ?? 'n/a', orderReference),
-    );
-
     const telegramChatId = metadata.telegram_chat_id;
     if (telegramChatId) {
       await sendTelegramAccessGrantMessage({
         chatId: telegramChatId,
-        pin,
         sessionId: session.id,
-        email: customerEmail,
       });
     } else {
       console.warn(`⚠️ Telegram metadata indicated telegram origin but telegram_chat_id is missing for session ${session.id}`);
@@ -332,6 +299,7 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
       {
         stripe_session_id: session.id,
         user_id: legacyUserId,
+        telegram_chat_id: telegramChatId,
         anonymized_user_hash: anonymizedUserHash,
         product_id: productId,
         delivery_type: deliveryType,
@@ -439,6 +407,7 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
       .from('orders')
       .update({
         stripe_session_id: paymentIntent.id,
+        telegram_chat_id: telegramChatId,
         status: 'paid',
         amount,
         currency,
@@ -462,6 +431,7 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
         {
           stripe_session_id: paymentIntent.id,
           user_id: legacyUserId,
+          telegram_chat_id: telegramChatId,
           anonymized_user_hash: metadata.telegram_user_hash ?? null,
           product_id: productId,
           delivery_type: 'dead_drop',
