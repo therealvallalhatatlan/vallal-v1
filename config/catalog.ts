@@ -22,11 +22,11 @@ export const CATALOG: Record<string, Product> = {
   },
   zold_01: {
     id: "zold_01",
-    code: "Amnezia Haze",
+    code: "Import Zöld",
     name: "Sativa domináns hibrid",
     priceHuf: 4000,
     minPerOrder: 5,
-    description: "A legendás Holland Amnesia Haze, a sativa domináns hibrid, amely a világ egyik legnépszerűbb kannabisz fajtája. Kiváló minőségű, erős hatású és aromás.",
+    description: "Változó kínálat",
     stripePriceId: "price_1U4VQ8FL4KlHxxuRivEaBrfD",
     active: true,
   },
