@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { loadStripe, type StripeElementsOptions } from "@stripe/stripe-js";
+import { useRouter } from "next/navigation";
 import {
   closeMiniApp,
   hapticFeedback,
@@ -206,6 +207,7 @@ function MiniAppInner() {
   const webApp = getTelegramWebApp();
   const telegramTheme = useSignal(themeParams.state, () => EMPTY_THEME_SNAPSHOT);
   const isDevMode = process.env.NODE_ENV !== "production";
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
@@ -350,7 +352,22 @@ function MiniAppInner() {
         throw new Error(payload.error ?? "Nem sikerült létrehozni a Stripe intentet.");
       }
 
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(
+          "telegram-mini-checkout",
+          JSON.stringify({
+            clientSecret: payload.clientSecret,
+            orderId: payload.orderId,
+            currency: payload.currency,
+            amount: payload.amount,
+            items: payload.items,
+            checkoutLabel: cartCheckoutLabel,
+          }),
+        );
+      }
+
       setClientSecret(payload.clientSecret);
+      router.push("/telegram-app/checkout");
     } catch (error) {
       setIntentError(error instanceof Error ? error.message : "Ismeretlen hiba történt.");
       triggerHapticImpact("heavy");
