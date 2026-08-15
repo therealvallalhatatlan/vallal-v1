@@ -16,30 +16,44 @@ import { CATALOG, type Product } from "@/config/catalog";
 
 type CreateIntentResponse = {
   clientSecret: string;
+  orderId: string;
   currency: string;
   amount: number;
-  product: {
-    id: string;
+  items: Array<{
+    productId: string;
     code: string;
     name: string;
-    priceHuf: number;
-  };
+    quantity: number;
+    unitAmountMinor: number;
+    lineTotalMinor: number;
+  }>;
+};
+
+type CartItem = {
+  productId: string;
+  quantity: number;
+};
+
+type CartRow = {
+  product: Product;
+  quantity: number;
+  lineTotal: number;
 };
 
 const products = Object.values(CATALOG).filter((product) => product.active);
 const EMPTY_THEME_SNAPSHOT = {} as Record<string, unknown>;
+
+const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 function triggerHapticImpact(style: "light" | "medium" | "heavy") {
   try {
     if (!isHapticFeedbackSupported()) return;
     hapticFeedback.impactOccurred(style);
   } catch {
-    // Localhost/browser fallback: haptics are unavailable outside Telegram Mini Apps.
+    // No-op outside Telegram Mini Apps (e.g. localhost browser).
   }
 }
-
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 function getTelegramWebApp() {
   if (typeof window === "undefined") return null;
@@ -74,8 +88,7 @@ function applyTelegramTheme(theme: Record<string, unknown> | null) {
 }
 
 function TelegramPaymentForm(props: {
-  product: Product;
-  quantity: number;
+  checkoutLabel: string;
   onClose: () => void;
 }) {
   const stripe = useStripe();
@@ -150,7 +163,7 @@ function TelegramPaymentForm(props: {
         disabled={isSubmitting || !stripe || !elements || isPaid}
         className="w-full border border-[#c98552]/70 bg-[#c98552] px-4 py-3 text-sm font-bold uppercase tracking-[0.24em] text-[#1b1009] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "Fizetés indítása..." : `Fizetés • ${props.product.code} × ${props.quantity}`}
+        {isSubmitting ? "Fizetés indítása..." : `Fizetés • ${props.checkoutLabel}`}
       </button>
     </form>
   );
@@ -159,14 +172,14 @@ function TelegramPaymentForm(props: {
 function MiniAppInner() {
   const [isMounted, setIsMounted] = useState(false);
   const [initData, setInitData] = useState("");
-  const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
-  const [quantity, setQuantity] = useState(products[0]?.minPerOrder ?? 1);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadingIntent, setLoadingIntent] = useState(false);
   const [intentError, setIntentError] = useState<string | null>(null);
 
   const webApp = getTelegramWebApp();
   const telegramTheme = useSignal(themeParams.state, () => EMPTY_THEME_SNAPSHOT);
+  const isDevMode = process.env.NODE_ENV !== "production";
 
   useEffect(() => {
     setIsMounted(true);
@@ -185,29 +198,89 @@ function MiniAppInner() {
     applyTelegramTheme(telegramTheme ?? null);
   }, [telegramTheme]);
 
-  const selectedProduct = useMemo(
-    () => products.find((product) => product.id === selectedProductId) ?? products[0] ?? null,
-    [selectedProductId],
-  );
   const hasInitData = initData.trim().length > 0;
+  const canCheckoutWithoutInitData = isDevMode;
 
-  useEffect(() => {
-    if (!selectedProduct) return;
-    if (quantity < selectedProduct.minPerOrder) {
-      setQuantity(selectedProduct.minPerOrder);
-    }
-  }, [quantity, selectedProduct]);
+  const cartRows = useMemo<CartRow[]>(() => {
+    return cartItems
+      .map((item) => {
+        const product = products.find((candidate) => candidate.id === item.productId);
+        if (!product) return null;
+        return {
+          product,
+          quantity: item.quantity,
+          lineTotal: product.priceHuf * item.quantity,
+        };
+      })
+      .filter((row): row is CartRow => Boolean(row));
+  }, [cartItems]);
 
-  const selectProduct = (product: Product) => {
-    setSelectedProductId(product.id);
-    setQuantity(product.minPerOrder);
+  const cartTotalHuf = useMemo(
+    () => cartRows.reduce((sum, row) => sum + row.lineTotal, 0),
+    [cartRows],
+  );
+
+  const cartTotalQuantity = useMemo(
+    () => cartRows.reduce((sum, row) => sum + row.quantity, 0),
+    [cartRows],
+  );
+
+  const cartCheckoutLabel = useMemo(() => {
+    if (cartRows.length === 0) return "Kosár üres";
+    return cartRows.map((row) => `${row.product.code} x${row.quantity}`).join(", ");
+  }, [cartRows]);
+
+  const upsertCartItem = (product: Product, nextQuantity: number) => {
+    const normalizedQuantity = Math.max(product.minPerOrder, nextQuantity);
+
+    setCartItems((current) => {
+      const existing = current.find((entry) => entry.productId === product.id);
+      if (!existing) {
+        return [...current, { productId: product.id, quantity: normalizedQuantity }];
+      }
+
+      return current.map((entry) =>
+        entry.productId === product.id ? { ...entry, quantity: normalizedQuantity } : entry,
+      );
+    });
+  };
+
+  const addToCart = (product: Product) => {
+    const existing = cartItems.find((entry) => entry.productId === product.id);
+    const nextQuantity = existing ? existing.quantity + 1 : product.minPerOrder;
+    upsertCartItem(product, nextQuantity);
+    triggerHapticImpact("light");
+  };
+
+  const decrementCartItem = (product: Product) => {
+    const existing = cartItems.find((entry) => entry.productId === product.id);
+    if (!existing) return;
+
+    const nextQuantity = Math.max(product.minPerOrder, existing.quantity - 1);
+    upsertCartItem(product, nextQuantity);
+    triggerHapticImpact("light");
+  };
+
+  const incrementCartItem = (product: Product) => {
+    const existing = cartItems.find((entry) => entry.productId === product.id);
+    const nextQuantity = existing ? existing.quantity + 1 : product.minPerOrder;
+    upsertCartItem(product, nextQuantity);
+    triggerHapticImpact("light");
+  };
+
+  const removeCartItem = (productId: string) => {
+    setCartItems((current) => current.filter((entry) => entry.productId !== productId));
     triggerHapticImpact("light");
   };
 
   const submitIntent = async () => {
-    if (!selectedProduct) return;
+    if (cartRows.length === 0) {
+      setIntentError("A kosár üres. Adj hozzá legalább egy terméket.");
+      triggerHapticImpact("heavy");
+      return;
+    }
 
-    if (!hasInitData) {
+    if (!hasInitData && !canCheckoutWithoutInitData) {
       setIntentError("Hiányzik a Telegram hitelesítési adat. Nyisd meg ezt az oldalt a bot Mini App gombjából.");
       triggerHapticImpact("heavy");
       return;
@@ -223,8 +296,10 @@ function MiniAppInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           initData,
-          productId: selectedProduct.id,
-          quantity,
+          items: cartRows.map((row) => ({
+            productId: row.product.id,
+            quantity: row.quantity,
+          })),
         }),
       });
 
@@ -291,12 +366,12 @@ function MiniAppInner() {
               <p className="text-[11px] uppercase tracking-[0.28em] text-[#d59b6b]/75">01 / Product</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {products.map((product) => {
-                  const isActive = product.id === selectedProductId;
+                  const cartEntry = cartItems.find((entry) => entry.productId === product.id);
+                  const isActive = Boolean(cartEntry);
+
                   return (
-                    <button
+                    <div
                       key={product.id}
-                      type="button"
-                      onClick={() => selectProduct(product)}
                       className={`border px-4 py-4 text-left transition-colors ${
                         isActive
                           ? "border-[#c98552]/70 bg-[#c98552]/10"
@@ -306,46 +381,72 @@ function MiniAppInner() {
                       <p className="text-xs uppercase tracking-[0.24em] text-white/45">{product.code}</p>
                       <h2 className="mt-2 text-lg font-semibold text-[#fff8f1]">{product.name}</h2>
                       <p className="mt-2 text-sm leading-relaxed text-white/65">{product.description}</p>
-                      <p className="mt-3 text-sm text-[#d59b6b]">
-                        {product.priceHuf.toLocaleString("hu-HU")} HUF / db
-                      </p>
-                    </button>
+                      <p className="mt-3 text-sm text-[#d59b6b]">{product.priceHuf.toLocaleString("hu-HU")} HUF / db</p>
+
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={() => addToCart(product)}
+                          className="border border-[#c98552]/70 bg-[#c98552] px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#1b1009]"
+                        >
+                          Hozzáadás
+                        </button>
+                        <span className="text-xs text-white/60">
+                          {cartEntry ? `Kosárban: ${cartEntry.quantity} db` : `Minimum: ${product.minPerOrder} db`}
+                        </span>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
             </div>
 
             <div className="border border-white/10 bg-black/30 p-4">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">02 / Quantity</p>
-              <div className="mt-3 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!selectedProduct) return;
-                    setQuantity((current) => Math.max(selectedProduct.minPerOrder, current - 1));
-                    triggerHapticImpact("light");
-                  }}
-                  className="h-11 w-11 border border-white/15 bg-white/[0.04] text-lg text-white"
-                >
-                  -
-                </button>
-                <div className="min-w-24 flex-1 border border-[#c98552]/35 bg-[#c98552]/10 px-4 py-3 text-center text-2xl font-bold text-[#e3b08a]">
-                  {quantity}
+              <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">02 / Kosár</p>
+              {cartRows.length === 0 ? (
+                <p className="mt-3 text-sm text-white/55">Még nincs termék a kosárban.</p>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  {cartRows.map((row) => (
+                    <div key={row.product.id} className="border border-[#c98552]/25 bg-[#120e0b] px-3 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-[#fff8f1]">{row.product.code}</p>
+                          <p className="text-xs text-white/55">{row.product.name}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeCartItem(row.product.id)}
+                          className="border border-white/20 px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-white/70"
+                        >
+                          Törlés
+                        </button>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => decrementCartItem(row.product)}
+                            className="h-9 w-9 border border-white/15 bg-white/[0.04] text-white"
+                          >
+                            -
+                          </button>
+                          <span className="min-w-12 text-center text-lg font-bold text-[#e3b08a]">{row.quantity}</span>
+                          <button
+                            type="button"
+                            onClick={() => incrementCartItem(row.product)}
+                            className="h-9 w-9 border border-white/15 bg-white/[0.04] text-white"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span className="text-sm text-[#d59b6b]">{row.lineTotal.toLocaleString("hu-HU")} HUF</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuantity((current) => current + 1);
-                    triggerHapticImpact("light");
-                  }}
-                  className="h-11 w-11 border border-white/15 bg-white/[0.04] text-lg text-white"
-                >
-                  +
-                </button>
-              </div>
-              <div className="mt-3 text-sm text-white/55">
-                Minimum rendelés: {selectedProduct?.minPerOrder ?? 1} db
-              </div>
+              )}
             </div>
 
             <div className="border border-white/10 bg-black/25 p-4">
@@ -356,14 +457,19 @@ function MiniAppInner() {
               <button
                 type="button"
                 onClick={submitIntent}
-                disabled={loadingIntent || !selectedProduct || !hasInitData}
+                disabled={loadingIntent || cartRows.length === 0 || (!hasInitData && !canCheckoutWithoutInitData)}
                 className="mt-4 w-full border border-[#c98552]/75 bg-[#c98552] px-4 py-3 text-sm font-bold uppercase tracking-[0.24em] text-[#1b1009] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loadingIntent ? "Stripe intent készül..." : "Checkout indítása"}
               </button>
-              {!hasInitData ? (
+              {!hasInitData && !canCheckoutWithoutInitData ? (
                 <p className="mt-3 text-sm text-amber-200/80">
                   Telegramon kívül vagy. A fizetéshez indítsd a Mini Appot a bot üzenetében lévő gombbal.
+                </p>
+              ) : null}
+              {!hasInitData && canCheckoutWithoutInitData ? (
+                <p className="mt-3 text-sm text-amber-200/80">
+                  Fejlesztői mód: Telegram initData nélkül fut a lokális checkout teszt.
                 </p>
               ) : null}
               {intentError ? <p className="mt-3 text-sm text-red-300">{intentError}</p> : null}
@@ -375,32 +481,26 @@ function MiniAppInner() {
               <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">Summary</p>
               <div className="mt-4 space-y-2 text-sm text-white/70">
                 <div className="flex justify-between gap-4">
-                  <span>Product</span>
-                  <span className="text-white">{selectedProduct?.code ?? "-"}</span>
+                  <span>Items</span>
+                  <span className="text-white">{cartRows.length}</span>
                 </div>
                 <div className="flex justify-between gap-4">
                   <span>Quantity</span>
-                  <span className="text-white">{quantity}</span>
+                  <span className="text-white">{cartTotalQuantity} db</span>
                 </div>
                 <div className="flex justify-between gap-4 border-t border-white/10 pt-3 text-base">
                   <span>Total</span>
-                  <span className="text-[#d59b6b]">
-                    {((selectedProduct?.priceHuf ?? 0) * quantity).toLocaleString("hu-HU")} HUF
-                  </span>
+                  <span className="text-[#d59b6b]">{cartTotalHuf.toLocaleString("hu-HU")} HUF</span>
                 </div>
               </div>
             </div>
 
-            {clientSecret && selectedProduct && stripePromise ? (
+            {clientSecret && cartRows.length > 0 && stripePromise ? (
               <div className="border border-[#c98552]/20 bg-white/[0.03] p-4">
                 <p className="text-[11px] uppercase tracking-[0.28em] text-[#d59b6b]/70">Stripe Elements</p>
                 <div className="mt-4">
                   <Elements stripe={stripePromise} options={stripeOptions ?? undefined}>
-                    <TelegramPaymentForm
-                      product={selectedProduct}
-                      quantity={quantity}
-                      onClose={() => closeMiniApp()}
-                    />
+                    <TelegramPaymentForm checkoutLabel={cartCheckoutLabel} onClose={() => closeMiniApp()} />
                   </Elements>
                 </div>
               </div>

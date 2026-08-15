@@ -96,6 +96,11 @@ async function sendTelegramPaymentIntentCompletionMessage(input: {
   });
 }
 
+type OrderItemRow = {
+  product_code: string;
+  quantity: number;
+};
+
 function sanitizeOrderMetadata(metadata: Record<string, string>) {
   const {
     telegram_chat_id: _telegramChatId,
@@ -226,52 +231,96 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
   if (!db) return;
 
   const metadata = paymentIntent.metadata ?? {};
-  const productId = metadata.product_id ?? metadata.telegram_product_id ?? 'unknown';
+  const productId = metadata.product_id ?? metadata.telegram_product_id ?? 'multi_cart';
   const telegramChatId = metadata.telegram_chat_id ?? null;
+  const orderId = metadata.order_id ?? null;
   const amount = typeof paymentIntent.amount_received === 'number'
     ? paymentIntent.amount_received
     : typeof paymentIntent.amount === 'number'
       ? paymentIntent.amount
       : 0;
   const currency = (paymentIntent.currency ?? 'huf').toLowerCase();
-  const packageLabel = metadata.product_code ?? metadata.telegram_product_code ?? productId;
+  const fallbackLabel = metadata.product_code ?? metadata.telegram_product_code ?? productId;
   const safeMetadata = sanitizeOrderMetadata(metadata);
 
-  const { data: upsertedOrder, error } = await db
-    .from('orders')
-    .upsert(
-      {
+  type OrderRow = {
+    id: string;
+    telegram_sent_at: string | null;
+    telegram_send_attempts: number;
+  };
+
+  let orderRecord: OrderRow | null = null;
+
+  if (orderId) {
+    const { data: updatedOrder, error: updateError } = await db
+      .from('orders')
+      .update({
         stripe_session_id: paymentIntent.id,
-        anonymized_user_hash: metadata.telegram_user_hash ?? null,
-        product_id: productId,
-        delivery_type: 'dead_drop',
+        status: 'paid',
         amount,
         currency,
-        status: 'paid',
-        customer_email: null,
-        customer_name: null,
-        shipping_address: null,
         metadata: safeMetadata,
-      },
-      { onConflict: 'stripe_session_id' },
-    )
-    .select('id, telegram_sent_at, telegram_send_attempts')
-    .single<{
-      id: string;
-      telegram_sent_at: string | null;
-      telegram_send_attempts: number;
-    }>();
+      })
+      .eq('id', orderId)
+      .select('id, telegram_sent_at, telegram_send_attempts')
+      .single<OrderRow>();
 
-  if (error) {
-    console.error(`❌ Failed to upsert Telegram order for PaymentIntent ${paymentIntent.id}:`, error);
-    return;
+    if (!updateError && updatedOrder) {
+      orderRecord = updatedOrder;
+    } else {
+      console.error(`❌ Failed to update existing Telegram order ${orderId}:`, updateError);
+    }
+  }
+
+  if (!orderRecord) {
+    const { data: upsertedOrder, error } = await db
+      .from('orders')
+      .upsert(
+        {
+          stripe_session_id: paymentIntent.id,
+          anonymized_user_hash: metadata.telegram_user_hash ?? null,
+          product_id: productId,
+          delivery_type: 'dead_drop',
+          amount,
+          currency,
+          status: 'paid',
+          customer_email: null,
+          customer_name: null,
+          shipping_address: null,
+          metadata: safeMetadata,
+        },
+        { onConflict: 'stripe_session_id' },
+      )
+      .select('id, telegram_sent_at, telegram_send_attempts')
+      .single<OrderRow>();
+
+    if (error || !upsertedOrder) {
+      console.error(`❌ Failed to upsert Telegram order for PaymentIntent ${paymentIntent.id}:`, error);
+      return;
+    }
+
+    orderRecord = upsertedOrder;
+  }
+
+  let packageLabel = fallbackLabel;
+  if (orderRecord?.id) {
+    const { data: orderItems, error: itemsError } = await db
+      .from('order_items')
+      .select('product_code, quantity')
+      .eq('order_id', orderRecord.id)
+      .order('created_at', { ascending: true })
+      .returns<OrderItemRow[]>();
+
+    if (!itemsError && orderItems && orderItems.length > 0) {
+      packageLabel = orderItems.map((item) => `${item.product_code} x${item.quantity}`).join(', ');
+    }
   }
 
   if (!telegramChatId || !telegramBotToken) {
     return;
   }
 
-  if (upsertedOrder?.telegram_sent_at) {
+  if (orderRecord?.telegram_sent_at) {
     return;
   }
 
@@ -283,7 +332,7 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
     stripePaymentIntentId: paymentIntent.id,
   });
 
-  const nextAttempts = Number(upsertedOrder?.telegram_send_attempts ?? 0) + 1;
+  const nextAttempts = Number(orderRecord?.telegram_send_attempts ?? 0) + 1;
 
   if (sendResult.ok) {
     await db
@@ -293,7 +342,7 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
         telegram_send_error: null,
         telegram_send_attempts: nextAttempts,
       })
-      .eq('stripe_session_id', paymentIntent.id);
+      .eq('id', orderRecord.id);
     return;
   }
 
@@ -303,7 +352,7 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
       telegram_send_error: sendResult.error,
       telegram_send_attempts: nextAttempts,
     })
-    .eq('stripe_session_id', paymentIntent.id);
+    .eq('id', orderRecord.id);
 }
 
 function generateVoucherCode(): string {

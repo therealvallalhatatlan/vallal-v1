@@ -1,20 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 
 import { CATALOG } from "@/config/catalog";
 import { hashTelegramId } from "@/lib/security/hash";
 import { validateTelegramInitData } from "@/lib/security/telegram";
 import { stripe } from "@/lib/stripe";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 type CreateIntentBody = {
   initData?: string;
-  productId?: string;
-  quantity?: number;
+  items?: Array<{
+    productId?: string;
+    quantity?: number;
+  }>;
 };
 
 function getProduct(productId: string) {
   const product = CATALOG[productId];
   if (!product || !product.active) return null;
   return product;
+}
+
+type NormalizedItem = {
+  productId: string;
+  quantity: number;
+};
+
+function normalizeItems(items: CreateIntentBody["items"]): NormalizedItem[] {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("empty_cart");
+  }
+
+  const merged = new Map<string, number>();
+
+  for (const item of items) {
+    const productId = String(item?.productId ?? "").trim();
+    const quantity = Number.parseInt(String(item?.quantity ?? ""), 10);
+
+    if (!productId) throw new Error("invalid_product_id");
+    if (!Number.isFinite(quantity) || quantity < 1) throw new Error("invalid_quantity");
+
+    merged.set(productId, (merged.get(productId) ?? 0) + quantity);
+  }
+
+  return Array.from(merged.entries()).map(([productId, quantity]) => ({ productId, quantity }));
 }
 
 export async function POST(request: NextRequest) {
@@ -50,41 +79,53 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "missing_init_data" }, { status: 401 });
     }
 
-    const productId = String(body.productId ?? "").trim();
-    const quantity = Number.parseInt(String(body.quantity ?? ""), 10);
-    const product = getProduct(productId);
+    const normalizedItems = normalizeItems(body.items);
+    const cart = normalizedItems.map((item) => {
+      const product = getProduct(item.productId);
+      if (!product) {
+        throw new Error("product_not_available");
+      }
+      if (item.quantity < product.minPerOrder) {
+        throw new Error(`min_order_not_met:${product.id}:${product.minPerOrder}`);
+      }
 
-    if (!product) {
-      return NextResponse.json({ error: "product_not_available" }, { status: 400 });
+      const unitAmountMinor = product.priceHuf * 100;
+      const lineTotalMinor = unitAmountMinor * item.quantity;
+
+      return {
+        product,
+        quantity: item.quantity,
+        unitAmountMinor,
+        lineTotalMinor,
+      };
+    });
+
+    const totalAmountMinor = cart.reduce((sum, item) => sum + item.lineTotalMinor, 0);
+    if (!Number.isFinite(totalAmountMinor) || totalAmountMinor <= 0) {
+      return NextResponse.json({ error: "invalid_total_amount" }, { status: 400 });
     }
 
-    if (!Number.isFinite(quantity) || quantity < product.minPerOrder) {
-      return NextResponse.json({ error: "invalid_quantity" }, { status: 400 });
-    }
-
-    const totalAmountHuf = product.priceHuf * quantity;
+    const orderId = crypto.randomUUID();
+    const cartSummary = cart.map((item) => `${item.product.code} x${item.quantity}`).join(", ");
     const anonymizedUserHash = process.env.HASH_SALT?.trim()
       ? hashTelegramId(String(telegramUserId))
       : `raw_${telegramUserId}`;
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalAmountHuf * 100,
+      amount: totalAmountMinor,
       currency: "huf",
       automatic_payment_methods: { enabled: true },
       metadata: {
         source: "telegram-mini-app",
+        order_id: orderId,
         telegram_chat_id: String(telegramUserId),
         telegram_user_id: String(telegramUserId),
         telegram_user_hash: anonymizedUserHash,
         telegram_auth_date: String(telegramAuthDate),
         telegram_query_id: telegramQueryId,
         telegram_init_bypass: isDevBypass ? "1" : "0",
-        telegram_product_id: product.id,
-        telegram_product_code: product.code,
-        telegram_quantity: String(quantity),
-        product_id: product.id,
-        product_code: product.code,
-        quantity: String(quantity),
+        cart_summary: cartSummary.slice(0, 450),
+        item_count: String(cart.length),
       },
     });
 
@@ -92,16 +133,67 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "missing_client_secret" }, { status: 500 });
     }
 
+    const { error: orderInsertError } = await supabaseAdmin()
+      .from("orders")
+      .insert({
+        id: orderId,
+        stripe_session_id: paymentIntent.id,
+        anonymized_user_hash: anonymizedUserHash,
+        product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
+        delivery_type: "dead_drop",
+        amount: totalAmountMinor,
+        currency: paymentIntent.currency,
+        status: "pending",
+        customer_email: null,
+        customer_name: null,
+        shipping_address: null,
+        metadata: {
+          source: "telegram-mini-app",
+          cart_summary: cartSummary,
+          item_count: cart.length,
+        },
+      });
+
+    if (orderInsertError) {
+      console.error("[telegram.create-intent] order insert failed", orderInsertError);
+      return NextResponse.json({ error: "order_insert_failed" }, { status: 500 });
+    }
+
+    const { error: itemInsertError } = await supabaseAdmin()
+      .from("order_items")
+      .insert(
+        cart.map((item) => ({
+          order_id: orderId,
+          product_id: item.product.id,
+          product_code: item.product.code,
+          product_name: item.product.name,
+          unit_price: item.unitAmountMinor,
+          quantity: item.quantity,
+          line_total: item.lineTotalMinor,
+          metadata: {
+            min_per_order: item.product.minPerOrder,
+          },
+        })),
+      );
+
+    if (itemInsertError) {
+      console.error("[telegram.create-intent] order_items insert failed", itemInsertError);
+      return NextResponse.json({ error: "order_items_insert_failed" }, { status: 500 });
+    }
+
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
+      orderId,
       currency: paymentIntent.currency,
       amount: paymentIntent.amount,
-      product: {
-        id: product.id,
-        code: product.code,
-        name: product.name,
-        priceHuf: product.priceHuf,
-      },
+      items: cart.map((item) => ({
+        productId: item.product.id,
+        code: item.product.code,
+        name: item.product.name,
+        quantity: item.quantity,
+        unitAmountMinor: item.unitAmountMinor,
+        lineTotalMinor: item.lineTotalMinor,
+      })),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "telegram_create_intent_failed";
