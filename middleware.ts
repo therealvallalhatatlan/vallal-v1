@@ -78,9 +78,38 @@ const PUBLIC_PATHS = new Set<string>([
 // Write operations to block in READ_ONLY mode
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
+function isTelegramAppRequest(req: NextRequest): boolean {
+  const { searchParams } = req.nextUrl;
+  const hasTelegramQuery =
+    searchParams.has('tgWebAppData') ||
+    searchParams.has('tgWebAppVersion') ||
+    searchParams.has('tgWebAppPlatform') ||
+    searchParams.has('tgWebAppStartParam');
+
+  if (hasTelegramQuery) return true;
+
+  const userAgent = (req.headers.get('user-agent') || '').toLowerCase();
+  const referer = (req.headers.get('referer') || '').toLowerCase();
+
+  const hasTelegramUa = userAgent.includes('telegram');
+  const hasTelegramReferer =
+    referer.includes('t.me') ||
+    referer.includes('telegram.me') ||
+    referer.includes('web.telegram.org');
+
+  return hasTelegramUa || hasTelegramReferer;
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = req.method;
+
+  // Telegram Mini App pages are private entrypoints; hide them from public browsing.
+  if (pathname === '/telegram-app' || pathname.startsWith('/telegram-app/')) {
+    if (!isTelegramAppRequest(req)) {
+      return new NextResponse('Not Found', { status: 404 });
+    }
+  }
 
   // 🔴 KRITIKUS: TELEGRAM ÉS STRIPE WEBHOOKOK AZONNALI KIVÉTELE (Bypass)
   // Ezeknek mindig át kell menniük, POST kérésként is, tiltások nélkül!
