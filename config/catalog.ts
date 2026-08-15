@@ -56,7 +56,7 @@ export const CATALOG: Record<string, Product> = {
     name: "Ecstasy tabletta, 320mg",
     priceHuf: 4000,
     minPerOrder: 2,
-    description: "Erős, 520µg LSD-tartalmű blotter, tapasztalt utazóknak.",
+    description: "260mg MDMA-tartalmú ecstasy tabletta, ",
     stripePriceId: "price_XXXXXXXXXXXX03",
     active: true,
   },
