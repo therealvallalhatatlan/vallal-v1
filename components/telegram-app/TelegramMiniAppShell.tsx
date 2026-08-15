@@ -68,6 +68,32 @@ function getTelegramWebApp() {
   }).Telegram?.WebApp ?? null;
 }
 
+function getInitDataFromUrl(): string {
+  if (typeof window === "undefined") return "";
+
+  const fromSearch = new URLSearchParams(window.location.search).get("tgWebAppData");
+  if (fromSearch && fromSearch.trim().length > 0) {
+    return fromSearch;
+  }
+
+  const rawHash = window.location.hash.startsWith("#")
+    ? window.location.hash.slice(1)
+    : window.location.hash;
+  const hashParams = new URLSearchParams(rawHash);
+  const fromHash = hashParams.get("tgWebAppData");
+
+  return fromHash?.trim() ?? "";
+}
+
+function resolveInitData(webApp: ReturnType<typeof getTelegramWebApp>): string {
+  const fromWebApp = webApp?.initData?.trim();
+  if (fromWebApp && fromWebApp.length > 0) {
+    return fromWebApp;
+  }
+
+  return getInitDataFromUrl();
+}
+
 function applyTelegramTheme(theme: Record<string, unknown> | null) {
   if (typeof document === "undefined") return;
 
@@ -187,11 +213,26 @@ function MiniAppInner() {
       miniAppReady();
       webApp.ready?.();
       webApp.expand?.();
-      setInitData(webApp.initData ?? "");
-    } else {
-      setInitData("");
     }
+
+    const syncInitData = () => {
+      const resolved = resolveInitData(webApp);
+      if (!resolved) return;
+      setInitData((current) => (current === resolved ? current : resolved));
+    };
+
+    syncInitData();
+    const retryTimer = window.setInterval(syncInitData, 350);
+    const stopRetryTimer = window.setTimeout(() => {
+      window.clearInterval(retryTimer);
+    }, 3500);
+
     applyTelegramTheme(telegramTheme ?? null);
+
+    return () => {
+      window.clearInterval(retryTimer);
+      window.clearTimeout(stopRetryTimer);
+    };
   }, [telegramTheme, webApp]);
 
   useEffect(() => {
