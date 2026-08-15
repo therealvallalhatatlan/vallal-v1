@@ -18,6 +18,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 const resendApiKey = process.env.RESEND_API_KEY;
 const emailFrom = process.env.EMAIL_FROM;
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 let cachedWebhookSupabase: SupabaseClient | null = null;
 
@@ -128,6 +129,165 @@ function sanitizeOrderMetadata(metadata: Record<string, string>) {
   } = metadata;
 
   return safeMetadata;
+}
+
+function escapeHtml(input: string): string {
+  return input
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function buildThankYouEmailHtml(customerEmail: string, orderReference: string) {
+  const safeEmail = escapeHtml(customerEmail);
+  const safeOrderReference = escapeHtml(orderReference);
+
+  return `
+    <div style="margin:0;background:#050505;color:#f4f4f4;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;padding:32px;line-height:1.65;">
+      <div style="max-width:640px;margin:0 auto;border:1px solid #2a2a2a;background:#0b0b0b;padding:28px;">
+        <div style="color:#8dff7a;font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px;">[CONFIRMATION]</div>
+        <h1 style="margin:0 0 16px;font-size:24px;color:#ffffff;">Köszönjük a rendelést!</h1>
+        <p style="margin:0 0 16px;color:#d6d6d6;">Megkaptuk a rendelésedet, és hamarosan felvesszük veled a kapcsolatot a további részletekkel kapcsolatban.</p>
+        <div style="border-top:1px solid #222;padding-top:14px;color:#9f9f9f;font-size:12px;">
+          <div>Email: ${safeEmail}</div>
+          <div>Referencia: ${safeOrderReference}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildAccessCodeEmailHtml(pin: string, customerEmail: string, orderReference: string) {
+  const safePin = escapeHtml(pin);
+  const safeEmail = escapeHtml(customerEmail);
+  const safeOrderReference = escapeHtml(orderReference);
+
+  return `
+    <div style="margin:0;background:#050505;color:#f4f4f4;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;padding:32px;line-height:1.65;">
+      <div style="max-width:640px;margin:0 auto;border:1px solid #2a2a2a;background:#090909;padding:28px;">
+        <div style="color:#8dff7a;font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px;">[ACCESS_GRANTED]</div>
+        <h1 style="margin:0 0 16px;font-size:24px;color:#ffffff;">Rendszer Hozzáférési Kulcs</h1>
+        <p style="margin:0 0 18px;color:#d6d6d6;">A tranzakció sikeres volt. A terminál belépéshez használd az alábbi kulcsot.</p>
+        <pre style="margin:0 0 18px;padding:18px;border:1px solid #2f2f2f;background:#000;color:#8dff7a;font-size:20px;letter-spacing:.12em;overflow:auto;">${safePin}</pre>
+        <p style="margin:0 0 14px;color:#cfcfcf;">Használat: add meg a kódot a terminal login felületen.</p>
+        <div style="border-top:1px solid #222;padding-top:14px;color:#9f9f9f;font-size:12px;">
+          <div>Email: ${safeEmail}</div>
+          <div>Referencia: ${safeOrderReference}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function sendCheckoutSessionEmail(session: Stripe.Checkout.Session, subject: string, html: string) {
+  const customerEmail = session.customer_details?.email;
+
+  if (!customerEmail) {
+    console.warn(`⚠️ Skipping email notification for session ${session.id}: customer_details.email missing`);
+    return false;
+  }
+
+  if (!resend || !emailFrom) {
+    console.warn(`⚠️ Skipping email notification for session ${session.id}: missing Resend configuration`);
+    return false;
+  }
+
+  try {
+    await resend.emails.send({
+      from: emailFrom,
+      to: [customerEmail],
+      subject,
+      html,
+    });
+
+    console.log(`✅ Email notification sent for Stripe session ${session.id} to ${customerEmail}`);
+    return true;
+  } catch (error) {
+    console.error(`⚠️ Email notification failed for Stripe session ${session.id}:`, error);
+    return false;
+  }
+}
+
+async function sendTelegramAccessGrantMessage(input: {
+  chatId: string;
+  pin: string;
+  sessionId: string;
+  email?: string | null;
+}) {
+  if (!telegramBotToken) {
+    console.warn(`⚠️ Telegram access grant skipped for session ${input.sessionId}: TELEGRAM_BOT_TOKEN missing`);
+    return false;
+  }
+
+  try {
+    await sendTelegramMessage({
+      token: telegramBotToken,
+      chatId: input.chatId,
+      text: [
+        '[ACCESS_GRANTED]',
+        'Tranzakció sikeres.',
+        `Hozzáférési PIN: ${input.pin}`,
+        'Használd a PIN-kódot a terminal login felületen.',
+        input.email ? `Email: ${input.email}` : 'Email: nem érkezett meg a checkoutból.',
+        `Referencia: ${input.sessionId}`,
+      ].join('\n'),
+    });
+
+    console.log(`✅ Telegram access grant sent for Stripe session ${input.sessionId}`);
+    return true;
+  } catch (error) {
+    console.error(`⚠️ Telegram access grant failed for Stripe session ${input.sessionId}:`, error);
+    return false;
+  }
+}
+
+async function handleCheckoutSessionNotifications(session: Stripe.Checkout.Session) {
+  const metadata = session.metadata ?? {};
+  const isTelegramOrder = Boolean(metadata.telegram_chat_id || metadata.src === 'telegram');
+  const orderReference = session.id;
+
+  if (isTelegramOrder) {
+    const pin = process.env.ADMIN_DASHBOARD_PIN?.trim();
+    if (!pin) {
+      console.warn(`⚠️ Telegram order ${session.id} completed but ADMIN_DASHBOARD_PIN is missing`);
+      return;
+    }
+
+    const customerEmail = session.customer_details?.email ?? null;
+    await sendCheckoutSessionEmail(
+      session,
+      '[ACCESS_GRANTED] Rendszer Hozzáférési Kulcs',
+      buildAccessCodeEmailHtml(pin, customerEmail ?? 'n/a', orderReference),
+    );
+
+    const telegramChatId = metadata.telegram_chat_id;
+    if (telegramChatId) {
+      await sendTelegramAccessGrantMessage({
+        chatId: telegramChatId,
+        pin,
+        sessionId: session.id,
+        email: customerEmail,
+      });
+    } else {
+      console.warn(`⚠️ Telegram metadata indicated telegram origin but telegram_chat_id is missing for session ${session.id}`);
+    }
+
+    return;
+  }
+
+  const customerEmail = session.customer_details?.email;
+  if (!customerEmail) {
+    console.warn(`⚠️ Standard checkout session ${session.id} has no customer_details.email; skipping thank-you email`);
+    return;
+  }
+
+  await sendCheckoutSessionEmail(
+    session,
+    '[CONFIRMATION] Köszönjük a rendelést!',
+    buildThankYouEmailHtml(customerEmail, orderReference),
+  );
 }
 
 async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
@@ -493,6 +653,8 @@ export async function PATCH(request: NextRequest) {
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeEventId: string) {
   console.log(`💳 Processing checkout completion for session: ${session.id}`);
+
+  await handleCheckoutSessionNotifications(session);
 
   const metadata = session.metadata;
   if (metadata?.type === 'spot_unlock') {
