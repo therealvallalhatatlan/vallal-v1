@@ -95,6 +95,7 @@ function TelegramPaymentForm(props: { checkoutLabel: string; onClose: () => void
 export default function TelegramAppCheckoutPage() {
   const [snapshot, setSnapshot] = useState<CheckoutSnapshot | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const stripeKeyMissing = !stripePublishableKey;
 
   useEffect(() => {
     try {
@@ -135,12 +136,21 @@ export default function TelegramAppCheckoutPage() {
     ? ({ clientSecret: snapshot.clientSecret, appearance } satisfies StripeElementsOptions)
     : null;
 
-  if (loadError) {
+  if (loadError || stripeKeyMissing) {
     return (
       <main className="min-h-screen bg-[#090705] px-4 py-8 text-[#f4ebe1]">
         <div className="mx-auto max-w-xl border border-white/10 bg-black/40 p-6">
           <h1 className="text-2xl font-bold text-[#fff8f1]">Checkout</h1>
-          <p className="mt-3 text-sm text-red-300">{loadError}</p>
+          <p className="mt-3 text-sm text-red-300">
+            {loadError ?? "Hiányzik a NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY env változó, ezért nem tölthető be a Stripe fizetési felület."}
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.assign("/telegram-app")}
+            className="mt-4 border border-[#c98552]/70 bg-[#c98552] px-4 py-3 text-sm font-bold uppercase tracking-[0.22em] text-[#1b1009]"
+          >
+            Vissza a kosárhoz
+          </button>
         </div>
       </main>
     );
@@ -151,7 +161,10 @@ export default function TelegramAppCheckoutPage() {
       <main className="min-h-screen bg-[#090705] px-4 py-8 text-[#f4ebe1]">
         <div className="mx-auto max-w-xl border border-white/10 bg-black/40 p-6">
           <h1 className="text-2xl font-bold text-[#fff8f1]">Checkout</h1>
-          <p className="mt-3 text-sm text-white/60">Betöltés...</p>
+          <p className="mt-3 text-sm text-white/60">A rendelési adatok betöltése folyamatban van...</p>
+          <p className="mt-2 text-xs text-white/40">
+            Ha ez sokáig így marad, indítsd újra a checkoutot a Mini Appból.
+          </p>
         </div>
       </main>
     );
