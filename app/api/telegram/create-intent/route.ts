@@ -187,6 +187,7 @@ export async function POST(request: NextRequest) {
 
     const fullOrderPayload: Record<string, unknown> = {
       id: orderId,
+      user_id: String(telegramUserId),
       stripe_session_id: paymentIntent.id,
       anonymized_user_hash: anonymizedUserHash,
       product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
@@ -211,6 +212,7 @@ export async function POST(request: NextRequest) {
       } else {
         const minimalFallbackPayload: Record<string, unknown> = {
           id: orderId,
+          user_id: String(telegramUserId),
           stripe_session_id: paymentIntent.id,
           product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
           amount: totalAmountMinor,

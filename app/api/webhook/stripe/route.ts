@@ -123,6 +123,7 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
   }
 
   const telegramChatId = metadata.telegram_chat_id ?? null;
+  const legacyUserId = metadata.telegram_user_id ?? telegramChatId ?? null;
   const rawTelegramIdentity = metadata.telegram_user_ephemeral ?? metadata.telegram_user_id ?? telegramChatId ?? null;
   const anonymizedUserHash = rawTelegramIdentity ? hashTelegramId(String(rawTelegramIdentity)) : null;
   const deliveryType = metadata.delivery_type === 'anonymous_locker' ? 'anonymous_locker' : 'dead_drop';
@@ -151,6 +152,7 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
     .upsert(
       {
         stripe_session_id: session.id,
+        user_id: legacyUserId,
         anonymized_user_hash: anonymizedUserHash,
         product_id: productId,
         delivery_type: deliveryType,
@@ -233,6 +235,7 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
   const metadata = paymentIntent.metadata ?? {};
   const productId = metadata.product_id ?? metadata.telegram_product_id ?? 'multi_cart';
   const telegramChatId = metadata.telegram_chat_id ?? null;
+  const legacyUserId = metadata.telegram_user_id ?? telegramChatId ?? null;
   const orderId = metadata.order_id ?? null;
   const amount = typeof paymentIntent.amount_received === 'number'
     ? paymentIntent.amount_received
@@ -278,6 +281,7 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
       .upsert(
         {
           stripe_session_id: paymentIntent.id,
+          user_id: legacyUserId,
           anonymized_user_hash: metadata.telegram_user_hash ?? null,
           product_id: productId,
           delivery_type: 'dead_drop',
