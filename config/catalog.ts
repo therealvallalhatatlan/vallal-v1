@@ -10,7 +10,7 @@ export interface Product {
 }
 
 export const CATALOG: Record<string, Product> = {
-  limited_book_01: {
+  zold_01: {
     id: "zold_01",
     code: "Amnezia Haze",
     name: "Sativa domináns hibrid",
