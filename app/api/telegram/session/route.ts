@@ -30,15 +30,17 @@ export async function POST(request: NextRequest) {
     });
 
     const response = NextResponse.json({ ok: true });
+    const isProduction = process.env.NODE_ENV === 'production';
     response.cookies.set({
       name: TELEGRAM_MINI_APP_SESSION_COOKIE,
       value: sessionToken,
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: isProduction ? 'none' : 'lax',
+      secure: isProduction,
       path: '/',
       maxAge: 60 * 60,
     });
+    response.headers.set('Cache-Control', 'no-store');
     response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
     return response;
   } catch (error) {

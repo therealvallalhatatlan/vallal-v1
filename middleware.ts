@@ -108,6 +108,26 @@ function isLocalDevRequest(req: NextRequest): boolean {
   return host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
 }
 
+function applyTelegramGateHeaders(
+  response: NextResponse,
+  details: {
+    decision: 'allow' | 'deny';
+    reason: string;
+    sessionCookie: 'present' | 'missing';
+    session: 'valid' | 'invalid';
+    telegramOrigin: 'yes' | 'no';
+  },
+): NextResponse {
+  response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  response.headers.set('X-TG-Gate-Decision', details.decision);
+  response.headers.set('X-TG-Gate-Reason', details.reason);
+  response.headers.set('X-TG-Session-Cookie', details.sessionCookie);
+  response.headers.set('X-TG-Session-Valid', details.session);
+  response.headers.set('X-TG-Origin', details.telegramOrigin);
+  response.headers.set('Cache-Control', 'no-store');
+  return response;
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = req.method;
@@ -119,24 +139,40 @@ export async function middleware(req: NextRequest) {
     }
 
     const sessionToken = req.cookies.get(TELEGRAM_MINI_APP_SESSION_COOKIE)?.value;
+    const hasSessionCookie = Boolean(sessionToken);
     const hasValidMiniAppSession = Boolean(await verifyTelegramMiniAppSessionToken(sessionToken));
     const isCheckoutRoute = pathname.startsWith('/telegram-app/checkout');
     const isTelegramOrigin = isTelegramAppRequest(req);
 
     if (isCheckoutRoute && !hasValidMiniAppSession && !isTelegramOrigin) {
-      return new NextResponse('Not Found', {
+      return applyTelegramGateHeaders(new NextResponse('Not Found', {
         status: 404,
-        headers: { 'X-Robots-Tag': 'noindex, nofollow, noarchive' },
+      }), {
+        decision: 'deny',
+        reason: hasSessionCookie ? 'checkout_invalid_session_and_non_telegram_origin' : 'checkout_missing_session_and_non_telegram_origin',
+        sessionCookie: hasSessionCookie ? 'present' : 'missing',
+        session: hasValidMiniAppSession ? 'valid' : 'invalid',
+        telegramOrigin: isTelegramOrigin ? 'yes' : 'no',
       });
     }
 
     if (!hasValidMiniAppSession && !isTelegramOrigin) {
-      return new NextResponse('Not Found', { status: 404 });
+      return applyTelegramGateHeaders(new NextResponse('Not Found', { status: 404 }), {
+        decision: 'deny',
+        reason: hasSessionCookie ? 'invalid_session_and_non_telegram_origin' : 'missing_session_and_non_telegram_origin',
+        sessionCookie: hasSessionCookie ? 'present' : 'missing',
+        session: hasValidMiniAppSession ? 'valid' : 'invalid',
+        telegramOrigin: isTelegramOrigin ? 'yes' : 'no',
+      });
     }
 
-    const response = NextResponse.next();
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
-    return response;
+    return applyTelegramGateHeaders(NextResponse.next(), {
+      decision: 'allow',
+      reason: hasValidMiniAppSession ? 'valid_session' : 'telegram_origin_fallback',
+      sessionCookie: hasSessionCookie ? 'present' : 'missing',
+      session: hasValidMiniAppSession ? 'valid' : 'invalid',
+      telegramOrigin: isTelegramOrigin ? 'yes' : 'no',
+    });
   }
 
   // 🔴 KRITIKUS: TELEGRAM ÉS STRIPE WEBHOOKOK AZONNALI KIVÉTELE (Bypass)
