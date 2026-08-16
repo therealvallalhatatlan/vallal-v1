@@ -100,12 +100,23 @@ function isTelegramAppRequest(req: NextRequest): boolean {
   return hasTelegramUa || hasTelegramReferer;
 }
 
+function isLocalDevRequest(req: NextRequest): boolean {
+  if (process.env.NODE_ENV === 'production') return false;
+
+  const host = (req.headers.get('host') || req.nextUrl.host || '').toLowerCase();
+  return host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = req.method;
 
   // Telegram Mini App pages are private entrypoints; hide them from public browsing.
   if (pathname === '/telegram-app' || pathname.startsWith('/telegram-app/')) {
+    if (isLocalDevRequest(req)) {
+      return NextResponse.next();
+    }
+
     if (!isTelegramAppRequest(req)) {
       return new NextResponse('Not Found', { status: 404 });
     }

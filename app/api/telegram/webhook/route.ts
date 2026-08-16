@@ -256,12 +256,9 @@ async function handleMessage(update: TelegramUpdate) {
     await bot.sendMessage(
       message.chat.id,
       [
-        "<b>[NODE_MARKET_ONLINE]</b>",
+        "<b>A Cukorkabolt - NYITVA</b>",
         "",
-        "Mobilbarát vásárlási mód: közvetlen Revolut fizetés a chatből.",
-        `<b>Fogadó revtag:</b> <code>${escapeHtml(revtag)}</code>`,
-        "",
-        "Válassz csomagot és mennyiséget, a bot automatikusan ad egy fizetési linket és kötelező referencia kódot.",
+        "Válassz csomagot és mennyiséget, a bot automatikusan ad egy Revolut fizetési linket és egy referencia kódot. Ha a fizetés beérkezett általában azonnal, vagy néhány órán belül felvesszük veled a kapcsolatot.",
       ].join("\n"),
       { parse_mode: "HTML" },
     );
@@ -368,7 +365,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
       await bot.sendMessage(
         chatId,
         [
-          "<b>[NODE_PAYMENT_INIT]</b>",
+          "<b>[PAYMENT_INIT]</b>",
           "",
           `<b>Termék:</b> ${escapeHtml(product.name)} (${escapeHtml(product.code)})`,
           `<b>Mennyiség:</b> ${qtyAction.count} db`,
@@ -377,9 +374,9 @@ async function handleCallbackQuery(update: TelegramUpdate) {
           `<b>Revtag:</b> <code>${escapeHtml(revtag)}</code>`,
           `<b>Revolut Pro link:</b> <a href="${escapeHtml(paymentUrl)}">${escapeHtml(paymentUrl)}</a>`,
           "",
-          `<b>Kötelező megjegyzés / NOTE:</b> <code>${escapeHtml(ref)}</code>`,
-          "<b>FONTOS:</b> A fenti referencia kód pontos beírása a Revolut utalás megjegyzésébe KÖTELEZŐ.",
-          "<b>Mobil tipp:</b> Nyisd meg a Revolut appot a gombbal, fizess, majd térj vissza ide és nyomd meg a FIZETTEM gombot.",
+          `<b>A megjegyzés rovatba írd ezt:</b> <code>${escapeHtml(ref)}</code>`,
+          "<b>FONTOS:</b> Ne felejtsd el a megjegyzés rovatba beírni a referencia kódot.",
+          "<b>Tipp:</b> Nyisd meg a Revolut appot a gombbal, fizess, majd térj vissza ide és nyomd meg a FIZETTEM gombot.",
         ].join("\n"),
         {
           parse_mode: "HTML",
@@ -403,7 +400,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
       console.error("[telegram.webhook] revolut_instruction_failed", { error: errorMessage });
 
       await bot.answerCallbackQuery(callbackQueryId, {
-        text: "A Revolut fizetési instrukció létrehozása sikertelen.",
+        text: "A Revolut fizetési instrukció létrehozása elbaszódott.",
         show_alert: true,
       });
       return;
@@ -432,16 +429,16 @@ async function handleCallbackQuery(update: TelegramUpdate) {
     await bot.sendMessage(
       pending.buyerChatId,
       [
-        "<b>[REFERENCE_REPLAY]</b>",
+        "<b>[REFRENCIA-KÓD]</b>",
         "",
-        "Ezt másold be pontosan a Revolut fizetés megjegyzésébe:",
+        "Ezt másold be a Revolut appban a megjegyzésbe:",
         `<code>${escapeHtml(pending.ref)}</code>`,
       ].join("\n"),
       { parse_mode: "HTML" },
     );
 
     await bot.answerCallbackQuery(callbackQueryId, {
-      text: "Referencia újraküldve.",
+      text: "Referencia-kód újraküldve.",
       show_alert: false,
     });
     return;
@@ -452,7 +449,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
     const pending = pendingOrders.get(verifyAction.ref);
     if (!pending) {
       await bot.answerCallbackQuery(callbackQueryId, {
-        text: "Ismeretlen vagy lejárt referencia.",
+        text: "Ismeretlen vagy lejárt referencia-kód.",
         show_alert: true,
       });
       return;
@@ -460,7 +457,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
 
     if (pending.buyerChatId !== chatId) {
       await bot.answerCallbackQuery(callbackQueryId, {
-        text: "Ez a referencia nem ehhez a csatornához tartozik.",
+        text: "Ez a referencia-kód nem ehhez a csatornához tartozik.",
         show_alert: true,
       });
       return;
@@ -606,7 +603,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
     await bot.sendMessage(
       pending.buyerChatId,
       [
-        "<b>[TRANSACT_FAILED]</b>",
+        "<b>[TRANZAKCIÓ_FAILED]</b>",
         "",
         "Köszönjük a jelzést. A megadott fizetési referencia jelenleg nem található.",
         "Kérlek ellenőrizd a megjegyzés mezőt, vagy vedd fel velünk a kapcsolatot.",
