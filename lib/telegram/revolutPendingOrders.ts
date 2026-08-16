@@ -14,7 +14,7 @@ export type PendingOrder = {
   status: PendingOrderStatus;
 };
 
-const REVTAG = "@vallalhatatlan";
+const REVTAG = "@cukorkabolt";
 const REVOLUT_BASE_URL = "https://revolut.me/vallalhatatlan";
 const pendingOrderTtlMs = 24 * 60 * 60 * 1000;
 

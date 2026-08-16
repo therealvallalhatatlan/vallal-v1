@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { closeMiniApp } from "@telegram-apps/sdk-react";
 
 type CheckoutSnapshot = {
   ref: string;
@@ -93,14 +92,19 @@ export default function TelegramAppCheckoutPage() {
         </div>
 
         <div className="mt-4 space-y-4 border border-[#c98552]/20 bg-white/[0.03] p-4">
-          <div className="border border-[#c98552]/30 bg-black/35 p-3">
+          <button
+            type="button"
+            onClick={copyReference}
+            className="w-full border border-[#c98552]/30 bg-black/35 p-3 text-left transition-colors hover:border-[#c98552]/60"
+          >
             <p className="text-xs uppercase tracking-[0.2em] text-white/50">Referencia kod</p>
             <p className="mt-2 text-lg font-bold text-[#f4d6bd]">{snapshot.ref}</p>
-          </div>
+            <p className="mt-2 text-xs text-white/45">Kattints a kodra a vagolapra masolashoz.</p>
+          </button>
 
           <div className="border border-white/10 bg-black/35 p-3 text-sm text-white/70">
             <p>
-              <span className="text-white/55">Revtag:</span> {snapshot.revtag ?? "@vallalhatatlan"}
+              <span className="text-white/55">Revtag:</span> {snapshot.revtag ?? "@cukorkabolt"}
             </p>
             {typeof snapshot.totalAmountHuf === "number" ? (
               <p className="mt-2">
@@ -118,14 +122,6 @@ export default function TelegramAppCheckoutPage() {
             Open Revolut
           </a>
 
-          <button
-            type="button"
-            onClick={copyReference}
-            className="w-full border border-white/20 bg-white/[0.05] px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-white"
-          >
-            Referencia masolasa
-          </button>
-
           {copyFeedback ? <p className="text-sm text-[#f4d6bd]">{copyFeedback}</p> : null}
 
           <p className="text-sm text-white/70">
@@ -133,20 +129,13 @@ export default function TelegramAppCheckoutPage() {
             A jovahagyas utan ott kapod a visszaigazolast.
           </p>
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div>
             <button
               type="button"
               onClick={() => window.location.assign("/telegram-app")}
-              className="border border-white/20 bg-transparent px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-white"
+              className="w-full border border-white/20 bg-transparent px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-white"
             >
               Vissza a kosarhoz
-            </button>
-            <button
-              type="button"
-              onClick={() => closeMiniApp()}
-              className="border border-[#c98552]/70 bg-[#c98552]/20 px-4 py-3 text-sm font-bold uppercase tracking-[0.2em] text-[#f4d6bd]"
-            >
-              Mini App bezarasa
             </button>
           </div>
         </div>

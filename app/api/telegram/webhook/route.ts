@@ -429,7 +429,12 @@ async function handleCallbackQuery(update: TelegramUpdate) {
 
     await bot.sendMessage(
       pending.buyerChatId,
-      "<b>[PENDING_VERIFICATION]</b> Order logged. Awaiting node operator confirmation...",
+      [
+        "<b>[FIZETES JELZES ROGZITVE]</b>",
+        "",
+        "Koszonjuk, a fizetesed jelzeset rogzitettuk.",
+        "Hamarosan felvesszuk veled a kapcsolatot.",
+      ].join("\n"),
       { parse_mode: "HTML" },
     );
 
