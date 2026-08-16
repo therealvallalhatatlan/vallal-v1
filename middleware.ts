@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from './lib/supabaseAdmin';
 import { isAdminEmail } from './lib/auth';
+import { TELEGRAM_MINI_APP_SESSION_COOKIE, verifyTelegramMiniAppSessionToken } from './lib/security/telegramMiniAppSession';
 
 // In-memory cache for system mode (30 second TTL)
 let cachedMode: { mode: 'SAFE' | 'READ_ONLY'; timestamp: number } | null = null;
@@ -117,9 +118,24 @@ export async function middleware(req: NextRequest) {
       return NextResponse.next();
     }
 
-    if (!isTelegramAppRequest(req)) {
+    const sessionToken = req.cookies.get(TELEGRAM_MINI_APP_SESSION_COOKIE)?.value;
+    const hasValidMiniAppSession = Boolean(await verifyTelegramMiniAppSessionToken(sessionToken));
+    const isCheckoutRoute = pathname.startsWith('/telegram-app/checkout');
+
+    if (isCheckoutRoute && !hasValidMiniAppSession) {
+      return new NextResponse('Not Found', {
+        status: 404,
+        headers: { 'X-Robots-Tag': 'noindex, nofollow, noarchive' },
+      });
+    }
+
+    if (!hasValidMiniAppSession && !isTelegramAppRequest(req)) {
       return new NextResponse('Not Found', { status: 404 });
     }
+
+    const response = NextResponse.next();
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+    return response;
   }
 
   // 🔴 KRITIKUS: TELEGRAM ÉS STRIPE WEBHOOKOK AZONNALI KIVÉTELE (Bypass)

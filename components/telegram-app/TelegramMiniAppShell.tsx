@@ -199,6 +199,8 @@ function TelegramPaymentForm(props: {
 function MiniAppInner() {
   const [isMounted, setIsMounted] = useState(false);
   const [initData, setInitData] = useState("");
+  const [sessionReady, setSessionReady] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadingIntent, setLoadingIntent] = useState(false);
@@ -243,6 +245,52 @@ function MiniAppInner() {
 
   const hasInitData = initData.trim().length > 0;
   const canCheckoutWithoutInitData = isDevMode;
+  const canUseMiniApp = sessionReady || canCheckoutWithoutInitData;
+
+  useEffect(() => {
+    if (!isMounted) return;
+
+    if (isDevMode && !hasInitData) {
+      setSessionReady(true);
+      setSessionError(null);
+      return;
+    }
+
+    if (!hasInitData) return;
+
+    let isCancelled = false;
+
+    const bootstrapSession = async () => {
+      try {
+        setSessionError(null);
+        const response = await fetch("/api/telegram/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initData }),
+        });
+
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        if (!response.ok) {
+          throw new Error(payload?.error ?? "miniapp_session_failed");
+        }
+
+        if (!isCancelled) {
+          setSessionReady(true);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setSessionReady(false);
+          setSessionError(error instanceof Error ? error.message : "miniapp_session_failed");
+        }
+      }
+    };
+
+    void bootstrapSession();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [hasInitData, initData, isDevMode, isMounted]);
 
   const cartRows = useMemo<CartRow[]>(() => {
     return cartItems
@@ -325,6 +373,12 @@ function MiniAppInner() {
 
     if (!hasInitData && !canCheckoutWithoutInitData) {
       setIntentError("Hiányzik a Telegram hitelesítési adat. Nyisd meg ezt az oldalt a bot Mini App gombjából.");
+      triggerHapticImpact("heavy");
+      return;
+    }
+
+    if (!canUseMiniApp) {
+      setIntentError(sessionError ?? "A Telegram Mini App session még nem állt fel.");
       triggerHapticImpact("heavy");
       return;
     }
@@ -512,10 +566,15 @@ function MiniAppInner() {
               <p className="mt-3 text-sm leading-relaxed text-white/65">
                 A fizetés Telegramon belül marad. A Stripe Elements nem visz ki a chatből, a visszaigazolás pedig a bot csatornán érkezik meg.
               </p>
+              {sessionError ? (
+                <p className="mt-3 text-sm text-red-300">
+                  Mini App session hiba: {sessionError}
+                </p>
+              ) : null}
               <button
                 type="button"
                 onClick={submitIntent}
-                disabled={loadingIntent || cartRows.length === 0 || (!hasInitData && !canCheckoutWithoutInitData)}
+                disabled={loadingIntent || cartRows.length === 0 || (!hasInitData && !canCheckoutWithoutInitData) || !canUseMiniApp}
                 className="mt-4 w-full border border-[#c98552]/75 bg-[#c98552] px-4 py-3 text-sm font-bold uppercase tracking-[0.24em] text-[#1b1009] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loadingIntent ? "Stripe intent készül..." : "Checkout indítása"}
