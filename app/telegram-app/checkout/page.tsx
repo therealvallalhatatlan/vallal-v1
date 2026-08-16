@@ -96,19 +96,23 @@ export default function TelegramAppCheckoutPage() {
             type="button"
             onClick={copyReference}
             className="w-full border border-[#c98552]/30 bg-black/35 p-3 text-left transition-colors hover:border-[#c98552]/60"
+            aria-label="Másolás a vágólapra"
           >
-            <p className="text-xs uppercase tracking-[0.2em] text-white/50">Referencia kod</p>
-            <p className="mt-2 text-lg font-bold text-[#f4d6bd]">{snapshot.ref}</p>
-            <p className="mt-2 text-xs text-white/45">Kattints a kodra a vagolapra masolashoz.</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/50">Referencia kod</p>
+              <span className="text-lg" aria-hidden="true">📋</span>
+            </div>
+            <p className="mt-2 text-xl font-black uppercase tracking-[0.12em] text-[#f4d6bd]">{snapshot.ref}</p>
+            <p className="mt-2 text-xs text-white/45">Kattints ide a vágólapra másoláshoz.</p>
           </button>
 
           <div className="border border-white/10 bg-black/35 p-3 text-sm text-white/70">
-            <p>
-              <span className="text-white/55">Revtag:</span> {snapshot.revtag ?? "@cukorkabolt"}
+            <p className="text-base font-bold uppercase tracking-[0.12em]">
+              <span className="text-white/55">Revtag:</span> <span className="text-[#f4d6bd]">{snapshot.revtag ?? "@cukorkabolt"}</span>
             </p>
             {typeof snapshot.totalAmountHuf === "number" ? (
-              <p className="mt-2">
-                <span className="text-white/55">Osszeg:</span> {snapshot.totalAmountHuf.toLocaleString("hu-HU")} HUF
+              <p className="mt-2 text-base font-bold uppercase tracking-[0.12em]">
+                <span className="text-white/55">Osszeg:</span> <span className="text-[#f4d6bd]">{snapshot.totalAmountHuf.toLocaleString("hu-HU")} HUF</span>
               </p>
             ) : null}
           </div>

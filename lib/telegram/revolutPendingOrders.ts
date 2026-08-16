@@ -15,7 +15,7 @@ export type PendingOrder = {
 };
 
 const REVTAG = "@cukorkabolt";
-const REVOLUT_BASE_URL = "https://revolut.me/vallalhatatlan";
+const REVOLUT_BASE_URL = "https://revolut.me/cukorkabolt";
 const pendingOrderTtlMs = 24 * 60 * 60 * 1000;
 
 const pendingOrders = new Map<string, PendingOrder>();
