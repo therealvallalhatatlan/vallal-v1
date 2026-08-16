@@ -3,6 +3,14 @@ import TelegramBot from "node-telegram-bot-api";
 
 import { CATALOG, type Product } from "@/config/catalog";
 import { getTelegramMiniAppUrl } from "@/lib/security/telegram";
+import {
+  buildRevolutPaymentUrl,
+  cleanupExpiredPendingOrders,
+  createPendingOrder,
+  getPendingOrder,
+  getRevolutRevtag,
+  putPendingOrder,
+} from "@/lib/telegram/revolutPendingOrders";
 
 type TelegramUser = {
   id: number;
@@ -36,32 +44,13 @@ type TelegramUpdate = {
   callback_query?: TelegramCallbackQuery;
 };
 
-type PendingOrderStatus = "created" | "pending_verification" | "approved" | "rejected";
-
-type PendingOrder = {
-  ref: string;
-  createdAt: number;
-  buyerChatId: number;
-  buyerTelegramUserId: number;
-  buyerUsername: string | null;
-  productId: string;
-  productCode: string;
-  productName: string;
-  quantity: number;
-  totalAmountHuf: number;
-  status: PendingOrderStatus;
-};
-
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
 const telegramAdminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
 const adminDashboardPin = process.env.ADMIN_DASHBOARD_PIN;
 
-const revtag = "@vallalhatatlan";
-const revolutBaseUrl = "https://revolut.me/vallalhatatlan";
-const pendingOrderTtlMs = 24 * 60 * 60 * 1000;
+const revtag = getRevolutRevtag();
 
 const bot = telegramBotToken ? new TelegramBot(telegramBotToken) : null;
-const pendingOrders = new Map<string, PendingOrder>();
 
 function getActiveProducts(): Product[] {
   return Object.values(CATALOG).filter((item) => item.active);
@@ -152,38 +141,6 @@ function escapeHtml(input: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
-}
-
-function cleanupExpiredPendingOrders(now = Date.now()) {
-  for (const [ref, order] of pendingOrders.entries()) {
-    if (now - order.createdAt > pendingOrderTtlMs) {
-      pendingOrders.delete(ref);
-    }
-  }
-}
-
-function generateReferenceCode(): string {
-  for (let attempt = 0; attempt < 20; attempt += 1) {
-    const numericPart = String(Math.floor(100000 + Math.random() * 900000));
-    const ref = `REF-#${numericPart}`;
-    if (!pendingOrders.has(ref)) {
-      return ref;
-    }
-  }
-
-  const fallback = `REF-#${String(Date.now()).slice(-6)}`;
-  if (!pendingOrders.has(fallback)) return fallback;
-
-  throw new Error("reference_generation_failed");
-}
-
-function buildRevolutPaymentUrl(amountHuf: number, ref: string): string {
-  const params = new URLSearchParams({
-    amount: String(amountHuf),
-    currency: "HUF",
-    note: ref,
-  });
-  return `${revolutBaseUrl}?${params.toString()}`;
 }
 
 function buildQuantityKeyboard(product: Product) {
@@ -345,13 +302,8 @@ async function handleCallbackQuery(update: TelegramUpdate) {
     }
 
     try {
-      const ref = generateReferenceCode();
       const totalAmountHuf = product.priceHuf * qtyAction.count;
-      const paymentUrl = buildRevolutPaymentUrl(totalAmountHuf, ref);
-
-      pendingOrders.set(ref, {
-        ref,
-        createdAt: Date.now(),
+      const pending = createPendingOrder({
         buyerChatId: chatId,
         buyerTelegramUserId: callbackQuery.from.id,
         buyerUsername: callbackQuery.from.username ?? null,
@@ -360,8 +312,8 @@ async function handleCallbackQuery(update: TelegramUpdate) {
         productName: product.name,
         quantity: qtyAction.count,
         totalAmountHuf,
-        status: "created",
       });
+      const paymentUrl = buildRevolutPaymentUrl(totalAmountHuf, pending.ref);
 
       await bot.sendMessage(
         chatId,
@@ -375,7 +327,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
           `<b>Revtag:</b> <code>${escapeHtml(revtag)}</code>`,
           `<b>Revolut Pro link:</b> <a href="${escapeHtml(paymentUrl)}">${escapeHtml(paymentUrl)}</a>`,
           "",
-          `<b>A megjegyzés rovatba írd ezt:</b> <code>${escapeHtml(ref)}</code>`,
+          `<b>A megjegyzés rovatba írd ezt:</b> <code>${escapeHtml(pending.ref)}</code>`,
           "<b>FONTOS:</b> Ne felejtsd el a megjegyzés rovatba beírni a referencia kódot.",
           "<b>Tipp:</b> Nyisd meg a Revolut appot a gombbal, fizess, majd térj vissza ide és nyomd meg a FIZETTEM gombot.",
         ].join("\n"),
@@ -384,8 +336,8 @@ async function handleCallbackQuery(update: TelegramUpdate) {
           reply_markup: {
             inline_keyboard: [
               [{ text: "💸 OPEN REVOLUT", url: paymentUrl }],
-              [{ text: "📋 REFERENCE KÓD ÚJRA", callback_data: `showref:${ref}` }],
-              [{ text: "✅ I HAVE PAID / FIZETTEM", callback_data: `verify:${ref}` }],
+              [{ text: "📋 REFERENCE KÓD ÚJRA", callback_data: `showref:${pending.ref}` }],
+              [{ text: "✅ I HAVE PAID / FIZETTEM", callback_data: `verify:${pending.ref}` }],
             ],
           },
         },
@@ -410,7 +362,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
 
   const showRefAction = parseShowRefCallback(payload);
   if (showRefAction) {
-    const pending = pendingOrders.get(showRefAction.ref);
+    const pending = getPendingOrder(showRefAction.ref);
     if (!pending) {
       await bot.answerCallbackQuery(callbackQueryId, {
         text: "Ismeretlen vagy lejárt referencia.",
@@ -447,7 +399,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
 
   const verifyAction = parseVerifyCallback(payload);
   if (verifyAction) {
-    const pending = pendingOrders.get(verifyAction.ref);
+    const pending = getPendingOrder(verifyAction.ref);
     if (!pending) {
       await bot.answerCallbackQuery(callbackQueryId, {
         text: "Ismeretlen vagy lejárt referencia-kód.",
@@ -473,7 +425,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
     }
 
     pending.status = "pending_verification";
-    pendingOrders.set(pending.ref, pending);
+    putPendingOrder(pending);
 
     await bot.sendMessage(
       pending.buyerChatId,
@@ -523,7 +475,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
 
   const approveAction = parseApproveCallback(payload);
   if (approveAction) {
-    const pending = pendingOrders.get(approveAction.ref);
+    const pending = getPendingOrder(approveAction.ref);
     if (!pending || pending.buyerChatId !== approveAction.buyerChatId) {
       await bot.answerCallbackQuery(callbackQueryId, {
         text: "A referencia nem található.",
@@ -549,7 +501,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
     }
 
     pending.status = "approved";
-    pendingOrders.set(pending.ref, pending);
+    putPendingOrder(pending);
 
     const pinValue = adminDashboardPin?.trim() || "PIN_UNAVAILABLE";
 
@@ -573,7 +525,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
 
   const rejectAction = parseRejectCallback(payload);
   if (rejectAction) {
-    const pending = pendingOrders.get(rejectAction.ref);
+    const pending = getPendingOrder(rejectAction.ref);
     if (!pending || pending.buyerChatId !== rejectAction.buyerChatId) {
       await bot.answerCallbackQuery(callbackQueryId, {
         text: "A referencia nem található.",
@@ -599,7 +551,7 @@ async function handleCallbackQuery(update: TelegramUpdate) {
     }
 
     pending.status = "rejected";
-    pendingOrders.set(pending.ref, pending);
+    putPendingOrder(pending);
 
     await bot.sendMessage(
       pending.buyerChatId,

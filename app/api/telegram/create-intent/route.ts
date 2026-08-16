@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
+import TelegramBot from "node-telegram-bot-api";
 
 import { CATALOG } from "@/config/catalog";
-import { hashTelegramId } from "@/lib/security/hash";
 import { validateTelegramInitData } from "@/lib/security/telegram";
-import { stripe } from "@/lib/stripe";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { SupabaseClient } from "@supabase/supabase-js";
+import {
+  buildRevolutPaymentUrl,
+  createPendingOrder,
+  getRevolutRevtag,
+} from "@/lib/telegram/revolutPendingOrders";
 
 type CreateIntentBody = {
   initData?: string;
@@ -15,6 +16,9 @@ type CreateIntentBody = {
     quantity?: number;
   }>;
 };
+
+const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
+const bot = telegramBotToken ? new TelegramBot(telegramBotToken) : null;
 
 function getProduct(productId: string) {
   const product = CATALOG[productId];
@@ -26,61 +30,6 @@ type NormalizedItem = {
   productId: string;
   quantity: number;
 };
-
-function toDeterministicUuid(seed: string): string {
-  const hex = crypto.createHash("sha256").update(seed).digest("hex").slice(0, 32);
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
-}
-
-function extractMissingColumn(errorMessage: string | undefined): string | null {
-  if (!errorMessage) return null;
-  const match = errorMessage.match(/Could not find the '([^']+)' column/);
-  return match?.[1] ?? null;
-}
-
-async function insertOrderWithSchemaFallback(
-  db: SupabaseClient,
-  payload: Record<string, unknown>,
-): Promise<{ ok: boolean }> {
-  const candidatePayload: Record<string, unknown> = { ...payload };
-
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const { error } = await db.from("orders").insert(candidatePayload);
-    if (!error) return { ok: true };
-
-    console.error("[telegram.create-intent] order insert attempt failed", {
-      attempt: attempt + 1,
-      code: error.code,
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-      payloadKeys: Object.keys(candidatePayload),
-    });
-
-    if (error.code === "23514" && error.message.includes("orders_status_check") && "status" in candidatePayload) {
-      delete candidatePayload.status;
-      continue;
-    }
-
-    if (error.code === "23502" && error.message.includes('column "currency"') && !("currency" in candidatePayload)) {
-      candidatePayload.currency = "huf";
-      continue;
-    }
-
-    if (error.code !== "PGRST204") {
-      break;
-    }
-
-    const missingColumn = extractMissingColumn(error.message);
-    if (!missingColumn || !(missingColumn in candidatePayload)) {
-      break;
-    }
-
-    delete candidatePayload[missingColumn];
-  }
-
-  return { ok: false };
-}
 
 function normalizeItems(items: CreateIntentBody["items"]): NormalizedItem[] {
   if (!Array.isArray(items) || items.length === 0) {
@@ -103,8 +52,8 @@ function normalizeItems(items: CreateIntentBody["items"]): NormalizedItem[] {
 }
 
 export async function POST(request: NextRequest) {
-  if (!stripe) {
-    return NextResponse.json({ error: "stripe_not_configured" }, { status: 503 });
+  if (!telegramBotToken || !bot) {
+    return NextResponse.json({ error: "missing_telegram_bot_token" }, { status: 503 });
   }
 
   try {
@@ -160,137 +109,85 @@ export async function POST(request: NextRequest) {
     if (!Number.isFinite(totalAmountMinor) || totalAmountMinor <= 0) {
       return NextResponse.json({ error: "invalid_total_amount" }, { status: 400 });
     }
-
-    const orderId = crypto.randomUUID();
-    const legacyOrderUserId = toDeterministicUuid(`telegram:${telegramUserId}`);
+    const totalAmountHuf = Math.floor(totalAmountMinor / 100);
+    const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
     const cartSummary = cart.map((item) => `${item.product.code} x${item.quantity}`).join(", ");
-    const anonymizedUserHash = process.env.HASH_SALT?.trim()
-      ? hashTelegramId(String(telegramUserId))
-      : `raw_${telegramUserId}`;
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalAmountMinor,
-      currency: "huf",
-      automatic_payment_methods: { enabled: true },
-      metadata: {
-        source: "telegram-mini-app",
-        order_id: orderId,
-        telegram_chat_id: String(telegramUserId),
-        telegram_user_id: String(telegramUserId),
-        user_uuid: legacyOrderUserId,
-        telegram_user_hash: anonymizedUserHash,
-        telegram_auth_date: String(telegramAuthDate),
-        telegram_query_id: telegramQueryId,
-        telegram_init_bypass: isDevBypass ? "1" : "0",
-        cart_summary: cartSummary.slice(0, 450),
-        item_count: String(cart.length),
-      },
+    const pending = createPendingOrder({
+      buyerChatId: telegramUserId,
+      buyerTelegramUserId: telegramUserId,
+      buyerUsername: null,
+      productId: cart.length === 1 ? cart[0].product.id : "multi_cart",
+      productCode: cart.length === 1 ? cart[0].product.code : "MULTI",
+      productName: cart.length === 1 ? cart[0].product.name : `Tobb tetel: ${cartSummary.slice(0, 120)}`,
+      quantity: totalQuantity,
+      totalAmountHuf,
     });
+    const paymentUrl = buildRevolutPaymentUrl(totalAmountHuf, pending.ref);
+    const revtag = getRevolutRevtag();
 
-    if (!paymentIntent.client_secret) {
-      return NextResponse.json({ error: "missing_client_secret" }, { status: 500 });
-    }
+    const notifyLines = [
+      "<b>[PAYMENT_INIT_MINIAPP]</b>",
+      "",
+      `<b>Termek:</b> ${cartSummary}`,
+      `<b>Mennyiseg:</b> ${totalQuantity} db`,
+      `<b>Osszeg:</b> ${totalAmountHuf.toLocaleString("hu-HU")} HUF`,
+      "",
+      `<b>Revtag:</b> <code>${revtag}</code>`,
+      `<b>Revolut Pro link:</b> <a href=\"${paymentUrl}\">${paymentUrl}</a>`,
+      "",
+      `<b>A megjegyzes rovatba ird ezt:</b> <code>${pending.ref}</code>`,
+      "Fizetes utan nyomd meg a FIZETTEM gombot.",
+    ];
 
-    let orderPersisted = false;
+    try {
+      await bot.sendMessage(
+        telegramUserId,
+        notifyLines.join("\n"),
+        {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "💸 OPEN REVOLUT", url: paymentUrl }],
+              [{ text: "📋 REFERENCE KOD UJRA", callback_data: `showref:${pending.ref}` }],
+              [{ text: "✅ I HAVE PAID / FIZETTEM", callback_data: `verify:${pending.ref}` }],
+            ],
+          },
+        },
+      );
+    } catch (notifyError) {
+      console.error("[telegram.create-intent] failed_to_send_buyer_message", {
+        telegramUserId,
+        ref: pending.ref,
+        isDevBypass,
+        error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+      });
 
-    const persistPendingOrders = process.env.TELEGRAM_PERSIST_PENDING_ORDER === "1";
-
-    let db: SupabaseClient | null = null;
-    if (persistPendingOrders) {
-      try {
-        db = supabaseAdmin();
-      } catch (dbInitError) {
-        console.error("[telegram.create-intent] supabase init failed, continuing without order persistence", {
-          error: dbInitError instanceof Error ? dbInitError.message : String(dbInitError),
-        });
-      }
-    }
-
-    const fullOrderPayload: Record<string, unknown> = {
-      id: orderId,
-      user_id: legacyOrderUserId,
-      stripe_session_id: paymentIntent.id,
-      anonymized_user_hash: anonymizedUserHash,
-      product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
-      delivery_type: "dead_drop",
-      amount: totalAmountMinor,
-      currency: paymentIntent.currency,
-      status: "pending",
-      customer_email: null,
-      customer_name: null,
-      shipping_address: null,
-      metadata: {
-        source: "telegram-mini-app",
-        cart_summary: cartSummary,
-        item_count: cart.length,
-      },
-    };
-
-    if (db) {
-      const fullInsert = await insertOrderWithSchemaFallback(db, fullOrderPayload);
-      if (fullInsert.ok) {
-        orderPersisted = true;
-      } else {
-        const minimalFallbackPayload: Record<string, unknown> = {
-          id: orderId,
-          user_id: legacyOrderUserId,
-          stripe_session_id: paymentIntent.id,
-          product_id: cart.length === 1 ? cart[0].product.id : "multi_cart",
-          amount: totalAmountMinor,
-          currency: paymentIntent.currency,
-          delivery_type: "dead_drop",
-        };
-
-        const fallbackInsert = await insertOrderWithSchemaFallback(db, minimalFallbackPayload);
-        orderPersisted = fallbackInsert.ok;
-      }
-    }
-
-    if (db && orderPersisted) {
-      const { error: itemInsertError } = await db
-        .from("order_items")
-        .insert(
-          cart.map((item) => ({
-            order_id: orderId,
-            product_id: item.product.id,
-            product_code: item.product.code,
-            product_name: item.product.name,
-            unit_price: item.unitAmountMinor,
-            quantity: item.quantity,
-            line_total: item.lineTotalMinor,
-            metadata: {
-              min_per_order: item.product.minPerOrder,
-            },
-          })),
-        );
-
-      if (itemInsertError) {
-        console.error("[telegram.create-intent] order_items insert failed", {
-          code: itemInsertError.code,
-          message: itemInsertError.message,
-          details: itemInsertError.details,
-          hint: itemInsertError.hint,
-        });
+      if (!isDevBypass) {
+        return NextResponse.json({ error: "failed_to_send_telegram_instruction" }, { status: 502 });
       }
     }
 
     return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
-      orderId,
-      currency: paymentIntent.currency,
-      amount: paymentIntent.amount,
-      orderPersisted,
+      ok: true,
+      ref: pending.ref,
+      paymentUrl,
+      revtag,
+      totalAmountHuf,
+      checkoutLabel: cartSummary,
+      buyerChatId: telegramUserId,
+      telegramAuthDate,
+      telegramQueryId,
       items: cart.map((item) => ({
         productId: item.product.id,
         code: item.product.code,
         name: item.product.name,
         quantity: item.quantity,
-        unitAmountMinor: item.unitAmountMinor,
-        lineTotalMinor: item.lineTotalMinor,
+        unitAmountHuf: Math.floor(item.unitAmountMinor / 100),
+        lineTotalHuf: Math.floor(item.lineTotalMinor / 100),
       })),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "telegram_create_intent_failed";
+    const message = error instanceof Error ? error.message : "telegram_create_revolut_instruction_failed";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { loadStripe, type StripeElementsOptions } from "@stripe/stripe-js";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  closeMiniApp,
   hapticFeedback,
   isHapticFeedbackSupported,
   miniAppReady,
@@ -16,17 +13,19 @@ import {
 import { CATALOG, type Product } from "@/config/catalog";
 
 type CreateIntentResponse = {
-  clientSecret: string;
-  orderId: string;
-  currency: string;
-  amount: number;
+  ok: boolean;
+  ref: string;
+  paymentUrl: string;
+  revtag: string;
+  totalAmountHuf: number;
+  checkoutLabel: string;
   items: Array<{
     productId: string;
     code: string;
     name: string;
     quantity: number;
-    unitAmountMinor: number;
-    lineTotalMinor: number;
+    unitAmountHuf: number;
+    lineTotalHuf: number;
   }>;
 };
 
@@ -43,9 +42,6 @@ type CartRow = {
 
 const products = Object.values(CATALOG).filter((product) => product.active);
 const EMPTY_THEME_SNAPSHOT = {} as Record<string, unknown>;
-
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 function triggerHapticImpact(style: "light" | "medium" | "heavy") {
   try {
@@ -114,95 +110,12 @@ function applyTelegramTheme(theme: Record<string, unknown> | null) {
   root.style.setProperty("--tg-button-text-color", (theme.buttonTextColor as string | undefined) ?? "#1b1009");
 }
 
-function TelegramPaymentForm(props: {
-  checkoutLabel: string;
-  onClose: () => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isPaid, setIsPaid] = useState(false);
-
-  useEffect(() => {
-    if (!isPaid) return;
-
-    const timer = window.setTimeout(() => {
-      props.onClose();
-    }, 900);
-
-    return () => window.clearTimeout(timer);
-  }, [isPaid, props]);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!stripe || !elements) {
-      setError("A Stripe még nem állt fel.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-    triggerHapticImpact("medium");
-
-    const result = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: window.location.href,
-      },
-      redirect: "if_required",
-    });
-
-    if (result.error) {
-      setError(result.error.message ?? "A fizetés sikertelen.");
-      triggerHapticImpact("heavy");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (result.paymentIntent?.status === "succeeded" || result.paymentIntent?.status === "processing") {
-      setIsPaid(true);
-      triggerHapticImpact("light");
-      setIsSubmitting(false);
-      return;
-    }
-
-    setIsSubmitting(false);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="border border-[#c98552]/20 bg-black/40 p-4">
-        <PaymentElement />
-      </div>
-
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
-
-      {isPaid ? (
-        <div className="border border-[#c98552]/40 bg-[#c98552]/10 p-4 text-sm text-[#f4e1cf]">
-          Fizetés elfogadva. A Mini App záródik, a visszaigazolás megy a chatbe.
-        </div>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={isSubmitting || !stripe || !elements || isPaid}
-        className="w-full border border-[#c98552]/70 bg-[#c98552] px-4 py-3 text-sm font-bold uppercase tracking-[0.24em] text-[#1b1009] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isSubmitting ? "Fizetés indítása..." : `Fizetés • ${props.checkoutLabel}`}
-      </button>
-    </form>
-  );
-}
-
 function MiniAppInner() {
   const [isMounted, setIsMounted] = useState(false);
   const [initData, setInitData] = useState("");
   const [sessionReady, setSessionReady] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loadingIntent, setLoadingIntent] = useState(false);
   const [intentError, setIntentError] = useState<string | null>(null);
 
@@ -403,25 +316,24 @@ function MiniAppInner() {
 
       const payload = (await response.json()) as Partial<CreateIntentResponse> & { error?: string };
 
-      if (!response.ok || !payload.clientSecret) {
-        throw new Error(payload.error ?? "Nem sikerült létrehozni a Stripe intentet.");
+      if (!response.ok || !payload.paymentUrl || !payload.ref) {
+        throw new Error(payload.error ?? "Nem sikerült létrehozni a Revolut instrukciót.");
       }
 
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(
           "telegram-mini-checkout",
           JSON.stringify({
-            clientSecret: payload.clientSecret,
-            orderId: payload.orderId,
-            currency: payload.currency,
-            amount: payload.amount,
+            ref: payload.ref,
+            paymentUrl: payload.paymentUrl,
+            revtag: payload.revtag,
+            totalAmountHuf: payload.totalAmountHuf,
             items: payload.items,
-            checkoutLabel: cartCheckoutLabel,
+            checkoutLabel: payload.checkoutLabel ?? cartCheckoutLabel,
           }),
         );
       }
 
-      setClientSecret(payload.clientSecret);
       router.push("/telegram-app/checkout");
     } catch (error) {
       setIntentError(error instanceof Error ? error.message : "Ismeretlen hiba történt.");
@@ -430,26 +342,6 @@ function MiniAppInner() {
       setLoadingIntent(false);
     }
   };
-
-  const colorPrimary = typeof telegramTheme?.buttonColor === "string" ? telegramTheme.buttonColor : "#c98552";
-  const colorBackground = typeof telegramTheme?.backgroundColor === "string" ? telegramTheme.backgroundColor : "#090705";
-  const colorText = typeof telegramTheme?.textColor === "string" ? telegramTheme.textColor : "#f4ebe1";
-
-  const appearance = {
-    theme: "night" as const,
-    variables: {
-      colorPrimary,
-      colorBackground,
-      colorText,
-      colorDanger: "#ef8f63",
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace",
-      borderRadius: "4px",
-    },
-  };
-
-  const stripeOptions = clientSecret
-    ? ({ clientSecret, appearance } satisfies StripeElementsOptions)
-    : null;
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(201,133,82,0.10),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(255,218,185,0.05),transparent_28%),linear-gradient(180deg,#090705_0%,#110d0a_100%)] px-4 py-5 text-[#f4ebe1] md:px-8 md:py-8">
@@ -565,7 +457,7 @@ function MiniAppInner() {
             <div className="border border-white/10 bg-black/25 p-4">
               <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">03 / Mission</p>
               <p className="mt-3 text-sm leading-relaxed text-white/65">
-                A fizetés Telegramon belül marad. A Stripe Elements nem visz ki a chatből, a visszaigazolás pedig a bot csatornán érkezik meg.
+                A fizetés Revoluton keresztul megy. A rendszer general egy referencia kodot, elkuldi chatbe az instrukciot, majd ott tudod jelezni, hogy fizettel.
               </p>
               {sessionError ? (
                 <p className="mt-3 text-sm text-red-300">
@@ -578,7 +470,7 @@ function MiniAppInner() {
                 disabled={loadingIntent || cartRows.length === 0 || (!hasInitData && !canCheckoutWithoutInitData) || !canUseMiniApp}
                 className="mt-4 w-full border border-[#c98552]/75 bg-[#c98552] px-4 py-3 text-sm font-bold uppercase tracking-[0.24em] text-[#1b1009] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loadingIntent ? "Stripe intent készül..." : "Checkout indítása"}
+                {loadingIntent ? "Revolut instrukcio keszul..." : "Revolut fizetes inditasa"}
               </button>
               {!hasInitData && !canCheckoutWithoutInitData ? (
                 <p className="mt-3 text-sm text-amber-200/80">
@@ -613,20 +505,9 @@ function MiniAppInner() {
               </div>
             </div>
 
-            {clientSecret && cartRows.length > 0 && stripePromise ? (
-              <div className="border border-[#c98552]/20 bg-white/[0.03] p-4">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-[#d59b6b]/70">Stripe Elements</p>
-                <div className="mt-4">
-                  <Elements stripe={stripePromise} options={stripeOptions ?? undefined}>
-                    <TelegramPaymentForm checkoutLabel={cartCheckoutLabel} onClose={() => closeMiniApp()} />
-                  </Elements>
-                </div>
-              </div>
-            ) : (
-              <div className="border border-white/10 bg-black/25 p-4 text-sm text-white/55">
-                A checkout panel akkor jelenik meg, ha a Stripe intent elkészült.
-              </div>
-            )}
+            <div className="border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+              A checkout oldalon Revolut linket es referencia kodot kapsz. Fizetes utan a Telegram chatben nyomd meg a FIZETTEM gombot.
+            </div>
           </aside>
         </div>
       </div>
