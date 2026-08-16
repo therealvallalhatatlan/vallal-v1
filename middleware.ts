@@ -121,15 +121,16 @@ export async function middleware(req: NextRequest) {
     const sessionToken = req.cookies.get(TELEGRAM_MINI_APP_SESSION_COOKIE)?.value;
     const hasValidMiniAppSession = Boolean(await verifyTelegramMiniAppSessionToken(sessionToken));
     const isCheckoutRoute = pathname.startsWith('/telegram-app/checkout');
+    const isTelegramOrigin = isTelegramAppRequest(req);
 
-    if (isCheckoutRoute && !hasValidMiniAppSession) {
+    if (isCheckoutRoute && !hasValidMiniAppSession && !isTelegramOrigin) {
       return new NextResponse('Not Found', {
         status: 404,
         headers: { 'X-Robots-Tag': 'noindex, nofollow, noarchive' },
       });
     }
 
-    if (!hasValidMiniAppSession && !isTelegramAppRequest(req)) {
+    if (!hasValidMiniAppSession && !isTelegramOrigin) {
       return new NextResponse('Not Found', { status: 404 });
     }
 

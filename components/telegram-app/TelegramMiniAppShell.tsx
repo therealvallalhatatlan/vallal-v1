@@ -265,6 +265,7 @@ function MiniAppInner() {
         setSessionError(null);
         const response = await fetch("/api/telegram/session", {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ initData }),
         });
