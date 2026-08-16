@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import TelegramBot from "node-telegram-bot-api";
 
 import { CATALOG, type Product } from "@/config/catalog";
+import { getTelegramMiniAppUrl } from "@/lib/security/telegram";
 
 type TelegramUser = {
   id: number;
@@ -185,15 +186,6 @@ function buildRevolutPaymentUrl(amountHuf: number, ref: string): string {
   return `${revolutBaseUrl}?${params.toString()}`;
 }
 
-function buildCatalogKeyboard(items: Product[]) {
-  return items.map((item) => [
-    {
-      text: `${item.code} - ${item.priceHuf.toLocaleString("hu-HU")} HUF`,
-      callback_data: toBuyCallback(item.id),
-    },
-  ]);
-}
-
 function buildQuantityKeyboard(product: Product) {
   const quantityButtons = Array.from({ length: 5 }, (_, idx) => {
     const count = product.minPerOrder + idx;
@@ -223,11 +215,20 @@ async function sendCatalogMenu(chatId: number) {
 
   await bot.sendMessage(
     chatId,
-    "Üdvözöllek a piacon. Válassz az alábbi elérhető csomagok közül a rendelés megkezdéséhez:",
+    [
+      "",
+      "",
+      "A rendelés indításához nyisd meg a Mini Appot az alábbi gombbal.",
+    ].join("\n"),
     {
       parse_mode: "HTML",
       reply_markup: {
-        inline_keyboard: buildCatalogKeyboard(activeProducts),
+        inline_keyboard: [[
+          {
+            text: "⚡ MINI APP MEGNYITÁSA",
+            web_app: { url: getTelegramMiniAppUrl() },
+          },
+        ]],
       },
     },
   );
