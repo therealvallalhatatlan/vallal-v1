@@ -1,4 +1,4 @@
-"use client";
+��﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -10,11 +10,11 @@ import { createClient } from "@/lib/browser";
 import { buildAuthHref, clearStoredAuthReturnTarget } from "@/lib/authRedirect";
 
 const NAV_LINKS = [
-  { label: "Könyv", href: "/konyv-2", accent: true },
-  { label: "Hálózat", href: "/halozat", protected: true },
+  { label: "K├Ânyv", href: "/konyv-2", accent: true },
+  { label: "H├íl├│zat", href: "/halozat", protected: true },
   { label: "Shop", href: "/shop" },
   { label: "Reader", href: "/reader", protected: true },
-  { label: "Támogatás", href: "/tamogatas" },
+  { label: "T├ímogat├ís", href: "/tamogatas" },
 ];
 
 const SOCIAL_LINKS = [
@@ -40,8 +40,8 @@ type OnlineNavUser = {
   avatarUrl: string | null;
 };
 
-function Avatar({ avatarUrl, label }: { avatarUrl?: string | null; label: string }) {
-  const initial = label.trim().charAt(0).toUpperCase() || "?";
+function Avatar({ avatarUrl, label }: { avatarUrl?: string | null; label: string }{
+  const initial = label.trim().charAt(0).toUpperCase(|| "?";
 
   if (!avatarUrl) {
     return (
@@ -83,13 +83,13 @@ export default function Navigation() {
   }, []);
 
   useEffect(() => {
-    if (!isMenuOpen) {
+    if (!isMenuOpen{
       document.body.style.overflow = "";
       return;
     }
 
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+    const onKeyDown = (event: KeyboardEvent=> {
+      if (event.key === "Escape"{
         setIsMenuOpen(false);
       }
     };
@@ -103,7 +103,7 @@ export default function Navigation() {
     };
   }, [isMenuOpen]);
 
-  useEffect(() => {
+  useEffect((=> {
     if (!isClient || !isHalozat) {
       setOnlineUsers([]);
       return;
@@ -117,24 +117,24 @@ export default function Navigation() {
         const json = await res.json();
 
         if (!res.ok || !Array.isArray(json?.users)) {
-          if (!cancelled) setOnlineUsers([]);
+          if (!cancelledsetOnlineUsers([]);
           return;
         }
 
         const online = json.users
-          .map((u: { id?: string; user_id?: string; email?: string }) => ({
+          .map((u: { id?: string; user_id?: string; email?: string }=> ({
             id: u.id ?? u.user_id,
             email: u.email ?? "",
           }))
-          .filter((u: { id?: string; email?: string }) => Boolean(u.id && u.email)) as Array<{ id: string; email: string }>;
+          .filter((u: { id?: string; email?: string }=> Boolean(u.id && u.email)) as Array<{ id: string; email: string }>;
 
-        if (online.length === 0) {
+        if (online.length === 0{
           if (!cancelled) setOnlineUsers([]);
           return;
         }
 
         const profiles = await Promise.all(
-          online.map(async (u) => {
+          online.map(async (u=> {
             try {
               const profileRes = await fetch(`/api/user/profile?userId=${encodeURIComponent(u.id)}`, { cache: "no-store" });
               const profileJson = await profileRes.json();
@@ -161,7 +161,7 @@ export default function Navigation() {
         );
 
         profiles.sort((a, b) => {
-          if (userId && a.id === userId) return -1;
+          if (userId && a.id === userIdreturn -1;
           if (userId && b.id === userId) return 1;
           return a.nickname.localeCompare(b.nickname, "hu");
         });
@@ -179,7 +179,7 @@ export default function Navigation() {
     void fetchOnlineUsers();
     const intervalId = window.setInterval(fetchOnlineUsers, 60000);
 
-    return () => {
+    return (=> {
       cancelled = true;
       window.clearInterval(intervalId);
     };
@@ -189,7 +189,7 @@ export default function Navigation() {
     console.error("[Navigation] Auth error:", error);
   }
 
-  const handleLogout = async () => {
+  const handleLogout = async (=> {
     setIsLoggingOut(true);
     try {
       await supabase.auth.signOut({ scope: "local" });
@@ -200,7 +200,7 @@ export default function Navigation() {
     clearStoredAuthReturnTarget();
 
     setIsMenuOpen(false);
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined"{
       window.location.replace("/auth?logout=1");
       return;
     }
@@ -208,7 +208,7 @@ export default function Navigation() {
     setIsLoggingOut(false);
   };
 
-  const closeMenu = () => setIsMenuOpen(false);
+  const closeMenu = (=> setIsMenuOpen(false);
 
   if (!isClient) {
     return (
@@ -216,7 +216,7 @@ export default function Navigation() {
         <nav className="border-b border-white/10 px-4 py-4 font-mono md:px-8">
           <div className="flex items-center justify-between gap-4">
             <a href="/" className="ml-0">
-              <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
+              <img src="/img/logo.png" alt="V├íllalhatatlan" className="h-10 w-auto" />
             </a>
             <span className="h-10 w-10 rounded-full border border-white/10 bg-white/5" aria-hidden="true" />
           </div>
@@ -231,15 +231,15 @@ export default function Navigation() {
         <div className="flex items-center justify-between gap-4">
           {!isHalozat ? (
             <Link href="/" className="hover:opacity-80 transition-opacity">
-              <img src="/img/logo.png" alt="Vállalhatatlan" className="h-10 w-auto" />
+              <img src="/img/logo.png" alt="V├íllalhatatlan" className="h-10 w-auto" />
             </Link>
           ) : null}
 
           {isHalozat ? (
             <div className="min-w-0 flex-1 overflow-hidden">
               <div className="flex items-center gap-2 overflow-x-auto py-1 [scrollbar-width:thin]">
-                {onlineUsers.filter((onlineUser) => !userId || onlineUser.id !== userId).map((onlineUser) => {
-                  const initial = (onlineUser.nickname || onlineUser.email).trim().charAt(0).toUpperCase() || "?";
+                {onlineUsers.filter((onlineUser=> !userId || onlineUser.id !== userId).map((onlineUser) => {
+                  const initial = (onlineUser.nickname || onlineUser.email).trim().charAt(0).toUpperCase(|| "?";
 
                   return (
                     <div
@@ -254,7 +254,7 @@ export default function Navigation() {
                           className="h-8 w-8 rounded-full border border-white/20 object-cover"
                           referrerPolicy="no-referrer"
                         />
-                      ) : (
+                      : (
                         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/5 text-[10px] font-semibold text-white/80">
                           {initial}
                         </span>
@@ -264,17 +264,17 @@ export default function Navigation() {
                 })}
               </div>
             </div>
-          ) : null}
+          : null}
 
           <div className="flex items-center gap-3">
             {userEmail ? (
               <button
                 type="button"
-                onClick={() => {
-                  if (!isHalozat) return;
+                onClick={(=> {
+                  if (!isHalozatreturn;
                   window.dispatchEvent(new CustomEvent("matrica:open-profile-menu"));
                 }}
-                aria-label={isHalozat ? "Profil menü megnyitása" : "Profil"}
+                aria-label={isHalozat ? "Profil men├╝ megnyit├ísa" : "Profil"}
                 className="relative"
                 style={{ background: "transparent", border: 0, padding: 0, cursor: isHalozat ? "pointer" : "default" }}
               >
@@ -283,24 +283,24 @@ export default function Navigation() {
                   <span className="absolute -bottom-1 -right-1 rounded-full border border-[#111] bg-[#c8a97e] px-1.5 py-[2px] text-[8px] font-bold leading-none text-[#111]">
                     TE
                   </span>
-                ) : null}
+                : null}
               </button>
-            ) : null}
+            : null}
             {!userEmail ? (
               <Link
                 href={buildAuthHref(pathname || "/halozat")}
                 onClick={closeMenu}
                 className="inline-flex h-12 items-center gap-2 border border-lime-500/40 bg-lime-500/10 px-4 text-sm font-semibold text-lime-300 transition-colors hover:border-lime-400 hover:bg-lime-500/15"
-                aria-label="Belépés"
+                aria-label="Bel├ęp├ęs"
               >
                 <KeyRound className="h-4 w-4" />
-                <span>Belépés</span>
+                <span>Bel├ęp├ęs</span>
               </Link>
-            ) : null}
+            : null}
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}
-              aria-label="Navigáció megnyitása"
+              aria-label="Navig├íci├│ megnyit├ísa"
               aria-expanded={isMenuOpen}
               className="inline-flex h-12 w-12 items-center justify-center border border-white/15 bg-white/5 text-white transition-colors hover:border-lime-400 hover:text-lime-300"
             >
@@ -325,11 +325,11 @@ export default function Navigation() {
         aria-hidden={!isMenuOpen}
       >
         <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-5 md:px-8">
-          <p className="text-[11px] uppercase tracking-[0.32em] text-lime-300/80">Navigáció</p>
+          <p className="text-[11px] uppercase tracking-[0.32em] text-lime-300/80">Navig├íci├│</p>
           <button
             type="button"
             onClick={closeMenu}
-            aria-label="Navigáció bezárása"
+            aria-label="Navig├íci├│ bez├ír├ísa"
             className="inline-flex h-11 w-11 items-center justify-center border border-white/15 bg-white/5 text-white transition-colors hover:border-lime-400 hover:text-lime-300"
           >
             <X className="h-5 w-5" />
@@ -338,7 +338,7 @@ export default function Navigation() {
 
         <div className="grid flex-1 gap-10 overflow-y-auto px-5 py-6 md:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)] md:px-8 md:py-8">
           <section>
-            <p className="mb-4 text-[11px] uppercase tracking-[0.28em] text-white/40">Ugrópontok</p>
+            <p className="mb-4 text-[11px] uppercase tracking-[0.28em] text-white/40">Ugr├│pontok</p>
             <div className="grid gap-3 sm:grid-cols-2">
               {NAV_LINKS.map((link) => (
                 <Link
@@ -353,7 +353,7 @@ export default function Navigation() {
                 >
                   <span className="block text-base font-semibold tracking-[0.08em]">{link.label}</span>
                   <span className="mt-1 block text-xs uppercase tracking-[0.24em] text-white/40 group-hover:text-white/55">
-                    Megnyitás
+                    Megnyit├ís
                   </span>
                 </Link>
               ))}
@@ -382,7 +382,7 @@ export default function Navigation() {
                     >
                       <span className="inline-flex items-center gap-2">
                         <UserRound className="h-4 w-4" />
-                        Profil megnyitása
+                        Profil megnyit├ísa
                       </span>
                       <span className="text-white/35">/</span>
                     </Link>
@@ -395,7 +395,7 @@ export default function Navigation() {
                     >
                       <span className="inline-flex items-center gap-2">
                         <LogOut className="h-4 w-4" />
-                        {isLoggingOut ? "Kilépés..." : "Kijelentkezés"}
+                        {isLoggingOut ? "Kil├ęp├ęs..." : "Kijelentkez├ęs"}
                       </span>
                       <span className="text-red-200/40">/</span>
                     </button>
@@ -425,7 +425,7 @@ export default function Navigation() {
                   <a
                     key={link.label}
                     href={link.href}
-                    target={link.href.startsWith("mailto") ? undefined : "_blank"}
+                    target={link.href.startsWith("mailto"? undefined : "_blank"}
                     rel={link.href.startsWith("mailto") ? undefined : "noopener noreferrer"}
                     className="inline-flex items-center gap-3 border border-white/10 px-4 py-3 text-sm text-white/70 transition-colors hover:border-white/20 hover:bg-white/[0.05] hover:text-lime-300"
                   >
@@ -440,4 +440,4 @@ export default function Navigation() {
       </aside>
     </div>
   );
-}
+}

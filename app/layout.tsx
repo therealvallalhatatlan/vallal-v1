@@ -7,8 +7,7 @@ import "./globals.css"
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 // import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
-import { Crimson_Pro, Inter, VT323 } from "next/font/google";
-import { Special_Elite } from "next/font/google";
+import { Crimson_Pro, Inter, VT323, Special_Elite, Oswald, Roboto_Condensed, JetBrains_Mono } from "next/font/google";
 import PWAInstallManager from "@/components/PWAInstallManager";
 import AuthUrlSessionSync from "@/components/AuthUrlSessionSync";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -17,6 +16,7 @@ import TrafficSourceHeuristics from "@/components/TrafficSourceHeuristics";
 import StatusBanner from "@/components/StatusBanner";
 import FacebookSDK from "@/components/FacebookSDK";
 import NotificationOrchestrator from "@/components/notifications/NotificationOrchestrator";
+import LayoutNavigationGuard from "@/components/LayoutNavigationGuard";
 
 
 const crimson = Crimson_Pro({
@@ -32,6 +32,9 @@ const inter = Inter({
 });
 
 const specialElite = Special_Elite({ subsets: ["latin"], weight: "400", variable: "--font-heading" });
+const oswald = Oswald({ subsets: ["latin"], weight: ["700"], variable: "--font-hero" });
+const robotoCond = Roboto_Condensed({ subsets: ["latin"], weight: ["700"], style: ["italic"], variable: "--font-logo" });
+const jetMono = JetBrains_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-mono-tech" });
 
 const vt323 = VT323({ subsets: ["latin"], weight: "400", variable: "--font-terminal" });
 
@@ -136,7 +139,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${crimson.variable} ${inter.variable} ${specialElite.variable} ${vt323.variable} antialiased overflow-x-hidden`}
+        className={`
+          ${crimson.variable} ${inter.variable} ${specialElite.variable} ${vt323.variable}
+          ${oswald.variable} ${robotoCond.variable} ${jetMono.variable}
+          antialiased overflow-x-hidden
+        `}
         style={{ touchAction: 'pan-y' }}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -149,6 +156,7 @@ export default function RootLayout({
             {/*<StatusBanner />*/}
             <AuthUrlSessionSync />
             <PWAInstallManager />
+            <LayoutNavigationGuard />
             {children}
             <TrafficSourceHeuristics />
             <Analytics />

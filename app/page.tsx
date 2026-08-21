@@ -1,18 +1,10 @@
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
+// Removed legacy header and footer for homepage; using hero-contained navigation
 import MainContent from "@/components/MainContent";
-import HeroTerminal from "@/components/HeroTerminal";
-import HomeActiveSpotsSection from "@/components/HomeActiveSpotsSection";
-import TopCta from "@/components/TopCta";
-
+import VallalhatatlanHero from "@/components/VallalhatatlanHero";
 export default function Page() {
   return (
     <MainContent>
-      <Navigation />
-      <TopCta />
-      <HeroTerminal />
-      <HomeActiveSpotsSection />
-      <Footer />
+      <VallalhatatlanHero />
     </MainContent>
   );
 }
