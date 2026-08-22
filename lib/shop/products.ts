@@ -46,16 +46,11 @@ export const products: Product[] = [
     // ── ITT ÍRD ÁT A KÉSZLETET méretenként ──
     sizeStock: {
       S:   7,
-      M:   6,
-      L:   2,
-      XL:  2,
+      M:   1,
+      L:   0,
+      XL:  0,
     },
     stock: 50,
-    preorder: {
-      campaignSlug: SHARED_TSHIRT_PREORDER_CAMPAIGN_SLUG,
-      preorderOnly: true,
-      goal: SHARED_TSHIRT_PREORDER_GOAL,
-    },
   },
   {
     id: 'bag-1',
