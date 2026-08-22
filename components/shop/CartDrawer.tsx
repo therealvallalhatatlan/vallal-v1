@@ -40,7 +40,20 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
 
+  // Prevent document.body access during SSR / Next.js prerendering.
+  const [portalReady, setPortalReady] = useState(false);
+
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  /*
+   * PORTAL READY
+   *
+   * This effect only runs in the browser.
+   * createPortal(document.body) must never execute during SSR.
+   */
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   const cartProducts = items.map((item) => {
     const product = products.find(
@@ -165,7 +178,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     };
   }, [visible]);
 
-  if (!mounted) {
+  /*
+   * IMPORTANT:
+   *
+   * During SSR / prerendering there is no document.
+   * Wait until the component has mounted in the browser
+   * before creating the portal.
+   */
+  if (!portalReady || !mounted) {
     return null;
   }
 
@@ -771,6 +791,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
    * Rendering directly into document.body prevents the
    * offcanvas from being constrained by parent stacking
    * contexts or overflow rules.
+   *
+   * portalReady guarantees that document.body exists.
    */
   return createPortal(offcanvas, document.body);
 };
