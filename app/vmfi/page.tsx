@@ -1,5 +1,5 @@
 import MainContent from "@/components/MainContent";
-import Navigation from "@/components/Navigation";
+// Navigation removed; header renders globally
 import Footer from "@/components/Footer";
 import VideoPlayer from "@/components/video/VideoPlayer";
 import VmfiContent from "@/components/vmfi/VmfiContent";
@@ -11,7 +11,7 @@ export const metadata = {
 export default function Page() {
   return (
     <MainContent>
-      <Navigation />
+      {/* SiteHeader rendered globally */}
 
       <div className="min-h-screen lg:h-screen lg:flex lg:items-stretch">
         {/* Left: sticky video (wider on desktop) */}

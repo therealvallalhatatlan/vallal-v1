@@ -36,15 +36,6 @@ export interface Product {
 
 export const products: Product[] = [
   {
-    id: 'pin-1',
-    type: 'pin',
-    name: 'Vállalhatatlan Kitűző',
-    description: '32mm átmérőjű, fasza kis badge, amit akár a zakódra is tűzhetsz, hogy mindenki lássa, milyen vállalhatatlan vagy.',
-    images: ['/s1.jpg'], // TODO: Replace with real pin mockups
-    price: 1000,
-    stock: 100,
-  },
-  {
     id: 'men-shirt-1',
     type: 'men-shirt',
     name: 'Vállalhatatlan Póló',
@@ -75,10 +66,10 @@ export const products: Product[] = [
     price: 10000,
     // ── ITT ÍRD ÁT A KÉSZLETET színenként ──
     colorStock: {
-      Pink: 5,
-      Fekete: 11,
+      Pink: 3,
+      Fekete: 3,
     },
-    stock: 16,
+    stock: 6,
   },
   {
     id: 'book-2',

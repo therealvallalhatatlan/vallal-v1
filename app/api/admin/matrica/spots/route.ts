@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import type { SpotStatus, SpotType } from '@/lib/matrica'
+import type { LocationSpotType, SpotStatus, SpotType, VirtualSpotContentType } from '@/lib/matrica'
 import { canCreatePaidSpots, canManageAllSpots, getUserRoleByEmail } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
@@ -72,8 +72,11 @@ export async function POST(req: NextRequest) {
 
   const { title, description, image_url, image_urls, lat, lng, radius_visibility, radius_claim, total_quantity } = body
   const role = getUserRoleByEmail(user.email)
+  const locationType: LocationSpotType = body.type === 'virtual' ? 'virtual' : 'physical'
+  const contentType = body.content_type as VirtualSpotContentType | null
+  const contentUrl = typeof body.content_url === 'string' ? body.content_url.trim() : ''
 
-  const spotType: SpotType = body.spot_type === 'paid' ? 'paid' : 'free'
+  const spotType: SpotType = locationType === 'physical' && body.spot_type === 'paid' ? 'paid' : 'free'
   const rawPriceHuf = Number(body.price_huf)
   const parsedPriceHuf = Number.isFinite(rawPriceHuf) ? Math.floor(rawPriceHuf) : 0
 
@@ -101,7 +104,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_coordinates' }, { status: 400 })
   }
 
-  const qty = Math.max(1, Number(total_quantity) || 1)
+  if (locationType === 'virtual') {
+    const allowedContentTypes: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link']
+    if (!contentType || !allowedContentTypes.includes(contentType)) {
+      return NextResponse.json({ error: 'content_type_required' }, { status: 400 })
+    }
+    if (!contentUrl) {
+      return NextResponse.json({ error: 'content_url_required' }, { status: 400 })
+    }
+  }
+
+  const qty = locationType === 'virtual' ? 1 : Math.max(1, Number(total_quantity) || 1)
 
   const normalizedImageUrls = Array.isArray(image_urls)
     ? image_urls.filter((url): url is string => typeof url === 'string' && !!url.trim()).slice(0, 5)
@@ -120,12 +133,15 @@ export async function POST(req: NextRequest) {
     lat: latN,
     lng: lngN,
     radius_visibility: Math.max(1, Number(radius_visibility) || 500),
-    radius_claim: Math.max(1, Number(radius_claim) || 50),
+    radius_claim: locationType === 'virtual' ? 50 : Math.max(1, Number(radius_claim) || 50),
     total_quantity: qty,
     remaining_quantity: qty,
     status: 'active',
     spot_type: spotType,
     price_huf: effectivePriceHuf,
+    type: locationType,
+    content_type: locationType === 'virtual' ? contentType : null,
+    content_url: locationType === 'virtual' ? contentUrl : null,
     creator_id: user.id,
   }
 

@@ -10,7 +10,6 @@ import { Container } from "@/components/Container";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePreorderCampaign } from "@/hooks/usePreorderCampaign";
 import { DEFAULT_PREORDER_CAMPAIGN_SLUG } from "@/lib/shop/preorder";
-import Navigation from "@/components/Navigation";
 
 const CATEGORIES = [
   { label: "Összes", value: "all" },
@@ -57,25 +56,7 @@ export default function ShopPage() {
   return (
     <main className="relative min-h-screen bg-black text-white overflow-x-hidden">
       <div className="fixed inset-0 pointer-events-none z-0" style={{ background: 'url(/img/visuals/noise-01.jpg) repeat', opacity: 0.08 }} />
-      <Navigation />
-      <Container className="relative z-10 py-10">
-        <header className="mb-10 text-center">
-          <h1 className="font-mono text-3xl md:text-5xl font-bold tracking-wider text-white/90 mb-2">Vállalhatatlan Shop</h1>
-          <p className="text-sm md:text-base text-white/45 max-w-2xl mx-auto font-mono">
-          Pólók és kitűzők és mindenféle vállalhatatlan cucc,<br/> <span className="text-lime-400">Bán Viktória<sup>®</sup></span> tervezésében.
-          </p>
-        </header>
-{ /*
-        <div className="mx-auto mb-8 max-w-3xl">
-          {campaign ? (
-            <PreorderCampaignPanel campaign={campaign} variant="hero" />
-          ) : campaignLoading ? (
-            <div className="rounded-[28px] border border-lime-400/10 bg-neutral-950/70 px-5 py-6 text-left text-sm text-neutral-500 animate-pulse">
-              Preorder signal tuning...
-            </div>
-          ) : null}
-        </div>
-*/}
+      <Container className="relative z-10 py-10 mt-20">
         <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
           {VISIBLE_PRODUCTS.map((product) => (
             <ProductCard key={product.id} product={product} campaign={campaign} onClick={() => handleProductClick(product)} />

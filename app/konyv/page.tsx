@@ -1,114 +1,206 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import MainContent from "@/components/MainContent";
-import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { Montserrat } from "next/font/google";
+
+const montserrat = Montserrat({
+  subsets: ["latin-ext"],
+  weight: "800",
+  style: "italic",
+});
 
 export const metadata: Metadata = {
-  title: "Könyv - Jelenleg nem elérhető",
+  title: "Könyvek - Vállalhatatlan",
   description:
-    "Az első Vállalhatatlan könyv jelenleg nem elérhető. Ha szeretnél hozzájutni, írj V.-nek emailben.",
-  alternates: {
-    canonical: "https://vallalhatatlan.online/konyv",
-  },
-  openGraph: {
-    title: "Vállalhatatlan - Első könyv",
-    description:
-      "Az első könyv jelenleg nem elérhető. Eléréshez írj V.-nek emailben.",
-    url: "https://vallalhatatlan.online/konyv",
-    images: [{ url: "/api/og?title=Vallalhatatlan%20-%20Konyv" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Vállalhatatlan - Első könyv",
-    description:
-      "Az első könyv jelenleg nem elérhető. Eléréshez írj V.-nek emailben.",
-    images: ["/api/og?title=Vallalhatatlan%20-%20Konyv"],
-  },
+    "Vállalhatatlan könyvek. Két évad, limitált sorszámozott példányok, dead drop terjesztés.",
 };
+
+const FIRST_BOOK_STRIPE_URL = "YOUR_FIRST_BOOK_STRIPE_URL";
+const SECOND_BOOK_STRIPE_URL = "YOUR_SECOND_BOOK_STRIPE_URL";
 
 export default function Page() {
   return (
     <MainContent>
-      <Navigation />
+      <div className="mx-auto w-full max-w-6xl px-6 pb-16">
+        {/* HEADER / INTRO */}
+        <section className="mb-8">
+          <div className="mb-4 flex items-center justify-between">
+            <span
+              className="text-[10px] uppercase tracking-[0.2em] text-zinc-500"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              [ ARCHIVE / BOOKS ]
+            </span>
 
-      <section className="relative z-20 border border-white/10 mx-4 md:mx-8 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-[3fr_4fr_3fr]" style={{ minHeight: "calc(100vh - 80px)" }}>
-
-          <div className="relative overflow-hidden border-b md:border-b-0 md:border-r border-white/10 min-h-[38vh] md:min-h-0">
-            <img
-              src="/img/logo.png"
-              alt="Vállalhatatlan"
-              className="absolute inset-0 m-auto w-44 md:w-56 opacity-60 mix-blend-screen"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-black/35 to-black/70" />
-            <div className="absolute inset-0 fx-stripes opacity-50 pointer-events-none" />
+            <span
+              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-lime-300/70"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.7)]" />
+              ACTIVE
+            </span>
           </div>
 
-          <div className="flex flex-col border-b md:border-b-0 md:border-r border-white/10 font-mono">
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-2.5 text-xs text-white/40 uppercase tracking-[0.18em]">
-              <span>[ KONYV STATUS ]</span>
-              <span className="text-lime-400">OFFLINE</span>
-            </div>
+          <p
+            className="max-w-3xl text-md leading-relaxed text-zinc-400 md:text-base py-6"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            Minden évadból 100 darab sorszámozott példány készül, amit dead
+            droppal terjesztek.
+            <br/><br/>
+            Elrejtem neked a városban és megadom a
+            koordinátáit.
+            <br/><br/>
+            48 órád van megtalálni.{" "}
+            <span className="text-lime-200/80">
+              Adrenalin ON, valós veszély OFF.
+            </span>
+          </p>
+        </section>
 
-            <div className="flex-1 px-6 py-8 md:py-12 flex items-center">
-              <div className="w-full space-y-6">
-                <h1 className="text-3xl md:text-4xl leading-tight text-white/90">
-                  Az első könyv
-                  <br />
-                  jelenleg nem elérhető.
+        {/* BOOKS */}
+        <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* ============================================================
+              BOOK 01
+          ============================================================ */}
+          <article className="overflow-hidden rounded-md border border-zinc-800 bg-zinc-950/70 transition-colors duration-300 hover:border-lime-400/30">
+            {/* IMAGE + TEXT */}
+            <div className="grid grid-cols-[96px_minmax(0,1fr)] md:grid-cols-[120px_minmax(0,1fr)]">
+              {/* COVER */}
+              <div className="relative h-[300px] w-[96px] overflow-hidden border-r border-zinc-800 bg-zinc-900 md:h-[340px] md:w-[120px]">
+                <img
+                  src="/cover.png"
+                  alt="Vállalhatatlan első könyv borító"
+                  className="absolute inset-0 block h-full w-full min-w-0 max-w-none object-cover"
+                />
+
+                <div
+                  className="absolute left-2 top-2 z-10 border border-zinc-700 bg-black/80 px-2 py-1 text-[8px] uppercase tracking-[0.15em] text-zinc-400"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  S01
+                </div>
+              </div>
+
+              {/* TEXT */}
+              <div className="min-w-0 overflow-hidden p-5 md:p-6">
+                <span
+                  className="mb-3 block text-[10px] uppercase tracking-[0.18em] text-lime-400/70"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  [ ELSŐ KÖNYV ]
+                </span>
+
+                <h1
+                  className={`${montserrat.className} break-words text-2xl uppercase leading-[0.95] tracking-[-0.025em] text-zinc-100 md:text-3xl`}
+                >
+                  Vállalhatatlan I.
                 </h1>
 
-                <div className="relative border border-lime-300/40 bg-black/45 p-5 md:p-6 shadow-[0_0_32px_rgba(163,230,53,0.12)]">
-                  <p className="text-lg md:text-xl text-white/80 leading-relaxed">
-                    Ha szeretnél hozzájutni, írj V.-nek:
-                  </p>
-
-                  <a
-                    href="mailto:therealvallalhatatlan@gmail.com"
-                    className="inline-block mt-3 text-lime-300 text-base md:text-lg tracking-wide underline underline-offset-4 decoration-lime-300/60 hover:text-lime-200 hover:decoration-lime-200 transition-colors"
-                  >
-                    therealvallalhatatlan@gmail.com
-                  </a>
-                </div>
-
-                <Link
-                  href="/"
-                  className="inline-flex items-center border border-white/30 px-4 py-2 text-xs md:text-sm font-bold tracking-[0.22em] uppercase text-white/85 hover:border-lime-400 hover:text-lime-300 transition-colors"
+                <p
+                  className="mt-5 text-sm leading-relaxed text-zinc-400"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
-                  Vissza a főoldalra
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col font-mono bg-black/30">
-            <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-2.5 text-[11px] uppercase tracking-[0.14em]">
-              <span className="text-neutral-400">[ CONTACT CHANNEL ]</span>
-              <span className="inline-flex items-center gap-2 text-lime-400/90">
-                <span className="h-1.5 w-1.5 rounded-full bg-lime-400" />
-                ACTIVE
-              </span>
-            </div>
-
-            <div className="flex-1 px-4 py-4">
-              <div className="border border-neutral-800 bg-black/40 p-4 space-y-3">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-neutral-500">Elérhetőség</p>
-                <a
-                  href="mailto:therealvallalhatatlan@gmail.com"
-                  className="block break-all text-lime-300 hover:text-lime-200 transition-colors"
-                >
-                  therealvallalhatatlan@gmail.com
-                </a>
-                <p className="text-sm text-neutral-400 leading-relaxed">
-                  Röviden írd meg, hogy a könyv miatt keresed, és V. jelentkezik.
+                  A 100 sorszámozott példány elfogyott.
+                  <br />
+                  Ha szeretnél egy sorszámozatlan példányt, itt előrendelheted.
                 </p>
               </div>
             </div>
-          </div>
 
+            {/* CTA */}
+            <a
+              href={FIRST_BOOK_STRIPE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-between border-t border-lime-400/30 bg-lime-400/[0.025] px-5 py-4 text-lime-200 transition-all hover:border-lime-300/70 hover:bg-lime-400/[0.07]"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              <span className="text-xs font-bold uppercase tracking-[0.16em]">
+                Előrendelés
+              </span>
+
+              <span className="text-base">↗</span>
+            </a>
+          </article>
+
+          {/* ============================================================
+              BOOK 02
+          ============================================================ */}
+          <article className="overflow-hidden rounded-md border border-zinc-800 bg-zinc-950/70 transition-colors duration-300 hover:border-lime-400/30">
+            {/* IMAGE + TEXT */}
+            <div className="grid grid-cols-[96px_minmax(0,1fr)] md:grid-cols-[120px_minmax(0,1fr)]">
+              {/* COVER */}
+              <div className="relative h-[300px] w-[96px] overflow-hidden border-r border-zinc-800 bg-zinc-900 md:h-[340px] md:w-[120px]">
+                <img
+                  src="/vallalhatatlan2.png"
+                  alt="Vállalhatatlan II. könyv borító"
+                  className="absolute inset-0 block h-full w-full min-w-0 max-w-none object-cover"
+                />
+
+                <div
+                  className="absolute left-2 top-2 z-10 border border-lime-400/25 bg-black/80 px-2 py-1 text-[8px] uppercase tracking-[0.15em] text-lime-300/80"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  S02
+                </div>
+              </div>
+
+              {/* TEXT */}
+              <div className="min-w-0 overflow-hidden p-5 md:p-6">
+                <span
+                  className="mb-3 block text-[10px] uppercase tracking-[0.18em] text-lime-400/70"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  [ MÁSODIK KÖNYV ]
+                </span>
+
+                <h2
+                  className={`${montserrat.className} break-words text-2xl uppercase leading-[0.95] tracking-[-0.025em] text-zinc-100 md:text-3xl`}
+                >
+                  Vállalhatatlan II.
+                </h2>
+
+                <p
+                  className="mt-5 text-sm leading-relaxed text-zinc-400"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  Még van{" "}
+                  <span className="font-bold text-lime-300">34 darab</span>{" "}
+                  sorszámozott példány.
+                  <br />
+                  Foglald le a saját sorszámodat.
+                </p>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <a
+              href={SECOND_BOOK_STRIPE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-between border-t border-lime-400/40 bg-zinc-400 px-5 py-4 text-lime-200 transition-all hover:border-lime-300/70 hover:bg-lime-400/[0.08] hover:text-lime-100"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              <span className="text-xs font-bold uppercase tracking-[0.16em] ">
+                Sorszám lefoglalása
+              </span>
+
+              <span className="text-base">↗</span>
+            </a>
+          </article>
+        </section>
+
+        {/* META */}
+        <div
+          className="mt-6 flex flex-col gap-2 border-t border-zinc-800 px-1 pt-4 text-[9px] uppercase tracking-[0.16em] text-zinc-600 sm:flex-row sm:items-center sm:justify-between"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          <span>LIMITED EDITIONS</span>
+          <span>DEAD DROP DISTRIBUTION</span>
+          <span>V. / 2026</span>
         </div>
-      </section>
+      </div>
 
       <Footer />
     </MainContent>

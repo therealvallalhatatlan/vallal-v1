@@ -8,6 +8,8 @@
 export type SpotStatus = 'active' | 'empty' | 'archived'
 export type ClaimStatus = 'pending' | 'accepted' | 'rejected'
 export type SpotType = 'free' | 'paid'
+export type LocationSpotType = 'physical' | 'virtual'
+export type VirtualSpotContentType = 'video' | 'audio' | 'image' | 'text' | 'link'
 
 export interface StickerSpot {
   id: string
@@ -19,6 +21,9 @@ export interface StickerSpot {
   lat: number
   lng: number
   spot_type?: SpotType
+  type?: LocationSpotType
+  content_type?: VirtualSpotContentType | null
+  content_url?: string | null
   price_huf?: number
   is_locked?: boolean
   unlock_expires_at?: string | null

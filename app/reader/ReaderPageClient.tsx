@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import ReaderApp, { Story } from "@/components/ReaderApp";
 import { createClient } from "@/lib/browser";
 import { useSessionGuard } from "@/hooks/useSessionGuard";
-import Navigation from "@/components/Navigation";
 
 const READER_NAV_OFFSET_PX = 84;
 
@@ -141,7 +140,6 @@ export default function ReaderPageClient({
           transition: "transform 240ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
-        <Navigation />
       </div>
 
       <div

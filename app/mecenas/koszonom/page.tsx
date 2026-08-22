@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Navigation from "@/components/Navigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,7 +8,6 @@ export const metadata: Metadata = {
 export default function MecenasKoszonom() {
   return (
     <main className="text-zinc-900">
-      <Navigation />
       <div className="min-h-screen flex items-start justify-center px-4 pt-12 pb-24">
         <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white/90 backdrop-blur-md shadow-xl px-8 py-10 text-center">
           <div className="text-5xl mb-4">🐇</div>

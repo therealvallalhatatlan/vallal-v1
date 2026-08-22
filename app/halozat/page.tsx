@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import MapViewClient from '@/components/matrica/MapViewClient'
 import MatricaNav from '@/components/matrica/MatricaNav'
-import Navigation from '@/components/Navigation'
 
 export const metadata: Metadata = {
   title: 'Halozat',
@@ -19,9 +18,6 @@ export default function HalozatPage() {
         ['--matrica-header-offset' as any]: '90px',
       }}
     >
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 4000 }}>
-        <Navigation />
-      </div>
       <Suspense fallback={null}>
         <MatricaNav showOnlineUsersBar={false} />
       </Suspense>

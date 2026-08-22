@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/browser";
 import { useSessionGuard } from "@/hooks/useSessionGuard";
-import Navigation from "@/components/Navigation";
 import PhantomPanel from "@/components/matrica/PhantomPanel";
 import MerchChatSimulator from "./components/MerchChatSimulator";
 
@@ -538,7 +537,6 @@ export default function DashboardClientPage({ serverEditor }: { serverEditor: bo
   if (loading || (!session && !loading)) {
     return (
       <main className="min-h-screen bg-black text-neutral-100">
-        <Navigation />
         <div className="flex items-center justify-center px-6 py-10">
           <p className="text-sm text-neutral-300">Betöltés...</p>
         </div>
@@ -548,7 +546,6 @@ export default function DashboardClientPage({ serverEditor }: { serverEditor: bo
 
   return (
     <main className="min-h-screen bg-black text-neutral-100">
-      <Navigation />
       <section className="mx-auto w-full max-w-4xl px-6 py-10">
         <div className="rounded-3xl border border-neutral-800 bg-black/60 p-6 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
           <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">dashboard</p>

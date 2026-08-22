@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import type { StickerSpot, SpotStatus, SpotType } from '@/lib/matrica'
+import type { LocationSpotType, StickerSpot, SpotStatus, SpotType, VirtualSpotContentType } from '@/lib/matrica'
 import type { UserRole } from '@/lib/auth'
 import MatricaNav from '@/components/matrica/MatricaNav'
 import { useSessionGuard } from '@/hooks/useSessionGuard'
@@ -201,6 +201,9 @@ async function optimizeSpotImage(file: File): Promise<File> {
 function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [locationType, setLocationType] = useState<LocationSpotType>('physical')
+  const [contentType, setContentType] = useState<VirtualSpotContentType | ''>('')
+  const [contentUrl, setContentUrl] = useState('')
   const [spotType, setSpotType] = useState<SpotType>('free')
   const [priceHuf, setPriceHuf] = useState(1500)
   const [lat, setLat] = useState<number | null>(null)
@@ -280,8 +283,10 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
     setError(null)
     if (!title.trim()) { setError('A cím kötelező.'); return }
     if (lat === null || lng === null) { setError('Kattints a térképre a hely megadásához.'); return }
-    if (spotType === 'paid' && !canCreatePaid) { setError('Ehhez nincs jogosultsagod.'); return }
-    if (spotType === 'paid' && (!Number.isFinite(priceHuf) || priceHuf <= 0)) {
+    if (locationType === 'virtual' && !contentType) { setError('Virtual spot requires a content type.'); return }
+    if (locationType === 'virtual' && !contentUrl.trim()) { setError('Virtual spot requires a content URL.'); return }
+    if (locationType === 'physical' && spotType === 'paid' && !canCreatePaid) { setError('Ehhez nincs jogosultsagod.'); return }
+    if (locationType === 'physical' && spotType === 'paid' && (!Number.isFinite(priceHuf) || priceHuf <= 0)) {
       setError('Fizetos szpothoz pozitiv HUF osszeg kell.');
       return
     }
@@ -291,7 +296,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
     let imageUrls: string[] = []
 
     // Upload images if provided
-    if (imageFiles.length > 0) {
+    if (locationType === 'physical' && imageFiles.length > 0) {
       try {
         for (let i = 0; i < imageFiles.length; i++) {
           const imageFile = imageFiles[i]
@@ -353,15 +358,18 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() || null,
-          spot_type: spotType,
-          price_huf: spotType === 'paid' ? Math.max(0, Math.floor(priceHuf)) : 0,
+          type: locationType,
+          content_type: locationType === 'virtual' ? contentType : null,
+          content_url: locationType === 'virtual' ? contentUrl.trim() : null,
+          spot_type: locationType === 'physical' ? spotType : 'free',
+          price_huf: locationType === 'physical' && spotType === 'paid' ? Math.max(0, Math.floor(priceHuf)) : 0,
           image_url: imageUrls[0] ?? null,
           image_urls: imageUrls,
           lat,
           lng,
           radius_visibility: radiusVisibility,
-          radius_claim: radiusClaim,
-          total_quantity: totalQty,
+          radius_claim: locationType === 'virtual' ? 50 : radiusClaim,
+          total_quantity: locationType === 'physical' ? totalQty : 1,
         }),
       })
       const json = await res.json()
@@ -369,7 +377,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
       setSuccess(true)
       onCreated(json.spot)
       // Reset form
-      setTitle(''); setDescription(''); setSpotType('free'); setPriceHuf(1500); setLat(null); setLng(null)
+      setTitle(''); setDescription(''); setLocationType('physical'); setContentType(''); setContentUrl(''); setSpotType('free'); setPriceHuf(1500); setLat(null); setLng(null)
       setRadiusVisibility(500); setRadiusClaim(50); setTotalQty(1)
       imagePreviews.forEach((preview) => URL.revokeObjectURL(preview))
       setImageFiles([]); setImagePreviews([])
@@ -409,6 +417,21 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
           />
         </div>
 
+        <div>
+          <label style={s.label} htmlFor="sp-location-type">Spot type</label>
+          <select
+            id="sp-location-type"
+            style={s.input}
+            value={locationType}
+            onChange={(e) => setLocationType(e.target.value === 'virtual' ? 'virtual' : 'physical')}
+          >
+            <option value="physical">PHYSICAL</option>
+            <option value="virtual">VIRTUAL</option>
+          </select>
+        </div>
+
+        {locationType === 'physical' ? (
+          <>
         <div style={{ display: 'grid', gridTemplateColumns: canCreatePaid ? '1fr 1fr' : '1fr', gap: 10 }}>
           <div>
             <label style={s.label} htmlFor="sp-type">Szpot tipus</label>
@@ -445,8 +468,41 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
             Jelenlegi jogosultsaggal csak ingyenes szpot hozhato letre.
           </p>
         ) : null}
+          </>
+        ) : (
+          <>
+            <div>
+              <label style={s.label} htmlFor="sp-content-type">Content type *</label>
+              <select
+                id="sp-content-type"
+                style={s.input}
+                value={contentType}
+                onChange={(e) => setContentType(e.target.value as VirtualSpotContentType | '')}
+              >
+                <option value="">Select content type</option>
+                <option value="video">VIDEO</option>
+                <option value="audio">AUDIO</option>
+                <option value="image">IMAGE</option>
+                <option value="text">TEXT</option>
+                <option value="link">LINK</option>
+              </select>
+            </div>
+            <div>
+              <label style={s.label} htmlFor="sp-content-url">Content URL *</label>
+              <input
+                id="sp-content-url"
+                type="url"
+                style={s.input}
+                value={contentUrl}
+                onChange={(e) => setContentUrl(e.target.value)}
+                placeholder="https://..."
+              />
+            </div>
+          </>
+        )}
 
         {/* Image upload */}
+        {locationType === 'physical' ? (
         <div>
           <label style={s.label}>Fotók (max 5)</label>
           {imagePreviews.length > 0 ? (
@@ -495,6 +551,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
           </p>
           <input ref={fileRef} type="file" accept="image/*" multiple capture="environment" style={{ display: 'none' }} onChange={handleFileChange} />
         </div>
+        ) : null}
 
         {/* Map picker */}
         <div>
@@ -502,7 +559,17 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
           <MapPicker lat={lat} lng={lng} onChange={(la, ln) => { setLat(la); setLng(ln) }} />
         </div>
 
+        {locationType === 'virtual' ? (
+          <div>
+            <label style={s.label}>Claim zone</label>
+            <div style={{ ...s.input, color: '#a3e635', background: 'rgba(163,230,53,0.06)' }}>
+              50 m (fixed for virtual spots)
+            </div>
+          </div>
+        ) : null}
+
         {/* Radii + quantity */}
+        {locationType === 'physical' ? (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
           <div>
             <label style={s.label} htmlFor="sp-vis">Láthatóság (m)</label>
@@ -529,6 +596,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
             </p>
           </div>
         </div>
+        ) : null}
 
         {error && (
           <p style={{ margin: 0, padding: '9px 12px', background: 'rgba(248,113,113,0.11)', border: '1px solid rgba(248,113,113,0.3)', borderRadius: 10, color: '#fecaca', fontSize: 13 }}>

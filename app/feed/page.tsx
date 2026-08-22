@@ -1,7 +1,6 @@
 "use client";
 
 import Feed from "@/components/Feed";
-import Navigation from "@/components/Navigation";
 import { useSessionGuard } from "@/hooks/useSessionGuard";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -33,7 +32,6 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <Navigation />
       <Feed />
     </div>
   );

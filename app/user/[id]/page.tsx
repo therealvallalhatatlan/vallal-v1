@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Navigation from "@/components/Navigation";
+// Navigation removed; header renders globally
 import { createClient } from "@supabase/supabase-js";
 import DOMPurify from "dompurify";
 import { useSessionGuard } from "@/hooks/useSessionGuard";
@@ -152,8 +152,8 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black">
-        <Navigation />
+    <div className="min-h-screen bg-black">
+        {/* SiteHeader rendered globally */}
         <div className="max-w-2xl mx-auto py-8 px-4">
           <div className="text-center py-12 text-neutral-400">Betöltés...</div>
         </div>
@@ -164,7 +164,7 @@ export default function UserProfilePage() {
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-black">
-        <Navigation />
+      {/* SiteHeader rendered globally */}
         <div className="max-w-2xl mx-auto py-8 px-4">
           <div className="text-center py-12">
             <p className="text-neutral-400 mb-4">{error || "Profil nem található."}</p>
@@ -182,7 +182,7 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <Navigation />
+      {/* SiteHeader rendered globally */}
       <div className="max-w-2xl mx-auto py-8 px-4">
         {/* Profile Header */}
         <div className="mb-8">

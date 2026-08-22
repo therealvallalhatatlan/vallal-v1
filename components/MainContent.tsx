@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode } from "react";
 import { useScrollGlitch } from "@/hooks/useScrollGlitch";
 import VHSTrackingLines from "./VHSTrackingLines";
 
@@ -13,15 +13,15 @@ export default function MainContent({ children }: MainContentProps) {
 
   return (
     <main
-      className="relative min-h-screen bg-black text-zinc-200 overflow-x-hidden"
+      className="relative min-h-screen overflow-x-hidden bg-black text-zinc-200"
       style={{
         background:
           "linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%)",
       }}
     >
-      {/* Base CRT scanlines overlay */}
+      {/* Base CRT scanlines */}
       <div
-        className="fixed inset-0 pointer-events-none z-40 fx-stripes"
+        className="pointer-events-none fixed inset-0 z-40 fx-stripes"
         style={{
           backgroundImage: `repeating-linear-gradient(
             to bottom,
@@ -33,9 +33,9 @@ export default function MainContent({ children }: MainContentProps) {
         }}
       />
 
-      {/* VHS sweep effect */}
+      {/* VHS sweep */}
       <div
-        className="fixed inset-0 pointer-events-none z-50 fx-vhs"
+        className="pointer-events-none fixed inset-0 z-50 fx-vhs"
         style={{
           backgroundImage: `
             linear-gradient(
@@ -56,34 +56,12 @@ export default function MainContent({ children }: MainContentProps) {
         }}
       />
 
-      {/* Scroll-based glitch disruption layer */}
-      <div
-        className="fixed inset-0 pointer-events-none z-45"
-        style={{
-          backgroundImage: `repeating-linear-gradient(
-            to bottom,
-            transparent 0,
-            transparent calc(2px + ${glitchIntensity * 3}px),
-            rgba(163, 230, 53, ${glitchIntensity * 0.1}) calc(2px + ${
-            glitchIntensity * 3
-          }px),
-            rgba(163, 230, 53, ${glitchIntensity * 0.1}) calc(4px + ${
-            glitchIntensity * 3
-          }px)
-          )`,
-          opacity: glitchIntensity * 0.3,
-          mixBlendMode: "overlay",
-          animation:
-            glitchIntensity > 0.3
-              ? `glitch-shift ${0.1 + glitchIntensity * 0.2}s infinite`
-              : "none",
-        }}
-      />
 
-      {/* VHS Tracking Lines */}
+      {/* VHS tracking lines */}
       <VHSTrackingLines />
 
       {/* Main content */}
+      <div className="w-full h-20"></div>
       <div className="relative z-20">{children}</div>
     </main>
   );
