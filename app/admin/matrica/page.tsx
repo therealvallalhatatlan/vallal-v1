@@ -284,7 +284,26 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
     if (!title.trim()) { setError('A cím kötelező.'); return }
     if (lat === null || lng === null) { setError('Kattints a térképre a hely megadásához.'); return }
     if (locationType === 'virtual' && !contentType) { setError('Virtual spot requires a content type.'); return }
-    if (locationType === 'virtual' && !contentUrl.trim()) { setError('Virtual spot requires a content URL.'); return }
+    const normalizedContentUrl = locationType === 'virtual' ? contentUrl.trim() : ''
+    if (locationType === 'virtual' && !normalizedContentUrl) {
+      setError('Virtual spot requires a content URL.');
+      return
+    }
+    if (locationType === 'virtual' && normalizedContentUrl.startsWith('/public/')) {
+      setError('A public mappát nem kell megadni. Példa: /videos/video.mp4');
+      return
+    }
+    if (locationType === 'virtual' && normalizedContentUrl && !normalizedContentUrl.startsWith('/')) {
+      try {
+        const parsedUrl = new URL(normalizedContentUrl)
+        if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+          throw new Error('unsupported protocol')
+        }
+      } catch {
+        setError('Érvénytelen URL. Használj /videos/video.mp4 vagy https://... formátumot.');
+        return
+      }
+    }
     if (locationType === 'physical' && spotType === 'paid' && !canCreatePaid) { setError('Ehhez nincs jogosultsagod.'); return }
     if (locationType === 'physical' && spotType === 'paid' && (!Number.isFinite(priceHuf) || priceHuf <= 0)) {
       setError('Fizetos szpothoz pozitiv HUF osszeg kell.');
@@ -489,14 +508,14 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
             </div>
             <div>
               <label style={s.label} htmlFor="sp-content-url">Content URL *</label>
-              <input
-                id="sp-content-url"
-                type="url"
-                style={s.input}
-                value={contentUrl}
-                onChange={(e) => setContentUrl(e.target.value)}
-                placeholder="https://..."
-              />
+          <input
+            id="sp-content-url"
+            type="text"
+            style={s.input}
+            value={contentUrl}
+            onChange={(e) => setContentUrl(e.target.value)}
+            placeholder="/videos/video.mp4 vagy https://..."
+          />
             </div>
           </>
         )}

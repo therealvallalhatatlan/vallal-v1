@@ -22,10 +22,10 @@ import { createClient } from '@/lib/browser'
 import SpotCircle from './SpotCircle'
 import SpotMarker from './SpotMarker'
 import SpotPreview from './SpotPreview'
-import ActiveSpotsPanel from './ActiveSpotsPanel'
 import PhantomPanel from './PhantomPanel'
 import ToastContainer from './ToastContainer'
 import HalozatWalkthrough, { type HalozatWalkthroughStep } from './HalozatWalkthrough'
+import VirtualContentViewer from './VirtualContentViewer'
 
 import { useToast } from './useToast'
 import MatricaLivePanel from './MatricaLivePanel'
@@ -80,6 +80,33 @@ interface RouteState {
 interface PreviewAnchor {
   x: number
   y: number
+}
+
+type ActiveSpotFilter = 'all' | 'physical' | 'virtual'
+
+function getVirtualContentLabel(contentType?: StickerSpot['content_type']): string {
+  switch (contentType) {
+    case 'video': return 'VIDEÓ'
+    case 'audio': return 'HANG'
+    case 'image': return 'KÉP'
+    case 'text': return 'SZÖVEG'
+    case 'link': return 'LINK'
+    default: return 'DIGITÁLIS'
+  }
+}
+
+function SpotTypeIcon({ virtual }: { virtual: boolean }) {
+  const stroke = virtual ? '#c084fc' : '#a3e635'
+  return virtual ? (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+      <path d="M8.8 15.2 15.2 8.8M7.2 10.2l-1.1 1.1a3.5 3.5 0 0 0 5 5l1.1-1.1M16.8 13.8l1.1-1.1a3.5 3.5 0 0 0-5-5l-1.1 1.1" stroke={stroke} strokeWidth="1.7" strokeLinecap="round"/>
+    </svg>
+  ) : (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+      <path d="M12 21s7-6.1 7-11.3A7 7 0 0 0 5 9.7C5 14.9 12 21 12 21Z" stroke={stroke} strokeWidth="1.7"/>
+      <circle cx="12" cy="9.7" r="2.1" stroke={stroke} strokeWidth="1.7"/>
+    </svg>
+  )
 }
 
 type WalkthroughStepId = 'nav' | 'map' | 'talalok' | 'spots' | 'chat'
@@ -293,6 +320,8 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
   const [claimingSpotId, setClaimingSpotId] = useState<string | null>(null)
   const [virtualUrls, setVirtualUrls] = useState<Record<string, string>>({})
   const [virtualClaimed, setVirtualClaimed] = useState<Record<string, boolean>>({})
+  const [virtualViewerSpot, setVirtualViewerSpot] = useState<StickerSpot | null>(null)
+  const [activeSpotsFilter, setActiveSpotsFilter] = useState<ActiveSpotFilter>('all')
   const [showIntroLayer, setShowIntroLayer] = useState(false)
   const [walkthroughStepIndex, setWalkthroughStepIndex] = useState(0)
   const [phantomPanelOpen, setPhantomPanelOpen] = useState(false)
@@ -951,9 +980,8 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
   }, [chatAuthToken, loadSpots, showToast])
 
   const handleVirtualOpen = useCallback((spot: StickerSpot) => {
-    const url = virtualUrls[spot.id]
-    if (!url) return
-    window.open(url, '_blank', 'noopener,noreferrer')
+    if (!virtualUrls[spot.id]) return
+    setVirtualViewerSpot(spot)
   }, [virtualUrls])
 
   const handleVirtualUnlock = useCallback(async (spot: StickerSpot) => {
@@ -1007,6 +1035,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       // Store URL and mark the virtual spot as unlocked/claimed in memory.
       setVirtualUrls((prev) => ({ ...prev, [spot.id]: content_url }))
       setVirtualClaimed((prev) => ({ ...prev, [spot.id]: true }))
+      setVirtualViewerSpot(spot)
     } catch (err: any) {
       console.error('[MapView] virtual unlock+claim failed', err)
       showToast(err.message || 'Feloldás vagy jelölés sikertelen.', 'error')
@@ -2511,7 +2540,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
                 handleTalalokPress()
               }
             }}
-            className="flex min-h-[84px] flex-col items-center justify-center bg-zinc-800/90 px-2 py-4 transition-colors hover:bg-zinc-800"
+            className="flex min-h-[84px] flex-col items-center justify-center bg-zinc-800/90 px-0 py-3 transition-colors hover:bg-zinc-800"
             aria-label="Összes szpot"
             title="Összes szpot"
           >
@@ -2553,22 +2582,202 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       </nav>
       </div>
 
-      <ActiveSpotsPanel
-        isOpen={spotsListOpen}
-        spots={spots}
-        userLocation={userLocation}
-        isMobile={isMobile}
-        bottomOffset={BOTTOM_ACTION_BAR_HEIGHT + 12}
-        unlockingSpotId={unlockingSpotId}
-        onClose={handleCloseSpotsList}
-        onSelectSpot={handleSelectSpotFromList}
-        onStartRoute={handleStartRouteFromList}
-        onClaimFound={handleClaimFound}
-        claimingSpotId={claimingSpotId}
-        canEditSpot={(spot) => !!spot.can_edit && (userRole === 'admin' || userRole === 'editor' || userRole === 'user')}
-        onSaveSpot={handleSaveActiveSpot}
-        onDeleteSpot={handleDeleteActiveSpot}
-      />
+      {spotsListOpen ? (() => {
+        const filteredSpots = spots
+          .filter((spot) => {
+            if (activeSpotsFilter === 'virtual') return spot.type === 'virtual'
+            if (activeSpotsFilter === 'physical') return spot.type !== 'virtual'
+            return true
+          })
+          .map((spot) => ({
+            spot,
+            distance: userLocation
+              ? getDistanceMeters(userLocation.lat, userLocation.lng, spot.lat, spot.lng)
+              : null,
+          }))
+          .sort((a, b) => {
+            if (a.distance === null && b.distance === null) return 0
+            if (a.distance === null) return 1
+            if (b.distance === null) return -1
+            return a.distance - b.distance
+          })
+
+        const virtualCount = spots.filter((spot) => spot.type === 'virtual').length
+        const physicalCount = spots.length - virtualCount
+
+        return (
+          <aside
+            aria-label="Aktív helyek"
+            style={{
+              position: 'fixed',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
+              width: 'min(760px, calc(100vw - 20px))',
+              maxHeight: 'min(66vh, 620px)',
+              zIndex: 220,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              border: '1px solid rgba(163,230,53,0.22)',
+              borderRadius: 18,
+              background: 'linear-gradient(180deg, rgba(7,10,13,0.98), rgba(4,6,8,0.98))',
+              boxShadow: '0 28px 72px rgba(0,0,0,0.62), 0 0 0 1px rgba(255,255,255,0.03)',
+              backdropFilter: 'blur(18px) saturate(130%)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 14,
+                padding: '16px 18px 12px',
+                borderBottom: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono-tech)', fontSize: 17, fontWeight: 800, letterSpacing: '0.08em', color: '#f4f4f5', textTransform: 'uppercase' }}>
+                  AKTÍV HELYEK
+                </div>
+                <div style={{ marginTop: 4, fontFamily: 'var(--font-mono-tech)', fontSize: 11, color: '#71717a', letterSpacing: '0.04em' }}>
+                  {filteredSpots.length} elérhető hely
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseSpotsList}
+                aria-label="Aktív helyek bezárása"
+                style={{
+                  width: 36,
+                  height: 36,
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: 10,
+                  background: 'rgba(255,255,255,0.03)',
+                  color: '#d4d4d8',
+                  fontSize: 20,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', overflowX: 'auto' }}>
+              {([
+                ['all', 'MIND', spots.length],
+                ['physical', 'FIZIKAI', physicalCount],
+                ['virtual', 'DIGITÁLIS', virtualCount],
+              ] as const).map(([value, label, count]) => {
+                const selected = activeSpotsFilter === value
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setActiveSpotsFilter(value)}
+                    aria-pressed={selected}
+                    style={{
+                      flex: '0 0 auto',
+                      border: selected ? `1px solid ${value === 'virtual' ? 'rgba(192,132,252,0.65)' : 'rgba(190,242,100,0.5)'}` : '1px solid rgba(255,255,255,0.1)',
+                      background: selected ? (value === 'virtual' ? 'rgba(168,85,247,0.12)' : 'rgba(163,230,53,0.10)') : 'rgba(255,255,255,0.025)',
+                      color: selected ? (value === 'virtual' ? '#e9d5ff' : '#ecfccb') : '#a1a1aa',
+                      borderRadius: 999,
+                      padding: '7px 11px',
+                      fontFamily: 'var(--font-mono-tech)',
+                      fontSize: 11,
+                      fontWeight: 800,
+                      letterSpacing: '0.06em',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {label} · {count}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div style={{ overflowY: 'auto', padding: 12 }}>
+              {filteredSpots.length === 0 ? (
+                <div style={{ padding: '34px 16px', textAlign: 'center', color: '#71717a', fontFamily: 'var(--font-mono-tech)', fontSize: 12, letterSpacing: '0.06em' }}>
+                  NINCS ITT MÉG HELY
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {filteredSpots.map(({ spot, distance }) => {
+                    const virtual = spot.type === 'virtual'
+                    const contentLabel = virtual ? getVirtualContentLabel(spot.content_type) : 'HELYSZÍN'
+                    const distanceLabel = distance === null ? 'HELYZET ISMERETLEN' : distance < 1000 ? `${Math.round(distance)} M` : `${(distance / 1000).toFixed(1)} KM`
+                    const locked = isPaidLockedSpot(spot)
+
+                    return (
+                      <button
+                        key={spot.id}
+                        type="button"
+                        onClick={() => handleSelectSpotFromList(spot)}
+                        style={{
+                          width: '100%',
+                          display: 'grid',
+                          gridTemplateColumns: '46px minmax(0,1fr) auto',
+                          alignItems: 'center',
+                          gap: 12,
+                          padding: '12px 13px',
+                          border: `1px solid ${virtual ? 'rgba(192,132,252,0.20)' : 'rgba(163,230,53,0.15)'}`,
+                          borderRadius: 14,
+                          background: virtual ? 'linear-gradient(90deg, rgba(88,28,135,0.16), rgba(15,10,20,0.72))' : 'linear-gradient(90deg, rgba(101,163,13,0.10), rgba(9,12,10,0.72))',
+                          color: '#f4f4f5',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: 12,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: `1px solid ${virtual ? 'rgba(192,132,252,0.34)' : 'rgba(163,230,53,0.28)'}`,
+                            background: virtual ? 'rgba(168,85,247,0.10)' : 'rgba(163,230,53,0.08)',
+                          }}
+                        >
+                          <SpotTypeIcon virtual={virtual} />
+                        </span>
+
+                        <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <span style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
+                            <span style={{ fontFamily: 'var(--font-mono-tech)', fontSize: 15, lineHeight: 1.2, fontWeight: 800, color: '#f4f4f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {spot.title}
+                            </span>
+                            {locked ? (
+                              <span style={{ fontFamily: 'var(--font-mono-tech)', fontSize: 9, fontWeight: 800, letterSpacing: '0.06em', color: '#fbbf24' }}>FIZETŐS</span>
+                            ) : null}
+                          </span>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', fontFamily: 'var(--font-mono-tech)', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', color: virtual ? '#d8b4fe' : '#bef264' }}>
+                            <span>{virtual ? 'DIGITÁLIS' : 'FIZIKAI'}</span>
+                            <span style={{ color: '#52525b' }}>•</span>
+                            <span>{contentLabel}</span>
+                            <span style={{ color: '#52525b' }}>•</span>
+                            <span style={{ color: '#71717a', fontWeight: 700 }}>{distanceLabel}</span>
+                          </span>
+                        </span>
+
+                        <span aria-hidden="true" style={{ color: virtual ? '#c084fc' : '#a3e635', fontSize: 22, lineHeight: 1, opacity: 0.8 }}>
+                          →
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </aside>
+        )
+      })() : null}
 
       <div
         aria-hidden={!phantomPanelOpen}
@@ -2799,6 +3008,14 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
         </div>
       ) : null}
 
+
+      {virtualViewerSpot && virtualUrls[virtualViewerSpot.id] ? (
+        <VirtualContentViewer
+          spot={virtualViewerSpot}
+          contentUrl={virtualUrls[virtualViewerSpot.id]}
+          onClose={() => setVirtualViewerSpot(null)}
+        />
+      ) : null}
 
       <MatricaLivePanel
         displayName={chatDisplayName}

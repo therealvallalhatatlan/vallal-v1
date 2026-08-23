@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { parseBearerToken, getUserFromToken } from '@/lib/auth'
-import { getDistanceMeters } from '@/lib/matrica'
+import { getDistanceMeters, type VirtualSpotContentType } from '@/lib/matrica'
 
 export const dynamic = 'force-dynamic'
 
@@ -64,7 +64,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_spot_type' }, { status: 400 })
   }
 
-  if (spot.content_type !== 'link') {
+  const SUPPORTED_CONTENT_TYPES: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link']
+  const contentType = spot.content_type as VirtualSpotContentType | null
+
+  if (!contentType || !SUPPORTED_CONTENT_TYPES.includes(contentType)) {
     return NextResponse.json({ error: 'unsupported_content_type' }, { status: 400 })
   }
 
