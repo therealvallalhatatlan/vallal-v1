@@ -997,11 +997,16 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       })
       if (!claimRes.ok) {
         const err = await claimRes.json().catch(() => ({} as any))
-        throw new Error(err.error || 'Megtalanasi jeloles sikertelen.')
+        // A virtual spot can be revisited. An existing claim is not an error
+        // for the unlock/open flow, because the user may access the content again.
+        if (err?.error !== 'already_claimed') {
+          throw new Error(err?.error || 'Megtalálás jelölése sikertelen.')
+        }
       }
-      // Store URL and mark claimed
-      setVirtualUrls(prev => ({ ...prev, [spot.id]: content_url }))
-      setVirtualClaimed(prev => ({ ...prev, [spot.id]: true }))
+
+      // Store URL and mark the virtual spot as unlocked/claimed in memory.
+      setVirtualUrls((prev) => ({ ...prev, [spot.id]: content_url }))
+      setVirtualClaimed((prev) => ({ ...prev, [spot.id]: true }))
     } catch (err: any) {
       console.error('[MapView] virtual unlock+claim failed', err)
       showToast(err.message || 'Feloldás vagy jelölés sikertelen.', 'error')
@@ -2235,7 +2240,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
           if (claimingSpotId === previewSpot.id) return true
           if (!chatAuthToken || !userLocation) return true
           if (isPaidLockedSpot(previewSpot)) return true
-          if (previewSpot.remaining_quantity <= 0) return true
+          if (previewSpot.type !== 'virtual' && previewSpot.remaining_quantity <= 0) return true
           const distance = getDistanceMeters(userLocation.lat, userLocation.lng, previewSpot.lat, previewSpot.lng)
           return distance > previewSpot.radius_claim
         })()}
@@ -2245,7 +2250,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
           if (!chatAuthToken) return 'Bejelentkezes szukseges'
           if (!userLocation) return 'Helymeghatarozas szukseges'
           if (isPaidLockedSpot(previewSpot)) return 'Elobb feloldas kell'
-          if (previewSpot.remaining_quantity <= 0) return 'Elfogyott'
+          if (previewSpot.type !== 'virtual' && previewSpot.remaining_quantity <= 0) return 'Elfogyott'
           const distance = getDistanceMeters(userLocation.lat, userLocation.lng, previewSpot.lat, previewSpot.lng)
           if (distance > previewSpot.radius_claim) {
             return `Menj kozelebb (${Math.round(distance)} m)`

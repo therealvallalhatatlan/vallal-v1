@@ -14,6 +14,7 @@ export const dynamic = 'force-dynamic'
 type SpotRow = StickerSpot & {
   creator_id: string | null
   spot_type: 'free' | 'paid'
+  type: 'physical' | 'virtual'
   price_huf: number
 }
 
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
   const { data, error } = await db
     .from('sticker_spots')
     .select(
-      'id, title, description, image_url, image_urls, lat, lng, radius_visibility, radius_claim, total_quantity, remaining_quantity, status, created_at, creator_id, spot_type, price_huf',
+      'id, title, description, image_url, image_urls, lat, lng, radius_visibility, radius_claim, total_quantity, remaining_quantity, status, created_at, creator_id, spot_type, type, price_huf',
     )
     .eq('status', 'active')
     .order('created_at', { ascending: false })
