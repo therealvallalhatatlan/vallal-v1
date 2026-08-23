@@ -109,6 +109,60 @@ function SpotTypeIcon({ virtual }: { virtual: boolean }) {
   )
 }
 
+function ContentTypeIcon({ type, physical = false }: { type?: StickerSpot['content_type']; physical?: boolean }) {
+  const stroke = '#a1a1aa'
+  if (physical) {
+    return (
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+        <path d="M12 21s6.5-5.6 6.5-10.4A6.5 6.5 0 0 0 5.5 10.6C5.5 15.4 12 21 12 21Z" stroke={stroke} strokeWidth="1.7"/>
+        <circle cx="12" cy="10.2" r="2" stroke={stroke} strokeWidth="1.7"/>
+      </svg>
+    )
+  }
+  switch (type) {
+    case 'video':
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <rect x="3.5" y="5.5" width="17" height="13" rx="1.5" stroke={stroke} strokeWidth="1.7"/>
+          <path d="m10 9 5 3-5 3V9Z" stroke={stroke} strokeWidth="1.7" strokeLinejoin="round"/>
+        </svg>
+      )
+    case 'audio':
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <path d="M4 13.5h3.2L12 8v8l-4.8-5.5H4v3Z" stroke={stroke} strokeWidth="1.7" strokeLinejoin="round"/>
+          <path d="M16 9.5c1.5 1.2 1.5 3.8 0 5M18.5 7c2.8 2.4 2.8 7.6 0 10" stroke={stroke} strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      )
+    case 'image':
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <rect x="3.5" y="4.5" width="17" height="15" rx="1.5" stroke={stroke} strokeWidth="1.7"/>
+          <circle cx="9" cy="9" r="1.6" stroke={stroke} strokeWidth="1.5"/>
+          <path d="m5.5 16 4.3-4.1 3.2 2.8 2.2-2 3.3 3.3" stroke={stroke} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )
+    case 'text':
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <path d="M5 7h14M5 12h14M5 17h9" stroke={stroke} strokeWidth="1.7" strokeLinecap="round"/>
+        </svg>
+      )
+    case 'link':
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <path d="m9 15 6-6M8 18H7a4 4 0 0 1 0-8h3M16 6h1a4 4 0 0 1 0 8h-3" stroke={stroke} strokeWidth="1.7" strokeLinecap="round"/>
+        </svg>
+      )
+    default:
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="7.5" stroke={stroke} strokeWidth="1.7"/>
+        </svg>
+      )
+  }
+}
+
 type WalkthroughStepId = 'nav' | 'map' | 'talalok' | 'spots' | 'chat'
 
 type WalkthroughStep = HalozatWalkthroughStep & {
@@ -2625,20 +2679,18 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
             aria-label="Aktív helyek"
             style={{
               position: 'fixed',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
-              width: 'min(760px, calc(100vw - 20px))',
-              maxHeight: 'min(66vh, 620px)',
+              left: 0,
+              right: 0,
+              bottom: `calc(${BOTTOM_ACTION_BAR_HEIGHT}px + env(safe-area-inset-bottom, 0px))`,
+              width: '100vw',
+              maxHeight: 'min(58vh, 620px)',
               zIndex: 220,
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              border: '1px solid rgba(163,230,53,0.22)',
-              borderRadius: 18,
-              background: 'linear-gradient(180deg, rgba(7,10,13,0.98), rgba(4,6,8,0.98))',
-              boxShadow: '0 28px 72px rgba(0,0,0,0.62), 0 0 0 1px rgba(255,255,255,0.03)',
-              backdropFilter: 'blur(18px) saturate(130%)',
+              background: '#07080b',
+              color: '#f4f4f5',
+              boxSizing: 'border-box',
             }}
           >
             <div
@@ -2647,30 +2699,52 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: 14,
-                padding: '16px 18px 12px',
+                minHeight: 62,
+                padding: '10px 18px',
                 borderBottom: '1px solid rgba(255,255,255,0.08)',
+                boxSizing: 'border-box',
               }}
             >
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono-tech)', fontSize: 17, fontWeight: 800, letterSpacing: '0.08em', color: '#f4f4f5', textTransform: 'uppercase' }}>
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-mono-tech)',
+                    fontSize: 17,
+                    lineHeight: 1.1,
+                    fontWeight: 800,
+                    letterSpacing: '0.08em',
+                    color: '#f4f4f5',
+                  }}
+                >
                   AKTÍV HELYEK
                 </div>
-                <div style={{ marginTop: 4, fontFamily: 'var(--font-mono-tech)', fontSize: 11, color: '#71717a', letterSpacing: '0.04em' }}>
-                  {filteredSpots.length} elérhető hely
+                <div
+                  style={{
+                    marginTop: 4,
+                    fontFamily: 'var(--font-mono-tech)',
+                    fontSize: 10,
+                    color: '#71717a',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  {filteredSpots.length} ELÉRHETŐ HELY
                 </div>
               </div>
+
               <button
                 type="button"
                 onClick={handleCloseSpotsList}
                 aria-label="Aktív helyek bezárása"
                 style={{
-                  width: 36,
-                  height: 36,
+                  flexShrink: 0,
+                  width: 34,
+                  height: 34,
                   border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: 10,
-                  background: 'rgba(255,255,255,0.03)',
+                  borderRadius: 4,
+                  background: '#0b0c10',
                   color: '#d4d4d8',
-                  fontSize: 20,
+                  fontSize: 19,
+                  lineHeight: 1,
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -2681,7 +2755,18 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
               </button>
             </div>
 
-            <div style={{ display: 'flex', gap: 8, padding: '12px 18px', borderBottom: '1px solid rgba(255,255,255,0.06)', overflowX: 'auto' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 18,
+                padding: '0 18px',
+                minHeight: 42,
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                background: '#090a0d',
+                overflowX: 'auto',
+              }}
+            >
               {([
                 ['all', 'MIND', spots.length],
                 ['physical', 'FIZIKAI', physicalCount],
@@ -2695,37 +2780,70 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
                     onClick={() => setActiveSpotsFilter(value)}
                     aria-pressed={selected}
                     style={{
+                      position: 'relative',
                       flex: '0 0 auto',
-                      border: selected ? `1px solid ${value === 'virtual' ? 'rgba(192,132,252,0.65)' : 'rgba(190,242,100,0.5)'}` : '1px solid rgba(255,255,255,0.1)',
-                      background: selected ? (value === 'virtual' ? 'rgba(168,85,247,0.12)' : 'rgba(163,230,53,0.10)') : 'rgba(255,255,255,0.025)',
-                      color: selected ? (value === 'virtual' ? '#e9d5ff' : '#ecfccb') : '#a1a1aa',
-                      borderRadius: 999,
-                      padding: '7px 11px',
+                      height: 42,
+                      border: 'none',
+                      background: 'transparent',
+                      color: selected ? '#bef264' : '#71717a',
+                      padding: 0,
                       fontFamily: 'var(--font-mono-tech)',
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: 800,
-                      letterSpacing: '0.06em',
+                      letterSpacing: '0.08em',
                       cursor: 'pointer',
                     }}
                   >
-                    {label} · {count}
+                    {label} <span style={{ color: selected ? '#f4f4f5' : '#52525b' }}>{count}</span>
+                    {selected ? (
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          height: 2,
+                          background: '#bef264',
+                        }}
+                      />
+                    ) : null}
                   </button>
                 )
               })}
             </div>
 
-            <div style={{ overflowY: 'auto', padding: 12 }}>
+            <div
+              style={{
+                overflowY: 'auto',
+                padding: '2px 18px 8px',
+                background: '#07080b',
+              }}
+            >
               {filteredSpots.length === 0 ? (
-                <div style={{ padding: '34px 16px', textAlign: 'center', color: '#71717a', fontFamily: 'var(--font-mono-tech)', fontSize: 12, letterSpacing: '0.06em' }}>
+                <div
+                  style={{
+                    padding: '30px 16px',
+                    textAlign: 'center',
+                    color: '#71717a',
+                    fontFamily: 'var(--font-mono-tech)',
+                    fontSize: 12,
+                    letterSpacing: '0.06em',
+                  }}
+                >
                   NINCS ITT MÉG HELY
                 </div>
               ) : (
-                <div style={{ display: 'grid', gap: 8 }}>
+                <div>
                   {filteredSpots.map(({ spot, distance }) => {
                     const virtual = spot.type === 'virtual'
                     const contentLabel = virtual ? getVirtualContentLabel(spot.content_type) : 'HELYSZÍN'
-                    const distanceLabel = distance === null ? 'HELYZET ISMERETLEN' : distance < 1000 ? `${Math.round(distance)} M` : `${(distance / 1000).toFixed(1)} KM`
-                    const locked = isPaidLockedSpot(spot)
+                    const distanceLabel =
+                      distance === null
+                        ? 'HELYZET ISMERETLEN'
+                        : distance < 1000
+                          ? `${Math.round(distance)} M`
+                          : `${(distance / 1000).toFixed(1)} KM`
 
                     return (
                       <button
@@ -2734,14 +2852,15 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
                         onClick={() => handleSelectSpotFromList(spot)}
                         style={{
                           width: '100%',
+                          minHeight: 68,
                           display: 'grid',
-                          gridTemplateColumns: '46px minmax(0,1fr) auto',
+                          gridTemplateColumns: '32px minmax(0,1fr) auto',
                           alignItems: 'center',
                           gap: 12,
-                          padding: '12px 13px',
-                          border: `1px solid ${virtual ? 'rgba(192,132,252,0.20)' : 'rgba(163,230,53,0.15)'}`,
-                          borderRadius: 14,
-                          background: virtual ? 'linear-gradient(90deg, rgba(88,28,135,0.16), rgba(15,10,20,0.72))' : 'linear-gradient(90deg, rgba(101,163,13,0.10), rgba(9,12,10,0.72))',
+                          padding: '10px 0',
+                          border: 'none',
+                          borderBottom: '1px solid rgba(255,255,255,0.07)',
+                          background: 'transparent',
                           color: '#f4f4f5',
                           textAlign: 'left',
                           cursor: 'pointer',
@@ -2750,38 +2869,77 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
                         <span
                           aria-hidden="true"
                           style={{
-                            width: 42,
-                            height: 42,
-                            borderRadius: 12,
+                            width: 28,
+                            height: 28,
                             display: 'inline-flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            border: `1px solid ${virtual ? 'rgba(192,132,252,0.34)' : 'rgba(163,230,53,0.28)'}`,
-                            background: virtual ? 'rgba(168,85,247,0.10)' : 'rgba(163,230,53,0.08)',
+                            color: '#a1a1aa',
                           }}
                         >
-                          <SpotTypeIcon virtual={virtual} />
+                          <ContentTypeIcon type={spot.content_type} physical={!virtual} />
                         </span>
 
-                        <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <span style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                            <span style={{ fontFamily: 'var(--font-mono-tech)', fontSize: 15, lineHeight: 1.2, fontWeight: 800, color: '#f4f4f5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {spot.title}
-                            </span>
-                            {locked ? (
-                              <span style={{ fontFamily: 'var(--font-mono-tech)', fontSize: 9, fontWeight: 800, letterSpacing: '0.06em', color: '#fbbf24' }}>FIZETŐS</span>
+                        <span
+                          style={{
+                            minWidth: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 4,
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: 'block',
+                              fontFamily: 'var(--font-mono-tech)',
+                              fontSize: 14,
+                              lineHeight: 1.25,
+                              fontWeight: 800,
+                              color: '#f4f4f5',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {spot.title}
+                          </span>
+
+                          <span
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 7,
+                              flexWrap: 'wrap',
+                              fontFamily: 'var(--font-mono-tech)',
+                              fontSize: 9,
+                              fontWeight: 700,
+                              letterSpacing: '0.07em',
+                              color: '#71717a',
+                            }}
+                          >
+                            <span>{virtual ? 'DIGITÁLIS' : 'FIZIKAI'}</span>
+                            <span style={{ color: '#3f3f46' }}>·</span>
+                            <span>{contentLabel}</span>
+                            <span style={{ color: '#3f3f46' }}>·</span>
+                            <span>{distanceLabel}</span>
+                            {isPaidLockedSpot(spot) ? (
+                              <>
+                                <span style={{ color: '#3f3f46' }}>·</span>
+                                <span style={{ color: '#a1a1aa' }}>FIZETŐS</span>
+                              </>
                             ) : null}
                           </span>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', fontFamily: 'var(--font-mono-tech)', fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', color: virtual ? '#d8b4fe' : '#bef264' }}>
-                            <span>{virtual ? 'DIGITÁLIS' : 'FIZIKAI'}</span>
-                            <span style={{ color: '#52525b' }}>•</span>
-                            <span>{contentLabel}</span>
-                            <span style={{ color: '#52525b' }}>•</span>
-                            <span style={{ color: '#71717a', fontWeight: 700 }}>{distanceLabel}</span>
-                          </span>
                         </span>
 
-                        <span aria-hidden="true" style={{ color: virtual ? '#c084fc' : '#a3e635', fontSize: 22, lineHeight: 1, opacity: 0.8 }}>
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            color: '#71717a',
+                            fontSize: 20,
+                            lineHeight: 1,
+                            paddingLeft: 10,
+                          }}
+                        >
                           →
                         </span>
                       </button>

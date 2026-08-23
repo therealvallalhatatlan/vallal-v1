@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type { StickerSpot } from '@/lib/matrica'
 import { getDistanceMeters } from '@/lib/matrica'
 
@@ -29,7 +29,19 @@ interface Props {
   userFoundCount?: number | null
 }
 
-type SpotsTab = 'free' | 'paid'
+type SpotsTab = 'all' | 'physical' | 'virtual'
+
+
+function getVirtualContentLabel(contentType?: StickerSpot['content_type']): string {
+  switch (contentType) {
+    case 'video': return 'VIDEÓ'
+    case 'audio': return 'HANG'
+    case 'image': return 'KÉP'
+    case 'text': return 'SZÖVEG'
+    case 'link': return 'LINK'
+    default: return 'DIGITÁLIS'
+  }
+}
 
 function isPaidLockedSpot(spot: StickerSpot): boolean {
   return spot.spot_type === 'paid' && !!spot.is_locked
@@ -61,7 +73,7 @@ export default function ActiveSpotsPanel({
   userFoundCount = null,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [activeTab, setActiveTab] = useState<SpotsTab>('free')
+  const [activeTab, setActiveTab] = useState<'all' | 'physical' | 'virtual'>('all')
   const [editingSpotId, setEditingSpotId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editDescription, setEditDescription] = useState('')
@@ -69,9 +81,10 @@ export default function ActiveSpotsPanel({
   const [savingSpotId, setSavingSpotId] = useState<string | null>(null)
   const [deletingSpotId, setDeletingSpotId] = useState<string | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
+  const [adminMenuSpotId, setAdminMenuSpotId] = useState<string | null>(null)
 
   const sortedSpots = useMemo(() => {
-    const withDistance = spots
+    return spots
       .filter((spot) => typeof spot.lat === 'number' && typeof spot.lng === 'number')
       .map((spot) => ({
         spot,
@@ -79,126 +92,216 @@ export default function ActiveSpotsPanel({
           ? getDistanceMeters(userLocation.lat, userLocation.lng, spot.lat, spot.lng)
           : null,
       }))
-
-    withDistance.sort((a, b) => {
-      if (a.distance === null && b.distance === null) return 0
-      if (a.distance === null) return 1
-      if (b.distance === null) return -1
-      return a.distance - b.distance
-    })
-
-    return withDistance
+      .sort((a, b) => {
+        if (a.distance === null && b.distance === null) return 0
+        if (a.distance === null) return 1
+        if (b.distance === null) return -1
+        return a.distance - b.distance
+      })
   }, [spots, userLocation])
 
-  const freeSpots = useMemo(
-    () => sortedSpots.filter(({ spot }) => spot.spot_type !== 'paid'),
+  const physicalSpots = useMemo(
+    () => sortedSpots.filter(({ spot }) => spot.type !== 'virtual'),
     [sortedSpots],
   )
 
-  const paidSpots = useMemo(
-    () => sortedSpots.filter(({ spot }) => spot.spot_type === 'paid'),
+  const virtualSpots = useMemo(
+    () => sortedSpots.filter(({ spot }) => spot.type === 'virtual'),
     [sortedSpots],
   )
 
-  const visibleSpots = activeTab === 'paid' ? paidSpots : freeSpots
+  const visibleSpots =
+    activeTab === 'physical' ? physicalSpots : activeTab === 'virtual' ? virtualSpots : sortedSpots
 
   const scrollByCard = useCallback((direction: 1 | -1) => {
     const container = scrollRef.current
     if (!container) return
-    const cardWidth = container.clientWidth * 0.82
-    container.scrollBy({ left: direction * cardWidth, behavior: 'smooth' })
+    container.scrollBy({
+      left: direction * Math.max(280, container.clientWidth * 0.72),
+      behavior: 'smooth',
+    })
   }, [])
 
   useEffect(() => {
-    const container = scrollRef.current
-    if (!container) return
-    container.scrollTo({ left: 0, behavior: 'smooth' })
+    scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' })
     setEditingSpotId(null)
     setEditError(null)
+    setAdminMenuSpotId(null)
   }, [activeTab])
+
+  useEffect(() => {
+    if (!isOpen) setAdminMenuSpotId(null)
+  }, [isOpen])
 
   if (!isOpen) return null
 
-  const hasSpots = visibleSpots.length > 0
-  const inlineMode = layout === 'inline'
-  const activeCountLabel = hasSpots ? `${visibleSpots.length} db a kornyeken` : 'Nincs aktiv szpot'
+  const physicalCount = physicalSpots.length
+  const virtualCount = virtualSpots.length
+  const allCount = sortedSpots.length
+
+  const panelTitle = layout === 'inline' ? 'AKTÍV HELYEK' : 'AKTÍV HELYEK'
+  const activeCountLabel = `${visibleSpots.length} elérhető hely`
+
+  const renderTypeIcon = (spot: StickerSpot, size = 22) => {
+    const virtual = spot.type === 'virtual'
+    const contentType = spot.content_type
+    const stroke = 'currentColor'
+    const common = {
+      width: size,
+      height: size,
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      'aria-hidden': true as const,
+    }
+
+    if (!virtual) {
+      return (
+        <svg {...common}>
+          <path d="M12 21s7-6.1 7-11.2A7 7 0 0 0 5 9.8C5 14.9 12 21 12 21Z" stroke={stroke} strokeWidth="1.7" />
+          <circle cx="12" cy="9.8" r="2.2" stroke={stroke} strokeWidth="1.7" />
+        </svg>
+      )
+    }
+
+    switch (contentType) {
+      case 'video':
+        return (
+          <svg {...common}>
+            <rect x="3" y="5" width="13" height="14" rx="2" stroke={stroke} strokeWidth="1.7" />
+            <path d="m16 10 5-3v10l-5-3" stroke={stroke} strokeWidth="1.7" strokeLinejoin="round" />
+            <path d="m8 9 4 3-4 3V9Z" fill={stroke} stroke="none" />
+          </svg>
+        )
+      case 'audio':
+        return (
+          <svg {...common}>
+            <path d="M8 18.5V8.8L17 6v9.5" stroke={stroke} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="6" cy="18" r="2.5" stroke={stroke} strokeWidth="1.7" />
+            <circle cx="15" cy="15" r="2.5" stroke={stroke} strokeWidth="1.7" />
+          </svg>
+        )
+      case 'image':
+        return (
+          <svg {...common}>
+            <rect x="3" y="4" width="18" height="16" rx="2" stroke={stroke} strokeWidth="1.7" />
+            <circle cx="8" cy="9" r="1.6" stroke={stroke} strokeWidth="1.5" />
+            <path d="m5.5 18 4.5-4.5 3 3 2-2 3.5 3.5" stroke={stroke} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )
+      case 'text':
+        return (
+          <svg {...common}>
+            <path d="M5 6h14M7 11h10M7 16h7" stroke={stroke} strokeWidth="1.7" strokeLinecap="round" />
+          </svg>
+        )
+      case 'link':
+      default:
+        return (
+          <svg {...common}>
+            <path d="m8.8 15.2-1.1 1.1a3.5 3.5 0 0 1-5-5l2-2a3.5 3.5 0 0 1 5-0.1" stroke={stroke} strokeWidth="1.7" strokeLinecap="round" />
+            <path d="m15.2 8.8 1.1-1.1a3.5 3.5 0 0 1 5 5l-2 2a3.5 3.5 0 0 1-5 .1" stroke={stroke} strokeWidth="1.7" strokeLinecap="round" />
+            <path d="m8 12 8-2" stroke={stroke} strokeWidth="1.7" strokeLinecap="round" />
+          </svg>
+        )
+    }
+  }
+
+  const renderTab = (value: 'all' | 'physical' | 'virtual', label: string, count: number) => {
+    const active = activeTab === value
+    return (
+      <button
+        type="button"
+        onClick={() => setActiveTab(value)}
+        aria-pressed={active}
+        style={{
+          flex: '0 0 auto',
+          border: 0,
+          borderRadius: 0,
+          borderBottom: active ? '2px solid #f4f4f5' : '2px solid transparent',
+          background: 'transparent',
+          color: active ? '#f4f4f5' : '#777b84',
+          fontSize: 12,
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          padding: '10px 12px 9px',
+          cursor: 'pointer',
+          transition: 'color 120ms ease, border-color 120ms ease',
+        }}
+      >
+        {label} <span style={{ color: active ? '#bef264' : '#5d616a' }}>{count}</span>
+      </button>
+    )
+  }
 
   const header = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-      <div>
-        <div style={{ fontSize: 10, color: '#bef264', letterSpacing: '0.08em', fontWeight: 700 }}>
-          {inlineMode ? 'AKTIV LELOHELYEK' : 'AKTIV SZPOTOK'}
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        gap: 16,
+      }}
+    >
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div
+          style={{
+            color: '#f4f4f5',
+            fontSize: isMobile ? 17 : 19,
+            fontWeight: 900,
+            letterSpacing: '0.06em',
+            lineHeight: 1.1,
+          }}
+        >
+          {panelTitle}
         </div>
-        {inlineMode ? (
-          <div style={{ marginTop: 2, fontSize: 12, color: '#a1a1aa' }}>
-            Akar most indulhatsz erte
-          </div>
-        ) : null}
-        <div style={{ marginTop: 6, display: 'flex', gap: 6 }}>
-          <button
-            type="button"
-            onClick={() => setActiveTab('free')}
-            aria-pressed={activeTab === 'free'}
-            style={{
-              border: activeTab === 'free' ? '1px solid rgba(190,242,100,0.5)' : '1px solid rgba(255,255,255,0.18)',
-              background: activeTab === 'free' ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
-              color: activeTab === 'free' ? '#ecfccb' : '#a1a1aa',
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.04em',
-              padding: '5px 9px',
-              borderRadius: 999,
-              cursor: 'pointer',
-            }}
-          >
-            Kozossegi Cuccok ({freeSpots.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('paid')}
-            aria-pressed={activeTab === 'paid'}
-            style={{
-              border: activeTab === 'paid' ? '1px solid rgba(190,242,100,0.5)' : '1px solid rgba(255,255,255,0.18)',
-              background: activeTab === 'paid' ? 'rgba(163,230,53,0.12)' : 'rgba(255,255,255,0.03)',
-              color: activeTab === 'paid' ? '#ecfccb' : '#a1a1aa',
-              fontSize: 10,
-              fontWeight: 700,
-              letterSpacing: '0.04em',
-              padding: '5px 9px',
-              borderRadius: 999,
-              cursor: 'pointer',
-            }}
-          >
-            Vallalhatatlan Cuccok ({paidSpots.length})
-          </button>
-        </div>
-        <div style={{ marginTop: 4, fontSize: 12, color: '#a1a1aa' }}>
+        <div
+          style={{
+            marginTop: 4,
+            color: '#777b84',
+            fontSize: 11,
+            fontFamily: 'var(--font-mono-tech)',
+            letterSpacing: '0.05em',
+          }}
+        >
           {activeCountLabel}
           {typeof userFoundCount === 'number' && userFoundCount > 0 ? (
-            <span style={{ marginLeft: 8, color: '#86efac', fontWeight: 700 }}>
-              {userFoundCount} aktivalva
-            </span>
+            <span style={{ marginLeft: 8, color: '#a1a1aa' }}>· {userFoundCount} felfedezve</span>
           ) : null}
         </div>
+        <div
+          style={{
+            display: 'flex',
+            gap: 4,
+            marginTop: 10,
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+          }}
+        >
+          {renderTab('all', 'MIND', allCount)}
+          {renderTab('physical', 'FIZIKAI', physicalCount)}
+          {renderTab('virtual', 'DIGITÁLIS', virtualCount)}
+        </div>
       </div>
+
       <button
         type="button"
         onClick={onClose}
         aria-label="Bezárás"
         style={{
-          width: 30,
-          height: 30,
-          border: '1px solid rgba(255,255,255,0.2)',
-          background: 'rgba(255,255,255,0.03)',
-          color: '#e4e4e7',
+          width: 42,
+          height: 42,
+          flex: '0 0 auto',
+          border: 0,
+          borderRadius: 0,
+          background: 'transparent',
+          color: '#b8bcc4',
           cursor: 'pointer',
-          fontSize: 16,
+          fontSize: 24,
           lineHeight: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 8,
-          flexShrink: 0,
+          marginTop: -4,
         }}
       >
         ×
@@ -207,29 +310,30 @@ export default function ActiveSpotsPanel({
   )
 
   const cardsRow = (
-    <div style={{ position: 'relative' }}>
-      {!isMobile && hasSpots ? (
+    <div style={{ position: 'relative', minHeight: 0 }}>
+      {!isMobile && visibleSpots.length > 0 ? (
         <>
           <button
             type="button"
             onClick={() => scrollByCard(-1)}
-            aria-label="Előző szpotok"
+            aria-label="Előző helyek"
             style={{
               position: 'absolute',
-              left: -6,
+              left: 0,
               top: '50%',
               transform: 'translateY(-50%)',
               zIndex: 2,
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              border: '1px solid rgba(190,242,100,0.46)',
-              background: 'rgba(8,10,12,0.92)',
-              color: '#ecfccb',
+              width: 34,
+              height: 54,
+              border: 0,
+              borderRight: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(7,8,11,0.92)',
+              color: '#d7dae0',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              fontSize: 22,
             }}
           >
             ‹
@@ -237,23 +341,24 @@ export default function ActiveSpotsPanel({
           <button
             type="button"
             onClick={() => scrollByCard(1)}
-            aria-label="Következő szpotok"
+            aria-label="Következő helyek"
             style={{
               position: 'absolute',
-              right: -6,
+              right: 0,
               top: '50%',
               transform: 'translateY(-50%)',
               zIndex: 2,
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              border: '1px solid rgba(190,242,100,0.46)',
-              background: 'rgba(8,10,12,0.92)',
-              color: '#ecfccb',
+              width: 34,
+              height: 54,
+              border: 0,
+              borderLeft: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(7,8,11,0.92)',
+              color: '#d7dae0',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              fontSize: 22,
             }}
           >
             ›
@@ -265,193 +370,278 @@ export default function ActiveSpotsPanel({
         ref={scrollRef}
         style={{
           display: 'flex',
-          gap: 10,
+          gap: 0,
           overflowX: 'auto',
           overflowY: 'hidden',
           scrollSnapType: 'x mandatory',
           WebkitOverflowScrolling: 'touch',
-          padding: '2px 2px 8px',
-          scrollbarWidth: 'thin',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none' as CSSProperties['msOverflowStyle'],
+          padding: '2px 34px 0',
         }}
       >
-        {!hasSpots ? (
-          <div style={{ padding: '18px 4px', color: '#71717a', fontSize: 13 }}>
-            {activeTab === 'paid'
-              ? 'Meg nincs aktiv fizetos szpot a kornyeken.'
-              : 'Meg nincs aktiv kozossegi szpot a kornyeken.'}
+        {!visibleSpots.length ? (
+          <div
+            style={{
+              width: '100%',
+              padding: '22px 4px 20px',
+              color: '#6f737d',
+              fontSize: 13,
+              fontFamily: 'var(--font-mono-tech)',
+            }}
+          >
+            {activeTab === 'physical'
+              ? 'Nincs aktív fizikai hely.'
+              : activeTab === 'virtual'
+                ? 'Nincs aktív digitális tartalom.'
+                : 'Nincs aktív hely.'}
           </div>
         ) : (
           visibleSpots.map(({ spot, distance }) => {
             const locked = isPaidLockedSpot(spot)
-            const coverImage = spot.image_url ?? spot.image_urls?.[0] ?? null
             const canEditThisSpot = canEditSpot ? canEditSpot(spot) : canEditSpots
             const isEditing = canEditThisSpot && editingSpotId === spot.id
-            const canClaim =
-              !locked &&
-              !!onClaimFound &&
-              spot.remaining_quantity > 0 &&
-              distance !== null &&
-              distance <= spot.radius_claim
-            const claimDisabled = !canClaim || claimingSpotId === spot.id
+            const adminOpen = canEditThisSpot && adminMenuSpotId === spot.id
+            const isClaiming = claimingSpotId === spot.id
+            const virtual = spot.type === 'virtual'
+            const contentLabel = virtual
+              ? getVirtualContentLabel(spot.content_type)
+              : 'HELYSZÍN'
+            const distanceLabel = formatDistance(distance)
 
-            let claimLabel = 'Megtalaltam'
-            if (claimingSpotId === spot.id) {
-              claimLabel = 'Rogzites...'
-            } else if (locked) {
-              claimLabel = 'Elobb feloldas kell'
-            } else if (spot.remaining_quantity <= 0) {
-              claimLabel = 'Elfogyott'
-            } else if (distance === null) {
-              claimLabel = 'Helymeghatarozas kell'
-            } else if (distance > spot.radius_claim) {
-              claimLabel = `Menj kozelebb (${Math.round(distance)} m)`
-            }
+            let claimLabel = 'MEGTALÁLTAM'
+            if (isClaiming) claimLabel = 'RÖGZÍTÉS…'
+            else if (locked) claimLabel = 'FELOLDÁS SZÜKSÉGES'
+            else if (spot.remaining_quantity <= 0 && !virtual) claimLabel = 'ELFOGYOTT'
+            else if (distance === null) claimLabel = 'HELYZET SZÜKSÉGES'
+            else if (distance > spot.radius_claim) claimLabel = `MENJ KÖZELEBB · ${Math.round(distance)} M`
+
+            const claimDisabled =
+              !onClaimFound ||
+              locked ||
+              isClaiming ||
+              (!virtual && spot.remaining_quantity <= 0) ||
+              distance === null ||
+              (distance !== null && distance > spot.radius_claim)
 
             return (
               <article
                 key={spot.id}
                 onClick={() => onSelectSpot(spot)}
                 style={{
+                  position: 'relative',
                   flex: '0 0 auto',
                   scrollSnapAlign: 'start',
-                  width: isMobile ? 'min(78vw, 260px)' : 220,
-                  border: '1px solid rgba(190,242,100,0.3)',
-                  borderRadius: 12,
-                  background: 'linear-gradient(180deg, rgba(9,12,16,0.96), rgba(11,14,19,0.96))',
+                  width: isMobile ? 'min(84vw, 390px)' : 'min(420px, 42vw)',
+                  minHeight: 86,
+                  borderBottom: '1px solid rgba(255,255,255,0.07)',
+                  background: 'transparent',
                   cursor: 'pointer',
-                  overflow: 'hidden',
-                  display: 'flex',
-                  flexDirection: 'column',
+                  display: 'grid',
+                  gridTemplateColumns: '42px minmax(0,1fr) auto',
+                  gap: 12,
+                  alignItems: 'center',
+                  padding: '12px 14px',
+                  boxSizing: 'border-box',
                 }}
               >
-                {coverImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={coverImage}
-                    alt={spot.title}
-                    style={{
-                      width: '100%',
-                      height: 96,
-                      objectFit: 'cover',
-                      filter: locked
-                        ? 'blur(5px) grayscale(0.35) contrast(1.02)'
-                        : 'grayscale(0.15) contrast(1.04)',
-                      transform: locked ? 'scale(1.06)' : 'none',
-                      display: 'block',
-                    }}
-                  />
-                ) : (
+                <div
+                  aria-hidden="true"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#c8cbd1',
+                    background: 'rgba(255,255,255,0.04)',
+                  }}
+                >
+                  {renderTypeIcon(spot)}
+                </div>
+
+                <div style={{ minWidth: 0 }}>
                   <div
                     style={{
-                      width: '100%',
-                      height: 96,
-                      background: 'rgba(255,255,255,0.04)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 7,
+                      minWidth: 0,
                     }}
-                  />
-                )}
-
-                <div style={{ padding: '9px 10px 11px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                  <div style={{ fontSize: 9, color: '#bef264', letterSpacing: '0.06em', fontWeight: 700 }}>
-                    {spot.spot_type === 'paid' ? 'FIZETOS' : 'AKTIV'}
-                  </div>
-                  {isEditing ? (
-                    <div style={{ display: 'grid', gap: 6 }}>
-                      <input
-                        value={editTitle}
-                        onChange={(event) => setEditTitle(event.target.value)}
-                        onClick={(event) => event.stopPropagation()}
+                  >
+                    <span
+                      style={{
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        color: '#f4f4f5',
+                        fontSize: isMobile ? 15 : 16,
+                        fontWeight: 850,
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      {spot.title}
+                    </span>
+                    {locked ? (
+                      <span
                         style={{
-                          width: '100%',
-                          border: '1px solid rgba(255,255,255,0.14)',
-                          background: 'rgba(255,255,255,0.03)',
-                          color: '#f4f4f5',
-                          fontSize: 12,
-                          padding: '7px 8px',
-                          outline: 'none',
-                        }}
-                      />
-                      <textarea
-                        value={editDescription}
-                        onChange={(event) => setEditDescription(event.target.value)}
-                        onClick={(event) => event.stopPropagation()}
-                        rows={3}
-                        style={{
-                          width: '100%',
-                          border: '1px solid rgba(255,255,255,0.14)',
-                          background: 'rgba(255,255,255,0.03)',
-                          color: '#f4f4f5',
-                          fontSize: 12,
-                          padding: '7px 8px',
-                          outline: 'none',
-                          resize: 'vertical',
-                        }}
-                      />
-                      <input
-                        type="number"
-                        min={0}
-                        step={1}
-                        value={editPriceHuf}
-                        onChange={(event) => setEditPriceHuf(event.target.value)}
-                        onClick={(event) => event.stopPropagation()}
-                        style={{
-                          width: '100%',
-                          border: '1px solid rgba(255,255,255,0.14)',
-                          background: 'rgba(255,255,255,0.03)',
-                          color: '#f4f4f5',
-                          fontSize: 12,
-                          padding: '7px 8px',
-                          outline: 'none',
-                        }}
-                      />
-                      {editError ? <div style={{ color: '#fda4af', fontSize: 11 }}>{editError}</div> : null}
-                    </div>
-                  ) : (
-                    <>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 700,
-                          color: '#f4f4f5',
-                          lineHeight: 1.25,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
+                          flex: '0 0 auto',
+                          color: '#777b84',
+                          fontSize: 9,
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
                         }}
                       >
-                        {spot.title}
-                      </div>
-                      <div style={{ fontSize: 11, color: '#94a3b8' }}>
-                        {formatDistance(distance)}
-                        {locked ? ' · zart' : ''}
-                      </div>
+                        ZÁRT
+                      </span>
+                    ) : null}
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 7,
+                      marginTop: 4,
+                      minWidth: 0,
+                      color: '#777b84',
+                      fontSize: 10,
+                      fontFamily: 'var(--font-mono-tech)',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    <span>{virtual ? 'DIGITÁLIS' : 'FIZIKAI'}</span>
+                    <span style={{ color: '#454851' }}>·</span>
+                    <span>{contentLabel}</span>
+                    <span style={{ color: '#454851' }}>·</span>
+                    <span>{distanceLabel}</span>
+                  </div>
+                </div>
 
-                      <div style={{ fontSize: 11, fontWeight: 700 }}>
-                        {typeof spot.price_huf === 'number' && spot.price_huf > 0 ? (
-                          <span style={{ color: '#ecfccb' }}>{spot.price_huf} HUF</span>
-                        ) : (
-                          <span style={{ color: '#86efac' }}>FREE</span>
-                        )}
-                      </div>
-                    </>
-                  )}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    color: '#c7cad1',
+                    fontSize: 18,
+                  }}
+                >
+                  <span aria-hidden="true">→</span>
+                  {canEditThisSpot ? (
+                    <button
+                      type="button"
+                      aria-label="Admin műveletek"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setAdminMenuSpotId((current) => (current === spot.id ? null : spot.id))
+                      }}
+                      style={{
+                        width: 30,
+                        height: 30,
+                        border: 0,
+                        background: 'transparent',
+                        color: '#737780',
+                        cursor: 'pointer',
+                        fontSize: 18,
+                      }}
+                    >
+                      ⋯
+                    </button>
+                  ) : null}
+                </div>
 
-                  <div style={{ marginTop: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {canEditThisSpot ? (
-                      isEditing ? (
-                        <>
+                {adminOpen ? (
+                  <div
+                    onClick={(event) => event.stopPropagation()}
+                    style={{
+                      gridColumn: '1 / -1',
+                      display: 'flex',
+                      gap: 8,
+                      paddingTop: 4,
+                      borderTop: '1px solid rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    {!isEditing ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingSpotId(spot.id)
+                            setEditTitle(spot.title || '')
+                            setEditDescription(spot.description || '')
+                            setEditPriceHuf(String(typeof spot.price_huf === 'number' ? Math.max(0, Math.floor(spot.price_huf)) : 0))
+                            setEditError(null)
+                            setAdminMenuSpotId(null)
+                          }}
+                          style={actionButtonStyle}
+                        >
+                          SZERKESZTÉS
+                        </button>
+                        {onDeleteSpot ? (
                           <button
                             type="button"
+                            disabled={deletingSpotId === spot.id}
+                            onClick={async () => {
+                              const confirmed = window.confirm('Biztosan törlöd ezt a spotot? Ez nem visszavonható.')
+                              if (!confirmed) return
+                              setDeletingSpotId(spot.id)
+                              setEditError(null)
+                              try {
+                                await onDeleteSpot(spot.id)
+                                setAdminMenuSpotId(null)
+                              } catch (error) {
+                                setEditError(error instanceof Error ? error.message : 'Nem sikerült törölni a szpotot.')
+                              } finally {
+                                setDeletingSpotId(null)
+                              }
+                            }}
+                            style={actionButtonStyle}
+                          >
+                            {deletingSpotId === spot.id ? 'TÖRLÉS…' : 'TÖRLÉS'}
+                          </button>
+                        ) : null}
+                      </>
+                    ) : (
+                      <div style={{ width: '100%', display: 'grid', gap: 8 }}>
+                        <input
+                          value={editTitle}
+                          onChange={(event) => setEditTitle(event.target.value)}
+                          onClick={(event) => event.stopPropagation()}
+                          placeholder="Cím"
+                          style={fieldStyle}
+                        />
+                        <textarea
+                          value={editDescription}
+                          onChange={(event) => setEditDescription(event.target.value)}
+                          onClick={(event) => event.stopPropagation()}
+                          rows={2}
+                          placeholder="Leírás"
+                          style={fieldStyle}
+                        />
+                        <input
+                          type="number"
+                          min={0}
+                          step={1}
+                          value={editPriceHuf}
+                          onChange={(event) => setEditPriceHuf(event.target.value)}
+                          onClick={(event) => event.stopPropagation()}
+                          placeholder="Ár HUF"
+                          style={fieldStyle}
+                        />
+                        {editError ? <div style={{ color: '#a1a1aa', fontSize: 11 }}>{editError}</div> : null}
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button
+                            type="button"
+                            disabled={savingSpotId === spot.id}
                             onClick={async (event) => {
                               event.stopPropagation()
                               if (!onSaveSpot) return
                               const parsedPriceHuf = Number(editPriceHuf)
                               if (!Number.isFinite(parsedPriceHuf) || parsedPriceHuf < 0) {
-                                setEditError('Az ar csak pozitiv szam lehet.')
+                                setEditError('Az ár nem lehet negatív szám.')
                                 return
                               }
-
                               setSavingSpotId(spot.id)
                               setEditError(null)
                               try {
@@ -461,187 +651,35 @@ export default function ActiveSpotsPanel({
                                   price_huf: Math.floor(parsedPriceHuf),
                                 })
                                 setEditingSpotId(null)
+                                setAdminMenuSpotId(null)
                               } catch (error) {
-                                setEditError(error instanceof Error ? error.message : 'Nem sikerult menteni a szpotot.')
+                                setEditError(error instanceof Error ? error.message : 'Nem sikerült menteni a szpotot.')
                               } finally {
                                 setSavingSpotId(null)
                               }
                             }}
-                            disabled={savingSpotId === spot.id}
-                            style={{
-                              flex: 1,
-                              border: '1px solid rgba(190,242,100,0.44)',
-                              background: 'rgba(163,230,53,0.12)',
-                              color: '#ecfccb',
-                              fontSize: 11,
-                              fontWeight: 700,
-                              padding: '6px 4px',
-                              borderRadius: 8,
-                              cursor: savingSpotId === spot.id ? 'not-allowed' : 'pointer',
-                              opacity: savingSpotId === spot.id ? 0.7 : 1,
-                            }}
+                            style={actionButtonStyle}
                           >
-                            {savingSpotId === spot.id ? 'Mentes...' : 'Mentes'}
+                            {savingSpotId === spot.id ? 'MENTÉS…' : 'MENTÉS'}
                           </button>
                           <button
                             type="button"
+                            disabled={savingSpotId === spot.id}
                             onClick={(event) => {
                               event.stopPropagation()
                               setEditingSpotId(null)
                               setEditError(null)
+                              setAdminMenuSpotId(null)
                             }}
-                            disabled={savingSpotId === spot.id}
-                            style={{
-                              flex: 1,
-                              border: '1px solid rgba(255,255,255,0.16)',
-                              background: 'rgba(255,255,255,0.04)',
-                              color: '#e4e4e7',
-                              fontSize: 11,
-                              fontWeight: 700,
-                              padding: '6px 4px',
-                              borderRadius: 8,
-                              cursor: savingSpotId === spot.id ? 'not-allowed' : 'pointer',
-                              opacity: savingSpotId === spot.id ? 0.7 : 1,
-                            }}
+                            style={actionButtonStyle}
                           >
-                            Megse
+                            MÉGSE
                           </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              setEditingSpotId(spot.id)
-                              setEditTitle(spot.title || '')
-                              setEditDescription(spot.description || '')
-                              setEditPriceHuf(String(typeof spot.price_huf === 'number' ? Math.max(0, Math.floor(spot.price_huf)) : 0))
-                              setEditError(null)
-                            }}
-                            style={{
-                              flex: 1,
-                              border: '1px solid rgba(190,242,100,0.4)',
-                              background: 'rgba(163,230,53,0.08)',
-                              color: '#ecfccb',
-                              fontSize: 11,
-                              fontWeight: 700,
-                              padding: '6px 4px',
-                              borderRadius: 8,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            Szerkesztes
-                          </button>
-                          {onDeleteSpot ? (
-                            <button
-                              type="button"
-                              disabled={deletingSpotId === spot.id}
-                              onClick={async (event) => {
-                                event.stopPropagation()
-                                const confirmed = window.confirm('Biztosan torlod ezt a spotot? Ez nem visszavonhato.')
-                                if (!confirmed) return
-                                setDeletingSpotId(spot.id)
-                                setEditError(null)
-                                try {
-                                  await onDeleteSpot(spot.id)
-                                  if (editingSpotId === spot.id) {
-                                    setEditingSpotId(null)
-                                  }
-                                } catch (error) {
-                                  setEditError(error instanceof Error ? error.message : 'Nem sikerult torolni a szpotot.')
-                                } finally {
-                                  setDeletingSpotId(null)
-                                }
-                              }}
-                              style={{
-                                flex: 1,
-                                border: '1px solid rgba(248,113,113,0.36)',
-                                background: 'rgba(127,29,29,0.2)',
-                                color: '#fecaca',
-                                fontSize: 11,
-                                fontWeight: 700,
-                                padding: '6px 4px',
-                                borderRadius: 8,
-                                cursor: deletingSpotId === spot.id ? 'not-allowed' : 'pointer',
-                                opacity: deletingSpotId === spot.id ? 0.7 : 1,
-                              }}
-                            >
-                              {deletingSpotId === spot.id ? 'Torles...' : 'Torles'}
-                            </button>
-                          ) : null}
-                        </>
-                      )
-                    ) : null}
-                    {onClaimFound ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (claimDisabled) return
-                          onClaimFound(spot)
-                        }}
-                        disabled={claimDisabled}
-                        style={{
-                          flex: 1,
-                          border: '1px solid rgba(190,242,100,0.4)',
-                          background: claimDisabled ? 'rgba(255,255,255,0.04)' : 'rgba(163,230,53,0.14)',
-                          color: claimDisabled ? '#71717a' : '#ecfccb',
-                          fontSize: 11,
-                          fontWeight: 700,
-                          padding: '6px 4px',
-                          borderRadius: 8,
-                          cursor: claimDisabled ? 'not-allowed' : 'pointer',
-                          opacity: claimingSpotId === spot.id ? 0.72 : 1,
-                        }}
-                      >
-                        {claimLabel}
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onSelectSpot(spot)
-                      }}
-                      style={{
-                        flex: 1,
-                        border: '1px solid rgba(190,242,100,0.42)',
-                        background: 'rgba(163,230,53,0.12)',
-                        color: '#ecfccb',
-                        fontSize: 11,
-                        fontWeight: 700,
-                        padding: '6px 4px',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Reszletek
-                    </button>
-                    {!locked ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onStartRoute(spot)
-                        }}
-                        style={{
-                          flex: 1,
-                          border: '1px solid rgba(255,255,255,0.16)',
-                          background: 'rgba(255,255,255,0.04)',
-                          color: '#e4e4e7',
-                          fontSize: 11,
-                          fontWeight: 700,
-                          padding: '6px 4px',
-                          borderRadius: 8,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Utvonal
-                      </button>
-                    ) : null}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                ) : null}
               </article>
             )
           })
@@ -650,87 +688,90 @@ export default function ActiveSpotsPanel({
     </div>
   )
 
-  if (layout === 'inline') {
-    return (
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          borderRadius: 16,
-          border: '1px solid rgba(190,242,100,0.3)',
-          background: 'linear-gradient(180deg, rgba(9,12,16,0.97), rgba(6,8,10,0.97))',
-          boxShadow: '0 20px 48px rgba(0,0,0,0.5)',
-          padding: '14px 16px 12px',
-          backdropFilter: 'blur(10px)',
-        }}
-      >
+  const panelSurface = (
+    <section
+      role="dialog"
+      aria-modal={layout !== 'inline'}
+      aria-label="Aktív helyek"
+      style={{
+        width: '100%',
+        background: '#07080b',
+        color: '#f4f4f5',
+        borderTop: '1px solid rgba(255,255,255,0.10)',
+        boxShadow: '0 -18px 40px rgba(0,0,0,0.38)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: isMobile ? '12px 0 10px' : '14px 0 12px',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div style={{ padding: '0 16px' }}>
         {header}
-        {cardsRow}
       </div>
-    )
-  }
+      {cardsRow}
+    </section>
+  )
 
-  if (isMobile) {
-    return (
-      <>
-        <div
-          onClick={onClose}
-          aria-hidden="true"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.32)',
-            zIndex: 44,
-          }}
-        />
-        <section
-          role="dialog"
-          aria-modal="true"
-          aria-label="Aktiv szpotok listaja"
-          style={{
-            position: 'fixed',
-            left: 0,
-            right: 0,
-            bottom: bottomOffset,
-            zIndex: 45,
-            background: 'linear-gradient(180deg, rgba(6,7,9,0.99), rgba(8,11,15,0.99))',
-            borderTop: '1px solid rgba(190,242,100,0.34)',
-            boxShadow: '0 -26px 60px rgba(0,0,0,0.46)',
-            padding: '12px 14px 16px',
-            maxHeight: '52vh',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-            <div style={{ width: 36, height: 4, background: 'rgba(163,230,53,0.5)', borderRadius: 4 }} />
-          </div>
-          {header}
-          {cardsRow}
-        </section>
-      </>
-    )
+  if (layout === 'inline') {
+    return panelSurface
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        bottom: bottomOffset,
-        zIndex: 36,
-        width: 'min(760px, calc(100vw - 24px))',
-        borderRadius: 16,
-        border: '1px solid rgba(190,242,100,0.3)',
-        background: 'linear-gradient(180deg, rgba(9,12,16,0.97), rgba(6,8,10,0.97))',
-        boxShadow: '0 20px 48px rgba(0,0,0,0.5)',
-        padding: '14px 16px 12px',
-        backdropFilter: 'blur(10px)',
-      }}
-    >
-      {header}
-      {cardsRow}
-    </div>
+    <>
+      <div
+        onClick={onClose}
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.24)',
+          zIndex: 44,
+        }}
+      />
+      <div
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: bottomOffset,
+          width: '100vw',
+          zIndex: 45,
+        }}
+      >
+        {panelSurface}
+      </div>
+      <style jsx>{`
+        div[role='dialog']::-webkit-scrollbar { display: none; }
+        @media (max-width: 900px) {
+          div[role='dialog'] { padding-right: 0 !important; }
+        }
+      `}</style>
+    </>
   )
+}
+
+const actionButtonStyle: CSSProperties = {
+  flex: 1,
+  minHeight: 34,
+  border: '1px solid rgba(255,255,255,0.10)',
+  borderRadius: 0,
+  background: 'rgba(255,255,255,0.04)',
+  color: '#d7dae0',
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: '0.08em',
+  padding: '7px 10px',
+  cursor: 'pointer',
+}
+
+const fieldStyle: CSSProperties = {
+  width: '100%',
+  border: '1px solid rgba(255,255,255,0.10)',
+  borderRadius: 0,
+  background: '#0b0c10',
+  color: '#f4f4f5',
+  fontSize: 12,
+  padding: '9px 10px',
+  outline: 'none',
+  boxSizing: 'border-box',
 }
