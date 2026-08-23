@@ -83,12 +83,13 @@ export async function POST(req: NextRequest) {
   }
 
   const spot = spotData as Pick<StickerSpot, 'id' | 'lat' | 'lng' | 'radius_claim' | 'status' | 'remaining_quantity' | 'spot_type' | 'type'>
+  const isVirtualSpot = spot.type === 'virtual'
 
   if (spot.status !== 'active') {
     return NextResponse.json({ error: 'spot_unavailable' }, { status: 409 })
   }
 
-  if (spot.remaining_quantity <= 0) {
+  if (!isVirtualSpot && spot.remaining_quantity <= 0) {
     return NextResponse.json({ error: 'spot_empty' }, { status: 409 })
   }
 
@@ -167,7 +168,7 @@ export async function POST(req: NextRequest) {
 
   // ── 7. Reserve one sticker immediately on submission ─────────────────────
   let updatedSpot = spot
-  if (spot.spot_type !== 'virtual') {
+  if (!isVirtualSpot) {
     const nextRemaining = spot.remaining_quantity - 1
     const nextStatus = nextRemaining <= 0 ? 'archived' : 'active'
 
