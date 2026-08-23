@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
   // ── 3. Fetch spot ─────────────────────────────────────────────────────────
   const { data: spotData, error: spotError } = await db
     .from('sticker_spots')
-    .select('id, lat, lng, radius_claim, status, remaining_quantity, spot_type')
+    .select('id, lat, lng, radius_claim, status, remaining_quantity, spot_type, type')
     .eq('id', spot_id.trim())
     .maybeSingle()
 
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'spot_not_found' }, { status: 404 })
   }
 
-  const spot = spotData as Pick<StickerSpot, 'id' | 'lat' | 'lng' | 'radius_claim' | 'status' | 'remaining_quantity' | 'spot_type'>
+  const spot = spotData as Pick<StickerSpot, 'id' | 'lat' | 'lng' | 'radius_claim' | 'status' | 'remaining_quantity' | 'spot_type' | 'type'>
 
   if (spot.status !== 'active') {
     return NextResponse.json({ error: 'spot_unavailable' }, { status: 409 })
@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
 
   // ── 7. Reserve one sticker immediately on submission ─────────────────────
   let updatedSpot = spot
-  if (spot.spot_type !== 'virtual') {
+  if (spot.type !== 'virtual') {
     const nextRemaining = spot.remaining_quantity - 1
     const nextStatus = nextRemaining <= 0 ? 'archived' : 'active'
 
