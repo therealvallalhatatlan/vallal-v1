@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
   if (existing) {
-    if (spot.type === 'virtual') {
+    if (spot.spot_type === 'virtual') {
       // Allow repeat claims for virtual spots: return existing claim
       const { data: existingClaim } = await db
         .from('claims')
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
 
   // ── 7. Reserve one sticker immediately on submission ─────────────────────
   let updatedSpot = spot
-  if (spot.type !== 'virtual') {
+  if (spot.spot_type !== 'virtual') {
     const nextRemaining = spot.remaining_quantity - 1
     const nextStatus = nextRemaining <= 0 ? 'archived' : 'active'
 
