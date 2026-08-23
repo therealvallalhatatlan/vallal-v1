@@ -21,6 +21,7 @@ interface Props {
   onStartRoute?: (spot: StickerSpot) => void
   onUnlock?: (spot: StickerSpot) => void
   onClaimFound?: (spot: StickerSpot) => void
+  onVirtualOpen?: (spot: StickerSpot) => void
   claimDisabled?: boolean
   claimLabel?: string
   claiming?: boolean
@@ -43,6 +44,7 @@ export default function SpotPreview({
   onStartRoute,
   onUnlock,
   onClaimFound,
+  onVirtualOpen,
   claimDisabled = false,
   claimLabel = 'Megtalaltam',
   claiming = false,
@@ -324,6 +326,25 @@ export default function SpotPreview({
               }}
             >
               {claiming ? 'Rogzites...' : claimLabel}
+            </button>
+          ) : null}
+          {spot.type === 'virtual' && onVirtualOpen ? (
+            <button
+              type="button"
+              onClick={() => onVirtualOpen(spot)}
+              style={{
+                width: '100%',
+                marginTop: 10,
+                border: '1px solid rgba(190,242,100,0.45)',
+                background: 'rgba(163,230,53,0.16)',
+                color: '#ecfccb',
+                fontSize: 13,
+                fontWeight: 700,
+                padding: '10px 12px',
+                cursor: 'pointer',
+              }}
+            >
+              MEGNYITOM
             </button>
           ) : null}
         </section>

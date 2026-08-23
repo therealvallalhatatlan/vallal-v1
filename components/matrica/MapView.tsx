@@ -291,6 +291,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
   const [spotsListOpen, setSpotsListOpen] = useState(false)
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
   const [claimingSpotId, setClaimingSpotId] = useState<string | null>(null)
+  const [virtualUrls, setVirtualUrls] = useState<Record<string, string>>({})
   const [showIntroLayer, setShowIntroLayer] = useState(false)
   const [walkthroughStepIndex, setWalkthroughStepIndex] = useState(0)
   const [phantomPanelOpen, setPhantomPanelOpen] = useState(false)
@@ -947,6 +948,44 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       setUnlockingSpotId(null)
     }
   }, [chatAuthToken, loadSpots, showToast])
+
+  const handleVirtualOpen = useCallback((spot: StickerSpot) => {
+    const url = virtualUrls[spot.id]
+    if (!url) return
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }, [virtualUrls])
+
+  const handleVirtualUnlock = useCallback(async (spot: StickerSpot) => {
+    if (!chatAuthToken) {
+      showToast('Bejelentkezes szukseges a feloldashoz.', 'error')
+      return
+    }
+    if (!userLocation) {
+      showToast('Helymeghatározás szükséges.', 'error')
+      return
+    }
+    try {
+      const res = await fetch('/api/matrica/digital/unlock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${chatAuthToken}`,
+        },
+        body: JSON.stringify({ spot_id: spot.id, lat: userLocation.lat, lng: userLocation.lng }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({} as any))
+        throw new Error(err.error || 'Feloldás sikertelen.')
+      }
+      const data = await res.json()
+      if (data.content_url) {
+        setVirtualUrls(prev => ({ ...prev, [spot.id]: data.content_url }))
+      }
+    } catch (err: any) {
+      console.error('[MapView] digital unlock failed', err)
+      showToast(err.message || 'Feloldás sikertelen.', 'error')
+    }
+  }, [chatAuthToken, userLocation, showToast])
 
   // ── Handle online user focus events ─────────────────────────────────────────
   useEffect(() => {
@@ -2169,7 +2208,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
         anchor={previewAnchor}
         onClose={handleClosePreview}
         onUnlock={handleUnlockSpot}
-        onClaimFound={handleClaimFound}
+        onClaimFound={previewSpot?.type === 'virtual' ? handleVirtualUnlock : handleClaimFound}
         claimDisabled={(() => {
           if (!previewSpot) return true
           if (claimingSpotId === previewSpot.id) return true
@@ -2197,6 +2236,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
           handleClosePreview()
           startRouteForSpot(spot)
         }}
+        onVirtualOpen={handleVirtualOpen}
       />
 
       {routeState.spot && !previewSpot && (
