@@ -1483,7 +1483,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
   }, [routeState.spot, userLocation])
 
   const handleToggleSpotsList = useCallback(() => {
-    playUiSound('toggle')
+    playUiSound('click')
 
     if (previewSpot) {
       handleClosePreview()
@@ -1967,7 +1967,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
 
 
   const handleToggleChatPanel = useCallback(() => {
-    playUiSound('toggle')
+    playUiSound('click')
     window.dispatchEvent(new CustomEvent('matrica:toggle-live-panel'))
   }, [playUiSound])
 
@@ -2474,165 +2474,82 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       />
 
       <nav
-        aria-label="Halozat gyors műveletek"
-        className="matrica-action-rail"
+        aria-label="Hálózat gyors műveletek"
+        className="matrica-action-rail fixed bottom-0 left-0 right-0 z-[60] border-t border-zinc-700 bg-zinc-950 px-3 py-6 pt-3"
         style={{
-          position: 'fixed',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 'min(560px, calc(100vw - 10px))',
-          bottom: 8,
-          zIndex: 230,
-          borderRadius: 12,
-          border: '1px solid rgba(203,213,225,0.2)',
-          background: 'linear-gradient(180deg, rgba(8,11,14,0.92) 0%, rgba(5,8,11,0.98) 100%)',
-          backdropFilter: 'blur(12px) saturate(140%)',
-          boxShadow: '0 18px 34px rgba(0,0,0,0.5), 0 0 0 1px rgba(148,163,184,0.07), inset 0 1px 0 rgba(203,213,225,0.08)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 6,
-          overflow: 'hidden',
-          padding: '7px 7px calc(8px + env(safe-area-inset-bottom, 0px))',
+          paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)',
         }}
       >
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            backgroundImage: 'repeating-linear-gradient(180deg, rgba(163,230,53,0.055) 0px, rgba(163,230,53,0.055) 1px, transparent 1px, transparent 3px)',
-            mixBlendMode: 'screen',
-            opacity: 0.18,
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="matrica-rail-sweep"
-          style={{
-            position: 'absolute',
-            inset: '-80% -25% auto',
-            height: '160%',
-            pointerEvents: 'none',
-            background: 'radial-gradient(circle at center, rgba(163,230,53,0.18) 0%, rgba(163,230,53,0) 72%)',
-            filter: 'blur(16px)',
-          }}
-        />
-        <button
-          type="button"
-          onClick={handleOpenSpotAdmin}
-          aria-label="Szpot hozzáadása"
-          title="Szpot hozzáadása"
-          className="matrica-action-btn matrica-action-btn-left"
-          style={{
-            position: 'relative',
-            clipPath: 'polygon(7% 0%, 96% 0%, 88% 100%, 0% 100%)',
-            border: '1px solid rgba(203,213,225,0.24)',
-            background: 'linear-gradient(180deg, rgba(14,19,25,0.95), rgba(7,11,16,0.96))',
-            color: '#d4d4d8',
-            padding: '8px',
-            cursor: 'pointer',
-            width: 138,
-            height: 62,
-            flex: '0 0 138px',
-            display: 'inline-flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 3,
-            boxShadow: 'inset 0 0 0 1px rgba(148,163,184,0.1)',
-          }}
-        >
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.11em' }}>UJ</span>
-        </button>
+        <div className="grid min-h-[94px] grid-cols-3 items-center divide-x divide-zinc-700 rounded-md border border-zinc-700 bg-zinc-950 text-center">
+          <button
+            type="button"
+            onClick={handleOpenSpotAdmin}
+            className="flex min-h-[84px] flex-col items-center justify-center px-2 py-4 transition-colors hover:bg-zinc-800/60"
+            aria-label="Új szpot"
+            title="Új szpot"
+          >
+            <span
+              className="text-sm font-bold uppercase text-zinc-400"
+              style={{ fontFamily: 'var(--font-mono-tech)' }}
+            >
+              ÚJ SZPOT
+            </span>
+            <span
+              className="mt-1 text-xs text-lime-100 opacity-70"
+              style={{ fontFamily: 'var(--font-mono-tech)' }}
+            >
+              Új Hely Hozzáadása
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={handleTalalokPress}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault()
-              handleTalalokPress()
-            }
-          }}
-          aria-label="Aktív szpotok"
-          title="Aktív szpotok"
-          className="matrica-action-btn matrica-action-btn-core"
-          style={{
-            position: 'relative',
-            clipPath: 'polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)',
-            border: '1px solid rgba(190,242,100,0.85)',
-            background: (previewSpot || spotsListOpen)
-              ? 'linear-gradient(180deg, rgba(55,77,12,0.97), rgba(25,38,8,0.98))'
-              : 'linear-gradient(180deg, rgba(46,67,10,0.96), rgba(20,32,7,0.98))',
-            color: '#f7fee7',
-            padding: '8px 10px',
-            cursor: 'pointer',
-            width: 206,
-            height: 62,
-            flex: '0 0 206px',
-            display: 'inline-flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 3,
-            boxShadow: '0 0 18px rgba(163,230,53,0.3), 0 14px 24px rgba(3,10,12,0.45), inset 0 0 0 1px rgba(217,249,157,0.26)',
-          }}
-        >
-          <span
-            aria-hidden="true"
-            className="matrica-core-btn-glow"
-            style={{
-              position: 'absolute',
-              inset: '-30% -12%',
-              background: 'radial-gradient(circle at 50% 45%, rgba(163,230,53,0.27), rgba(163,230,53,0) 72%)',
-              pointerEvents: 'none',
-              zIndex: 0,
+          <button
+            type="button"
+            onClick={handleTalalokPress}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                handleTalalokPress()
+              }
             }}
-          />
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2" />
-            <circle cx="12" cy="12" r="2.2" fill="currentColor" />
-          </svg>
-          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textShadow: '0 0 8px rgba(190,242,100,0.9)' }}>TALALOK</span>
-        </button>
+            className="flex min-h-[84px] flex-col items-center justify-center bg-zinc-800/90 px-2 py-4 transition-colors hover:bg-zinc-800"
+            aria-label="Összes szpot"
+            title="Összes szpot"
+          >
+            <span
+              className="text-sm font-bold uppercase text-zinc-100"
+              style={{ fontFamily: 'var(--font-mono-tech)' }}
+            >
+              ÖSSZES SZPOT
+            </span>
+            <span
+              className="mt-1 text-xs text-lime-100 opacity-70"
+              style={{ fontFamily: 'var(--font-mono-tech)' }}
+            >
+              Aktív Helyek
+            </span>
+          </button>
 
-        <button
-          type="button"
-          onClick={handleToggleChatPanel}
-          aria-label="Chat panel"
-          title="Chat panel"
-          className="matrica-action-btn matrica-action-btn-right"
-          style={{
-            position: 'relative',
-            clipPath: 'polygon(4% 0%, 93% 0%, 100% 100%, 12% 100%)',
-            border: '1px solid rgba(203,213,225,0.24)',
-            background: livePanelOpen
-              ? 'linear-gradient(180deg, rgba(16,34,44,0.96), rgba(9,18,25,0.98))'
-              : 'linear-gradient(180deg, rgba(11,16,21,0.95), rgba(6,10,14,0.98))',
-            color: '#e4e4e7',
-            padding: '8px',
-            cursor: 'pointer',
-            width: 138,
-            height: 62,
-            flex: '0 0 138px',
-            display: 'inline-flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 3,
-            boxShadow: 'inset 0 0 0 1px rgba(148,163,184,0.1)',
-          }}
-        >
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
-            <path d="M4 6.8a2.8 2.8 0 0 1 2.8-2.8h10.4A2.8 2.8 0 0 1 20 6.8v6.4a2.8 2.8 0 0 1-2.8 2.8H10.5l-3.9 3.1a.7.7 0 0 1-1.1-.55V16A2.8 2.8 0 0 1 4 13.2V6.8Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-          </svg>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em' }}>BESZELEK</span>
-        </button>
+          <button
+            type="button"
+            onClick={handleToggleChatPanel}
+            className="flex min-h-[84px] flex-col items-center justify-center px-2 transition-colors hover:bg-zinc-800/60"
+            aria-label="Csevegés"
+            title="Csevegés"
+          >
+            <span
+              className="text-sm font-bold uppercase text-zinc-400"
+              style={{ fontFamily: 'var(--font-mono-tech)' }}
+            >
+              CSEVEGÉS
+            </span>
+            <span
+              className="mt-1 text-xs text-lime-100 opacity-70"
+              style={{ fontFamily: 'var(--font-mono-tech)' }}
+            >
+              Kik Vannak Online
+            </span>
+          </button>
+        </div>
       </nav>
       </div>
 
