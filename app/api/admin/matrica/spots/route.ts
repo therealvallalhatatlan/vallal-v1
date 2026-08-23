@@ -72,6 +72,9 @@ export async function POST(req: NextRequest) {
 
   const { title, description, image_url, image_urls, lat, lng, radius_visibility, radius_claim, total_quantity } = body
   const role = getUserRoleByEmail(user.email)
+  if (role === 'user') {
+    return NextResponse.json({ error: 'spot_creation_forbidden' }, { status: 403 })
+  }
   const locationType: LocationSpotType = body.type === 'virtual' ? 'virtual' : 'physical'
   const contentType = body.content_type as VirtualSpotContentType | null
   const contentUrl = typeof body.content_url === 'string' ? body.content_url.trim() : ''

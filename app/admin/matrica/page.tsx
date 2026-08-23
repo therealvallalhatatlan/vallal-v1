@@ -208,6 +208,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
   const [priceHuf, setPriceHuf] = useState(1500)
   const [lat, setLat] = useState<number | null>(null)
   const [lng, setLng] = useState<number | null>(null)
+  const [coordinatesInput, setCoordinatesInput] = useState('')
   const [radiusVisibility, setRadiusVisibility] = useState(500)
   const [radiusClaim, setRadiusClaim] = useState(50)
   const [totalQty, setTotalQty] = useState(1)
@@ -278,11 +279,49 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
     })
   }
 
+  function handleCoordinatesChange(value: string) {
+    setCoordinatesInput(value)
+    setError(null)
+
+    const trimmed = value.trim()
+    if (!trimmed) {
+      setLat(null)
+      setLng(null)
+      return
+    }
+
+    const parts = trimmed.split(/[,\s]+/).filter(Boolean)
+    if (parts.length !== 2) {
+      setLat(null)
+      setLng(null)
+      return
+    }
+
+    const parsedLat = Number(parts[0])
+    const parsedLng = Number(parts[1])
+    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLng)) {
+      setLat(null)
+      setLng(null)
+      return
+    }
+
+    setLat(parsedLat)
+    setLng(parsedLng)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     if (!title.trim()) { setError('A cím kötelező.'); return }
-    if (lat === null || lng === null) { setError('Kattints a térképre a hely megadásához.'); return }
+    const coordinateParts = coordinatesInput.trim().split(/[,\s]+/).filter(Boolean)
+    const parsedLat = coordinateParts.length === 2 ? Number(coordinateParts[0]) : NaN
+    const parsedLng = coordinateParts.length === 2 ? Number(coordinateParts[1]) : NaN
+    if (coordinateParts.length !== 2 || !Number.isFinite(parsedLat) || !Number.isFinite(parsedLng) || parsedLat < -90 || parsedLat > 90 || parsedLng < -180 || parsedLng > 180) {
+      setError('Adj meg érvényes koordinátát: pl. 47.45072865636555, 19.17387437340058')
+      return
+    }
+    setLat(parsedLat)
+    setLng(parsedLng)
     if (locationType === 'virtual' && !contentType) { setError('Virtual spot requires a content type.'); return }
     const normalizedContentUrl = locationType === 'virtual' ? contentUrl.trim() : ''
     if (locationType === 'virtual' && !normalizedContentUrl) {
@@ -397,7 +436,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
       onCreated(json.spot)
       // Reset form
       setTitle(''); setDescription(''); setLocationType('physical'); setContentType(''); setContentUrl(''); setSpotType('free'); setPriceHuf(1500); setLat(null); setLng(null)
-      setRadiusVisibility(500); setRadiusClaim(50); setTotalQty(1)
+      setRadiusVisibility(500); setRadiusClaim(50); setTotalQty(1); setCoordinatesInput('')
       imagePreviews.forEach((preview) => URL.revokeObjectURL(preview))
       setImageFiles([]); setImagePreviews([])
       setTimeout(() => setSuccess(false), 3000)
@@ -572,10 +611,37 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
         </div>
         ) : null}
 
-        {/* Map picker */}
+        {/* Coordinates */}
         <div>
-          <label style={s.label}>Helyszín *</label>
-          <MapPicker lat={lat} lng={lng} onChange={(la, ln) => { setLat(la); setLng(ln) }} />
+          <label style={s.label} htmlFor="sp-coordinates">Koordináták *</label>
+          <input
+            id="sp-coordinates"
+            type="text"
+            inputMode="decimal"
+            style={s.input}
+            value={coordinatesInput}
+            onChange={(e) => handleCoordinatesChange(e.target.value)}
+            placeholder="47.45072865636555, 19.17387437340058"
+            autoComplete="off"
+          />
+          <p style={{ margin: '6px 0 0', fontSize: 11, color: '#6b7280', lineHeight: 1.35 }}>
+            Google Mapsből közvetlenül bemásolható. A formátum: szélesség, hosszúság.
+          </p>
+          {lat !== null && lng !== null && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 ? (
+            <div style={{ marginTop: 8, fontSize: 11, color: '#a3e635' }}>
+              ✓ {lat.toFixed(6)}, {lng.toFixed(6)}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Map preview / manual fallback */}
+        <div>
+          <label style={s.label}>Helyszín</label>
+          <MapPicker lat={lat} lng={lng} onChange={(la, ln) => {
+            setLat(la)
+            setLng(ln)
+            setCoordinatesInput(`${la}, ${ln}`)
+          }} />
         </div>
 
         {locationType === 'virtual' ? (
@@ -961,7 +1027,13 @@ export default function MatricaAdminPage() {
           </div>
         </div>
 
-        {accessToken ? <CreateSpotForm accessToken={accessToken} canCreatePaid={userRole === 'admin' || userRole === 'editor'} onCreated={handleCreated} /> : null}
+        {accessToken && (userRole === 'admin' || userRole === 'editor') ? (
+          <CreateSpotForm
+            accessToken={accessToken}
+            canCreatePaid={userRole === 'admin' || userRole === 'editor'}
+            onCreated={handleCreated}
+          />
+        ) : null}
 
         {loadingSpots ? (
           <div style={{ ...s.card, color: '#71717a', fontSize: 14 }}>Betöltés…</div>

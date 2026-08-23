@@ -104,6 +104,12 @@ export default function SiteHeader() {
 
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
+
   return (
     <header
       className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-zinc-800 bg-zinc-950 px-6"
@@ -202,48 +208,65 @@ export default function SiteHeader() {
             {/* Auth / Profile */}
             <div className="relative border-b border-zinc-800 px-5 py-5">
               {user ? (
-                <SheetClose asChild>
+                <div className="space-y-2">
+                  <SheetClose asChild>
                     <Link
                       href="/dashboard"
-                    className="group flex w-full items-center gap-4 border border-zinc-800 bg-zinc-900/30 px-5 py-4 transition-all hover:border-lime-400/50 hover:bg-lime-400/[0.035]"
-                  >
-                    {/* Avatar */}
-                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900">
-                      {avatarUrl ? (
-                        <img
-                          src={avatarUrl}
-                          alt=""
-                          className="h-full w-full object-cover grayscale transition-all group-hover:grayscale-0"
-                        />
-                      ) : (
-                        <span className="text-sm font-bold text-lime-200">
-                          {avatarLetter}
-                        </span>
-                      )}
+                      className="group flex w-full items-center gap-4 border border-zinc-800 bg-zinc-900/30 px-5 py-4 transition-all hover:border-lime-400/50 hover:bg-lime-400/[0.035]"
+                    >
+                      {/* Avatar */}
+                      <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900">
+                        {avatarUrl ? (
+                          <img
+                            src={avatarUrl}
+                            alt=""
+                            className="h-full w-full object-cover grayscale transition-all group-hover:grayscale-0"
+                          />
+                        ) : (
+                          <span className="text-sm font-bold text-lime-200">
+                            {avatarLetter}
+                          </span>
+                        )}
 
-                      <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.8)]" />
-                    </div>
-
-                    {/* User information */}
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs font-bold tracking-[0.16em] text-lime-200">
-                        {displayName}
+                        <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.8)]" />
                       </div>
 
-                      {user.email && (
-                        <div className="mt-1 truncate text-[10px] tracking-[0.05em] text-zinc-500">
-                          {user.email}
+                      {/* User information */}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-xs font-bold tracking-[0.16em] text-lime-200">
+                          {displayName}
                         </div>
-                      )}
 
-                      <div className="mt-2 text-[9px] uppercase tracking-[0.12em] text-zinc-600">
-                        Open profile
+                        {user.email && (
+                          <div className="mt-1 truncate text-[10px] tracking-[0.05em] text-zinc-500">
+                            {user.email}
+                          </div>
+                        )}
+
+                        <div className="mt-2 text-[9px] uppercase tracking-[0.12em] text-zinc-600">
+                          Open dashboard
+                        </div>
                       </div>
-                    </div>
 
-                    <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-600 transition-colors group-hover:text-lime-300" />
-                  </Link>
-                </SheetClose>
+                      <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-600 transition-colors group-hover:text-lime-300" />
+                    </Link>
+                  </SheetClose>
+
+                  <SheetClose asChild>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="group flex w-full items-center justify-between border border-zinc-800 px-5 py-3 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
+                    >
+                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500 transition-colors group-hover:text-zinc-200">
+                        Kijelentkezés
+                      </span>
+                      <span className="text-[9px] uppercase tracking-[0.12em] text-zinc-700 transition-colors group-hover:text-zinc-500">
+                        Logout
+                      </span>
+                    </button>
+                  </SheetClose>
+                </div>
               ) : (
                 <SheetClose asChild>
                   <Link
