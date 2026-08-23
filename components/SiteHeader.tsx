@@ -25,7 +25,7 @@ const menuItems = [
   },
   {
     href: "/halozat",
-    label: "NETWORK",
+    label: "HÁLÓZAT",
     description: "Map, spots, drops and live signals.",
   },
   {
@@ -133,8 +133,8 @@ export default function SiteHeader() {
         {/* Logged-in avatar */}
         {user && (
           <Link
-            href="/profile"
-            aria-label="Open profile"
+            href="/dashboard"
+            aria-label="Open dashboard"
             className="group relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900 transition-all hover:border-lime-400/70 hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]"
           >
             {avatarUrl ? (
@@ -203,8 +203,8 @@ export default function SiteHeader() {
             <div className="relative border-b border-zinc-800 px-5 py-5">
               {user ? (
                 <SheetClose asChild>
-                  <Link
-                    href="/profile"
+                    <Link
+                      href="/dashboard"
                     className="group flex w-full items-center gap-4 border border-zinc-800 bg-zinc-900/30 px-5 py-4 transition-all hover:border-lime-400/50 hover:bg-lime-400/[0.035]"
                   >
                     {/* Avatar */}
@@ -306,7 +306,7 @@ export default function SiteHeader() {
               <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.12em] text-zinc-600">
                 <span className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-lime-400 shadow-[0_0_7px_rgba(163,230,53,0.7)]" />
-                  Network online
+                  Hálózat online
                 </span>
 
                 <span>Public access</span>

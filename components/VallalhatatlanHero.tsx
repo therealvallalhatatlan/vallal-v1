@@ -12,6 +12,8 @@ const montserrat = Montserrat({
 
 export default function VallalhatatlanHero() {
   const [activeDropCount, setActiveDropCount] = useState(17)
+  const [physicalSpotCount, setPhysicalSpotCount] = useState<number | null>(null)
+  const [virtualSpotCount, setVirtualSpotCount] = useState<number | null>(null)
   const [registeredUsers, setRegisteredUsers] = useState<number | null>(null)
   const [networkStatus, setNetworkStatus] = useState<
     "idle" | "loading" | "maintenance"
@@ -57,13 +59,38 @@ export default function VallalhatatlanHero() {
       }
     }
 
+    async function loadSpotCounts() {
+      try {
+        const response = await fetch("/api/matrica/spots", {
+          cache: "no-store",
+        })
+
+        const data = await response.json()
+
+        if (!cancelled && response.ok && Array.isArray(data?.spots)) {
+          setPhysicalSpotCount(
+            data.spots.filter((spot: { type?: string }) => spot.type === "physical").length,
+          )
+          setVirtualSpotCount(
+            data.spots.filter((spot: { type?: string }) => spot.type === "virtual").length,
+          )
+        }
+      } catch {
+        // Keep null state when the spots endpoint is unavailable.
+      }
+    }
+
     void loadActiveDropCount()
     void loadRegisteredUsers()
+    void loadSpotCounts()
 
     return () => {
       cancelled = true
     }
   }, [])
+
+  const formatHeroCount = (value: number | null) =>
+    value === null ? "--" : String(value).padStart(2, "0")
 
   useEffect(() => {
     if (networkStatus !== "loading") {
@@ -128,7 +155,17 @@ export default function VallalhatatlanHero() {
               : `${registeredUsers} REGISZTRÁLT FELHASZNÁLÓ`}
           </p>
 
-          <p>{String(activeDropCount).padStart(2, "0")} AKTÍV SZPOT</p>
+          <p>
+            <span>{formatHeroCount(physicalSpotCount)}</span>
+            {" "}
+            ELREJTETT TÁRGY
+          </p>
+
+          <p>
+            <span>{formatHeroCount(virtualSpotCount)}</span>
+            {" "}
+            ELÉRHETŐ TARTALOM
+          </p>
 
           <p>39 KINYOMTATOTT TÖRTÉNET</p>
 
