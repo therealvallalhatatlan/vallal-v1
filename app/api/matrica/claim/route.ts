@@ -125,6 +125,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
   if (existing) {
+    if (spot.type === 'virtual') {
+      // Allow repeat claims for virtual spots: return existing claim
+      const { data: existingClaim } = await db
+        .from('claims')
+        .select('id, status, created_at')
+        .eq('id', existing.id)
+        .single()
+      return NextResponse.json({ claim: existingClaim, spot }, { status: 200 })
+    }
     return NextResponse.json({ error: 'already_claimed' }, { status: 409 })
   }
 
