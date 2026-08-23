@@ -157,32 +157,37 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 7. Reserve one sticker immediately on submission ─────────────────────
-  const nextRemaining = spot.remaining_quantity - 1
-  const nextStatus = nextRemaining <= 0 ? 'archived' : 'active'
+  let updatedSpot = spot
+  if (spot.spot_type !== 'virtual') {
+    const nextRemaining = spot.remaining_quantity - 1
+    const nextStatus = nextRemaining <= 0 ? 'archived' : 'active'
 
-  const { data: reservedSpot, error: reserveError } = await db
-    .from('sticker_spots')
-    .update({
-      remaining_quantity: nextRemaining,
-      status: nextStatus,
-    })
-    .eq('id', spot.id)
-    .eq('status', 'active')
-    .eq('remaining_quantity', spot.remaining_quantity)
-    .select('id, remaining_quantity, status')
-    .maybeSingle()
+    const { data: reservedSpot, error: reserveError } = await db
+      .from('sticker_spots')
+      .update({
+        remaining_quantity: nextRemaining,
+        status: nextStatus,
+      })
+      .eq('id', spot.id)
+      .eq('status', 'active')
+      .eq('remaining_quantity', spot.remaining_quantity)
+      .select('id, remaining_quantity, status')
+      .maybeSingle()
 
-  // If reservation fails due concurrent update, undo pending claim so state stays consistent.
-  if (reserveError || !reservedSpot) {
-    await db.from('claims').delete().eq('id', claim.id)
+    // If reservation fails due concurrent update, undo pending claim so state stays consistent.
+    if (reserveError || !reservedSpot) {
+      await db.from('claims').delete().eq('id', claim.id)
 
-    if (reserveError) {
-      console.error('[matrica/claim] reserve error', reserveError)
-      return NextResponse.json({ error: 'server_error' }, { status: 500 })
+      if (reserveError) {
+        console.error('[matrica/claim] reserve error', reserveError)
+        return NextResponse.json({ error: 'server_error' }, { status: 500 })
+      }
+
+      return NextResponse.json({ error: 'spot_empty' }, { status: 409 })
     }
 
-    return NextResponse.json({ error: 'spot_empty' }, { status: 409 })
+    updatedSpot = reservedSpot
   }
 
-  return NextResponse.json({ claim, spot: reservedSpot }, { status: 201 })
+  return NextResponse.json({ claim, spot: updatedSpot }, { status: 201 })
 }

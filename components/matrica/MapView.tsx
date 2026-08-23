@@ -292,6 +292,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
   const [claimingSpotId, setClaimingSpotId] = useState<string | null>(null)
   const [virtualUrls, setVirtualUrls] = useState<Record<string, string>>({})
+  const [virtualClaimed, setVirtualClaimed] = useState<Record<string, boolean>>({})
   const [showIntroLayer, setShowIntroLayer] = useState(false)
   const [walkthroughStepIndex, setWalkthroughStepIndex] = useState(0)
   const [phantomPanelOpen, setPhantomPanelOpen] = useState(false)
@@ -965,7 +966,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       return
     }
     try {
-      const res = await fetch('/api/matrica/digital/unlock', {
+      const unlockRes = await fetch('/api/matrica/digital/unlock', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -973,17 +974,37 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
         },
         body: JSON.stringify({ spot_id: spot.id, lat: userLocation.lat, lng: userLocation.lng }),
       })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({} as any))
+      if (!unlockRes.ok) {
+        const err = await unlockRes.json().catch(() => ({} as any))
         throw new Error(err.error || 'Feloldás sikertelen.')
       }
-      const data = await res.json()
-      if (data.content_url) {
-        setVirtualUrls(prev => ({ ...prev, [spot.id]: data.content_url }))
+      const { content_url } = await unlockRes.json()
+
+      // Claim the virtual spot
+      const claimRes = await fetch('/api/matrica/claim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${chatAuthToken}`,
+        },
+        body: JSON.stringify({
+          spot_id: spot.id,
+          user_lat: userLocation.lat,
+          user_lng: userLocation.lng,
+          user_image_url: null,
+          comment: null,
+        }),
+      })
+      if (!claimRes.ok) {
+        const err = await claimRes.json().catch(() => ({} as any))
+        throw new Error(err.error || 'Megtalanasi jeloles sikertelen.')
       }
+      // Store URL and mark claimed
+      setVirtualUrls(prev => ({ ...prev, [spot.id]: content_url }))
+      setVirtualClaimed(prev => ({ ...prev, [spot.id]: true }))
     } catch (err: any) {
-      console.error('[MapView] digital unlock failed', err)
-      showToast(err.message || 'Feloldás sikertelen.', 'error')
+      console.error('[MapView] virtual unlock+claim failed', err)
+      showToast(err.message || 'Feloldás vagy jelölés sikertelen.', 'error')
     }
   }, [chatAuthToken, userLocation, showToast])
 
@@ -2236,7 +2257,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
           handleClosePreview()
           startRouteForSpot(spot)
         }}
-        onVirtualOpen={handleVirtualOpen}
+        onVirtualOpen={previewSpot && virtualClaimed[previewSpot.id] ? handleVirtualOpen : undefined}
       />
 
       {routeState.spot && !previewSpot && (
