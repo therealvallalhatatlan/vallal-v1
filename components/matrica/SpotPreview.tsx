@@ -21,7 +21,14 @@ interface Props {
   onStartRoute?: (spot: StickerSpot) => void
   onUnlock?: (spot: StickerSpot) => void
   onClaimFound?: (spot: StickerSpot) => void
-  onVirtualOpen?: (spot: StickerSpot) => void
+  /** UI-only: virtual spot indicator */
+  isVirtual?: boolean
+  /** UI-only: distance in meters to user */
+  distanceMeters?: number | null
+  /** UI-only: within claim radius */
+  isWithinClaimRadius?: boolean
+  /** UI-only: whether user already claimed */
+  isClaimed?: boolean
   claimDisabled?: boolean
   claimLabel?: string
   claiming?: boolean
@@ -44,7 +51,10 @@ export default function SpotPreview({
   onStartRoute,
   onUnlock,
   onClaimFound,
-  onVirtualOpen,
+  isVirtual = false,
+  distanceMeters = null,
+  isWithinClaimRadius = false,
+  isClaimed = false,
   claimDisabled = false,
   claimLabel = 'Megtalaltam',
   claiming = false,
@@ -178,7 +188,7 @@ export default function SpotPreview({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.62)',
+            background: 'rgba(0,0,0,0.68)',
             zIndex: 4190,
           }}
         />
@@ -189,50 +199,68 @@ export default function SpotPreview({
           aria-label={`${spot.title} szpot`}
           style={{
             position: 'fixed',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 'min(540px, calc(100vw - 18px))',
-            maxHeight: 'min(86dvh, 780px)',
+            left: 0,
+            right: 0,
+            bottom: 'calc(var(--matrica-bottom-bar-height, 84px) + 4px)',
+            width: '100%',
+            maxHeight: 'min(72dvh, 720px)',
             overflowY: 'auto',
             zIndex: 4200,
-            background: 'linear-gradient(180deg, rgba(6,7,9,0.99), rgba(8,11,15,0.99))',
-            border: '1px solid rgba(190,242,100,0.36)',
-            borderBottom: '1px solid rgba(255,255,255,0.08)',
-            boxShadow: '0 -26px 60px rgba(0,0,0,0.46)',
-            padding: '12px 16px calc(18px + env(safe-area-inset-bottom, 0px))',
+            background: 'rgba(5,7,9,0.985)',
+            borderTop: '1px solid rgba(190,242,100,0.28)',
+            boxShadow: '0 -20px 50px rgba(0,0,0,0.52)',
+            padding: '16px 18px calc(20px + env(safe-area-inset-bottom, 0px))',
+            fontFamily: "'Anton', 'Arial Narrow', sans-serif",
+            color: '#f4f4f5',
+            boxSizing: 'border-box',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
-            <div
-              style={{
-                width: 36,
-                height: 4,
-                background: 'rgba(163,230,53,0.52)',
-              }}
-            />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <div style={{ width: 42, height: 3, background: '#bef264' }} />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 11, color: '#bef264', fontWeight: 700, letterSpacing: '0.08em' }}>
-                {isPaid ? 'FIZETOS SZPOT' : 'AKTIV SZPOT'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, alignItems: 'flex-start' }}>
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: '#bef264',
+                  fontWeight: 800,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {isVirtual ? 'DIGITÁLIS SZPOT' : isPaid ? 'FIZETŐS SZPOT' : 'AKTÍV SZPOT'}
               </div>
-              <h3 style={{ margin: '4px 0 0', fontSize: 18, lineHeight: 1.2, color: '#f4f4f5' }}>{spot.title}</h3>
+              <h3
+                style={{
+                  margin: '6px 0 0',
+                  fontSize: 'clamp(22px, 6vw, 28px)',
+                  lineHeight: 1.05,
+                  color: '#f4f4f5',
+                  fontWeight: 800,
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                {spot.title}
+              </h3>
             </div>
+
             <button
               type="button"
               onClick={onClose}
               aria-label="Bezárás"
               style={{
-                width: 30,
-                height: 30,
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.03)',
-                color: '#e4e4e7',
+                width: 42,
+                height: 42,
+                flex: '0 0 auto',
+                border: '1px solid rgba(255,255,255,0.12)',
+                background: 'rgba(255,255,255,0.04)',
+                color: '#f4f4f5',
                 cursor: 'pointer',
-                fontSize: 16,
+                fontSize: 20,
                 lineHeight: 1,
+                fontFamily: 'inherit',
               }}
             >
               ×
@@ -242,111 +270,168 @@ export default function SpotPreview({
           {imageBlock}
 
           {canShowDetails && spot.description ? (
-            <p style={{ margin: '10px 0 0', color: '#d4d4d8', fontSize: 13, lineHeight: 1.45 }}>
+            <p style={{ margin: '14px 0 0', color: '#d4d4d8', fontSize: 15, lineHeight: 1.45, fontFamily: 'inherit' }}>
               {spot.description}
             </p>
           ) : null}
 
           <div
             style={{
-              marginTop: 12,
-              border: '1px solid rgba(255,255,255,0.14)',
-              background: 'rgba(255,255,255,0.04)',
-              padding: '10px 11px',
+              marginTop: 16,
+              borderTop: '1px solid rgba(255,255,255,0.10)',
+              borderBottom: '1px solid rgba(255,255,255,0.10)',
+              padding: '12px 0',
             }}
           >
-            <div style={{ color: '#bef264', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>KOZELITO TAVOLSAG</div>
-            <div style={{ marginTop: 4, color: '#f8fafc', fontSize: 14, fontWeight: 700 }}>{approxDistance}</div>
+            <div style={{ color: '#bef264', fontSize: 11, fontWeight: 800, letterSpacing: '0.10em', textTransform: 'uppercase' }}>
+              KÖZELÍTŐ TÁVOLSÁG
+            </div>
+            <div style={{ marginTop: 5, color: '#f8fafc', fontSize: 18, fontWeight: 800, lineHeight: 1.2 }}>
+              {approxDistance}
+            </div>
           </div>
 
-          {isPaid ? (
-            <div style={{ marginTop: 9, fontSize: 12, color: '#cbd5e1' }}>
-              {isLocked ? `Feloldas ara: ${priceHuf} HUF / 24 ora` : 'Feloldva: teljes adatok elerhetok'}
+          {isVirtual ? (
+            distanceMeters !== null ? (
+              isClaimed ? (
+                <div style={{ marginTop: 12, color: '#bef264', fontSize: 14, fontWeight: 800 }}>
+                  ✓ FELFEDEZVE
+                </div>
+              ) : isWithinClaimRadius ? (
+                <div style={{ marginTop: 12, color: '#bef264', fontSize: 14, fontWeight: 800 }}>
+                  ZÓNA AKTÍV
+                </div>
+              ) : (
+                <div style={{ marginTop: 12, color: '#d4d4d8', fontSize: 14, fontWeight: 800 }}>
+                  ZÁRVA • {spot.radius_claim} m
+                </div>
+              )
+            ) : (
+              <div style={{ marginTop: 12, color: '#d4d4d8', fontSize: 14, fontWeight: 800 }}>
+                HELYMEGHATÁROZÁS SZÜKSÉGES
+              </div>
+            )
+          ) : isPaid ? (
+            <div style={{ marginTop: 12, color: '#d4d4d8', fontSize: 14, lineHeight: 1.4 }}>
+              {isLocked ? `Feloldás ára: ${priceHuf} HUF / 24 óra` : 'Feloldva: teljes adatok elérhetők'}
             </div>
           ) : null}
 
-          {isPaid && isLocked && onUnlock ? (
-            <button
-              type="button"
-              onClick={() => onUnlock(spot)}
-              disabled={unlocking}
-              style={{
-                width: '100%',
-                marginTop: 12,
-                border: '1px solid rgba(190,242,100,0.45)',
-                background: 'rgba(163,230,53,0.14)',
-                color: '#ecfccb',
-                fontSize: 13,
-                fontWeight: 700,
-                padding: '10px 12px',
-                cursor: unlocking ? 'not-allowed' : 'pointer',
-                opacity: unlocking ? 0.7 : 1,
-              }}
-            >
-              {unlocking ? 'Atiranyitas fizeteshez...' : 'Fizetessel feloldom'}
-            </button>
-          ) : null}
+          {isVirtual ? (
+            isClaimed ? (
+              <button
+                type="button"
+                onClick={() => onClaimFound?.(spot)}
+                style={{
+                  width: '100%',
+                  marginTop: 14,
+                  border: '1px solid rgba(190,242,100,0.34)',
+                  background: 'rgba(163,230,53,0.10)',
+                  color: '#ecfccb',
+                  fontSize: 15,
+                  fontWeight: 800,
+                  padding: '13px 14px',
+                  minHeight: 50,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                MEGNYITOM
+              </button>
+            ) : isWithinClaimRadius ? (
+              <button
+                type="button"
+                onClick={() => onClaimFound?.(spot)}
+                style={{
+                  width: '100%',
+                  marginTop: 14,
+                  border: '1px solid rgba(190,242,100,0.34)',
+                  background: 'rgba(163,230,53,0.10)',
+                  color: '#ecfccb',
+                  fontSize: 15,
+                  fontWeight: 800,
+                  padding: '13px 14px',
+                  minHeight: 50,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                FELFEDEZTEM
+              </button>
+            ) : null
+          ) : (
+            <>
+              {isPaid && isLocked && onUnlock ? (
+                <button
+                  type="button"
+                  onClick={() => onUnlock(spot)}
+                  disabled={unlocking}
+                  style={{
+                    width: '100%',
+                    marginTop: 14,
+                    border: '1px solid rgba(190,242,100,0.34)',
+                    background: 'rgba(163,230,53,0.10)',
+                    color: '#ecfccb',
+                    fontSize: 15,
+                    fontWeight: 800,
+                    padding: '13px 14px',
+                    minHeight: 50,
+                    cursor: unlocking ? 'not-allowed' : 'pointer',
+                    opacity: unlocking ? 0.7 : 1,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {unlocking ? 'ÁTIRÁNYÍTÁS FIZETÉSHEZ...' : 'SZPOT FELOLDÁSA'}
+                </button>
+              ) : null}
 
-          {onStartRoute && (!isPaid || !isLocked) ? (
-            <button
-              type="button"
-              onClick={() => onStartRoute(spot)}
-              style={{
-                width: '100%',
-                marginTop: 12,
-                border: '1px solid rgba(255,255,255,0.18)',
-                background: 'rgba(255,255,255,0.04)',
-                color: '#f5f5f5',
-                fontSize: 13,
-                fontWeight: 700,
-                padding: '10px 12px',
-                cursor: 'pointer',
-              }}
-            >
-              Utvonal inditasa
-            </button>
-          ) : null}
+              {onStartRoute && (!isPaid || !isLocked) ? (
+                <button
+                  type="button"
+                  onClick={() => onStartRoute(spot)}
+                  style={{
+                    width: '100%',
+                    marginTop: 12,
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    background: 'rgba(255,255,255,0.045)',
+                    color: '#f5f5f5',
+                    fontSize: 15,
+                    fontWeight: 800,
+                    padding: '13px 14px',
+                    minHeight: 50,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  ÚTVONAL INDÍTÁSA
+                </button>
+              ) : null}
 
-          {onClaimFound && (!isPaid || !isLocked) ? (
-            <button
-              type="button"
-              onClick={() => onClaimFound(spot)}
-              disabled={claimDisabled || claiming}
-              style={{
-                width: '100%',
-                marginTop: 10,
-                border: '1px solid rgba(190,242,100,0.45)',
-                background: claimDisabled || claiming ? 'rgba(255,255,255,0.05)' : 'rgba(163,230,53,0.16)',
-                color: claimDisabled || claiming ? '#71717a' : '#ecfccb',
-                fontSize: 13,
-                fontWeight: 700,
-                padding: '10px 12px',
-                cursor: claimDisabled || claiming ? 'not-allowed' : 'pointer',
-                opacity: claiming ? 0.72 : 1,
-              }}
-            >
-              {claiming ? 'Rogzites...' : claimLabel}
-            </button>
-          ) : null}
-          {spot.type === 'virtual' && onVirtualOpen ? (
-            <button
-              type="button"
-              onClick={() => onVirtualOpen(spot)}
-              style={{
-                width: '100%',
-                marginTop: 10,
-                border: '1px solid rgba(190,242,100,0.45)',
-                background: 'rgba(163,230,53,0.16)',
-                color: '#ecfccb',
-                fontSize: 13,
-                fontWeight: 700,
-                padding: '10px 12px',
-                cursor: 'pointer',
-              }}
-            >
-              MEGNYITOM
-            </button>
-          ) : null}
+              {onClaimFound && (!isPaid || !isLocked) ? (
+                <button
+                  type="button"
+                  onClick={() => onClaimFound(spot)}
+                  disabled={claimDisabled || claiming}
+                  style={{
+                    width: '100%',
+                    marginTop: 12,
+                    border: '1px solid rgba(190,242,100,0.34)',
+                    background: claimDisabled || claiming ? 'rgba(255,255,255,0.04)' : 'rgba(163,230,53,0.10)',
+                    color: claimDisabled || claiming ? '#71717a' : '#ecfccb',
+                    fontSize: 15,
+                    fontWeight: 800,
+                    padding: '13px 14px',
+                    minHeight: 50,
+                    cursor: claimDisabled || claiming ? 'not-allowed' : 'pointer',
+                    opacity: claiming ? 0.72 : 1,
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  {claiming ? 'RÖGZÍTÉS...' : claimLabel}
+                </button>
+              ) : null}
+            </>
+          )}
         </section>
       </>
     )
@@ -366,34 +451,36 @@ export default function SpotPreview({
         left: centeredLeft,
         top: '50%',
         zIndex: 4200,
-        width: cardWidth,
+        width: 'min(380px, calc(100vw - 24px))',
         maxWidth: 'calc(100vw - 24px)',
         maxHeight: 'min(82dvh, 760px)',
         overflowY: 'auto',
         transform: 'translate(-50%, -50%)',
-        border: '1px solid rgba(190,242,100,0.34)',
-        background: 'linear-gradient(180deg, rgba(8,10,12,0.98), rgba(4,6,8,0.98))',
+        border: '1px solid rgba(190,242,100,0.26)',
+        background: 'rgba(5,7,9,0.985)',
         color: '#f4f4f5',
         boxShadow: '0 20px 48px rgba(0,0,0,0.52), inset 0 0 0 1px rgba(255,255,255,0.03)',
         pointerEvents: 'auto',
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'blur(10px)',
+        fontFamily: "'Anton', 'Arial Narrow', sans-serif",
       }}
     >
-      <div style={{ padding: '11px 12px 12px' }}>
-        <div style={{ fontSize: 10, color: '#bef264', letterSpacing: '0.08em', fontWeight: 700 }}>
+      <div style={{ padding: '16px 18px 18px' }}>
+        <div style={{ fontSize: 11, color: '#bef264', letterSpacing: '0.12em', fontWeight: 800 }}>
           {isPaid ? 'FIZETOS SZPOT' : 'AKTIV SZPOT'}
         </div>
-        <div style={{ marginTop: 4, fontSize: 16, lineHeight: 1.2, fontWeight: 700 }}>{spot.title}</div>
+        <div style={{ marginTop: 6, fontSize: 23, lineHeight: 1.08, fontWeight: 800 }}>{spot.title}</div>
         <div
           style={{
             marginTop: 10,
-            border: '1px solid rgba(255,255,255,0.14)',
-            background: 'rgba(255,255,255,0.04)',
-            padding: '7px 9px',
+            borderTop: '1px solid rgba(255,255,255,0.10)',
+            borderBottom: '1px solid rgba(255,255,255,0.10)',
+            background: 'transparent',
+            padding: '12px 0',
           }}
         >
           <div style={{ fontSize: 11, color: '#bef264', letterSpacing: '0.08em', fontWeight: 700 }}>KOZELITO TAVOLSAG</div>
-          <div style={{ marginTop: 3, fontSize: 13, color: '#f8fafc', fontWeight: 700 }}>{approxDistance}</div>
+          <div style={{ marginTop: 5, fontSize: 17, color: '#f8fafc', fontWeight: 800 }}>{approxDistance}</div>
         </div>
 
         {imageBlock}
@@ -421,9 +508,10 @@ export default function SpotPreview({
               border: '1px solid rgba(190,242,100,0.45)',
               background: 'rgba(163,230,53,0.14)',
               color: '#ecfccb',
-              fontSize: 12,
-              fontWeight: 700,
-              padding: '8px 10px',
+              fontSize: 14,
+              fontWeight: 800,
+              padding: '12px 14px',
+              minHeight: 48,
               cursor: unlocking ? 'not-allowed' : 'pointer',
               opacity: unlocking ? 0.7 : 1,
             }}
@@ -442,9 +530,10 @@ export default function SpotPreview({
               border: '1px solid rgba(255,255,255,0.18)',
               background: 'rgba(255,255,255,0.04)',
               color: '#f5f5f5',
-              fontSize: 12,
-              fontWeight: 700,
-              padding: '8px 10px',
+              fontSize: 14,
+              fontWeight: 800,
+              padding: '12px 14px',
+              minHeight: 48,
               cursor: 'pointer',
             }}
           >
@@ -463,9 +552,10 @@ export default function SpotPreview({
               border: '1px solid rgba(190,242,100,0.45)',
               background: claimDisabled || claiming ? 'rgba(255,255,255,0.05)' : 'rgba(163,230,53,0.16)',
               color: claimDisabled || claiming ? '#71717a' : '#ecfccb',
-              fontSize: 12,
-              fontWeight: 700,
-              padding: '8px 10px',
+              fontSize: 14,
+              fontWeight: 800,
+              padding: '12px 14px',
+              minHeight: 48,
               cursor: claimDisabled || claiming ? 'not-allowed' : 'pointer',
               opacity: claiming ? 0.72 : 1,
             }}
