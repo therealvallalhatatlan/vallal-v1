@@ -6,6 +6,7 @@ import type { StickerSpot, VirtualSpotContentType } from '@/lib/matrica'
 interface Props {
   spot: StickerSpot
   contentUrl: string
+  contentType: VirtualSpotContentType
   onClose: () => void
 }
 
@@ -24,8 +25,7 @@ const formatTime = (value: number) => {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-export default function VirtualContentViewer({ spot, contentUrl, onClose }: Props) {
-  const contentType = (spot.content_type ?? 'video') as VirtualSpotContentType
+export default function VirtualContentViewer({ spot, contentUrl, contentType, onClose }: Props) {
   const typeLabel = CONTENT_LABELS[contentType] ?? 'DIGITÁLIS'
   const accentColor = '#c084fc'
 

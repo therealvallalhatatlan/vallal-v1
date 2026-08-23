@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
   if (existing) {
-    if (spot.spot_type === 'virtual') {
+    if (isVirtualSpot) {
       // Allow repeat claims for virtual spots: return existing claim
       const { data: existingClaim } = await db
         .from('claims')
@@ -196,7 +196,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'spot_empty' }, { status: 409 })
     }
 
-    updatedSpot = reservedSpot
+    updatedSpot = {
+      ...spot,
+      remaining_quantity: reservedSpot.remaining_quantity,
+      status: reservedSpot.status,
+    }
   }
 
   return NextResponse.json({ claim, spot: updatedSpot }, { status: 201 })

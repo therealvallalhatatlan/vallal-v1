@@ -17,7 +17,7 @@ import { useEffect, useRef, useState, useCallback, useMemo, type KeyboardEvent }
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { getDistanceMeters } from '@/lib/matrica'
-import type { StickerSpot } from '@/lib/matrica'
+import type { StickerSpot, VirtualSpotContentType } from '@/lib/matrica'
 import { createClient } from '@/lib/browser'
 import SpotCircle from './SpotCircle'
 import SpotMarker from './SpotMarker'
@@ -319,6 +319,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
   const [unlockingSpotId, setUnlockingSpotId] = useState<string | null>(null)
   const [claimingSpotId, setClaimingSpotId] = useState<string | null>(null)
   const [virtualUrls, setVirtualUrls] = useState<Record<string, string>>({})
+  const [virtualContentTypes, setVirtualContentTypes] = useState<Record<string, VirtualSpotContentType>>({})
   const [virtualClaimed, setVirtualClaimed] = useState<Record<string, boolean>>({})
   const [virtualViewerSpot, setVirtualViewerSpot] = useState<StickerSpot | null>(null)
   const [activeSpotsFilter, setActiveSpotsFilter] = useState<ActiveSpotFilter>('all')
@@ -980,9 +981,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
   }, [chatAuthToken, loadSpots, showToast])
 
   const handleVirtualOpen = useCallback((spot: StickerSpot) => {
-    if (!virtualUrls[spot.id]) return
+    if (!virtualUrls[spot.id] || !virtualContentTypes[spot.id]) return
     setVirtualViewerSpot(spot)
-  }, [virtualUrls])
+  }, [virtualContentTypes, virtualUrls])
 
   const handleVirtualUnlock = useCallback(async (spot: StickerSpot) => {
     if (!chatAuthToken) {
@@ -1006,7 +1007,20 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
         const err = await unlockRes.json().catch(() => ({} as any))
         throw new Error(err.error || 'Feloldás sikertelen.')
       }
-      const { content_url } = await unlockRes.json()
+      const { content_url, content_type } = await unlockRes.json()
+
+      const supportedContentTypes: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link']
+
+      if (typeof content_url !== 'string' || !content_url.trim()) {
+        throw new Error('A tartalom URL-je hiányzik.')
+      }
+
+      if (typeof content_type !== 'string' || !supportedContentTypes.includes(content_type as VirtualSpotContentType)) {
+        throw new Error('A tartalom típusa nem támogatott.')
+      }
+
+      const validatedContentUrl = content_url.trim()
+      const validatedContentType = content_type as VirtualSpotContentType
 
       // Claim the virtual spot
       const claimRes = await fetch('/api/matrica/claim', {
@@ -1033,7 +1047,8 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       }
 
       // Store URL and mark the virtual spot as unlocked/claimed in memory.
-      setVirtualUrls((prev) => ({ ...prev, [spot.id]: content_url }))
+      setVirtualUrls((prev) => ({ ...prev, [spot.id]: validatedContentUrl }))
+      setVirtualContentTypes((prev) => ({ ...prev, [spot.id]: validatedContentType }))
       setVirtualClaimed((prev) => ({ ...prev, [spot.id]: true }))
       setVirtualViewerSpot(spot)
     } catch (err: any) {
@@ -3010,11 +3025,12 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
 
 
       {virtualViewerSpot && virtualUrls[virtualViewerSpot.id] ? (
-        <VirtualContentViewer
-          spot={virtualViewerSpot}
-          contentUrl={virtualUrls[virtualViewerSpot.id]}
-          onClose={() => setVirtualViewerSpot(null)}
-        />
+      <VirtualContentViewer
+        spot={virtualViewerSpot}
+        contentUrl={virtualUrls[virtualViewerSpot.id]}
+        contentType={virtualContentTypes[virtualViewerSpot.id]}
+        onClose={() => setVirtualViewerSpot(null)}
+      />
       ) : null}
 
       <MatricaLivePanel
