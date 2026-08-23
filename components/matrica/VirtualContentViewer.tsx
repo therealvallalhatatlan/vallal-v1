@@ -27,7 +27,7 @@ const formatTime = (value: number) => {
 
 export default function VirtualContentViewer({ spot, contentUrl, contentType, onClose }: Props) {
   const typeLabel = CONTENT_LABELS[contentType] ?? 'DIGITÁLIS'
-  const accentColor = '#c084fc'
+  const accentColor = '#d9f99d'
 
   const [textContent, setTextContent] = useState<string | null>(null)
   const [textLoading, setTextLoading] = useState(false)
@@ -179,7 +179,7 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
               display: 'block',
               width: '100%',
               height: '100%',
-              borderRadius: 18,
+              borderRadius: 0,
               objectFit: 'contain',
               background: '#020204',
             }}
@@ -208,14 +208,14 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
                 width: 108,
                 height: 108,
                 borderRadius: '50%',
-                border: '1px solid rgba(192,132,252,0.45)',
-                background: 'radial-gradient(circle, rgba(192,132,252,0.18), rgba(192,132,252,0.03) 62%, transparent 63%)',
+                border: '1px solid rgba(190,242,100,0.38)',
+                background: 'rgba(163,230,53,0.05)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: accentColor,
                 fontSize: 34,
-                boxShadow: '0 0 48px rgba(192,132,252,0.18)',
+                boxShadow: '0 0 48px rgba(163,230,53,0.12)',
               }}
             >
               {audioPlaying ? 'Ⅱ' : '▶'}
@@ -227,8 +227,8 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
               style={{
                 minWidth: 180,
                 borderRadius: 16,
-                border: '1px solid rgba(192,132,252,0.72)',
-                background: 'rgba(192,132,252,0.13)',
+                border: '1px solid rgba(190,242,100,0.58)',
+                background: 'rgba(163,230,53,0.08)',
                 color: '#f4f4f5',
                 fontSize: 13,
                 fontWeight: 800,
@@ -273,7 +273,7 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
               width: '100%',
               height: '100%',
               objectFit: 'contain',
-              borderRadius: 18,
+              borderRadius: 0,
             }}
           />
         )
@@ -299,15 +299,13 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
           <div
             style={{
               width: '100%',
-              maxWidth: 980,
               height: '100%',
               overflowY: 'auto',
-              padding: '28px clamp(18px, 4vw, 56px)',
-              borderRadius: 18,
-              background: 'rgba(15,16,19,0.7)',
+              padding: '8px 24px 32px',
+              background: 'transparent',
               color: '#f4f4f5',
-              fontSize: 'clamp(16px, 1.5vw, 20px)',
-              lineHeight: 1.72,
+              fontSize: 'clamp(19px, 2vw, 25px)',
+              lineHeight: 1.78,
               whiteSpace: 'pre-wrap',
               boxSizing: 'border-box',
             }}
@@ -337,7 +335,7 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
                   width: '100%',
                   minHeight: 0,
                   border: 'none',
-                  borderRadius: 18,
+                  borderRadius: 0,
                   background: '#030712',
                 }}
                 onLoad={handleIframeLoad}
@@ -348,9 +346,9 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
                 style={{
                   flex: 1,
                   minHeight: 220,
-                  borderRadius: 18,
-                  border: '1px solid rgba(192,132,252,0.35)',
-                  background: 'rgba(192,132,252,0.07)',
+                  borderRadius: 0,
+                  border: '1px solid rgba(190,242,100,0.28)',
+                  background: 'rgba(163,230,53,0.04)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -370,8 +368,8 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
                   type="button"
                   onClick={() => window.open(contentUrl, '_blank', 'noopener,noreferrer')}
                   style={{
-                    borderRadius: 14,
-                    border: '1px solid rgba(192,132,252,0.65)',
+                    borderRadius: 0,
+                    border: '1px solid rgba(190,242,100,0.58)',
                     background: 'rgba(192,132,252,0.14)',
                     color: '#f4f4f5',
                     fontSize: 13,
@@ -427,14 +425,14 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
       <div
         style={{
           position: 'relative',
-          width: 'min(1280px, calc(100vw - 20px))',
-          height: 'calc(100dvh - var(--matrica-header-offset, 90px) - 10px)',
-          maxHeight: 'calc(100dvh - var(--matrica-header-offset, 90px) - 10px)',
-          margin: '8px auto 0',
-          background: 'rgba(5,6,9,0.99)',
-          borderRadius: 24,
-          border: '1px solid rgba(192,132,252,0.22)',
-          boxShadow: '0 45px 140px rgba(0,0,0,0.68)',
+          width: '100%',
+          height: 'calc(100dvh - var(--matrica-header-offset, 90px))',
+          maxHeight: 'calc(100dvh - var(--matrica-header-offset, 90px))',
+          margin: 0,
+          background: 'rgba(5,5,8,0.98)',
+          borderRadius: 0,
+          border: 'none',
+          boxShadow: 'none',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -448,10 +446,10 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 72,
-            padding: '14px 76px 12px',
-            borderBottom: '1px solid rgba(255,255,255,0.04)',
-            background: 'rgba(5,5,8,0.96)',
+            minHeight: 92,
+            padding: '18px 72px 16px',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            background: 'rgba(5,5,8,0.98)',
             boxSizing: 'border-box',
           }}
         >
@@ -465,9 +463,9 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
               top: 12,
               width: 46,
               height: 46,
-              borderRadius: 14,
-              border: '1px solid rgba(255,255,255,0.15)',
-              background: 'rgba(255,255,255,0.03)',
+              borderRadius: 0,
+              border: 'none',
+              background: 'rgba(255,255,255,0.04)',
               color: '#f4f4f5',
               fontSize: 26,
               lineHeight: 1,
@@ -478,35 +476,44 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
             ×
           </button>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, minWidth: 0, width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, fontFamily: 'var(--font-mono-tech)' }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  letterSpacing: '0.18em',
+                  fontWeight: 800,
+                  color: '#d4d4d8',
+                  textTransform: 'uppercase',
+                }}
+              >
+                DIGITÁLIS SZPOT
+              </span>
+              <span style={{ color: '#71717a', fontSize: 10 }}> / </span>
+              <span
+                style={{
+                  fontSize: 10,
+                  letterSpacing: '0.18em',
+                  fontWeight: 800,
+                  color: '#d4d4d8',
+                  textTransform: 'uppercase',
+                }}
+              >
+                {typeLabel}
+              </span>
+            </div>
             <span
               style={{
-                fontSize: 10,
-                letterSpacing: '0.28em',
-                fontWeight: 800,
-                color: '#bef264',
-              }}
-            >
-              DIGITÁLIS SPOT
-            </span>
-            <span
-              style={{
-                fontSize: 16,
-                fontWeight: 800,
-                color: accentColor,
-                letterSpacing: '0.05em',
-              }}
-            >
-              {typeLabel}
-            </span>
-            <span
-              style={{
-                maxWidth: '55vw',
+                maxWidth: 'calc(100% - 48px)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                color: '#9ca3af',
-                fontSize: 12,
+                color: '#f4f4f5',
+                fontSize: 'clamp(20px, 2.2vw, 28px)',
+                lineHeight: 1.15,
+                fontWeight: 800,
+                letterSpacing: '-0.01em',
+                textAlign: 'center',
               }}
             >
               {spot.title}
@@ -540,7 +547,7 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
           style={{
             flex: 1,
             minHeight: 0,
-            padding: '10px',
+            padding: 0,
             display: 'flex',
             overflow: 'hidden',
             boxSizing: 'border-box',
@@ -551,14 +558,14 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
               flex: 1,
               minWidth: 0,
               minHeight: 0,
-              borderRadius: 18,
-              background: 'rgba(12,12,14,0.88)',
-              border: '1px solid rgba(255,255,255,0.04)',
-              boxShadow: 'inset 0 0 40px rgba(0,0,0,0.52)',
+              borderRadius: 0,
+              background: 'transparent',
+              border: 'none',
+              boxShadow: 'none',
               display: 'flex',
               alignItems: 'stretch',
               justifyContent: 'center',
-              padding: 10,
+              padding: 0,
               overflow: 'hidden',
               boxSizing: 'border-box',
             }}
@@ -570,8 +577,9 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
         <footer
           style={{
             flex: '0 0 auto',
-            padding: '9px 18px 12px',
-            borderTop: '1px solid rgba(255,255,255,0.04)',
+            minHeight: 28,
+            padding: '7px 24px 9px',
+            borderTop: '1px solid rgba(255,255,255,0.06)',
             display: 'flex',
             flexDirection: 'column',
             gap: 3,
