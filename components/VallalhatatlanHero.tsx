@@ -249,7 +249,7 @@ export default function VallalhatatlanHero() {
           </Link>
 
           <Link
-            href="/nyitott-muhely"
+            href="/lab"
             className="flex min-h-[84px] flex-col items-center justify-center px-2"
           >
             <span

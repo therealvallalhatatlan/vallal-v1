@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import MainContent from "@/components/MainContent";
 import Footer from "@/components/Footer";
+import LabContact from "@/components/LabContact";
 import { Montserrat } from "next/font/google";
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
   weight: "800",
-  style: "italic",
 });
 
 export const metadata: Metadata = {
@@ -147,7 +147,7 @@ export default function Page() {
             <h1
               className={`${montserrat.className} text-4xl uppercase leading-[0.9] tracking-[-0.03em] text-zinc-100 md:text-6xl`}
             >
-              LAB
+              V. FÖLD ALATTI* AI LABORATÓRIUMA
             </h1>
 
             <p
@@ -156,21 +156,21 @@ export default function Page() {
             >
               Ahol a következő generációs cuccok készülnek.
               <br />
-              <br />
-              A LAB a játszóterünk, ahol olyan technológiákkal kísérletezünk, ami összehozza az embereket. 
-              <br />
-              <br />
+              Problémamegoldás LEVEL 10000.
+              <br /><br />
               <span className="text-lime-200/80">
-                Üdv a fedélzeten testvérem!
+                Oszd meg velem őrült tervedet. Megcsináljuk!
               </span>
             </p>
+
+            <LabContact />
           </div>
         </section>
 
         {/* PROJECTS */}
         <section className="space-y-6">
           {/* PROJECT 01 */}
-          <article className="overflow-hidden rounded-md border border-zinc-800 bg-zinc-950/70 transition-colors duration-300 hover:border-lime-400/30">
+          <article className="mt-8 overflow-hidden rounded-md border border-zinc-800 bg-zinc-950/70 transition-colors duration-300 hover:border-lime-400/30">
             <div className="p-5 md:p-7">
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
