@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { StickerSpot, VirtualSpotContentType } from '@/lib/matrica'
+import AudioPlayer from './AudioPlayer'
 
 interface Props {
   spot: StickerSpot
@@ -34,12 +35,8 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
   const [textError, setTextError] = useState<string | null>(null)
 
   const iframeTimeoutRef = useRef<number | null>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const [iframeFailed, setIframeFailed] = useState(false)
-  const [audioPlaying, setAudioPlaying] = useState(false)
-  const [audioCurrent, setAudioCurrent] = useState(0)
-  const [audioDuration, setAudioDuration] = useState(0)
 
   useEffect(() => {
     if (contentType !== 'text') return
@@ -98,30 +95,6 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
   }, [contentUrl, contentType])
 
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio || contentType !== 'audio') return
-
-    const handleLoadedMetadata = () => setAudioDuration(audio.duration || 0)
-    const handleTimeUpdate = () => setAudioCurrent(audio.currentTime || 0)
-    const handlePlay = () => setAudioPlaying(true)
-    const handlePause = () => setAudioPlaying(false)
-
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata)
-    audio.addEventListener('timeupdate', handleTimeUpdate)
-    audio.addEventListener('play', handlePlay)
-    audio.addEventListener('pause', handlePause)
-    audio.addEventListener('ended', handlePause)
-
-    return () => {
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
-      audio.removeEventListener('timeupdate', handleTimeUpdate)
-      audio.removeEventListener('play', handlePlay)
-      audio.removeEventListener('pause', handlePause)
-      audio.removeEventListener('ended', handlePause)
-    }
-  }, [contentUrl, contentType])
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
     }
@@ -129,27 +102,6 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
-
-  const toggleAudio = useCallback(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    if (audio.paused) {
-      void audio.play().catch(() => {
-        setAudioPlaying(false)
-      })
-    } else {
-      audio.pause()
-    }
-  }, [])
-
-  const handleSeek = useCallback((value: number) => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    audio.currentTime = value
-    setAudioCurrent(value)
-  }, [])
 
   const handleIframeLoad = useCallback(() => {
     setIframeFailed(false)
@@ -187,80 +139,7 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
         )
 
       case 'audio':
-        return (
-          <div
-            style={{
-              width: '100%',
-              maxWidth: 760,
-              margin: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 22,
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '8px 16px',
-            }}
-          >
-            <audio ref={audioRef} src={contentUrl} preload="metadata" />
-
-            <div
-              style={{
-                width: 108,
-                height: 108,
-                borderRadius: '50%',
-                border: '1px solid rgba(217,249,157,0.28)',
-                background: 'rgba(163,230,53,0.04)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: accentColor,
-                fontSize: 34,
-                boxShadow: '0 0 48px rgba(163,230,53,0.12)',
-              }}
-            >
-              {audioPlaying ? 'Ⅱ' : '▶'}
-            </div>
-
-            <button
-              type="button"
-              onClick={toggleAudio}
-              style={{
-                minWidth: 180,
-                borderRadius: 16,
-                border: '1px solid rgba(217,249,157,0.46)',
-                background: 'rgba(163,230,53,0.06)',
-                color: '#f4f4f5',
-                fontSize: 13,
-                fontWeight: 800,
-                letterSpacing: '0.16em',
-                padding: '13px 22px',
-                cursor: 'pointer',
-              }}
-            >
-              {audioPlaying ? 'SZÜNET' : 'LEJÁTSZÁS'}
-            </button>
-
-            <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontFamily: 'var(--font-mono-tech)', fontSize: 12, color: '#9ca3af', minWidth: 40 }}>
-                {formatTime(audioCurrent)}
-              </span>
-
-              <input
-                type="range"
-                min={0}
-                max={audioDuration || 1}
-                step={0.1}
-                value={Math.min(audioCurrent, audioDuration || 0)}
-                onChange={(event) => handleSeek(Number(event.target.value))}
-                style={{ flex: 1, accentColor, cursor: 'pointer' }}
-              />
-
-              <span style={{ fontFamily: 'var(--font-mono-tech)', fontSize: 12, color: '#9ca3af', minWidth: 40, textAlign: 'right' }}>
-                {formatTime(audioDuration)}
-              </span>
-            </div>
-          </div>
-        )
+        return <AudioPlayer src={contentUrl} />
 
       case 'image':
         return (
@@ -394,11 +273,6 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
     textLoading,
     textError,
     textContent,
-    toggleAudio,
-    audioPlaying,
-    audioCurrent,
-    audioDuration,
-    handleSeek,
     handleIframeLoad,
     handleIframeError,
     spot.title,
