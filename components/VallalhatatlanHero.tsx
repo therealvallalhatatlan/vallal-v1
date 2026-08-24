@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useState } from "react"
 import Link from "next/link"
 import { Montserrat } from "next/font/google"
+import VHeroChat from "@/components/VHeroChat"
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -12,16 +13,18 @@ const montserrat = Montserrat({
 
 const HERO_HEADLINES = [
   "EZ NEM EGY KÖNYV.",
+  "MA KI KELL VINNEM A KUKÁT.",
   "PÁNIKOLNÉK, DE TÚL FÁRADT VAGYOK.",
   "MI A FASZT OLVASTAM?",
   "404: DOPAMIN NOT FOUND.",
   "A NADRÁG OPCIONÁLIS.",
   "EZ NEM IRODALOM.",
-  "A NORMÁLISAKTÓL FÉLEK",
+  "A VÁROS A MIÉNK",
   "NEM MENEKÜLÖK. TESZTELEM A SZABADSÁGOT.",
-  "NE KÉRDEZD, KI ÍRTA",
-  "RÁDFÉR EGY HARD RESET",
+  "NE KÉRDEZD, KI ÍRTA.",
+  "RÁDFÉR EGY HARD RESET.",
   "A TERAPEUTÁM SÍRT. ÉN NEVETTEM.",
+  "NYÁLAZD MEG, FÉLREÉG.",
 ] as const
 
 const DEFAULT_HEADLINE = "PÁNIKOLNÉK,\nDE TÚL\nFÁRADT VAGYOK"
@@ -181,109 +184,15 @@ export default function VallalhatatlanHero() {
           PUBLIC ACCESS // NODE DISCOVERY
         </p>
 
-        {/* Video: full width, natural aspect-ratio / auto height */}
-        <div className="relative mt-12 w-full overflow-hidden">
-          <video
-            className="block h-auto w-full opacity-100 grayscale"
-            src="/videos/vmfi.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            aria-hidden="true"
-          />
-
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(1,1,1,0.16),rgba(1,1,1,0.62))]" />
+        <div className="mt-12 w-full">
+          <VHeroChat />
         </div>
 
         {/* About / project description */}
         <div
-          className="mt-8 border-t border-zinc-800 pb-12 pt-6 font-mono text-md leading-relaxed text-zinc-400"
-          style={{ fontFamily: "var(--font-mono-tech)" }}
+          className="mt-8 pb-8 pt-6 font-mono text-md leading-relaxed text-zinc-400"
+          style={{ fontFamily: "var(--font-mono-tech)"}}
         >
-          <p className="mb-4 text-[16px] uppercase tracking-[0.16em] text-lime-200/80">
-            Mi a fasz történik velem?
-          </p>
-
-          <div className="space-y-4">
-            <p>
-              Nem tudom mi történt velem abban a sötét erdőben, ahol megszületett Író Úr, és elkezdte visszafejteni az eseményeket.
-            </p>
-
-            <p>
-              De aznap éjjel valami meghasadt, és Vállalhatatlan szabad lett.
-            </p>
-
-            <p>
-              Aztán lett belőle egy{" "}
-              <Link
-                href="/konyv2"
-                className="text-lime-200 underline decoration-lime-200/40 underline-offset-4 transition-colors hover:text-lime-100"
-              >
-                limitált példányszámú könyv
-              </Link>
-              . A könyv mellé lejátszási listák, QR-kódok, ki nem adott
-              anyagok és egy csomó olyan dolog került, aminek nem feltétlenül
-              kellett volna egy könyvben lennie.
-            </p>
-
-            <p>
-              Később kiderült, hogy a könyv csak egy belépési pont. Azóta lett
-              belőle egy{" "}
-              <Link
-                href="/halozat"
-                className="text-lime-200 underline decoration-lime-200/40 underline-offset-4 transition-colors hover:text-lime-100"
-              >
-                hálózat
-              </Link>
-              , fizikai helyekkel, digitális nyomokkal, dead dropokkal,
-              történetekkel és olyan tartalmakkal, amelyek nem feltétlenül
-              ugyanott vannak, ahol keresed őket.
-            </p>
-
-            <p>
-              Van{" "}
-              <Link
-                href="/reader"
-                className="text-lime-200 underline decoration-lime-200/40 underline-offset-4 transition-colors hover:text-lime-100"
-              >
-                olvasó
-              </Link>
-              , vannak könyvek, van{" "}
-              <Link
-                href="/shop"
-                className="text-lime-200 underline decoration-lime-200/40 underline-offset-4 transition-colors hover:text-lime-100"
-              >
-                shop
-              </Link>
-              , vannak elrejtett dolgok, és vannak olyan részei a rendszernek,
-              amelyek még nincsenek teljesen kész.
-            </p>
-
-            <p>
-              Nem egy startup. Nem egy márkaépítési gyakorlat. És nem egy
-              gondosan becsomagolt univerzum, amit valaki a háttérben
-              előre megtervezett.
-            </p>
-
-            <p className="text-zinc-300">
-              Inkább egy folyamatosan épülő archívum arról, mi történik,
-              amikor egy könyv kilép a könyvből.
-            </p>
-
-            <p>
-              Ha szeretnéd, hogy tovább épüljön,{" "}
-              <Link
-                href="/tamogatas"
-                className="text-lime-200 underline decoration-lime-200/40 underline-offset-4 transition-colors hover:text-lime-100"
-              >
-                támogathatod
-              </Link>
-              . Ha nem, az is teljesen rendben van. A rendszer ettől még
-              működik tovább.
-            </p>
-          </div>
 
           <div className="mt-8 border-t border-zinc-900 pt-4 text-[10px] uppercase tracking-[0.12em] text-zinc-600">
             SIGNAL ORIGIN: REDDIT
