@@ -22,7 +22,6 @@ type ConversationRow = {
 const MAX_MESSAGE_LENGTH = 480;
 const HISTORY_LIMIT = 12;
 const FETCH_MESSAGES_LIMIT = 30;
-const MAX_HISTORY_MESSAGE_LENGTH = 320;
 const ANONYMOUS_CONVERSATION_LIMIT = 3;
 
 const CONTEXT_MESSAGE = (() => {
@@ -38,26 +37,6 @@ const buildContextMessages = () => [
   { role: "system", content: HERO_CHAT_SYSTEM_PROMPT },
   { role: "system", content: CONTEXT_MESSAGE },
 ];
-
-const sanitizeHistory = (history?: unknown): HistoryEntry[] => {
-  if (!Array.isArray(history)) return [];
-
-  return history
-    .flatMap((entry) => (Array.isArray ? entry : entry ? [entry] : []))
-    .filter(
-      (entry): entry is HistoryEntry =>
-        entry !== null &&
-        typeof entry === "object" &&
-        (entry.role === "user" || entry.role === "assistant") &&
-        typeof entry.content === "string" &&
-        Boolean(entry.content.trim()),
-    )
-    .slice(-HISTORY_LIMIT)
-    .map((entry) => ({
-      role: entry.role,
-      content: entry.content.trim().slice(0, MAX_HISTORY_MESSAGE_LENGTH),
-    }));
-};
 
 const clampMessage = (message: string) =>
   message.length <= MAX_MESSAGE_LENGTH ? message : `${message.slice(0, MAX_MESSAGE_LENGTH - 3)}...`;
@@ -148,12 +127,12 @@ const fetchConversationForAnonymous = async (
 
   if (data) return data;
 
-  const existingCount = await db
+  const { count } = await db
     .from("hero_chat_conversations")
     .select("id", { count: "exact", head: true })
     .eq("anonymous_id", anonymousId);
 
-  if (existingCount?.count !== null && existingCount.count >= ANONYMOUS_CONVERSATION_LIMIT) {
+  if (count !== null && count >= ANONYMOUS_CONVERSATION_LIMIT) {
     return null;
   }
 
@@ -247,7 +226,18 @@ export async function GET(request: NextRequest) {
   const admin = supabaseAdmin();
 
   if (!user) {
-    return respondWithError(401, { requiresAuth: true, reason: "unauthenticated" });
+    const anonymousId = request.headers.get("x-anonymous-id")?.trim() ?? null;
+    if (!anonymousId) {
+      return NextResponse.json({ conversationId: null, messages: [] });
+    }
+
+    const conversation = await fetchConversationForAnonymous(admin, anonymousId);
+    if (!conversation) {
+      return NextResponse.json({ conversationId: null, messages: [] });
+    }
+
+    const messages = await loadConversationMessages(admin, conversation.id);
+    return NextResponse.json({ conversationId: conversation.id, messages });
   }
 
   const conversation = await fetchConversationForUser(admin, user.id);
@@ -283,8 +273,9 @@ export async function POST(request: NextRequest) {
     }
 
     let conversation: ConversationRow | null = null;
-    let anonymousNeedsAuth = false;
-    let anonymousId = body.anonymousId;
+    const headerAnonymousId = request.headers.get("x-anonymous-id")?.trim() ?? null;
+    let anonymousId = typeof body.anonymousId === "string" ? body.anonymousId.trim() || null : null;
+    anonymousId = anonymousId ?? headerAnonymousId;
 
     if (user) {
       if (anonymousId) {
@@ -292,7 +283,6 @@ export async function POST(request: NextRequest) {
       }
       conversation = await fetchConversationForUser(admin, user.id, body.conversationId);
     } else {
-      anonymousId = anonymousId ?? body.conversationId ?? null;
       if (!anonymousId) {
         return respondWithError(401, { requiresAuth: true, reason: "anonymous required" });
       }

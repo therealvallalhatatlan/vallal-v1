@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { createClient as createBrowserClient } from "@/lib/browser"
 
 const PRESET_QUESTIONS = [
   "MI A FASZ EZ?",
@@ -15,10 +16,29 @@ type Message = {
   content: string
 }
 
-const BASE_FETCH_OPTIONS = { method: "POST", headers: { "Content-Type": "application/json" } }
-
 const clampLength = (text: string, max = 480) =>
   text.length <= max ? text : `${text.slice(0, max - 3)}...`
+
+const ANONYMOUS_COOKIE = "__vhc_anonymous_id"
+
+const readCookie = (name: string) => {
+  if (typeof document === "undefined") return null
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]+)`))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+const writeCookie = (name: string, value: string) => {
+  if (typeof document === "undefined") return
+  const maxAge = 60 * 60 * 24 * 365 // 1 year
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`
+}
+
+const generateAnonymousId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
+  return `anon-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
 
 const HUNGARIAN_DAY_NAMES = [
   "VASÁRNAP",
@@ -36,6 +56,9 @@ export default function VHeroChat() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentDate, setCurrentDate] = useState(() => new Date())
+  const [conversationId, setConversationId] = useState<string | null>(null)
+  const [anonymousId, setAnonymousId] = useState<string | null>(null)
+  const supabase = useMemo(() => createBrowserClient(), [])
 
   const sendMessage = async (override?: string) => {
     const text = (override ?? draft).trim()
@@ -49,24 +72,49 @@ export default function VHeroChat() {
     setLoading(true)
 
     try {
-      const res = await fetch(
-        "/api/hero-chat",
-        {
-          ...BASE_FETCH_OPTIONS,
-          body: JSON.stringify({
-            message: prepared,
-            history: nextMessages,
-          }),
-        },
-      )
-
-      if (!res.ok) {
-        throw new Error("Választ nem kaptam")
+      const { data } = await supabase.auth.getSession()
+      const token = data?.session?.access_token ?? null
+      const headers: Record<string, string> = { "Content-Type": "application/json" }
+      if (token) {
+        headers.Authorization = `Bearer ${token}`
+      }
+      if (anonymousId) {
+        headers["x-anonymous-id"] = anonymousId
       }
 
-      const payload = (await res.json()) as { message?: string; error?: string }
+      const res = await fetch("/api/hero-chat", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ message: prepared, conversationId }),
+      })
+
+      const payload = (await res.json()) as {
+        message?: string
+        error?: string
+        requiresAuth?: boolean
+        reason?: string
+        conversationId?: string | null
+      }
+
+      if (!res.ok) {
+        if (payload.requiresAuth) {
+          setError(
+            payload.reason === "anonymous_limit_reached"
+              ? "Elérted az anonim limitet. Jelentkezz be a további beszélgetésekhez."
+              : "Jelentkezz be a folytatáshoz.",
+          )
+          return
+        }
+
+        throw new Error(payload.error ?? "Választ nem kaptam")
+      }
+
       if (payload.error) {
         throw new Error(payload.error)
+      }
+
+      if (payload.conversationId) {
+        setConversationId(payload.conversationId)
       }
 
       if (payload.message) {
@@ -89,6 +137,59 @@ export default function VHeroChat() {
     return () => clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (anonymousId) return
+
+    const id = readCookie(ANONYMOUS_COOKIE)
+    if (id) {
+      setAnonymousId(id)
+      return
+    }
+
+    const generated = generateAnonymousId()
+    writeCookie(ANONYMOUS_COOKIE, generated)
+    setAnonymousId(generated)
+  }, [anonymousId])
+
+  useEffect(() => {
+    if (!anonymousId) return
+
+    let active = true
+
+    const loadHistory = async () => {
+      const { data } = await supabase.auth.getSession()
+      const token = data?.session?.access_token ?? null
+      const headers: Record<string, string> = { "x-anonymous-id": anonymousId }
+      if (token) {
+        headers.Authorization = `Bearer ${token}`
+      }
+
+      const res = await fetch("/api/hero-chat", {
+        method: "GET",
+        headers,
+      })
+
+      if (!res.ok) return
+
+      const payload = (await res.json()) as { conversationId?: string | null; messages?: Message[] }
+      if (!active) return
+
+      if (payload.conversationId) {
+        setConversationId(payload.conversationId)
+      }
+
+      if (Array.isArray(payload.messages)) {
+        setMessages(payload.messages)
+      }
+    }
+
+    void loadHistory()
+
+    return () => {
+      active = false
+    }
+  }, [anonymousId, supabase])
   return (
     <section className="mx-auto w-full mt-4 bg-black/60  text-white">
       <div className="border-b border-t border-zinc-800 pt-4 pb-4">
