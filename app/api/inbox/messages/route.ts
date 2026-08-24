@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
   const json = await req.json().catch(() => ({}))
   const rawBody = (json.body || "").toString()
   let conversationId = json.conversationId ? json.conversationId.toString() : ""
+  let conversationOwnerId: string | null = null
 
   const body = rawBody.trim().slice(0, MAX_BODY_CHARS)
   if (!body) return NextResponse.json({ error: "missing_body" }, { status: 400 })
@@ -110,20 +111,54 @@ export async function POST(req: NextRequest) {
     }
     const isOwner = await assertConversationOwner(supabase, conversationId, user.id)
     if (!isOwner) return NextResponse.json({ error: "forbidden" }, { status: 403 })
+    conversationOwnerId = user.id
   } else {
     if (!conversationId) return NextResponse.json({ error: "missing_conversation" }, { status: 400 })
+
+    const { data: conversationRow, error: conversationError } = await supabase
+      .from("conversations")
+      .select("user_id")
+      .eq("id", conversationId)
+      .maybeSingle()
+
+    if (conversationError) {
+      console.error("[inbox] conversation lookup error", conversationError)
+      return NextResponse.json({ error: "server_error" }, { status: 500 })
+    }
+
+    if (!conversationRow?.user_id) {
+      return NextResponse.json({ error: "conversation_not_found" }, { status: 404 })
+    }
+
+    conversationOwnerId = conversationRow.user_id
   }
 
   const { error } = await supabase.from("messages").insert({
     conversation_id: conversationId,
     sender_role: isAdmin ? "admin" : "user",
-    user_id: isAdmin ? null : user.id,
+    user_id: isAdmin ? conversationOwnerId : user.id,
     body,
   })
 
   if (error) {
     console.error("[inbox] message insert error", error)
     return NextResponse.json({ error: "server_error" }, { status: 500 })
+  }
+
+  if (isAdmin && conversationOwnerId && conversationOwnerId !== user.id) {
+    const { error: unreadError } = await supabase.rpc("increment_pm_unread", {
+      p_recipient_user_id: conversationOwnerId,
+      p_other_user_id: user.id,
+    })
+
+    if (unreadError) {
+      console.error("[inbox] increment_pm_unread failed", {
+        conversationId,
+        recipient: conversationOwnerId,
+        sender: user.id,
+        error: unreadError,
+      })
+    }
   }
 
   return NextResponse.json({ ok: true, conversationId })

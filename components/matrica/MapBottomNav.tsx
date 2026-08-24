@@ -16,7 +16,7 @@ const MapBottomNav: FC<MapBottomNavProps> = ({
   return (
     <nav
       aria-label="Hálózat gyors műveletek"
-      className="matrica-action-rail fixed bottom-0 left-0 right-0 z-[60] border-t border-zinc-700 bg-zinc-950 px-3 py-6 pt-3"
+      className="matrica-action-rail absolute  bottom-0 left-0 right-0 z-[60] border-t border-zinc-700 bg-zinc-950 px-3 py-6 pt-3"
       style={{
         paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)',
       }}

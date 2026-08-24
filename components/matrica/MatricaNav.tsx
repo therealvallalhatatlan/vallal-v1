@@ -1,4 +1,5 @@
 ﻿"use client";
+
 // Fallback for missing constant
 // Remove if you have the real import
 const MATRICA_START_ROUTE_EVENT = 'matrica:start-route';
@@ -11,10 +12,18 @@ import { useSessionGuard } from '@/hooks/useSessionGuard.js'
 import { usePresence } from '@/hooks/usePresence'
 import { buildAuthHref, clearStoredAuthReturnTarget } from '@/lib/authRedirect'
 import MatricaPrivateMessagePanel from '@/components/matrica/MatricaPrivateMessagePanel'
+
 // If StickerSpot is not imported from types, define a fallback type
 // Remove this if you have the correct import
 // import { StickerSpot } from '@/types/StickerSpot'
-type StickerSpot = { id: string; name: string; lat: number; lng: number; [key: string]: any }
+type StickerSpot = {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  [key: string]: any
+}
+
 type OnlineUserProfile = {
   id: string;
   email: string;
@@ -34,7 +43,17 @@ type SpotEditDraft = {
   price_huf: string;
 };
 
-export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrentUser = false, reserveRightSpace = 0 }: { onMessageUser?: (user: OnlineUserProfile) => void; pmUnreadCounts?: Record<string, number | undefined>; hideCurrentUser?: boolean; reserveRightSpace?: number }) {
+export function OnlineUsersBar({
+  onMessageUser,
+  pmUnreadCounts = {},
+  hideCurrentUser = false,
+  reserveRightSpace = 0,
+}: {
+  onMessageUser?: (user: OnlineUserProfile) => void;
+  pmUnreadCounts?: Record<string, number | undefined>;
+  hideCurrentUser?: boolean;
+  reserveRightSpace?: number;
+}) {
   usePresence()
 
   const currentUserAccent = '#a3e635'
@@ -48,19 +67,24 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
 
   useEffect(() => {
     const updateIsMobile = () => setIsMobile(window.innerWidth < 768)
+
     updateIsMobile()
+
     window.addEventListener('resize', updateIsMobile)
+
     return () => window.removeEventListener('resize', updateIsMobile)
   }, [])
 
   useEffect(() => {
     let cancelled = false
+
     async function fetchOnlineUsers() {
       setLoading(true)
+
       try {
-        // 1. Get online user IDs
         const res = await fetch('/api/presence/online')
         const json = await res.json()
+
         if (!res.ok || !Array.isArray(json?.users)) {
           setUsers([])
           setLoading(false)
@@ -68,19 +92,32 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
         }
 
         const onlineUsers = json.users
-          .map((u: { id?: string; user_id?: string; email?: string; lat?: number; lng?: number }) => ({
-            id: u.id ?? u.user_id,
-            email: u.email,
-            lat: u.lat,
-            lng: u.lng,
-          }))
+          .map(
+            (u: {
+              id?: string;
+              user_id?: string;
+              email?: string;
+              lat?: number;
+              lng?: number;
+            }) => ({
+              id: u.id ?? u.user_id,
+              email: u.email,
+              lat: u.lat,
+              lng: u.lng,
+            })
+          )
           .filter((u: { id?: string }) => !!u.id)
           .sort((a: { id: string }, b: { id: string }) => {
             if (!currentUserId) return 0
             if (a.id === currentUserId) return -1
             if (b.id === currentUserId) return 1
             return 0
-          }) as Array<{ id: string; email?: string; lat?: number; lng?: number }>
+          }) as Array<{
+          id: string;
+          email?: string;
+          lat?: number;
+          lng?: number;
+        }>
 
         if (onlineUsers.length === 0) {
           setUsers([])
@@ -88,64 +125,136 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
           return
         }
 
-        // 2. For each user, fetch profile (nickname, avatar, badge)
         const profiles: OnlineUserProfile[] = await Promise.all(
-          onlineUsers.map(async (u: { id: string; email?: string; lat?: number; lng?: number }) => {
-            try {
-              const pres = await fetch(`/api/user/profile?userId=${encodeURIComponent(u.id)}`)
-              const pjson = await pres.json()
-              const fallbackName = u.email || `user-${u.id.slice(0, 6)}`
-              if (pres.ok && pjson?.ok && pjson?.profile) {
-                return {
-                  id: u.id,
-                  email: u.email || '',
-                  nickname: pjson.profile.nickname || fallbackName,
-                  avatarUrl: pjson.profile.avatar_url || null,
-                  badge: pjson.profile.accepted ?? pjson.profile.badge ?? 0,
-                  score: pjson.profile.score ?? 0,
-                  accepted: pjson.profile.accepted ?? 0,
-                  lat: u.lat,
-                  lng: u.lng,
+          onlineUsers.map(
+            async (u: {
+              id: string;
+              email?: string;
+              lat?: number;
+              lng?: number;
+            }) => {
+              try {
+                const pres = await fetch(
+                  `/api/user/profile?userId=${encodeURIComponent(u.id)}`
+                )
+
+                const pjson = await pres.json()
+                const fallbackName =
+                  u.email || `user-${u.id.slice(0, 6)}`
+
+                if (pres.ok && pjson?.ok && pjson?.profile) {
+                  return {
+                    id: u.id,
+                    email: u.email || '',
+                    nickname:
+                      pjson.profile.nickname || fallbackName,
+                    avatarUrl:
+                      pjson.profile.avatar_url || null,
+                    badge:
+                      pjson.profile.accepted ??
+                      pjson.profile.badge ??
+                      0,
+                    score: pjson.profile.score ?? 0,
+                    accepted: pjson.profile.accepted ?? 0,
+                    lat: u.lat,
+                    lng: u.lng,
+                  }
                 }
+              } catch {}
+
+              return {
+                id: u.id,
+                email: u.email || '',
+                nickname:
+                  u.email || `user-${u.id.slice(0, 6)}`,
+                avatarUrl: null,
+                badge: 0,
+                score: 0,
+                accepted: 0,
+                lat: u.lat,
+                lng: u.lng,
               }
-            } catch {}
-            return {
-              id: u.id,
-              email: u.email || '',
-              nickname: u.email || `user-${u.id.slice(0, 6)}`,
-              avatarUrl: null,
-              badge: 0,
-              score: 0,
-              accepted: 0,
-              lat: u.lat,
-              lng: u.lng,
             }
-          })
+          )
         )
-        if (!cancelled) setUsers(profiles)
+
+        if (!cancelled) {
+          setUsers(profiles)
+        }
       } catch (error) {
         console.error('Online users fetch failed:', error)
-        if (!cancelled) setUsers([])
+
+        if (!cancelled) {
+          setUsers([])
+        }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
+
     fetchOnlineUsers()
+
     const interval = setInterval(fetchOnlineUsers, 8000)
-    return () => { cancelled = true; clearInterval(interval) }
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, [currentUserId])
 
   const visibleUsers = hideCurrentUser
     ? users.filter((u) => u.id !== currentUserId)
     : users
 
-  if (loading && visibleUsers.length === 0) return null
-  if (visibleUsers.length === 0) return (
-    <div style={{ width: '100%', background: 'rgba(6,7,9,0.96)', color: '#9ca3af', fontSize: 12, letterSpacing: '0.04em', textAlign: 'center', padding: 6, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>NINCS ONLINE FELHASZNALO</div>
-  )
+  if (loading && visibleUsers.length === 0) {
+    return null
+  }
+
+  if (visibleUsers.length === 0) {
+    return (
+      <div
+        style={{
+          width: '100%',
+          background: 'rgba(6,7,9,0.96)',
+          color: '#9ca3af',
+          fontSize: 12,
+          letterSpacing: '0.04em',
+          textAlign: 'center',
+          padding: 6,
+          borderBottom:
+            '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        NINCS ONLINE FELHASZNALO
+      </div>
+    )
+  }
+
   return (
-    <div id="matrica-online-users-bar" style={{ width: '100%', position: 'relative', zIndex: 1, pointerEvents: 'auto', background: 'rgba(6,7,9,0.96)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: isMobile ? `4px ${reserveRightSpace}px 4px 0` : `6px ${reserveRightSpace}px 6px 0`, display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.04)' }}>
-      {visibleUsers.map(u => (
+    <div
+      id="matrica-online-users-bar"
+      style={{
+        width: '100%',
+        position: 'relative',
+        zIndex: 1,
+        pointerEvents: 'auto',
+        background: 'rgba(6,7,9,0.96)',
+        borderBottom:
+          '1px solid rgba(255,255,255,0.08)',
+        padding: isMobile
+          ? `4px ${reserveRightSpace}px 4px 0`
+          : `6px ${reserveRightSpace}px 6px 0`,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        overflowX: 'auto',
+        boxShadow:
+          'inset 0 -1px 0 rgba(255,255,255,0.04)',
+      }}
+    >
+      {visibleUsers.map((u) => (
         <div
           key={u.id}
           style={{
@@ -155,21 +264,47 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
             justifyContent: 'center',
             gap: 4,
             marginRight: 10,
-            padding: u.id === currentUserId ? (isMobile ? '3px 6px' : '4px 8px') : 0,
-            borderRadius: u.id === currentUserId ? (isMobile ? 14 : 999) : 999,
-            background: u.id === currentUserId ? 'rgba(163,230,53,0.16)' : 'transparent',
-            border: u.id === currentUserId ? '1px solid rgba(190,242,100,0.5)' : '1px solid transparent',
-            boxShadow: u.id === currentUserId ? '0 0 0 1px rgba(163,230,53,0.16), 0 4px 12px rgba(0,0,0,0.4)' : 'none',
+            padding:
+              u.id === currentUserId
+                ? isMobile
+                  ? '3px 6px'
+                  : '4px 8px'
+                : 0,
+            borderRadius:
+              u.id === currentUserId
+                ? isMobile
+                  ? 14
+                  : 999
+                : 999,
+            background:
+              u.id === currentUserId
+                ? 'rgba(163,230,53,0.16)'
+                : 'transparent',
+            border:
+              u.id === currentUserId
+                ? '1px solid rgba(190,242,100,0.5)'
+                : '1px solid transparent',
+            boxShadow:
+              u.id === currentUserId
+                ? '0 0 0 1px rgba(163,230,53,0.16), 0 4px 12px rgba(0,0,0,0.4)'
+                : 'none',
           }}
         >
           <button
             type="button"
-            style={{ position: 'relative', width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, cursor: 'pointer', touchAction: 'manipulation', padding: 0, border: 'none', background: 'transparent' }}
+            style={{
+              position: 'relative',
+              width: isMobile ? 44 : 32,
+              height: isMobile ? 44 : 32,
+              cursor: 'pointer',
+              touchAction: 'manipulation',
+              padding: 0,
+              border: 'none',
+              background: 'transparent',
+            }}
             role="button"
             tabIndex={0}
             onPointerDown={(e) => {
-              // In a horizontally scrollable rail click events can be swallowed.
-              // Open PM early on pointer down for reliable interaction.
               if (u.id !== currentUserId && onMessageUser) {
                 e.preventDefault()
                 e.stopPropagation()
@@ -179,64 +314,104 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
             onClick={(e) => {
               e.stopPropagation()
 
-              // Primary action on top online avatars: open private chat immediately.
-              if (u.id !== currentUserId && onMessageUser) {
+              if (
+                u.id !== currentUserId &&
+                onMessageUser
+              ) {
                 onMessageUser(u)
                 return
               }
-              
-              // If location data exists, use it
-              if (u.lat && u.lng && Number.isFinite(u.lat) && Number.isFinite(u.lng)) {
-                window.dispatchEvent(new CustomEvent('matrica:focus-online-user', {
-                  detail: {
-                    lat: u.lat,
-                    lng: u.lng,
-                    nickname: u.nickname,
-                    avatarUrl: u.avatarUrl,
-                    score: u.score,
-                    accepted: u.accepted,
-                    userId: u.id,
-                    canChat: u.id !== currentUserId,
-                  },
-                }))
+
+              if (
+                u.lat &&
+                u.lng &&
+                Number.isFinite(u.lat) &&
+                Number.isFinite(u.lng)
+              ) {
+                window.dispatchEvent(
+                  new CustomEvent(
+                    'matrica:focus-online-user',
+                    {
+                      detail: {
+                        lat: u.lat,
+                        lng: u.lng,
+                        nickname: u.nickname,
+                        avatarUrl: u.avatarUrl,
+                        score: u.score,
+                        accepted: u.accepted,
+                        userId: u.id,
+                        canChat:
+                          u.id !== currentUserId,
+                      },
+                    }
+                  )
+                )
               } else {
-                // Fallback: try to get current user location from window or show message
-                const userLoc = (window as any).vallalhatatlan_userLocation
-                if (userLoc?.lat && userLoc?.lng) {
-                  window.dispatchEvent(new CustomEvent('matrica:focus-online-user', {
-                    detail: {
-                      lat: userLoc.lat,
-                      lng: userLoc.lng,
-                      nickname: `${u.nickname} (kb. pozicio)`,
-                      avatarUrl: u.avatarUrl,
-                      score: u.score,
-                      accepted: u.accepted,
-                      userId: u.id,
-                      canChat: u.id !== currentUserId,
-                    },
-                  }))
+                const userLoc = (window as any)
+                  .vallalhatatlan_userLocation
+
+                if (
+                  userLoc?.lat &&
+                  userLoc?.lng
+                ) {
+                  window.dispatchEvent(
+                    new CustomEvent(
+                      'matrica:focus-online-user',
+                      {
+                        detail: {
+                          lat: userLoc.lat,
+                          lng: userLoc.lng,
+                          nickname: `${u.nickname} (kb. pozicio)`,
+                          avatarUrl: u.avatarUrl,
+                          score: u.score,
+                          accepted: u.accepted,
+                          userId: u.id,
+                          canChat:
+                            u.id !== currentUserId,
+                        },
+                      }
+                    )
+                  )
                 } else {
-                  alert(`${u.nickname} pozĂ­ciĂłja nem elĂ©rhetĹ‘.\n\nBiztos, hogy engedĂ©lyezted a helymeghatĂˇrozĂˇst?`)
+                  alert(
+                    `${u.nickname} pozĂ­ciĂłja nem elĂ©rhetĹ‘.\n\nBiztos, hogy engedĂ©lyezted a helymeghatĂˇrozĂˇst?`
+                  )
                 }
               }
             }}
             onTouchEnd={(e) => {
               e.stopPropagation()
 
-              if (u.id !== currentUserId && onMessageUser) {
+              if (
+                u.id !== currentUserId &&
+                onMessageUser
+              ) {
                 onMessageUser(u)
               }
             }}
             onKeyDown={(e) => {
-              if (e.key !== 'Enter' && e.key !== ' ') return
+              if (
+                e.key !== 'Enter' &&
+                e.key !== ' '
+              ) {
+                return
+              }
+
               e.preventDefault()
               e.stopPropagation()
 
-              if (u.id !== currentUserId && onMessageUser) {
+              if (
+                u.id !== currentUserId &&
+                onMessageUser
+              ) {
                 onMessageUser(u)
               }
             }}
-            title={`${u.nickname} - ${u.lat && u.lng ? 'Kattints a tĂ©rkĂ©pen valĂł megjelenĂ­tĂ©shez' : 'Nincs pozĂ­ciĂł adat'}`}
+            title={`${u.nickname} - ${
+              u.lat && u.lng
+                ? 'Kattints a tĂ©rkĂ©pen valĂł megjelenĂ­tĂ©shez'
+                : 'Nincs pozĂ­ciĂł adat'
+            }`}
           >
             {u.avatarUrl ? (
               <img
@@ -247,15 +422,42 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                   height: isMobile ? 44 : 32,
                   borderRadius: '50%',
                   objectFit: 'cover',
-                  border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #4b5563',
+                  border:
+                    u.id === currentUserId
+                      ? `3px solid ${currentUserAccent}`
+                      : '2px solid #4b5563',
                   background: '#23232a',
                   cursor: 'pointer',
                 }}
               />
             ) : (
-
-              <div style={{ width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, borderRadius: '50%', background: '#23232a', color: u.id === currentUserId ? '#dbe1e8' : '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: isMobile ? 17 : 15, border: u.id === currentUserId ? `3px solid ${currentUserAccent}` : '2px solid #4b5563', cursor: 'pointer' }}>{u.nickname?.[0]?.toUpperCase() || '?'}</div>
+              <div
+                style={{
+                  width: isMobile ? 44 : 32,
+                  height: isMobile ? 44 : 32,
+                  borderRadius: '50%',
+                  background: '#23232a',
+                  color:
+                    u.id === currentUserId
+                      ? '#dbe1e8'
+                      : '#9ca3af',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: isMobile ? 17 : 15,
+                  border:
+                    u.id === currentUserId
+                      ? `3px solid ${currentUserAccent}`
+                      : '2px solid #4b5563',
+                  cursor: 'pointer',
+                }}
+              >
+                {u.nickname?.[0]?.toUpperCase() ||
+                  '?'}
+              </div>
             )}
+
             {u.id === currentUserId ? (
               <span
                 style={{
@@ -278,10 +480,20 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                 title="Te vagy"
                 aria-label="Te vagy"
               >
-                <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.06em' }}>TE</span>
+                <span
+                  style={{
+                    fontSize: 9,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                  }}
+                >
+                  TE
+                </span>
               </span>
             ) : null}
-            {u.id !== currentUserId && onMessageUser ? (
+
+            {u.id !== currentUserId &&
+            onMessageUser ? (
               <button
                 type="button"
                 onClick={(e) => {
@@ -297,8 +509,10 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                   width: isMobile ? 18 : 16,
                   height: isMobile ? 18 : 16,
                   borderRadius: '50%',
-                  border: '1px solid rgba(255,255,255,0.16)',
-                  background: 'rgba(9,9,11,0.92)',
+                  border:
+                    '1px solid rgba(255,255,255,0.16)',
+                  background:
+                    'rgba(9,9,11,0.92)',
                   color: '#e5e7eb',
                   display: 'flex',
                   alignItems: 'center',
@@ -307,7 +521,13 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                   cursor: 'pointer',
                 }}
               >
-                <svg viewBox="0 0 20 20" width="10" height="10" fill="none" aria-hidden="true">
+                <svg
+                  viewBox="0 0 20 20"
+                  width="10"
+                  height="10"
+                  fill="none"
+                  aria-hidden="true"
+                >
                   <path
                     d="M4 5.5h12v7H8.8L5 15.5v-3H4v-7Z"
                     stroke="currentColor"
@@ -315,34 +535,105 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
                     strokeLinejoin="round"
                   />
                 </svg>
+
                 {pmUnreadCounts[u.id] ? (
-                  <span style={{ position: 'absolute', top: -2, right: -2, background: '#ef4444', color: '#fff', borderRadius: '50%', fontSize: 8, fontWeight: 700, minWidth: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #1f2937' }}>
-                    {pmUnreadCounts[u.id]! > 99 ? '99' : pmUnreadCounts[u.id]}
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: -2,
+                      right: -2,
+                      background: '#ef4444',
+                      color: '#fff',
+                      borderRadius: '50%',
+                      fontSize: 8,
+                      fontWeight: 700,
+                      minWidth: 14,
+                      height: 14,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border:
+                        '1px solid #1f2937',
+                    }}
+                  >
+                    {pmUnreadCounts[u.id]! > 99
+                      ? '99'
+                      : pmUnreadCounts[u.id]}
                   </span>
                 ) : null}
               </button>
             ) : null}
-            <span style={{ position: 'absolute', bottom: -2, right: -2, background: u.id === currentUserId ? '#a3e635' : '#4b5563', color: '#111827', borderRadius: 8, fontSize: 11, fontWeight: 700, minWidth: isMobile ? 18 : 16, height: isMobile ? 18 : 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #18181b', padding: '0 4px', pointerEvents: 'none' }}>{u.badge}</span>
+
+            <span
+              style={{
+                position: 'absolute',
+                bottom: -2,
+                right: -2,
+                background:
+                  u.id === currentUserId
+                    ? '#a3e635'
+                    : '#4b5563',
+                color: '#111827',
+                borderRadius: 8,
+                fontSize: 11,
+                fontWeight: 700,
+                minWidth: isMobile ? 18 : 16,
+                height: isMobile ? 18 : 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border:
+                  '2px solid #18181b',
+                padding: '0 4px',
+                pointerEvents: 'none',
+              }}
+            >
+              {u.badge}
+            </span>
           </button>
+
           <span
             onClick={(e) => {
-              if (u.id === currentUserId || !onMessageUser) return
+              if (
+                u.id === currentUserId ||
+                !onMessageUser
+              ) {
+                return
+              }
+
               e.stopPropagation()
               onMessageUser(u)
             }}
-            title={u.id === currentUserId ? u.nickname : `${u.nickname} privat uzenet`}
+            title={
+              u.id === currentUserId
+                ? u.nickname
+                : `${u.nickname} privat uzenet`
+            }
             style={{
               fontSize: isMobile ? 12 : 13,
-              color: u.id === currentUserId ? '#e5e7eb' : '#d4d4d8',
-              fontWeight: u.id === currentUserId ? 700 : 500,
+              color:
+                u.id === currentUserId
+                  ? '#e5e7eb'
+                  : '#d4d4d8',
+              fontWeight:
+                u.id === currentUserId ? 700 : 500,
               maxWidth: isMobile ? 56 : 70,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               textAlign: 'center',
-              cursor: u.id === currentUserId || !onMessageUser ? 'default' : 'pointer',
-              textDecoration: u.id === currentUserId || !onMessageUser ? 'none' : 'underline',
-              textDecorationColor: 'rgba(190,242,100,0.5)',
+              cursor:
+                u.id === currentUserId ||
+                !onMessageUser
+                  ? 'default'
+                  : 'pointer',
+              textDecoration:
+                u.id === currentUserId ||
+                !onMessageUser
+                  ? 'none'
+                  : 'underline',
+              textDecorationColor:
+                'rgba(190,242,100,0.5)',
               textUnderlineOffset: 2,
             }}
           >
@@ -354,47 +645,135 @@ export function OnlineUsersBar({ onMessageUser, pmUnreadCounts = {}, hideCurrent
   )
 }
 
-function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolean }) {
+function MatricaNav({
+  showOnlineUsersBar = true,
+}: {
+  showOnlineUsersBar?: boolean
+}) {
   const SECONDARY_NAV_EXTRA_OFFSET = 8
   const CONTROL_RAIL_HEIGHT = 52
   const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
+
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const isAdmin = pathname?.startsWith('/admin/matrica')
+
+  const isAdmin =
+    pathname?.startsWith('/admin/matrica')
+
   const { session } = useSessionGuard()
   const user = (session as any)?.user ?? null
   const email: string = user?.email ?? ''
-  const authToken: string | null = (session as any)?.access_token ?? null
+  const authToken: string | null =
+    (session as any)?.access_token ?? null
 
   const [menuOpen, setMenuOpen] = useState(false)
-  const [score, setScore] = useState<number | null>(null)
-  const [accepted, setAccepted] = useState<number | null>(null)
-  const [nickname, setNickname] = useState<string | null>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [nicknameDraft, setNicknameDraft] = useState('')
-  const [nicknameEditing, setNicknameEditing] = useState(false)
-  const [nicknameSaving, setNicknameSaving] = useState(false)
-  const [nicknameError, setNicknameError] = useState<string | null>(null)
-  const [spotsSheetOpen, setSpotsSheetOpen] = useState(false)
-  const [spots, setSpots] = useState<StickerSpot[]>([])
-  const [spotsLoading, setSpotsLoading] = useState(false)
-  const [spotsError, setSpotsError] = useState<string | null>(null)
-  const [onlineBarHeight, setOnlineBarHeight] = useState(showOnlineUsersBar ? 38 : 0)
+  const [score, setScore] = useState<number | null>(
+    null
+  )
+  const [accepted, setAccepted] = useState<
+    number | null
+  >(null)
+  const [nickname, setNickname] = useState<
+    string | null
+  >(null)
+  const [avatarUrl, setAvatarUrl] = useState<
+    string | null
+  >(null)
+  const [nicknameDraft, setNicknameDraft] =
+    useState('')
+  const [nicknameEditing, setNicknameEditing] =
+    useState(false)
+  const [nicknameSaving, setNicknameSaving] =
+    useState(false)
+  const [nicknameError, setNicknameError] =
+    useState<string | null>(null)
+  const [spotsSheetOpen, setSpotsSheetOpen] =
+    useState(false)
+  const [spots, setSpots] = useState<StickerSpot[]>(
+    []
+  )
+  const [spotsLoading, setSpotsLoading] =
+    useState(false)
+  const [spotsError, setSpotsError] = useState<
+    string | null
+  >(null)
+
+  /*
+   * IMPORTANT:
+   * /halozat and every nested /halozat/* route must
+   * completely ignore the OnlineUsersBar layout.
+   */
+  const isNetworkPage =
+    pathname === '/halozat' ||
+    pathname?.startsWith('/halozat/')
+
+  const shouldShowOnlineUsersBar =
+    showOnlineUsersBar && !isNetworkPage
+
+  /*
+   * Keep this state at zero on network pages.
+   * The effect below also resets it when navigation
+   * happens client-side.
+   */
+  const [onlineBarHeight, setOnlineBarHeight] =
+    useState(
+      shouldShowOnlineUsersBar ? 38 : 0
+    )
+
   const [isMobile, setIsMobile] = useState(false)
-  const [pmRecipient, setPmRecipient] = useState<OnlineUserProfile | null>(null)
-  const [pmUnreadCounts, setPmUnreadCounts] = useState<Record<string, number | undefined>>({})
-  const [pmToasts, setPmToasts] = useState<Array<{ id: string; userId: string; nickname: string }>>([])
-  const pmUnreadStorageReadyRef = useRef(false)
-  const pmDeepLinkHandledRef = useRef<string | null>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const clickSfxRef = useRef<HTMLAudioElement | null>(null)
-  const headerOffset = onlineBarHeight + SECONDARY_NAV_EXTRA_OFFSET + CONTROL_RAIL_HEIGHT
+
+  const [pmRecipient, setPmRecipient] =
+    useState<OnlineUserProfile | null>(null)
+
+  const [pmUnreadCounts, setPmUnreadCounts] =
+    useState<
+      Record<string, number | undefined>
+    >({})
+
+  const [pmToasts, setPmToasts] = useState<
+    Array<{
+      id: string
+      userId: string
+      nickname: string
+    }>
+  >([])
+
+  const pmUnreadStorageReadyRef =
+    useRef(false)
+
+  const pmDeepLinkHandledRef =
+    useRef<string | null>(null)
+
+  const menuRef =
+    useRef<HTMLDivElement>(null)
+
+  const clickSfxRef =
+    useRef<HTMLAudioElement | null>(null)
+
+  /*
+   * THIS IS THE IMPORTANT FIX.
+   *
+   * Previously this was always:
+   *
+   * onlineBarHeight + 8 + 52
+   *
+   * which meant /halozat still received a 60px
+   * header offset even though OnlineUsersBar was hidden.
+   */
+  const headerOffset = shouldShowOnlineUsersBar
+    ? onlineBarHeight +
+      SECONDARY_NAV_EXTRA_OFFSET +
+      CONTROL_RAIL_HEIGHT
+    : 0
 
   const playUiClick = useCallback(() => {
     const audio = clickSfxRef.current
+
     if (!audio) return
+
     audio.currentTime = 0
+
     void audio.play().catch(() => {
       // Ignore autoplay restrictions.
     })
@@ -402,10 +781,14 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+
     const click = new Audio(UI_CLICK_SFX_SRC)
+
     click.preload = 'auto'
     click.volume = 0.26
+
     clickSfxRef.current = click
+
     return () => {
       if (clickSfxRef.current) {
         clickSfxRef.current.pause()
@@ -423,18 +806,34 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
     }
 
     try {
-      const raw = window.localStorage.getItem(`matrica:pm-unread:${user.id}`)
+      const raw = window.localStorage.getItem(
+        `matrica:pm-unread:${user.id}`
+      )
+
       if (!raw) {
         setPmUnreadCounts({})
         pmUnreadStorageReadyRef.current = true
         return
       }
 
-      const parsed = JSON.parse(raw) as Record<string, unknown>
-      const restored: Record<string, number | undefined> = {}
+      const parsed = JSON.parse(raw) as Record<
+        string,
+        unknown
+      >
 
-      for (const [key, value] of Object.entries(parsed)) {
-        if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      const restored: Record<
+        string,
+        number | undefined
+      > = {}
+
+      for (const [key, value] of Object.entries(
+        parsed
+      )) {
+        if (
+          typeof value === 'number' &&
+          Number.isFinite(value) &&
+          value > 0
+        ) {
           restored[key] = value
         }
       }
@@ -448,16 +847,34 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
   }, [user?.id])
 
   useEffect(() => {
-    if (!user?.id || !pmUnreadStorageReadyRef.current) return
+    if (
+      !user?.id ||
+      !pmUnreadStorageReadyRef.current
+    ) {
+      return
+    }
 
-    const serializable: Record<string, number> = {}
-    for (const [key, value] of Object.entries(pmUnreadCounts)) {
-      if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    const serializable: Record<
+      string,
+      number
+    > = {}
+
+    for (const [key, value] of Object.entries(
+      pmUnreadCounts
+    )) {
+      if (
+        typeof value === 'number' &&
+        Number.isFinite(value) &&
+        value > 0
+      ) {
         serializable[key] = value
       }
     }
 
-    window.localStorage.setItem(`matrica:pm-unread:${user.id}`, JSON.stringify(serializable))
+    window.localStorage.setItem(
+      `matrica:pm-unread:${user.id}`,
+      JSON.stringify(serializable)
+    )
   }, [user?.id, pmUnreadCounts])
 
   useEffect(() => {
@@ -467,20 +884,51 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
 
     const loadUnreadFromServer = async () => {
       try {
-        const res = await fetch('/api/matrica/pm-unread', {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        })
-        const json = await res.json().catch(() => null)
-        if (cancelled || !res.ok || !json?.ok || typeof json?.unreadByUserId !== 'object') return
+        const res = await fetch(
+          '/api/matrica/pm-unread',
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        )
 
-        const next: Record<string, number | undefined> = {}
-        for (const [key, value] of Object.entries(json.unreadByUserId as Record<string, unknown>)) {
-          if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+        const json = await res
+          .json()
+          .catch(() => null)
+
+        if (
+          cancelled ||
+          !res.ok ||
+          !json?.ok ||
+          typeof json?.unreadByUserId !== 'object'
+        ) {
+          return
+        }
+
+        const next: Record<
+          string,
+          number | undefined
+        > = {}
+
+        for (const [
+          key,
+          value,
+        ] of Object.entries(
+          json.unreadByUserId as Record<
+            string,
+            unknown
+          >
+        )) {
+          if (
+            typeof value === 'number' &&
+            Number.isFinite(value) &&
+            value > 0
+          ) {
             next[key] = Math.floor(value)
           }
         }
+
         setPmUnreadCounts(next)
       } catch {
         // Keep local fallback if server sync fails.
@@ -488,6 +936,7 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
     }
 
     void loadUnreadFromServer()
+
     const timer = setInterval(() => {
       void loadUnreadFromServer()
     }, 10000)
@@ -501,25 +950,57 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
   useEffect(() => {
     if (!user?.id) return
 
-    const pmTargetUserId = searchParams?.get('pm')?.trim() || ''
-    if (!pmTargetUserId || pmTargetUserId === user.id) return
-    if (pmDeepLinkHandledRef.current === pmTargetUserId) return
+    const pmTargetUserId =
+      searchParams?.get('pm')?.trim() || ''
+
+    if (
+      !pmTargetUserId ||
+      pmTargetUserId === user.id
+    ) {
+      return
+    }
+
+    if (
+      pmDeepLinkHandledRef.current ===
+      pmTargetUserId
+    ) {
+      return
+    }
 
     let cancelled = false
-    pmDeepLinkHandledRef.current = pmTargetUserId
+
+    pmDeepLinkHandledRef.current =
+      pmTargetUserId
 
     const openPmFromDeepLink = async () => {
       try {
-        const res = await fetch(`/api/user/profile?userId=${encodeURIComponent(pmTargetUserId)}`)
-        const json = await res.json().catch(() => null)
+        const res = await fetch(
+          `/api/user/profile?userId=${encodeURIComponent(
+            pmTargetUserId
+          )}`
+        )
+
+        const json = await res
+          .json()
+          .catch(() => null)
 
         if (cancelled) return
 
-        const nickname = typeof json?.profile?.nickname === 'string' && json.profile.nickname.trim()
-          ? json.profile.nickname.trim()
-          : `user-${pmTargetUserId.slice(0, 6)}`
+        const nickname =
+          typeof json?.profile?.nickname ===
+            'string' &&
+          json.profile.nickname.trim()
+            ? json.profile.nickname.trim()
+            : `user-${pmTargetUserId.slice(
+                0,
+                6
+              )}`
 
-        const avatarUrl = typeof json?.profile?.avatar_url === 'string' ? json.profile.avatar_url : null
+        const avatarUrl =
+          typeof json?.profile?.avatar_url ===
+          'string'
+            ? json.profile.avatar_url
+            : null
 
         setPmRecipient({
           id: pmTargetUserId,
@@ -530,7 +1011,11 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
           score: 0,
           accepted: 0,
         })
-        setPmUnreadCounts((prev) => ({ ...prev, [pmTargetUserId]: undefined }))
+
+        setPmUnreadCounts((prev) => ({
+          ...prev,
+          [pmTargetUserId]: undefined,
+        }))
       } catch {
         // Deep-link open is best effort.
       }
@@ -545,84 +1030,178 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
 
   useEffect(() => {
     const handleOpenPM = (event: Event) => {
-      const customEvent = event as CustomEvent<{
-        userId: string
-        nickname: string
-        avatarUrl?: string | null
-      }>
-      const { userId, nickname, avatarUrl = null } = customEvent.detail
-      
+      const customEvent =
+        event as CustomEvent<{
+          userId: string
+          nickname: string
+          avatarUrl?: string | null
+        }>
+
+      const {
+        userId,
+        nickname,
+        avatarUrl = null,
+      } = customEvent.detail
+
       setPmRecipient({
         id: userId,
         email: '',
-        nickname: nickname,
-        avatarUrl: avatarUrl,
+        nickname,
+        avatarUrl,
         badge: 0,
         score: 0,
         accepted: 0,
       })
-      setPmUnreadCounts((prev) => ({ ...prev, [userId]: undefined }))
+
+      setPmUnreadCounts((prev) => ({
+        ...prev,
+        [userId]: undefined,
+      }))
     }
 
-    window.addEventListener('matrica:open-pm', handleOpenPM)
-    return () => window.removeEventListener('matrica:open-pm', handleOpenPM)
+    window.addEventListener(
+      'matrica:open-pm',
+      handleOpenPM
+    )
+
+    return () =>
+      window.removeEventListener(
+        'matrica:open-pm',
+        handleOpenPM
+      )
   }, [])
 
+  /*
+   * Measure OnlineUsersBar ONLY when it actually
+   * exists.
+   *
+   * On /halozat this effect immediately forces the
+   * height to zero and never attaches observers.
+   */
   useEffect(() => {
-    if (!showOnlineUsersBar) {
+    if (!shouldShowOnlineUsersBar) {
       setOnlineBarHeight(0)
       return
     }
 
     const measureOnlineBar = () => {
-      const bar = document.getElementById('matrica-online-users-bar')
-      const nextHeight = bar?.getBoundingClientRect().height
-      setOnlineBarHeight(nextHeight && nextHeight > 0 ? Math.round(nextHeight) : 38)
+      const bar = document.getElementById(
+        'matrica-online-users-bar'
+      )
+
+      const nextHeight =
+        bar?.getBoundingClientRect().height
+
+      setOnlineBarHeight(
+        nextHeight && nextHeight > 0
+          ? Math.round(nextHeight)
+          : 38
+      )
     }
 
     measureOnlineBar()
-    window.addEventListener('resize', measureOnlineBar)
 
-    let resizeObserver: ResizeObserver | null = null
-    const bar = document.getElementById('matrica-online-users-bar')
-    if (bar && typeof ResizeObserver !== 'undefined') {
+    window.addEventListener(
+      'resize',
+      measureOnlineBar
+    )
+
+    let resizeObserver:
+      | ResizeObserver
+      | null = null
+
+    const bar = document.getElementById(
+      'matrica-online-users-bar'
+    )
+
+    if (
+      bar &&
+      typeof ResizeObserver !== 'undefined'
+    ) {
       resizeObserver = new ResizeObserver(() => {
         measureOnlineBar()
       })
+
       resizeObserver.observe(bar)
     }
 
     return () => {
-      window.removeEventListener('resize', measureOnlineBar)
+      window.removeEventListener(
+        'resize',
+        measureOnlineBar
+      )
+
       if (resizeObserver) {
         resizeObserver.disconnect()
       }
     }
-  }, [showOnlineUsersBar])
+  }, [shouldShowOnlineUsersBar])
 
   useEffect(() => {
-    const updateIsMobile = () => setIsMobile(window.innerWidth < 768)
+    const updateIsMobile = () =>
+      setIsMobile(window.innerWidth < 768)
+
     updateIsMobile()
-    window.addEventListener('resize', updateIsMobile)
-    return () => window.removeEventListener('resize', updateIsMobile)
+
+    window.addEventListener(
+      'resize',
+      updateIsMobile
+    )
+
+    return () =>
+      window.removeEventListener(
+        'resize',
+        updateIsMobile
+      )
   }, [])
 
+  /*
+   * Keep the global CSS offset in sync.
+   *
+   * Most importantly:
+   * /halozat => 0px
+   */
   useEffect(() => {
-    document.documentElement.style.setProperty('--matrica-header-offset', `${headerOffset}px`)
+    document.documentElement.style.setProperty(
+      '--matrica-header-offset',
+      `${headerOffset}px`
+    )
+
+    return () => {
+      /*
+       * Only clear it if this component is being
+       * removed. Do not leave an old 60px value behind.
+       */
+      document.documentElement.style.setProperty(
+        '--matrica-header-offset',
+        '0px'
+      )
+    }
   }, [headerOffset])
 
-  // Fetch score when session is available and after successful claims.
+  /*
+   * Fetch score when session is available and
+   * after successful claims.
+   */
   useEffect(() => {
     if (!session) return
+
     const token = (session as any).access_token
+
     if (!token) return
 
     let cancelled = false
 
     const loadScore = () => {
-      fetch('/api/matrica/score', { headers: { Authorization: `Bearer ${token}` } })
-        .then(r => r.ok ? r.json() : null)
-        .then(json => {
+      fetch('/api/matrica/score', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((r) =>
+          r.ok ? r.json() : null
+        )
+        .then((json) => {
           if (!cancelled && json) {
             setScore(json.score ?? 0)
             setAccepted(json.accepted ?? 0)
@@ -637,11 +1216,18 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
       loadScore()
     }
 
-    window.addEventListener('matrica:claim-submitted', onClaimSubmitted)
+    window.addEventListener(
+      'matrica:claim-submitted',
+      onClaimSubmitted
+    )
 
     return () => {
       cancelled = true
-      window.removeEventListener('matrica:claim-submitted', onClaimSubmitted)
+
+      window.removeEventListener(
+        'matrica:claim-submitted',
+        onClaimSubmitted
+      )
     }
   }, [session])
 
@@ -656,16 +1242,36 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
 
     const loadNickname = async () => {
       try {
-        const res = await fetch(`/api/user/profile?userId=${encodeURIComponent(user.id)}`)
+        const res = await fetch(
+          `/api/user/profile?userId=${encodeURIComponent(
+            user.id
+          )}`
+        )
+
         const json = await res.json()
 
         if (cancelled) return
 
-        if (res.ok && json?.ok && typeof json?.profile?.nickname === 'string') {
-          const value = json.profile.nickname.trim()
+        if (
+          res.ok &&
+          json?.ok &&
+          typeof json?.profile?.nickname ===
+            'string'
+        ) {
+          const value =
+            json.profile.nickname.trim()
+
           setNickname(value || null)
-          setAvatarUrl(typeof json?.profile?.avatar_url === 'string' ? json.profile.avatar_url : null)
+
+          setAvatarUrl(
+            typeof json?.profile?.avatar_url ===
+              'string'
+              ? json.profile.avatar_url
+              : null
+          )
+
           setNicknameDraft(value || '')
+
           return
         }
 
@@ -690,14 +1296,23 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
 
   async function handleSaveNickname() {
     const token = (session as any)?.access_token
+
     if (!token) {
-      setNicknameError('Bejelentkezes szukseges a menteshez.')
+      setNicknameError(
+        'Bejelentkezes szukseges a menteshez.'
+      )
       return
     }
 
-    const trimmed = nicknameDraft.trim().toLocaleLowerCase('hu-HU')
+    const trimmed =
+      nicknameDraft
+        .trim()
+        .toLocaleLowerCase('hu-HU')
+
     if (!trimmed) {
-      setNicknameError('Adj meg egy felhasznalonevet.')
+      setNicknameError(
+        'Adj meg egy felhasznalonevet.'
+      )
       return
     }
 
@@ -705,33 +1320,55 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
     setNicknameError(null)
 
     try {
-      const res = await fetch('/api/user/profile', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ nickname: trimmed }),
-      })
+      const res = await fetch(
+        '/api/user/profile',
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            nickname: trimmed,
+          }),
+        }
+      )
 
       const json = await res.json()
+
       if (!res.ok || !json?.ok) {
-        if (json?.error === 'nickname_taken') {
-          setNicknameError('Ez a felhasznalonev mar foglalt.')
-        } else if (typeof json?.error === 'string') {
+        if (
+          json?.error === 'nickname_taken'
+        ) {
+          setNicknameError(
+            'Ez a felhasznalonev mar foglalt.'
+          )
+        } else if (
+          typeof json?.error === 'string'
+        ) {
           setNicknameError(json.error)
         } else {
-          setNicknameError('Nem sikerult menteni a felhasznalonevet.')
+          setNicknameError(
+            'Nem sikerult menteni a felhasznalonevet.'
+          )
         }
+
         return
       }
 
-      const savedNickname = typeof json?.profile?.nickname === 'string' ? json.profile.nickname.trim() : trimmed
+      const savedNickname =
+        typeof json?.profile?.nickname ===
+        'string'
+          ? json.profile.nickname.trim()
+          : trimmed
+
       setNickname(savedNickname)
       setNicknameDraft(savedNickname)
       setNicknameEditing(false)
     } catch {
-      setNicknameError('Nem sikerult menteni a felhasznalonevet.')
+      setNicknameError(
+        'Nem sikerult menteni a felhasznalonevet.'
+      )
     } finally {
       setNicknameSaving(false)
     }
@@ -741,37 +1378,58 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
     if (!spotsSheetOpen) return
 
     let cancelled = false
+
     const loadSpots = async () => {
       setSpotsLoading(true)
       setSpotsError(null)
+
       try {
-        const res = await fetch('/api/matrica/spots', {
-          headers: authToken
-            ? {
-                Authorization: `Bearer ${authToken}`,
-              }
-            : undefined,
-        })
+        const res = await fetch(
+          '/api/matrica/spots',
+          {
+            headers: authToken
+              ? {
+                  Authorization: `Bearer ${authToken}`,
+                }
+              : undefined,
+          }
+        )
+
         const json = await res.json()
 
         if (cancelled) return
 
         if (!res.ok) {
-          setSpotsError('Nem sikerult betolteni a szpotokat.')
+          setSpotsError(
+            'Nem sikerult betolteni a szpotokat.'
+          )
           setSpots([])
           return
         }
 
-        const rawSpots = Array.isArray(json?.spots) ? json.spots : []
-        const activeSpots = rawSpots.filter((spot: any) => spot?.status === 'active')
+        const rawSpots = Array.isArray(
+          json?.spots
+        )
+          ? json.spots
+          : []
+
+        const activeSpots = rawSpots.filter(
+          (spot: any) =>
+            spot?.status === 'active'
+        )
+
         setSpots(activeSpots)
       } catch {
         if (!cancelled) {
-          setSpotsError('Nem sikerult betolteni a szpotokat.')
+          setSpotsError(
+            'Nem sikerult betolteni a szpotokat.'
+          )
           setSpots([])
         }
       } finally {
-        if (!cancelled) setSpotsLoading(false)
+        if (!cancelled) {
+          setSpotsLoading(false)
+        }
       }
     }
 
@@ -782,82 +1440,140 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
     }
   }, [spotsSheetOpen, authToken])
 
-  function startRouteToSpot(spot: StickerSpot) {
+  function startRouteToSpot(
+    spot: StickerSpot
+  ) {
     window.dispatchEvent(
-      new CustomEvent(MATRICA_START_ROUTE_EVENT, {
-        detail: {
-          spotId: spot.id,
-          lat: spot.lat,
-          lng: spot.lng,
-          title: spot.title,
-        },
-      })
+      new CustomEvent(
+        MATRICA_START_ROUTE_EVENT,
+        {
+          detail: {
+            spotId: spot.id,
+            lat: spot.lat,
+            lng: spot.lng,
+            title: spot.title,
+          },
+        }
+      )
     )
+
     setSpotsSheetOpen(false)
   }
-
 
   // Close dropdown on outside click
   useEffect(() => {
     if (!menuOpen) return
+
     function onPointerDown(e: PointerEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(
+          e.target as Node
+        )
+      ) {
         setMenuOpen(false)
       }
     }
-    document.addEventListener('pointerdown', onPointerDown)
-    return () => document.removeEventListener('pointerdown', onPointerDown)
+
+    document.addEventListener(
+      'pointerdown',
+      onPointerDown
+    )
+
+    return () =>
+      document.removeEventListener(
+        'pointerdown',
+        onPointerDown
+      )
   }, [menuOpen])
 
   useEffect(() => {
     const handleOpenProfileMenu = () => {
       if (!user) return
+
       setMenuOpen(true)
     }
 
-    window.addEventListener('matrica:open-profile-menu', handleOpenProfileMenu)
-    return () => {
-      window.removeEventListener('matrica:open-profile-menu', handleOpenProfileMenu)
-    }
+    window.addEventListener(
+      'matrica:open-profile-menu',
+      handleOpenProfileMenu
+    )
+
+    return () =>
+      window.removeEventListener(
+        'matrica:open-profile-menu',
+        handleOpenProfileMenu
+      )
   }, [user])
 
   async function handleSignOut() {
     setMenuOpen(false)
+
     const supabase = createClient()
+
     try {
-      await supabase.auth.signOut({ scope: 'local' })
+      await supabase.auth.signOut({
+        scope: 'local',
+      })
     } catch {
-      // Continue with local cleanup even if network/global revoke fails.
+      // Continue with local cleanup even if
+      // network/global revoke fails.
     }
 
     clearStoredAuthReturnTarget()
 
     const returnTo = pathname || '/halozat'
+
     if (typeof window !== 'undefined') {
-      window.location.replace(`${buildAuthHref(returnTo)}&logout=1`)
+      window.location.replace(
+        `${buildAuthHref(returnTo)}&logout=1`
+      )
       return
     }
-    router.replace(`${buildAuthHref(returnTo)}&logout=1`)
+
+    router.replace(
+      `${buildAuthHref(returnTo)}&logout=1`
+    )
   }
 
   const profileAvatarSize = isMobile ? 44 : 32
-  const pmDisplayName = (nickname && nickname.trim()) || (email && email.split('@')[0]) || 'user'
+
+  const pmDisplayName =
+    (nickname && nickname.trim()) ||
+    (email && email.split('@')[0]) ||
+    'user'
 
   return (
     <>
-      {showOnlineUsersBar ? (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 5200, pointerEvents: 'auto' }}>
+      {shouldShowOnlineUsersBar ? (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 5200,
+            pointerEvents: 'auto',
+          }}
+        >
           <OnlineUsersBar
             onMessageUser={(selectedUser) => {
               setPmRecipient(selectedUser)
-              setPmUnreadCounts((prev) => ({ ...prev, [selectedUser.id]: undefined }))
+
+              setPmUnreadCounts((prev) => ({
+                ...prev,
+                [selectedUser.id]: undefined,
+              }))
             }}
             pmUnreadCounts={pmUnreadCounts}
             hideCurrentUser
-            reserveRightSpace={profileAvatarSize + 42}
+            reserveRightSpace={
+              profileAvatarSize + 42
+            }
           />
         </div>
       ) : null}
+
       <nav
         style={{
           position: 'fixed',
@@ -876,516 +1592,975 @@ function MatricaNav({ showOnlineUsersBar = true }: { showOnlineUsersBar?: boolea
           pointerEvents: 'none',
         }}
       >
-      {/* Wordmark */}
-      <Link
-        href="/"
-        style={{
-          display: 'none',
-          alignItems: 'center',
-          flexShrink: 0,
-          textDecoration: 'none',
-          color: '#e5e7eb',
-          fontSize: 10,
-          letterSpacing: '0.3em',
-          textTransform: 'uppercase',
-          fontWeight: 600,
-          lineHeight: 1,
-        }}
-        aria-label="HĂLĂ“ZAT"
-      >
-        HĂLĂ“ZAT
-      </Link>
+        {/* Wordmark */}
+        <Link
+          href="/"
+          style={{
+            display: 'none',
+            alignItems: 'center',
+            flexShrink: 0,
+            textDecoration: 'none',
+            color: '#e5e7eb',
+            fontSize: 10,
+            letterSpacing: '0.3em',
+            textTransform: 'uppercase',
+            fontWeight: 600,
+            lineHeight: 1,
+          }}
+          aria-label="HĂLĂ“ZAT"
+        >
+          HĂLĂ“ZAT
+        </Link>
 
-      {/* Right side: links + profile */}
-      <div style={{ position: 'fixed', top: isMobile ? 4 : 6, right: 8, display: 'flex', alignItems: 'center', gap: 4, pointerEvents: 'auto', zIndex: 1003 }}>
-
-        {/* Profile menu trigger + dropdown */}
-        {user && (
-          <div ref={menuRef} style={{ position: 'relative', marginLeft: 4 }}>
-            <button
-              onClick={() => {
-                playUiClick()
-                setMenuOpen(o => !o)
-              }}
-              aria-label="FelhasznĂˇlĂłi menĂĽ"
-              title="Profil beĂˇllĂ­tĂˇsok"
+        {/* Right side: links + profile */}
+        <div
+          style={{
+            position: 'fixed',
+            top: isMobile ? 4 : 6,
+            right: 8,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            pointerEvents: 'auto',
+            zIndex: 1003,
+          }}
+        >
+          {/* Profile menu trigger + dropdown */}
+          {user && (
+            <div
+              ref={menuRef}
               style={{
-                width: profileAvatarSize,
-                height: profileAvatarSize,
-                borderRadius: '50%',
-                border: '2px solid #a3e635',
-                background: 'transparent',
-                cursor: 'pointer',
-                padding: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                color: menuOpen ? '#e2e8f0' : '#f4f4f5',
+                position: 'relative',
+                marginLeft: 4,
               }}
             >
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={nickname || email || 'Profilkep'}
-                  style={{
-                    width: profileAvatarSize,
-                    height: profileAvatarSize,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    display: 'block',
-                    border: '2px solid #a3e635',
-                  }}
-                />
-              ) : (
+              <button
+                onClick={() => {
+                  playUiClick()
+                  setMenuOpen((o) => !o)
+                }}
+                aria-label="FelhasznĂˇlĂłi menĂĽ"
+                title="Profil beĂˇllĂ­tĂˇsok"
+                style={{
+                  width: profileAvatarSize,
+                  height: profileAvatarSize,
+                  borderRadius: '50%',
+                  border:
+                    '2px solid #a3e635',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  color: menuOpen
+                    ? '#e2e8f0'
+                    : '#f4f4f5',
+                }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={
+                      nickname ||
+                      email ||
+                      'Profilkep'
+                    }
+                    style={{
+                      width: profileAvatarSize,
+                      height: profileAvatarSize,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      display: 'block',
+                      border:
+                        '2px solid #a3e635',
+                    }}
+                  />
+                ) : (
+                  <span
+                    style={{
+                      width: profileAvatarSize,
+                      height: profileAvatarSize,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background:
+                        'rgba(163,230,53,0.16)',
+                      color: '#f4f4f5',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      border:
+                        '2px solid #a3e635',
+                    }}
+                  >
+                    {(nickname ||
+                      email ||
+                      '?')
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase() || '?'}
+                  </span>
+                )}
+
                 <span
                   style={{
-                    width: profileAvatarSize,
-                    height: profileAvatarSize,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'rgba(163,230,53,0.16)',
-                    color: '#f4f4f5',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '0.02em',
-                    border: '2px solid #a3e635',
+                    position: 'absolute',
+                    top: -6,
+                    left: -5,
+                    border:
+                      '1px solid rgba(255,255,255,0.18)',
+                    background: '#a3e635',
+                    color: '#111827',
+                    fontSize: 9,
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    padding: '2px 5px',
+                    lineHeight: 1,
                   }}
                 >
-                  {(nickname || email || '?').trim().charAt(0).toUpperCase() || '?'}
+                  TE
                 </span>
-              )}
-              <span
-                style={{
-                  position: 'absolute',
-                  top: -6,
-                  left: -5,
-                  border: '1px solid rgba(255,255,255,0.18)',
-                  background: '#a3e635',
-                  color: '#111827',
-                  fontSize: 9,
-                  fontWeight: 800,
-                  letterSpacing: '0.06em',
-                  padding: '2px 5px',
-                  lineHeight: 1,
-                }}
-              >
-                TE
-              </span>
-            </button>
+              </button>
 
-            {menuOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  right: 0,
-                  minWidth: 260,
-                  background: 'rgba(5,7,9,0.98)',
-                  border: '1px solid rgba(190,242,100,0.22)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  overflow: 'hidden',
-                  zIndex: 300,
-                }}
-              >
-                {/* Identity */}
-                <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                  <p style={{ margin: 0, fontSize: 10, color: '#a3e635', marginBottom: 6, letterSpacing: '0.12em', fontWeight: 700 }}>SESSION ACTIVE</p>
-                  {nicknameEditing ? (
-                    <>
-                      <input
-                        type="text"
-                        value={nicknameDraft}
-                        onChange={(e) => setNicknameDraft(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            void handleSaveNickname()
+              {menuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    right: 0,
+                    minWidth: 260,
+                    background:
+                      'rgba(5,7,9,0.98)',
+                    border:
+                      '1px solid rgba(190,242,100,0.22)',
+                    boxShadow:
+                      '0 8px 32px rgba(0,0,0,0.6)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter:
+                      'blur(16px)',
+                    overflow: 'hidden',
+                    zIndex: 300,
+                  }}
+                >
+                  {/* Identity */}
+                  <div
+                    style={{
+                      padding:
+                        '14px 16px 12px',
+                      borderBottom:
+                        '1px solid rgba(255,255,255,0.07)',
+                    }}
+                  >
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 10,
+                        color: '#a3e635',
+                        marginBottom: 6,
+                        letterSpacing:
+                          '0.12em',
+                        fontWeight: 700,
+                      }}
+                    >
+                      SESSION ACTIVE
+                    </p>
+
+                    {nicknameEditing ? (
+                      <>
+                        <input
+                          type="text"
+                          value={nicknameDraft}
+                          onChange={(e) =>
+                            setNicknameDraft(
+                              e.target.value
+                            )
                           }
-                          if (e.key === 'Escape') {
-                            setNicknameEditing(false)
-                            setNicknameDraft(nickname || '')
-                            setNicknameError(null)
-                          }
-                        }}
-                        maxLength={20}
-                        autoFocus
-                        style={{
-                          width: '100%',
-                          margin: 0,
-                          fontSize: 14,
-                          color: '#f4f4f5',
-                          fontWeight: 700,
-                          border: '1px solid rgba(255,255,255,0.14)',
-                          background: 'rgba(255,255,255,0.03)',
-                          padding: '7px 9px',
-                          outline: 'none',
-                        }}
-                      />
-                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                        <button
-                          type="button"
-                          onClick={() => void handleSaveNickname()}
-                          disabled={nicknameSaving}
+                          onKeyDown={(e) => {
+                            if (
+                              e.key === 'Enter'
+                            ) {
+                              e.preventDefault()
+                              void handleSaveNickname()
+                            }
+
+                            if (
+                              e.key ===
+                              'Escape'
+                            ) {
+                              setNicknameEditing(
+                                false
+                              )
+                              setNicknameDraft(
+                                nickname || ''
+                              )
+                              setNicknameError(
+                                null
+                              )
+                            }
+                          }}
+                          maxLength={20}
+                          autoFocus
                           style={{
-                            border: '1px solid rgba(190,242,100,0.35)',
-                            background: 'rgba(163,230,53,0.12)',
-                            color: '#ecfccb',
-                            fontSize: 11,
+                            width: '100%',
+                            margin: 0,
+                            fontSize: 14,
+                            color: '#f4f4f5',
                             fontWeight: 700,
-                            padding: '5px 8px',
-                            cursor: nicknameSaving ? 'default' : 'pointer',
-                            opacity: nicknameSaving ? 0.7 : 1,
+                            border:
+                              '1px solid rgba(255,255,255,0.14)',
+                            background:
+                              'rgba(255,255,255,0.03)',
+                            padding: '7px 9px',
+                            outline: 'none',
+                          }}
+                        />
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: 8,
+                            marginTop: 8,
                           }}
                         >
-                          {nicknameSaving ? 'Mentes...' : 'Mentes'}
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleSaveNickname()
+                            }
+                            disabled={
+                              nicknameSaving
+                            }
+                            style={{
+                              border:
+                                '1px solid rgba(190,242,100,0.35)',
+                              background:
+                                'rgba(163,230,53,0.12)',
+                              color: '#ecfccb',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              padding:
+                                '5px 8px',
+                              cursor:
+                                nicknameSaving
+                                  ? 'default'
+                                  : 'pointer',
+                              opacity:
+                                nicknameSaving
+                                  ? 0.7
+                                  : 1,
+                            }}
+                          >
+                            {nicknameSaving
+                              ? 'Mentes...'
+                              : 'Mentes'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNicknameEditing(
+                                false
+                              )
+                              setNicknameDraft(
+                                nickname || ''
+                              )
+                              setNicknameError(
+                                null
+                              )
+                            }}
+                            disabled={
+                              nicknameSaving
+                            }
+                            style={{
+                              border:
+                                '1px solid rgba(255,255,255,0.14)',
+                              background:
+                                'transparent',
+                              color: '#a1a1aa',
+                              fontSize: 11,
+                              fontWeight: 600,
+                              padding:
+                                '5px 8px',
+                              cursor:
+                                nicknameSaving
+                                  ? 'default'
+                                  : 'pointer',
+                            }}
+                          >
+                            Megse
+                          </button>
+                        </div>
+
+                        {nicknameError ? (
+                          <p
+                            style={{
+                              margin:
+                                '8px 0 0 0',
+                              fontSize: 11,
+                              color: '#fda4af',
+                            }}
+                          >
+                            {nicknameError}
+                          </p>
+                        ) : (
+                          <p
+                            style={{
+                              margin:
+                                '8px 0 0 0',
+                              fontSize: 11,
+                              color: '#71717a',
+                            }}
+                          >
+                            3-20 karakter,
+                            betu/szam/_/-
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}
+                      >
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: 14,
+                            color: '#f4f4f5',
+                            fontWeight: 700,
+                            overflow: 'hidden',
+                            textOverflow:
+                              'ellipsis',
+                            whiteSpace:
+                              'nowrap',
+                            maxWidth: 188,
+                          }}
+                        >
+                          {nickname ||
+                            'nevtelen'}
+                        </p>
+
                         <button
                           type="button"
                           onClick={() => {
-                            setNicknameEditing(false)
-                            setNicknameDraft(nickname || '')
-                            setNicknameError(null)
+                            setNicknameEditing(
+                              true
+                            )
+                            setNicknameDraft(
+                              nickname || ''
+                            )
+                            setNicknameError(
+                              null
+                            )
                           }}
-                          disabled={nicknameSaving}
                           style={{
-                            border: '1px solid rgba(255,255,255,0.14)',
-                            background: 'transparent',
-                            color: '#a1a1aa',
+                            border: 'none',
+                            background:
+                              'transparent',
+                            color: '#a3e635',
                             fontSize: 11,
-                            fontWeight: 600,
-                            padding: '5px 8px',
-                            cursor: nicknameSaving ? 'default' : 'pointer',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            padding: 0,
+                            flexShrink: 0,
                           }}
                         >
-                          Megse
+                          Szerkesztes
                         </button>
                       </div>
-                      {nicknameError ? (
-                        <p style={{ margin: '8px 0 0 0', fontSize: 11, color: '#fda4af' }}>{nicknameError}</p>
-                      ) : (
-                        <p style={{ margin: '8px 0 0 0', fontSize: 11, color: '#71717a' }}>3-20 karakter, betu/szam/_/-</p>
-                      )}
-                    </>
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <p style={{
-                        margin: 0, fontSize: 14, color: '#f4f4f5', fontWeight: 700,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 188,
-                      }}>
-                        {nickname || 'nevtelen'}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNicknameEditing(true)
-                          setNicknameDraft(nickname || '')
-                          setNicknameError(null)
-                        }}
+                    )}
+
+                    <p
+                      style={{
+                        margin:
+                          '2px 0 0 0',
+                        fontSize: 11,
+                        color: '#71717a',
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow:
+                          'ellipsis',
+                        whiteSpace:
+                          'nowrap',
+                        maxWidth: 188,
+                      }}
+                    >
+                      {email}
+                    </p>
+                  </div>
+
+                  {/* Score */}
+                  <div
+                    style={{
+                      padding: '11px 16px',
+                      borderBottom:
+                        '1px solid rgba(255,255,255,0.07)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent:
+                        'space-between',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 12,
+                        color: '#a1a1aa',
+                        letterSpacing:
+                          '0.08em',
+                      }}
+                    >
+                      PONTSZAM
+                    </span>
+
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        color: '#a3e635',
+                        fontWeight: 700,
+                        fontSize: 14,
+                      }}
+                    >
+                      <span
                         style={{
-                          border: 'none',
-                          background: 'transparent',
-                          color: '#a3e635',
-                          fontSize: 11,
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          padding: 0,
-                          flexShrink: 0,
+                          fontSize: 15,
                         }}
                       >
-                        Szerkesztes
-                      </button>
+                        +
+                      </span>
+
+                      {score !== null
+                        ? `${score} pont`
+                        : 'â€¦'}
+                    </span>
+                  </div>
+
+                  {/* Accepted count */}
+                  {accepted !== null && (
+                    <div
+                      style={{
+                        padding:
+                          '11px 16px',
+                        borderBottom:
+                          '1px solid rgba(255,255,255,0.07)',
+                        display: 'flex',
+                        alignItems:
+                          'center',
+                        justifyContent:
+                          'space-between',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color: '#a1a1aa',
+                          letterSpacing:
+                            '0.08em',
+                        }}
+                      >
+                        ELFOGADOTT
+                      </span>
+
+                      <span
+                        style={{
+                          fontSize: 13,
+                          color: '#d4d4d8',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {accepted} db
+                      </span>
                     </div>
                   )}
-                  <p style={{
-                    margin: '2px 0 0 0', fontSize: 11, color: '#71717a', fontWeight: 500,
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 188,
-                  }}>
-                    {email}
-                  </p>
+
+                  {/* Sign out */}
+                  <button
+                    onClick={handleSignOut}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      background:
+                        'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontSize: 13,
+                      color: '#fca5a5',
+                      letterSpacing:
+                        '0.05em',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    <span>[00]</span>{' '}
+                    KijelentkezĂ©s
+                  </button>
                 </div>
+              )}
+            </div>
+          )}
+        </div>
 
-                {/* Score */}
-                <div style={{
-                  padding: '11px 16px',
-                  borderBottom: '1px solid rgba(255,255,255,0.07)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                }}>
-                  <span style={{ fontSize: 12, color: '#a1a1aa', letterSpacing: '0.08em' }}>PONTSZAM</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#a3e635', fontWeight: 700, fontSize: 14 }}>
-                    <span style={{ fontSize: 15 }}>+</span>
-                    {score !== null ? `${score} pont` : 'â€¦'}
-                  </span>
-                </div>
-
-                {/* Accepted count */}
-                {accepted !== null && (
-                  <div style={{
-                    padding: '11px 16px',
-                    borderBottom: '1px solid rgba(255,255,255,0.07)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  }}>
-                    <span style={{ fontSize: 12, color: '#a1a1aa', letterSpacing: '0.08em' }}>ELFOGADOTT</span>
-                    <span style={{ fontSize: 13, color: '#d4d4d8', fontWeight: 600 }}>{accepted} db</span>
-                  </div>
-                )}
-
-                {/* Sign out */}
-                <button
-                  onClick={handleSignOut}
-                  style={{
-                    width: '100%', padding: '12px 16px',
-                    background: 'transparent', border: 'none', cursor: 'pointer',
-                    textAlign: 'left', fontSize: 13, color: '#fca5a5', letterSpacing: '0.05em',
-                    display: 'flex', alignItems: 'center', gap: 8,
-                  }}
-                >
-                  <span>[00]</span> KijelentkezĂ©s
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div
-        style={{
-          position: 'fixed',
-          top: headerOffset,
-          left: 0,
-          right: 0,
-          zIndex: 190,
-          transform: spotsSheetOpen ? 'translateY(0)' : 'translateY(-110%)',
-          opacity: spotsSheetOpen ? 1 : 0,
-          pointerEvents: spotsSheetOpen ? 'auto' : 'none',
-          transition: 'transform 240ms ease, opacity 200ms ease',
-        }}
-        aria-hidden={!spotsSheetOpen}
-      >
+        {/* Spots sheet */}
         <div
           style={{
-            margin: '0 auto',
-            width: 'min(980px, calc(100vw - 24px))',
-            maxWidth: 980,
-            borderRadius: 0,
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-            background: 'rgba(5, 7, 9, 0.96)',
-            boxShadow: '0 24px 42px rgba(0,0,0,0.42)',
-            overflow: 'hidden',
-            maxHeight: `calc(100dvh - ${headerOffset + 12}px)`,
-            display: 'flex',
-            flexDirection: 'column',
+            position: 'fixed',
+            top: headerOffset,
+            left: 0,
+            right: 0,
+            zIndex: 190,
+            transform: spotsSheetOpen
+              ? 'translateY(0)'
+              : 'translateY(-110%)',
+            opacity: spotsSheetOpen ? 1 : 0,
+            pointerEvents: spotsSheetOpen
+              ? 'auto'
+              : 'none',
+            transition:
+              'transform 240ms ease, opacity 200ms ease',
           }}
+          aria-hidden={!spotsSheetOpen}
         >
           <div
             style={{
+              margin: '0 auto',
+              width:
+                'min(980px, calc(100vw - 24px))',
+              maxWidth: 980,
+              borderRadius: 0,
+              borderTop:
+                '1px solid rgba(255,255,255,0.08)',
+              background:
+                'rgba(5, 7, 9, 0.96)',
+              boxShadow:
+                '0 24px 42px rgba(0,0,0,0.42)',
+              overflow: 'hidden',
+              maxHeight: `calc(100dvh - ${
+                headerOffset + 12
+              }px)`,
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '14px 16px',
-              borderBottom: 'none',
+              flexDirection: 'column',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <strong style={{ fontSize: 14, color: '#e5e7eb' }}>AktĂ­v szpotok</strong>
-              <span style={{ fontSize: 12, color: '#a1a1aa' }}>{spots.length} db</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSpotsSheetOpen(false)}
+            <div
               style={{
-                border: '1px solid rgba(255,255,255,0.18)',
-                background: 'transparent',
-                color: '#d4d4d8',
-                padding: '4px 8px',
-                fontSize: 12,
-                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent:
+                  'space-between',
+                padding: '14px 16px',
+                borderBottom: 'none',
               }}
             >
-              BezĂˇr
-            </button>
-          </div>
-
-          <div style={{ padding: '12px 16px' }}>
-            {spotsLoading ? (
-              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Szpotok betĂ¶ltĂ©se...</div>
-            ) : spotsError ? (
-              <div style={{ color: '#fda4af', fontSize: 13 }}>{spotsError}</div>
-            ) : spots.length === 0 ? (
-              <div style={{ color: '#a1a1aa', fontSize: 13 }}>Nincs aktiv szpot.</div>
-            ) : (
               <div
                 style={{
                   display: 'flex',
-                  gap: 12,
-                  overflowX: 'auto',
-                  paddingBottom: 4,
-                  scrollSnapType: 'x mandatory',
+                  alignItems: 'center',
+                  gap: 10,
                 }}
               >
-                {spots.map((spot) => (
-                  <article
-                    key={spot.id}
-                    style={{
-                      minWidth: 'min(310px, 78vw)',
-                      maxWidth: 340,
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      background: 'rgba(255,255,255,0.03)',
-                      overflow: 'hidden',
-                      scrollSnapAlign: 'start',
-                    }}
-                  >
-                    <div style={{ height: 128, background: 'rgba(255,255,255,0.04)' }}>
-                      {spot.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={spot.image_url}
-                          alt={spot.title}
-                          loading="lazy"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#94a3b8',
-                            fontSize: 12,
-                          }}
-                        >
-                          Nincs kep
-                        </div>
-                      )}
-                    </div>
+                <strong
+                  style={{
+                    fontSize: 14,
+                    color: '#e5e7eb',
+                  }}
+                >
+                  AktĂ­v szpotok
+                </strong>
 
-                    <div style={{ padding: 11, display: 'grid', gap: 8 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                        <strong style={{ color: '#f4f4f5', fontSize: 14, lineHeight: 1.25 }}>{spot.title}</strong>
-                        <span style={{ color: '#a3e635', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>
-                          {spot.remaining_quantity} maradt
-                        </span>
-                      </div>
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: '#a1a1aa',
+                  }}
+                >
+                  {spots.length} db
+                </span>
+              </div>
 
-                      <p style={{ margin: 0, color: '#cbd5e1', fontSize: 12, lineHeight: 1.4, minHeight: 34 }}>
-                        {spot.description || 'Nincs leiras ehhez a szpothoz.'}
-                      </p>
+              <button
+                type="button"
+                onClick={() =>
+                  setSpotsSheetOpen(false)
+                }
+                style={{
+                  border:
+                    '1px solid rgba(255,255,255,0.18)',
+                  background: 'transparent',
+                  color: '#d4d4d8',
+                  padding: '4px 8px',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                }}
+              >
+                BezĂˇr
+              </button>
+            </div>
 
-                      <button
-                        type="button"
-                        onClick={() => startRouteToSpot(spot)}
+            <div
+              style={{
+                padding: '12px 16px',
+              }}
+            >
+              {spotsLoading ? (
+                <div
+                  style={{
+                    color: '#a1a1aa',
+                    fontSize: 13,
+                  }}
+                >
+                  Szpotok betĂ¶ltĂ©se...
+                </div>
+              ) : spotsError ? (
+                <div
+                  style={{
+                    color: '#fda4af',
+                    fontSize: 13,
+                  }}
+                >
+                  {spotsError}
+                </div>
+              ) : spots.length === 0 ? (
+                <div
+                  style={{
+                    color: '#a1a1aa',
+                    fontSize: 13,
+                  }}
+                >
+                  Nincs aktiv szpot.
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: 12,
+                    overflowX: 'auto',
+                    paddingBottom: 4,
+                    scrollSnapType:
+                      'x mandatory',
+                  }}
+                >
+                  {spots.map((spot) => (
+                    <article
+                      key={spot.id}
+                      style={{
+                        minWidth:
+                          'min(310px, 78vw)',
+                        maxWidth: 340,
+                        border:
+                          '1px solid rgba(255,255,255,0.12)',
+                        background:
+                          'rgba(255,255,255,0.03)',
+                        overflow: 'hidden',
+                        scrollSnapAlign:
+                          'start',
+                      }}
+                    >
+                      <div
                         style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 6,
-                          border: '1px solid rgba(255,255,255,0.18)',
-                          background: 'rgba(255,255,255,0.04)',
-                          color: '#e5e7eb',
-                          fontSize: 12,
-                          fontWeight: 700,
-                          padding: '7px 10px',
-                          cursor: 'pointer',
+                          height: 128,
+                          background:
+                            'rgba(255,255,255,0.04)',
                         }}
                       >
-                        Mutasd az utvonalat
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+                        {spot.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={spot.image_url}
+                            alt={spot.title}
+                            loading="lazy"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems:
+                                'center',
+                              justifyContent:
+                                'center',
+                              color: '#94a3b8',
+                              fontSize: 12,
+                            }}
+                          >
+                            Nincs kep
+                          </div>
+                        )}
+                      </div>
 
+                      <div
+                        style={{
+                          padding: 11,
+                          display: 'grid',
+                          gap: 8,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent:
+                              'space-between',
+                            gap: 8,
+                          }}
+                        >
+                          <strong
+                            style={{
+                              color: '#f4f4f5',
+                              fontSize: 14,
+                              lineHeight: 1.25,
+                            }}
+                          >
+                            {spot.title}
+                          </strong>
 
-      {pmRecipient && user?.id && authToken ? (
-        <MatricaPrivateMessagePanel
-          recipient={{ id: pmRecipient.id, nickname: pmRecipient.nickname, avatarUrl: pmRecipient.avatarUrl }}
-          currentUserId={user.id}
-          displayName={pmDisplayName}
-          authToken={authToken}
-          onClose={() => setPmRecipient(null)}
-          onOpenConversation={(recipientUserId) => {
-            setPmUnreadCounts((prev) => ({ ...prev, [recipientUserId]: undefined }))
+                          <span
+                            style={{
+                              color: '#a3e635',
+                              fontSize: 11,
+                              fontWeight: 700,
+                              whiteSpace:
+                                'nowrap',
+                              letterSpacing:
+                                '0.06em',
+                            }}
+                          >
+                            {
+                              spot.remaining_quantity
+                            }{' '}
+                            maradt
+                          </span>
+                        </div>
 
-            void fetch('/api/matrica/pm-unread', {
-              method: 'PATCH',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${authToken}`,
-              },
-              body: JSON.stringify({ otherUserId: recipientUserId }),
-            }).catch(() => {
-              // Keep optimistic clear to avoid blocking UX.
-            })
-          }}
-          onUnreadChange={(count, userId) => {
-            const prevCount = pmUnreadCounts[userId] || 0
-            setPmUnreadCounts((prev) => ({
-              ...prev,
-              [userId]: count > 0 ? count : undefined,
-            }))
-            
-            // Show toast when new message arrives
-            if (count > prevCount && count > 0 && pmRecipient) {
-              const toastId = `${Date.now()}-${userId}`
-              setPmToasts((prev) => [...prev, { id: toastId, userId, nickname: pmRecipient.nickname }])
-              setTimeout(() => {
-                setPmToasts((prev) => prev.filter(t => t.id !== toastId))
-              }, 4000)
-            }
-          }}
-        />
-      ) : null}
-      
-      {/* Toast notifications */}
-      <div style={{ position: 'fixed', top: 'calc(var(--matrica-header-offset, 90px) + 6px)', right: 12, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {pmToasts.map(toast => (
-          <div
-            key={toast.id}
-            style={{
-              animation: 'slideInRight 0.3s ease-out',
-              background: 'linear-gradient(135deg, rgba(163,230,53,0.92), rgba(101,163,13,0.92))',
-              border: '1px solid rgba(190,242,100,0.45)',
-              borderRadius: 12,
-              padding: '12px 14px',
-              color: '#101418',
-              fontSize: 13,
-              fontWeight: 600,
-              boxShadow: '0 12px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(8px)',
-              minWidth: 240,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 16 }}>đź’¬</span>
-              <span><strong>{toast.nickname}</strong> ĂĽzenetet kĂĽldĂ¶tt</span>
+                        <p
+                          style={{
+                            margin: 0,
+                            color: '#cbd5e1',
+                            fontSize: 12,
+                            lineHeight: 1.4,
+                            minHeight: 34,
+                          }}
+                        >
+                          {spot.description ||
+                            'Nincs leiras ehhez a szpothoz.'}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            startRouteToSpot(
+                              spot
+                            )
+                          }
+                          style={{
+                            display:
+                              'inline-flex',
+                            alignItems:
+                              'center',
+                            justifyContent:
+                              'center',
+                            gap: 6,
+                            border:
+                              '1px solid rgba(255,255,255,0.18)',
+                            background:
+                              'rgba(255,255,255,0.04)',
+                            color: '#e5e7eb',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            padding:
+                              '7px 10px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Mutasd az utvonalat
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        ))}
-      </div>
-      <style jsx>{`
-        @keyframes slideInRight {
-          from {
-            transform: translateX(400px);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
-    </nav>
+        </div>
 
+        {pmRecipient &&
+        user?.id &&
+        authToken ? (
+          <MatricaPrivateMessagePanel
+            recipient={{
+              id: pmRecipient.id,
+              nickname:
+                pmRecipient.nickname,
+              avatarUrl:
+                pmRecipient.avatarUrl,
+            }}
+            currentUserId={user.id}
+            displayName={pmDisplayName}
+            authToken={authToken}
+            onClose={() =>
+              setPmRecipient(null)
+            }
+            onOpenConversation={(
+              recipientUserId
+            ) => {
+              setPmUnreadCounts((prev) => ({
+                ...prev,
+                [recipientUserId]:
+                  undefined,
+              }))
+
+              void fetch(
+                '/api/matrica/pm-unread',
+                {
+                  method: 'PATCH',
+                  headers: {
+                    'Content-Type':
+                      'application/json',
+                    Authorization: `Bearer ${authToken}`,
+                  },
+                  body: JSON.stringify({
+                    otherUserId:
+                      recipientUserId,
+                  }),
+                }
+              ).catch(() => {
+                // Keep optimistic clear to avoid blocking UX.
+              })
+            }}
+            onUnreadChange={(
+              count,
+              userId
+            ) => {
+              const prevCount =
+                pmUnreadCounts[userId] || 0
+
+              setPmUnreadCounts((prev) => ({
+                ...prev,
+                [userId]:
+                  count > 0
+                    ? count
+                    : undefined,
+              }))
+
+              if (
+                count > prevCount &&
+                count > 0 &&
+                pmRecipient
+              ) {
+                const toastId = `${Date.now()}-${userId}`
+
+                setPmToasts((prev) => [
+                  ...prev,
+                  {
+                    id: toastId,
+                    userId,
+                    nickname:
+                      pmRecipient.nickname,
+                  },
+                ])
+
+                setTimeout(() => {
+                  setPmToasts((prev) =>
+                    prev.filter(
+                      (t) =>
+                        t.id !== toastId
+                    )
+                  )
+                }, 4000)
+              }
+            }}
+          />
+        ) : null}
+
+        {/* Toast notifications */}
+        <div
+          style={{
+            position: 'fixed',
+
+            /*
+             * headerOffset is now guaranteed to be
+             * 0px on /halozat.
+             */
+            top: 'calc(var(--matrica-header-offset, 0px) + 6px)',
+
+            right: 12,
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          {pmToasts.map((toast) => (
+            <div
+              key={toast.id}
+              style={{
+                animation:
+                  'slideInRight 0.3s ease-out',
+                background:
+                  'linear-gradient(135deg, rgba(163,230,53,0.92), rgba(101,163,13,0.92))',
+                border:
+                  '1px solid rgba(190,242,100,0.45)',
+                borderRadius: 12,
+                padding: '12px 14px',
+                color: '#101418',
+                fontSize: 13,
+                fontWeight: 600,
+                boxShadow:
+                  '0 12px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1)',
+                backdropFilter: 'blur(8px)',
+                minWidth: 240,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <span
+                  style={{ fontSize: 16 }}
+                >
+                  đź’¬
+                </span>
+
+                <span>
+                  <strong>
+                    {toast.nickname}
+                  </strong>{' '}
+                  ĂĽzenetet kĂĽldĂ¶tt
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <style jsx>{`
+          @keyframes slideInRight {
+            from {
+              transform: translateX(400px);
+              opacity: 0;
+            }
+
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+        `}</style>
+      </nav>
     </>
   )
 }

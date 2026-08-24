@@ -256,12 +256,8 @@ export default function MapViewClient() {
         </div>
       )}
 
-      {!needsNickname ? (
-        <HalozatPermissionCenter
-          accessToken={accessToken}
-          onEnableGeolocation={() => setGeolocationEnabled(true)}
-        />
-      ) : null}
+      {/* DEBUG: HalozatPermissionCenter ideiglenesen kikapcsolva. */}
+
     </div>
   )
 }

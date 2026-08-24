@@ -15,10 +15,6 @@ export default function VallalhatatlanHero() {
   const [physicalSpotCount, setPhysicalSpotCount] = useState<number | null>(null)
   const [virtualSpotCount, setVirtualSpotCount] = useState<number | null>(null)
   const [registeredUsers, setRegisteredUsers] = useState<number | null>(null)
-  const [networkStatus, setNetworkStatus] = useState<
-    "idle" | "loading" | "maintenance"
-  >("idle")
-  const [loadingDots, setLoadingDots] = useState("")
 
   useEffect(() => {
     let cancelled = false
@@ -69,10 +65,15 @@ export default function VallalhatatlanHero() {
 
         if (!cancelled && response.ok && Array.isArray(data?.spots)) {
           setPhysicalSpotCount(
-            data.spots.filter((spot: { type?: string }) => spot.type === "physical").length,
+            data.spots.filter(
+              (spot: { type?: string }) => spot.type === "physical",
+            ).length,
           )
+
           setVirtualSpotCount(
-            data.spots.filter((spot: { type?: string }) => spot.type === "virtual").length,
+            data.spots.filter(
+              (spot: { type?: string }) => spot.type === "virtual",
+            ).length,
           )
         }
       } catch {
@@ -92,35 +93,6 @@ export default function VallalhatatlanHero() {
   const formatHeroCount = (value: number | null) =>
     value === null ? "--" : String(value).padStart(2, "0")
 
-  useEffect(() => {
-    if (networkStatus !== "loading") {
-      setLoadingDots("")
-      return
-    }
-
-    const dots = ["", ".", "..", "..."]
-    let index = 0
-
-    const interval = window.setInterval(() => {
-      index = (index + 1) % dots.length
-      setLoadingDots(dots[index])
-    }, 300)
-
-    return () => {
-      window.clearInterval(interval)
-    }
-  }, [networkStatus])
-
-  function handleNetworkClick() {
-    if (networkStatus !== "idle") return
-
-    setNetworkStatus("loading")
-
-    window.setTimeout(() => {
-      setNetworkStatus("maintenance")
-    }, 2400)
-  }
-
   return (
     <section
       className="relative flex min-h-screen flex-col overflow-hidden bg-[#010101] text-green-200"
@@ -134,13 +106,10 @@ export default function VallalhatatlanHero() {
         <h2
           className={`${montserrat.className} text-6xl uppercase leading-tighter text-zinc-100`}
         >
-          EZ NEM
+          A KÖNYV
           <br />
-          EGY KÖNYV.
+          A KULCS.
           <br />
-          EZ EGY
-          <br />
-          HÁLÓZAT.
         </h2>
 
         <div
@@ -156,14 +125,12 @@ export default function VallalhatatlanHero() {
           </p>
 
           <p>
-            <span>{formatHeroCount(physicalSpotCount)}</span>
-            {" "}
+            <span>{formatHeroCount(physicalSpotCount)}</span>{" "}
             ELREJTETT TÁRGY
           </p>
 
           <p>
-            <span>{formatHeroCount(virtualSpotCount)}</span>
-            {" "}
+            <span>{formatHeroCount(virtualSpotCount)}</span>{" "}
             ELÉRHETŐ TARTALOM
           </p>
 
@@ -172,45 +139,19 @@ export default function VallalhatatlanHero() {
           <p>67 ONLINE SZTORI</p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleNetworkClick}
-          disabled={networkStatus !== "idle"}
-          className="mt-6 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80  bg-black/20 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80  transition-colors hover:border-zinc-100 hover:bg-zinc-100/30 hover:text-zinc-700 disabled:cursor-default"
+        {/* Main Network CTA */}
+        <Link
+          href="/halozat"
+          className="mt-6 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-colors hover:border-zinc-100 hover:bg-zinc-100/70 hover:text-zinc-900"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
-          <span>
-            {networkStatus === "idle" && "BELÉPÉS A HÁLÓZATBA"}
-            {networkStatus === "loading" && `CSATLAKOZÁS${loadingDots}`}
-            {networkStatus === "maintenance" && "VALAMI ELBASZÓDOTT :("}
-          </span>
+          <span>BELÉPÉS A HÁLÓZATBA</span>
 
-          {networkStatus === "idle" && (
-            <span aria-hidden="true">→</span>
-          )}
-
-          {networkStatus === "loading" && (
-            <span aria-hidden="true" className="animate-pulse">
-              █
-            </span>
-          )}
-
-          {networkStatus === "maintenance" && (
-            <span aria-hidden="true">×</span>
-          )}
-        </button>
-
-        {networkStatus === "maintenance" && (
-          <p
-            className="mt-3 px-4 text-center font-mono text-[11px] uppercase leading-relaxed tracking-[0.08em] text-rose-300"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            Sajnálom, valószínűleg V. hegesztget épp valamit. Gyere vissza később.
-          </p>
-        )}
+          <span aria-hidden="true">→</span>
+        </Link>
 
         <p
-          className="mt-3 text-center font-mono text-[11px] uppercase tracking-[0.12em] text-zinc-400"
+          className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-lime-100/40"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           PUBLIC ACCESS // NODE DISCOVERY
@@ -219,7 +160,7 @@ export default function VallalhatatlanHero() {
         {/* Video: full width, natural aspect-ratio / auto height */}
         <div className="relative mt-12 w-full overflow-hidden">
           <video
-            className="block h-auto w-full opacity-65 grayscale"
+            className="block h-auto w-full opacity-100 grayscale"
             src="/videos/vmfi.mp4"
             autoPlay
             muted
@@ -243,7 +184,7 @@ export default function VallalhatatlanHero() {
 
           <div className="space-y-4">
             <p>
-              Nem tudom mi történt velem abban a sötét erdőben, ahol megszületett Író Úr, és elkezdte visszafejteni az eseményeket. 
+              Nem tudom mi történt velem abban a sötét erdőben, ahol megszületett Író Úr, és elkezdte visszafejteni az eseményeket.
             </p>
 
             <p>

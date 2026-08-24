@@ -123,7 +123,7 @@ function ProjectActions() {
 export default function Page() {
   return (
     <MainContent>
-      <div className="mx-auto w-full max-w-6xl px-6 pb-16 pt-36 md:px-8 md:pt-40">
+      <div className="mx-auto w-full max-w-6xl px-6 pb-16 md:px-8 ">
         {/* HEADER / INTRO */}
         <section className="mb-10">
           <div className="mb-5 flex items-center justify-between">

@@ -16,19 +16,20 @@
 import { useEffect, useRef, useState, useCallback, useMemo, type KeyboardEvent } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { getDistanceMeters, geoCirclePolygon } from '@/lib/matrica'
+import { getDistanceMeters } from '@/lib/matrica'
 import type { StickerSpot, VirtualSpotContentType } from '@/lib/matrica'
 import { createClient } from '@/lib/browser'
+import SpotCircle from './SpotCircle'
 import SpotMarker from './SpotMarker'
 import SpotPreview from './SpotPreview'
 import PhantomPanel from './PhantomPanel'
 import ToastContainer from './ToastContainer'
 import HalozatWalkthrough, { type HalozatWalkthroughStep } from './HalozatWalkthrough'
 import VirtualContentViewer from './VirtualContentViewer'
-import MapBottomNav from './MapBottomNav'
 
 import { useToast } from './useToast'
 import MatricaLivePanel from './MatricaLivePanel'
+import MapBottomNav from './MapBottomNav'
 
 // Token comes from env; set it once at module level
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
@@ -39,7 +40,7 @@ const ROUTE_LAYER_ID = 'matrica-route-layer'
 const AUTO_REROUTE_MIN_DISTANCE_METERS = 35
 const AUTO_REROUTE_COOLDOWN_MS = 15000
 const BOTTOM_ACTION_BAR_HEIGHT = 84
-const MATRICA_TOP_SAFE_OFFSET = 'calc(var(--matrica-header-offset, 90px) + 8px)'
+const MATRICA_TOP_SAFE_OFFSET = '8px'
 const HALOZAT_WALKTHROUGH_STORAGE_KEY = 'halozat-onboarding-v2-seen'
 const APPROX_SPOT_PULSE_DURATION_MS = 4600
 const UI_CLICK_SFX_SRC = '/audio/ui-click.wav'
@@ -282,156 +283,6 @@ function buildWalkthroughSteps(isMobile: boolean): WalkthroughStep[] {
 }
 
 
-function AnimatedSpotCircle({
-  map,
-  spot,
-  radiusMeters,
-  onSelect,
-}: {
-  map: mapboxgl.Map
-  spot: StickerSpot
-  radiusMeters?: number
-  onSelect?: (spot: StickerSpot) => void
-}) {
-  const baseId = `spot-zone-${spot.id}`
-  const sourceId = `${baseId}-src`
-  const fillId = `${baseId}-fill`
-  const ringIds = [`${baseId}-ring-1`, `${baseId}-ring-2`, `${baseId}-ring-3`]
-  const accent = spot.type === 'virtual' ? '#c084fc' : '#a3e635'
-
-  useEffect(() => {
-    const baseRadius = radiusMeters ?? spot.radius_visibility
-    const ringScales = [0.62, 0.81, 1]
-    const features: GeoJSON.Feature[] = [
-      {
-        type: 'Feature',
-        properties: { kind: 'fill' },
-        geometry: geoCirclePolygon(spot.lng, spot.lat, baseRadius).geometry,
-      },
-      ...ringScales.map((scale, index) => ({
-        type: 'Feature' as const,
-        properties: { kind: `ring-${index + 1}` },
-        geometry: geoCirclePolygon(spot.lng, spot.lat, baseRadius * scale).geometry,
-      })),
-    ]
-
-    const sourceData: GeoJSON.FeatureCollection = {
-      type: 'FeatureCollection',
-      features,
-    }
-
-    if (!map.getSource(sourceId)) {
-      map.addSource(sourceId, { type: 'geojson', data: sourceData })
-    } else {
-      ;(map.getSource(sourceId) as mapboxgl.GeoJSONSource).setData(sourceData)
-    }
-
-    if (!map.getLayer(fillId)) {
-      map.addLayer({
-        id: fillId,
-        type: 'fill',
-        source: sourceId,
-        filter: ['==', ['get', 'kind'], 'fill'],
-        paint: {
-          'fill-color': accent,
-          'fill-opacity': 0.055,
-        },
-      })
-    }
-
-    ringIds.forEach((ringId, index) => {
-      if (!map.getLayer(ringId)) {
-        map.addLayer({
-          id: ringId,
-          type: 'line',
-          source: sourceId,
-          filter: ['==', ['get', 'kind'], `ring-${index + 1}`],
-          layout: {
-            'line-cap': 'round',
-            'line-join': 'round',
-          },
-          paint: {
-            'line-color': accent,
-            'line-width': index === 2 ? 1.5 : 1.1,
-            'line-opacity': index === 2 ? 0.38 : 0.18,
-          },
-        })
-      }
-    })
-
-    let animationFrame = 0
-    const startedAt = performance.now()
-    const duration = 5200
-
-    const animate = (now: number) => {
-      try {
-        const progress = ((now - startedAt) % duration) / duration
-        const fillPulse = 0.04 + 0.025 * (0.5 + 0.5 * Math.sin(progress * Math.PI * 2))
-
-        if (map.getLayer(fillId)) {
-          map.setPaintProperty(fillId, 'fill-opacity', fillPulse)
-        }
-
-        ringIds.forEach((ringId, index) => {
-          const phase = (progress - index / ringIds.length + 1) % 1
-          const wave = Math.pow(Math.sin(Math.PI * phase), 4)
-          const baseOpacity = index === 2 ? 0.18 : 0.09
-          const peakOpacity = index === 2 ? 0.72 : 0.48
-          const opacity = baseOpacity + (peakOpacity - baseOpacity) * wave
-          const width = 1 + 1.05 * wave
-
-          if (map.getLayer(ringId)) {
-            map.setPaintProperty(ringId, 'line-opacity', opacity)
-            map.setPaintProperty(ringId, 'line-width', width)
-          }
-        })
-      } catch {
-        // Ignore map teardown/style-switch races.
-      }
-
-      animationFrame = window.requestAnimationFrame(animate)
-    }
-
-    animationFrame = window.requestAnimationFrame(animate)
-
-    const handleClick = () => onSelect?.(spot)
-    const handleEnter = () => {
-      map.getCanvas().style.cursor = 'pointer'
-    }
-    const handleLeave = () => {
-      map.getCanvas().style.cursor = ''
-    }
-
-    if (onSelect) {
-      map.on('click', fillId, handleClick)
-      map.on('mouseenter', fillId, handleEnter)
-      map.on('mouseleave', fillId, handleLeave)
-    }
-
-    return () => {
-      window.cancelAnimationFrame(animationFrame)
-
-      if (onSelect) {
-        map.off('click', fillId, handleClick)
-        map.off('mouseenter', fillId, handleEnter)
-        map.off('mouseleave', fillId, handleLeave)
-      }
-
-      try {
-        ringIds.forEach((ringId) => {
-          if (map.getLayer(ringId)) map.removeLayer(ringId)
-        })
-        if (map.getLayer(fillId)) map.removeLayer(fillId)
-        if (map.getSource(sourceId)) map.removeSource(sourceId)
-      } catch {
-        // Ignore teardown races while Mapbox is being destroyed.
-      }
-    }
-  }, [map, spot, radiusMeters, onSelect, accent, sourceId, fillId, ringIds.join('|')])
-
-  return null
-}
-
 export default function MapView({ chatDisplayName, chatAuthToken, userRole, geolocationEnabled = false }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
@@ -608,16 +459,6 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (!mapLoaded) return
-
-    const hasSeenWalkthrough = window.localStorage.getItem(HALOZAT_WALKTHROUGH_STORAGE_KEY) === '1'
-    if (!hasSeenWalkthrough) {
-      openWalkthrough(0)
-    }
-  }, [mapLoaded, openWalkthrough])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
 
     const sessionId = getOrCreateShadowSessionId()
     if (sessionId) {
@@ -786,10 +627,39 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
 
     map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right')
 
-    map.on('load', () => {
+    // Expose the live Mapbox instance for diagnostics in the browser console.
+    // This can be removed later; it has no effect on the map itself.
+    if (typeof window !== 'undefined') {
+      ;(window as any).__DEBUG_MAPBOX_MAP = map
+    }
+
+    // Mapbox can initialize while the fixed/absolute layout is still settling.
+    // Force a resize after the browser has committed the layout, then once more
+    // shortly afterwards. This is deliberately tied to the actual container.
+    const resizeMap = () => {
+      if (!mapRef.current) return
       map.resize()
+      map.triggerRepaint()
+    }
+
+    map.on('load', () => {
+      resizeMap()
+      requestAnimationFrame(resizeMap)
+      window.setTimeout(resizeMap, 100)
       setMapLoaded(true)
     })
+
+    // Keep Mapbox synchronized with the real container dimensions.
+    const resizeTarget = containerRef.current
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => {
+          requestAnimationFrame(resizeMap)
+        })
+      : null
+
+    if (resizeObserver && resizeTarget) {
+      resizeObserver.observe(resizeTarget)
+    }
 
     map.on('error', (e) => {
       console.error('[MapView] map error', e)
@@ -798,6 +668,10 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
     mapRef.current = map
 
     return () => {
+      resizeObserver?.disconnect()
+      if (typeof window !== 'undefined' && (window as any).__DEBUG_MAPBOX_MAP === map) {
+        delete (window as any).__DEBUG_MAPBOX_MAP
+      }
       map.remove()
       mapRef.current = null
     }
@@ -860,17 +734,16 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
 
             const label = document.createElement('div');
             label.className = 'matrica-user-tooltip';
-            label.textContent = 'SAJÁT POZÍCIÓD';
+            label.textContent = 'SAJAT POZICIOD';
 
             const dot = document.createElement('div');
             dot.className = 'matrica-user-dot';
             dot.style.cssText = `
-              width: 14px; height: 14px; border-radius: 50%;
-              background: #ecfccb;
-              border: 2px solid #ffffff;
-              box-shadow: 0 0 0 3px rgba(255,255,255,0.18), 0 0 12px rgba(255,255,255,0.9), 0 0 24px rgba(255,255,255,0.42), 0 0 30px rgba(190,242,100,0.34);
-              animation: userPulse 2.8s ease-in-out infinite;
-              position: relative;
+              width: 18px; height: 18px; border-radius: 50%;
+              background: radial-gradient(circle at 30% 30%, #f7fee7 0%, #bef264 42%, #4d7c0f 100%);
+              border: 2px solid rgba(255,255,255,0.92);
+              box-shadow: 0 0 0 6px rgba(163,230,53,0.24), 0 0 24px rgba(163,230,53,0.34);
+              animation: userPulse 2.4s ease-in-out infinite;
             `;
 
             el.appendChild(label);
@@ -2180,8 +2053,11 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
   return (
     <div
       style={{
-        position: 'absolute',
-        inset: 0,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         ['--matrica-action-rail-offset' as any]: `${BOTTOM_ACTION_BAR_HEIGHT + 16}px`,
       }}
     >
@@ -2189,9 +2065,9 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
         style={{
           position: 'absolute',
           inset: 0,
-          transform: livePanelOpen ? 'translateX(calc(-1 * min(460px, 42vw)))' : 'translateX(0)',
-          transition: 'transform 320ms cubic-bezier(.2,.9,.2,1)',
-          willChange: 'transform',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
         }}
       >
       {/* Global CSS for marker animations */}
@@ -2217,25 +2093,26 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 24px;
-          height: 24px;
+          width: 18px;
+          height: 18px;
         }
 
         .matrica-user-tooltip {
           position: absolute;
           left: 50%;
-          bottom: calc(100% + 12px);
+          bottom: calc(100% + 10px);
           transform: translateX(-50%);
           white-space: nowrap;
-          padding: 12px 12px 12px;
-          background: rgba(5, 6, 8, 0.9);
-          border-bottom: 1px solid rgba(190, 242, 100, 0.48);
-          color: #ecfccb;
-          font-size: 12px;
-          font-weight: 800;
+          padding: 5px 8px;
+          border-radius: 999px;
+          background: rgba(9, 9, 11, 0.92);
+          border: 1px solid rgba(148, 163, 184, 0.38);
+          color: #e2e8f0;
+          font-size: 11px;
+          font-weight: 700;
           line-height: 1;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
           pointer-events: none;
         }
 
@@ -2244,44 +2121,10 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
           position: absolute;
           left: 50%;
           top: 100%;
-          width: 20px;
-          height: 1px;
           transform: translateX(-50%);
-          background: rgba(190, 242, 100, 0.42);
-        }
-
-        .matrica-user-dot {
-          position: relative;
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          background: #ecfccb;
-          border: 2px solid #ffffff;
-          box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18), 0 0 12px rgba(255, 255, 255, 0.92), 0 0 24px rgba(255, 255, 255, 0.42), 0 0 30px rgba(190, 242, 100, 0.34);
-          animation: userPulse 2.8s ease-in-out infinite;
-          z-index: 2;
-        }
-
-        .matrica-user-dot::before,
-        .matrica-user-dot::after {
-          content: '';
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          border: 1px solid rgba(255, 255, 255, 0.48);
-          transform: translate(-50%, -50%) scale(1);
-          pointer-events: none;
-        }
-
-        .matrica-user-dot::before {
-          animation: userRingPulse 2.8s ease-out infinite;
-        }
-
-        .matrica-user-dot::after {
-          animation: userRingPulse 2.8s ease-out 1.4s infinite;
+          border-left: 5px solid transparent;
+          border-right: 5px solid transparent;
+          border-top: 6px solid rgba(9, 9, 11, 0.92);
         }
 
         .matrica-approx-pulse-marker {
@@ -2329,13 +2172,8 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
         }
 
         @keyframes userPulse {
-          0%, 100% { box-shadow: 0 0 10px rgba(163,230,53,0.52), 0 0 0 3px rgba(163,230,53,0.12); }
-          50% { box-shadow: 0 0 18px rgba(163,230,53,0.72), 0 0 0 5px rgba(163,230,53,0.06); }
-        }
-
-        @keyframes userRingPulse {
-          0% { opacity: 0.68; transform: translate(-50%, -50%) scale(0.9); }
-          70%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(2.8); }
+          0%, 100% { box-shadow: 0 0 0 4px rgba(56,189,248,0.3); }
+          50%       { box-shadow: 0 0 0 10px rgba(56,189,248,0.08); }
         }
 
         @keyframes hudSweep {
@@ -2346,7 +2184,63 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       `}</style>
 
       {/* Map container */}
-      <div ref={containerRef} style={{ position: 'absolute', inset: 0 }} />
+      <div
+        ref={containerRef}
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          minWidth: 0,
+          minHeight: 0,
+          margin: 0,
+          padding: 0,
+          overflow: 'hidden',
+        }}
+      />
+
+      {/* Mapbox layout reset.
+          The canvas itself is correctly sized, but Mapbox's
+          canvas-container was collapsing to height: 0. */}
+      <style>{`
+        .mapboxgl-map {
+          position: absolute !important;
+          top: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        .mapboxgl-canvas-container {
+          position: absolute !important;
+          top: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        .mapboxgl-canvas {
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          display: block !important;
+        }
+      `}</style>
 
       {/* Loading state */}
       {!mapLoaded && !mapError && (
@@ -2367,7 +2261,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       {mapLoaded && mapRef.current && (
         <>
           {hintSpots.map((spot) => (
-            <AnimatedSpotCircle
+            <SpotCircle
               key={spot.id}
               map={mapRef.current!}
               spot={spot}
@@ -2671,47 +2565,19 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       {/* Toasts */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      <button
-        type="button"
-        onClick={() => openWalkthrough(0)}
-        aria-label="Halozat bemutato ujrainditasa"
-        title="Bemutató újraindítása"
-        style={{
-          position: 'fixed',
-          right: 12,
-          top: 'calc(var(--matrica-action-rail-offset, 100px) + 10px)',
-          zIndex: 260,
-          minHeight: 36,
-          padding: '0 12px',
-          borderRadius: 999,
-          border: '1px solid rgba(190,242,100,0.16)',
-          background: 'rgba(6,9,12,0.84)',
-          color: '#ccc',
-          fontSize: 12,
-          fontWeight: 800,
-          letterSpacing: '0.09em',
-          cursor: 'pointer',
-          boxShadow: '0 10px 24px rgba(0,0,0,0.35)',
-        }}
+      <div
+        className="pointer-events-none relative z-[60] w-full shrink-0"
+        style={{ marginTop: 'auto' }}
       >
-        ? Segítség
-      </button>
-
-      <HalozatWalkthrough
-        open={showIntroLayer}
-        stepIndex={walkthroughStepIndex}
-        steps={walkthroughSteps}
-        onPrev={handleWalkthroughPrev}
-        onNext={handleWalkthroughNext}
-        onClose={handleDismissIntroLayer}
-      />
-
-      <MapBottomNav
-        userRole={userRole}
-        onOpenSpotAdmin={handleOpenSpotAdmin}
-        onOpenActiveSpots={handleTalalokPress}
-        onOpenChat={handleToggleChatPanel}
-      />
+        <div className="pointer-events-auto w-full [&>nav]:!static [&>nav]:!w-full [&>nav]:!border-t [&>nav]:!px-3 [&>nav]:!py-3">
+          <MapBottomNav
+            userRole={userRole}
+            onOpenSpotAdmin={handleOpenSpotAdmin}
+            onOpenActiveSpots={handleTalalokPress}
+            onOpenChat={handleToggleChatPanel}
+          />
+        </div>
+      </div>
       </div>
 
       {spotsListOpen ? (() => {
@@ -2929,11 +2795,10 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
         aria-hidden={!phantomPanelOpen}
         style={{
           position: 'fixed',
-          top: 'var(--matrica-header-offset, 90px)',
+          top: '64px',
           left: 0,
           right: 0,
           bottom: 0,
-          maxHeight: 'calc(100dvh - var(--matrica-header-offset, 90px))',
           overflowY: 'auto',
           transform: phantomPanelOpen ? 'translateY(0)' : 'translateY(106%)',
           transition: 'transform 320ms cubic-bezier(.2,.9,.2,1)',
@@ -3162,124 +3027,17 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
           isolation: isolate;
         }
 
-        .matrica-action-btn {
-          transition: transform 180ms ease, box-shadow 240ms ease, border-color 200ms ease, filter 200ms ease, color 180ms ease;
-          will-change: transform;
-        }
 
-        .matrica-action-btn:hover {
-          transform: translateY(-1px);
-          border-color: rgba(217, 249, 157, 0.62);
-          color: #f4f4f5;
-          box-shadow: inset 0 0 0 1px rgba(217, 249, 157, 0.18), 0 8px 20px rgba(0, 0, 0, 0.35);
-        }
 
-        .matrica-action-btn:active {
-          transform: translateY(0);
-        }
 
-        .matrica-action-btn-core {
-          animation: matricaCorePulse 2.8s ease-in-out infinite;
-        }
 
-        .matrica-action-btn-core:hover {
-          transform: translateY(-1px);
-          border-color: rgba(217, 249, 157, 0.98);
-          box-shadow: 0 0 22px rgba(163, 230, 53, 0.44), 0 16px 26px rgba(3, 10, 12, 0.52), inset 0 0 0 1px rgba(217, 249, 157, 0.3);
-        }
 
-        .matrica-core-btn-glow {
-          animation: matricaCoreGlow 2.2s linear infinite;
-        }
 
-        .matrica-rail-sweep {
-          animation: matricaRailSweep 5.4s ease-in-out infinite;
-        }
 
-        @keyframes matricaCorePulse {
-          0%,
-          100% {
-            filter: saturate(100%);
-          }
-          45% {
-            filter: saturate(122%);
-          }
-          48% {
-            transform: skewX(-0.4deg);
-          }
-          50% {
-            transform: skewX(0.5deg);
-          }
-          52% {
-            transform: skewX(0deg);
-          }
-        }
 
-        @keyframes matricaCoreGlow {
-          0%,
-          100% {
-            opacity: 0.5;
-            transform: scale(0.98);
-          }
-          45% {
-            opacity: 0.82;
-            transform: scale(1.03);
-          }
-          49% {
-            opacity: 0.95;
-            transform: scale(1.06) translateX(-1px);
-          }
-          51% {
-            opacity: 0.7;
-            transform: scale(1) translateX(1px);
-          }
-        }
 
-        @keyframes matricaRailSweep {
-          0% {
-            transform: translateY(0%);
-            opacity: 0.2;
-          }
-          50% {
-            transform: translateY(54%);
-            opacity: 0.38;
-          }
-          100% {
-            transform: translateY(0%);
-            opacity: 0.2;
-          }
-        }
 
-        @media (max-width: 600px) {
-          .matrica-action-rail {
-            width: calc(100vw - 8px) !important;
-            padding-left: 5px !important;
-            padding-right: 5px !important;
-            gap: 4px !important;
-          }
 
-          .matrica-action-btn {
-            width: 30vw !important;
-            height: 58px !important;
-            flex-basis: 30vw !important;
-          }
-
-          .matrica-action-btn-core {
-            width: 34vw !important;
-            height: 70px !important;
-            flex-basis: 34vw !important;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .matrica-action-btn,
-          .matrica-action-btn-core,
-          .matrica-core-btn-glow,
-          .matrica-rail-sweep {
-            animation: none !important;
-            transition: none !important;
-          }
-        }
       `}</style>
     </div>
   )

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Menu } from "lucide-react";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
-
 import {
   Sheet,
   SheetClose,
@@ -13,7 +13,8 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@/components/ui/sheet"
+import NetworkInboxSheet from "@/components/notifications/NetworkInboxSheet"
 
 import { createClient } from "@/lib/browser";
 
@@ -56,6 +57,7 @@ type AuthUser = {
 };
 
 export default function SiteHeader() {
+  const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
@@ -121,7 +123,7 @@ export default function SiteHeader() {
           className="text-lg font-bold italic text-zinc-100 transition-colors group-hover:text-lime-200"
           style={{ fontFamily: "var(--font-logo)" }}
         >
-          Vállalhatatlan
+          {pathname === '/halozat' ? 'Hálózat' : 'Vállalhatatlan'}
         </h1>
       </Link>
 
@@ -169,6 +171,8 @@ export default function SiteHeader() {
             LOGIN
           </Link>
         )}
+
+        <NetworkInboxSheet />
 
         {/* Hamburger */}
         <Sheet>
