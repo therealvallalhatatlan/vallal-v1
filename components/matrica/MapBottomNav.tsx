@@ -77,7 +77,7 @@ const MapBottomNav: FC<MapBottomNavProps> = ({
             className="mt-1 text-xs text-lime-100 opacity-70"
             style={{ fontFamily: 'var(--font-mono-tech)' }}
           >
-            Aktív Helyek
+            Aktív Rejtekhelyek
           </span>
         </button>
 

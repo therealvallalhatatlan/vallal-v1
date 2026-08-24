@@ -3026,18 +3026,6 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
         .matrica-action-rail {
           isolation: isolate;
         }
-
-
-
-
-
-
-
-
-
-
-
-
       `}</style>
     </div>
   )

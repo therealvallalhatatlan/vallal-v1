@@ -61,14 +61,14 @@ export default function HalozatPermissionCenter({ accessToken, onEnableGeolocati
   }
 
   useEffect(() => {
-    if (!accessToken) return
     if (typeof window === 'undefined') return
 
+    // A reminder timestamp must NOT prevent the location check.
+    // If location is not enabled, the permission center has to be able to
+    // re-appear so the map can recover from a stale/old geolocation state.
+    // The reminder is only relevant after location is already granted.
     const raw = window.localStorage.getItem(REMIND_AT_KEY)
     const remindAt = raw ? Number(raw) : 0
-    if (Number.isFinite(remindAt) && remindAt > Date.now()) {
-      return
-    }
 
     let cancelled = false
 
@@ -113,13 +113,25 @@ export default function HalozatPermissionCenter({ accessToken, onEnableGeolocati
       }
 
       if (!cancelled) {
-        const shouldAskLocation = resolvedGeoState === 'prompt'
-        const shouldAskNotifications = canUsePush && notificationPermission !== 'granted'
+        // Location is the primary gate for /halozat. Never suppress this
+        // panel because of a previous "Később" reminder.
+        const shouldAskLocation = resolvedGeoState !== 'granted' && resolvedGeoState !== 'unsupported'
+        const reminderActive = Number.isFinite(remindAt) && remindAt > Date.now()
+        const shouldAskNotifications =
+          canUsePush &&
+          notificationPermission !== 'granted' &&
+          (resolvedGeoState === 'granted' || !reminderActive)
 
         if (!shouldAskLocation && !shouldAskNotifications) {
           setVisible(false)
           return
         }
+
+        // Always surface the permission center while geolocation is missing.
+        if (shouldAskLocation) {
+          setStep('location')
+        }
+
         setVisible(true)
       }
     }
@@ -140,18 +152,18 @@ export default function HalozatPermissionCenter({ accessToken, onEnableGeolocati
   }, [visible, notificationPermission, geoState])
 
   const locationStatusText = useMemo(() => {
-    if (geoState === 'granted') return 'Engedelyezve'
+    if (geoState === 'granted') return ':)'
     if (geoState === 'denied') return 'Tiltva'
     if (geoState === 'unsupported') return 'Nem tamogatott'
-    if (geoState === 'prompt') return 'Nincs beallitva'
+    if (geoState === 'prompt') return ':('
     return 'Ellenorzes...'
   }, [geoState])
 
   const notificationStatusText = useMemo(() => {
     if (!canUsePush) return 'Nem tamogatott'
-    if (notificationPermission === 'granted') return 'Engedelyezve'
+    if (notificationPermission === 'granted') return ':)'
     if (notificationPermission === 'denied') return 'Tiltva'
-    return 'Nincs beallitva'
+    return ':('
   }, [canUsePush, notificationPermission])
 
   async function requestLocation() {
@@ -286,15 +298,15 @@ export default function HalozatPermissionCenter({ accessToken, onEnableGeolocati
       <section
         style={{
           width: 'min(480px, calc(100vw - 24px))',
-          border: '1px solid rgba(190,242,100,0.34)',
-          background: 'rgba(5,7,9,0.96)',
+          border: '0px solid rgba(190,242,100,0.34)',
+          background: 'rgba(5,7,9,0.9)',
           boxShadow: '0 12px 30px rgba(0,0,0,0.45)',
           backdropFilter: 'blur(10px)',
           padding: '14px 14px 12px',
         }}
       >
         <p style={{ margin: 0, color: '#e5e7eb', fontSize: 14, fontWeight: 700 }}>
-          Engedélyezd a helymeghatározást és az értesítéseket a teljes élményhez!
+          Engedélyezd a helymeghatározást és az értesítéseket a fullos élményhez!
         </p>
 
         <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
