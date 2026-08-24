@@ -40,8 +40,8 @@ export default function LabContact() {
   };
 
   return (
-    <section className="mt-6" style={{ fontFamily: "var(--font-mono-tech)" }}>
-      <div className="flex flex-col gap-4 rounded-md border border-zinc-900 bg-zinc-900/90 p-5 text-zinc-100 sm:flex-row sm:items-center sm:justify-between">
+    <section className="mt-6 mb-6" style={{ fontFamily: "var(--font-mono-tech)" }}>
+      <div className="flex flex-col gap-4 rounded-md bg-transparent p-5 text-zinc-100 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[8px] uppercase tracking-[0.2em] text-zinc-500">Elektronikus Levél</p>
         </div>

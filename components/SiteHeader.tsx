@@ -22,27 +22,27 @@ const menuItems = [
   {
     href: "/konyv",
     label: "ARCHÍVUM",
-    description: "Meg sem történt történetek.",
+    description: "A Könyv, és egyéb írások.",
   },
   {
     href: "/halozat",
     label: "HÁLÓZAT",
-    description: "Map, spots, drops and live signals.",
+    description: "Mi sem tudjuk mi ez.",
   },
   {
     href: "/lab",
-    label: "LAB",
-    description: "Experiments, prototypes and works in progress.",
+    label: "LABORATÓRIUM",
+    description: "Szoftver és neuromarketing.",
   },
   {
     href: "/shop",
-    label: "SHOP",
-    description: "Books, objects, editions and other artifacts.",
+    label: "ELADÓ CUCCOK",
+    description: "Saját márkás cuccaink.",
   },
   {
     href: "/tamogatas",
-    label: "SUPPORT",
-    description: "Help keep the network alive and moving.",
+    label: "TETSZIK EZ?",
+    description: "Támogasd ezt a faszt.",
   },
 ];
 
@@ -200,12 +200,12 @@ export default function SiteHeader() {
 
             {/* Header */}
             <SheetHeader className="relative border-b border-zinc-800 px-6 pb-5 pt-7 pr-14 text-left">
-              <SheetTitle className="text-[11px] font-bold tracking-[0.22em] text-lime-300">
-                [ ACCESS MENU ]
+              <SheetTitle className="text-[11px] font-bold tracking-[0.22em] text-lime-100/60">
+                [ HOZZÁFÉRÉS ENGEDÉLYEZVE ]
               </SheetTitle>
 
-              <SheetDescription className="mt-2 text-xs tracking-[0.08em] text-zinc-500">
-                Vállalhatatlan Network
+              <SheetDescription className="mt-2 text-sm tracking-[0.08em] text-zinc-500">
+                Vállalhatatlan Projekt v3.7.4
               </SheetDescription>
             </SheetHeader>
 
@@ -318,7 +318,7 @@ export default function SiteHeader() {
                           <ArrowUpRight className="h-3.5 w-3.5 text-zinc-700 transition-colors group-hover:text-lime-300" />
                         </div>
 
-                        <p className="mt-2 pl-[2.35rem] text-[13px] leading-relaxed tracking-[0.06em] text-zinc-600 transition-colors group-hover:text-zinc-400">
+                        <p className="mt-2 pl-[0rem] text-[14px] leading-relaxed tracking-[0.06em] text-zinc-600 transition-colors group-hover:text-zinc-400">
                           {item.description}
                         </p>
                       </Link>
