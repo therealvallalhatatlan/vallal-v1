@@ -267,6 +267,12 @@ export default function VHeroChat() {
           className="flex-1 rounded-full border border-zinc-800 bg-zinc-950/70 px-4 py-2 text-sm text-white outline-none focus:border-lime-400"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault()
+              sendMessage()
+            }
+          }}
           placeholder={holderText}
           disabled={loading}
           style={{ fontFamily: "var(--font-mono-tech)" }}
