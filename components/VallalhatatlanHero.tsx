@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import Link from "next/link"
 import { Montserrat } from "next/font/google"
 
@@ -10,11 +10,28 @@ const montserrat = Montserrat({
   weight: "800",
 })
 
+const HERO_HEADLINES = [
+  "EZ NEM EGY KÖNYV.",
+  "PÁNIKOLNÉK, DE TÚL FÁRADT VAGYOK.",
+  "MI A FASZT OLVASTAM?",
+  "404: DOPAMIN NOT FOUND.",
+  "A NADRÁG OPCIONÁLIS.",
+  "EZ NEM IRODALOM.",
+  "A NORMÁLISAKTÓL FÉLEK",
+  "NEM MENEKÜLÖK. TESZTELEM A SZABADSÁGOT.",
+  "NE KÉRDEZD, KI ÍRTA",
+  "RÁDFÉR EGY HARD RESET",
+  "A TERAPEUTÁM SÍRT. ÉN NEVETTEM.",
+] as const
+
+const DEFAULT_HEADLINE = "PÁNIKOLNÉK,\nDE TÚL\nFÁRADT VAGYOK"
+
 export default function VallalhatatlanHero() {
   const [activeDropCount, setActiveDropCount] = useState(17)
   const [physicalSpotCount, setPhysicalSpotCount] = useState<number | null>(null)
   const [virtualSpotCount, setVirtualSpotCount] = useState<number | null>(null)
   const [registeredUsers, setRegisteredUsers] = useState<number | null>(null)
+  const [headline, setHeadline] = useState(DEFAULT_HEADLINE)
 
   useEffect(() => {
     let cancelled = false
@@ -90,6 +107,11 @@ export default function VallalhatatlanHero() {
     }
   }, [])
 
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * HERO_HEADLINES.length)
+    setHeadline(HERO_HEADLINES[randomIndex])
+  }, [])
+
   const formatHeroCount = (value: number | null) =>
     value === null ? "--" : String(value).padStart(2, "0")
 
@@ -106,10 +128,12 @@ export default function VallalhatatlanHero() {
         <h2
           className={`${montserrat.className} text-6xl uppercase leading-tighter text-zinc-100`}
         >
-          A KÖNYV
-          <br />
-          A KULCS.
-          <br />
+          {headline.split("\n").map((line, index, array) => (
+            <Fragment key={line + index}>
+              {line}
+              {index < array.length - 1 && <br />}
+            </Fragment>
+          ))}
         </h2>
 
         <div
