@@ -256,7 +256,10 @@ export default function MapViewClient() {
         </div>
       )}
 
-      {/* DEBUG: HalozatPermissionCenter ideiglenesen kikapcsolva. */}
+      <HalozatPermissionCenter
+        accessToken={accessToken}
+        onEnableGeolocation={() => setGeolocationEnabled(true)}
+      />
 
     </div>
   )
