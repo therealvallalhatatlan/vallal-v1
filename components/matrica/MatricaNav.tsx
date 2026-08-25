@@ -710,12 +710,12 @@ function MatricaNav({
    * /halozat and every nested /halozat/* route must
    * completely ignore the OnlineUsersBar layout.
    */
+  const isNetworkRoot = pathname === '/halozat'
   const isNetworkPage =
-    pathname === '/halozat' ||
-    pathname?.startsWith('/halozat/')
+    isNetworkRoot || pathname?.startsWith('/halozat/')
 
   const shouldShowOnlineUsersBar =
-    showOnlineUsersBar && !isNetworkPage
+    showOnlineUsersBar && (!isNetworkPage || isNetworkRoot)
 
   /*
    * Keep this state at zero on network pages.
@@ -1582,15 +1582,17 @@ function MatricaNav({
   return (
     <>
       {shouldShowOnlineUsersBar ? (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 5200,
-            pointerEvents: 'auto',
-          }}
+      <div
+        style={{
+          position: 'fixed',
+          top: isNetworkRoot
+            ? 'calc(4rem + env(safe-area-inset-top))'
+            : 0,
+          left: 0,
+          right: 0,
+          zIndex: isNetworkRoot ? 45 : 5200,
+          pointerEvents: 'auto',
+        }}
         >
           <OnlineUsersBar
             onMessageUser={(selectedUser) => {
