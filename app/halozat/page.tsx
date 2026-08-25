@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import MatricaNav from '@/components/matrica/MatricaNav'
 import MapViewClient from '@/components/matrica/MapViewClient'
@@ -19,7 +20,9 @@ export default function HalozatPage() {
         background: '#09090b',
       }}
     >
-      <MatricaNav />
+      <Suspense fallback={null}>
+        <MatricaNav />
+      </Suspense>
       <MapViewClient />
     </main>
   )
