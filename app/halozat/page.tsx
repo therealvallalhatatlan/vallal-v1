@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import MatricaNav from '@/components/matrica/MatricaNav'
 import MapViewClient from '@/components/matrica/MapViewClient'
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export default function HalozatPage() {
         background: '#09090b',
       }}
     >
+      <MatricaNav />
       <MapViewClient />
     </main>
   )
