@@ -1,5 +1,6 @@
 import type { DashboardApiResponse } from '@/types/dashboard'
 import type { ClaimStatus, LocationSpotType, VirtualSpotContentType } from '@/lib/matrica'
+import MySpotsSection from './MySpotsSection'
 
 const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
   accepted: 'FELFEDEZVE',
@@ -52,9 +53,10 @@ function renderContentLine(type: LocationSpotType | null, contentType: VirtualSp
 
 type Props = {
   data: DashboardApiResponse
+  token: string | null
 }
 
-export default function UserDashboard({ data }: Props) {
+export default function UserDashboard({ data, token }: Props) {
   const { user, stats, recentClaims, recentSpots } = data
   const displayName = user.nickname || user.email || 'NODE'
   const avatarLetter = (user.nickname || user.email || 'N').charAt(0).toUpperCase()
@@ -111,9 +113,6 @@ export default function UserDashboard({ data }: Props) {
     <section className="min-h-screen bg-[#010101] px-6 py-20 text-zinc-100">
       <div className="mx-auto flex max-w-5xl flex-col gap-8">
         <header className="space-y-3 border border-zinc-900/80 bg-zinc-950/60 p-6">
-          <p className="text-[10px] uppercase tracking-[0.4em] text-zinc-500">
-            A hálózaton hagyott nyomod.
-          </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="h-20 w-20 overflow-hidden rounded-full border border-zinc-800 bg-zinc-900 text-center text-3xl font-bold leading-[5rem] text-lime-200">
               {user.avatar_url ? (
@@ -134,29 +133,25 @@ export default function UserDashboard({ data }: Props) {
               <div className="flex items-center gap-3 text-sm uppercase tracking-[0.3em] text-lime-200/80">
                 <span>{user.nickname ? `@${user.nickname}` : '@node'}</span>
                 <span className="hidden h-1 w-10 border-t border-dotted border-zinc-800 sm:inline-block" />
-                <span className="text-[10px] tracking-[0.4em] text-zinc-500">
+                <span className="text-sm tracking-[0.4em] text-zinc-500">
                   NODE ACTIVE
                 </span>
               </div>
-              <div className="flex flex-wrap items-center gap-4 text-xs uppercase tracking-[0.3em] text-zinc-500">
+              <div className="flex flex-wrap items-center gap-4 text-sm uppercase tracking-[0.3em] text-zinc-500">
                 <span>BELÉPÉS: {formatJoinDate(user.created_at)}</span>
                 <span>{user.email ?? '—'}</span>
-                <span>{user.role.toUpperCase()}</span>
+                <span>| {user.role.toUpperCase()}</span>
               </div>
             </div>
           </div>
         </header>
 
         <section className="space-y-4 rounded border border-zinc-800 bg-zinc-950/60 p-6">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-zinc-500">HÁLÓZATI STÁTUSZ</p>
           <div className="grid gap-3 sm:grid-cols-4">
             {[{
-              label: 'CLAIM-EK',
+              label: 'MEGTALÁLÁSOK',
               value: stats.totalClaims,
-            }, {
-              label: 'ELFOGADVA',
-              value: stats.acceptedClaims,
-            }, {
+            },{
               label: 'DIGITÁLIS',
               value: stats.virtualClaims,
             }, {
@@ -167,7 +162,7 @@ export default function UserDashboard({ data }: Props) {
                 key={stat.label}
                 className="flex flex-col gap-3 rounded border border-zinc-900 bg-black/40 px-4 py-5"
               >
-                <span className="text-[10px] uppercase tracking-[0.4em] text-zinc-500">
+                <span className="text-sm uppercase tracking-[0.4em] text-zinc-500">
                   {stat.label}
                 </span>
                 <span className="text-3xl font-black uppercase tracking-[0.2em] text-lime-200">
@@ -178,45 +173,6 @@ export default function UserDashboard({ data }: Props) {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] uppercase tracking-[0.25em] text-zinc-500">AZ ÉN NYOMAIM</p>
-            <span className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">
-              LEGFRISSEBB: {formatShortDate(recentClaims[0]?.created_at ?? null)}
-            </span>
-          </div>
-          <div className="grid gap-3">
-            {timeline.length > 0 ? timeline : (
-              <div className="rounded border border-zinc-800 bg-zinc-950/60 p-4 text-[11px] uppercase tracking-[0.3em] text-zinc-500">
-                Még nem hagytál nyomot a hálózaton.
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="space-y-3 rounded border border-zinc-800 bg-zinc-950/60 p-6">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] uppercase tracking-[0.25em] text-zinc-500">FELFEDEZÉSEIM</p>
-            <span className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">
-              {stats.totalClaims} CLAIM
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {discoveryItems.map((item) => (
-              <div
-                key={item.label}
-                className="rounded border border-zinc-900 bg-black/40 p-4 text-center"
-              >
-                <p className="text-[11px] uppercase tracking-[0.35em] text-zinc-500">
-                  {item.label}
-                </p>
-                <p className="text-2xl font-black uppercase tracking-[0.25em] text-lime-200">
-                  {item.value}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
 
         <section className="space-y-3 rounded border border-zinc-800 bg-zinc-950/60 p-6">
           <div className="flex items-center justify-between">
@@ -248,6 +204,7 @@ export default function UserDashboard({ data }: Props) {
             )}
           </ul>
         </section>
+        <MySpotsSection token={token} />
 
         <section className="space-y-2 rounded border border-zinc-800 bg-zinc-950/60 p-6">
           <p className="text-[11px] uppercase tracking-[0.3em] text-zinc-500">FIÓK</p>

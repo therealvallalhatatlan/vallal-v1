@@ -168,6 +168,14 @@ export async function PATCH(req: NextRequest) {
     updates.price_huf = Math.floor(parsedPrice)
   }
 
+  if (typeof body.status !== 'undefined') {
+    const allowedStatuses: SpotStatus[] = ['active', 'archived']
+    if (!allowedStatuses.includes(body.status as SpotStatus)) {
+      return NextResponse.json({ error: 'invalid_status' }, { status: 400 })
+    }
+    updates.status = body.status as SpotStatus
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'no_updates' }, { status: 400 })
   }

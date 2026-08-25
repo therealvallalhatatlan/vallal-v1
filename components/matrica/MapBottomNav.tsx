@@ -22,43 +22,26 @@ const MapBottomNav: FC<MapBottomNavProps> = ({
       }}
     >
       <div className="grid min-h-[94px] grid-cols-3 items-center divide-x divide-zinc-700 rounded-md border border-zinc-700 bg-zinc-950 text-center">
-        {userRole !== 'user' ? (
-          <button
-            type="button"
-            onClick={onOpenSpotAdmin}
-            className="flex min-h-[84px] flex-col items-center justify-center px-2 py-4 transition-colors hover:bg-zinc-800/60"
-            aria-label="Új szpot"
-            title="Új szpot"
+        <button
+          type="button"
+          onClick={onOpenSpotAdmin}
+          className="flex min-h-[84px] flex-col items-center justify-center px-2 py-4 transition-colors hover:bg-zinc-800/60"
+          aria-label="Új szpot"
+          title="Új szpot"
+        >
+          <span
+            className="text-sm font-bold uppercase text-zinc-400"
+            style={{ fontFamily: 'var(--font-mono-tech)' }}
           >
-            <span
-              className="text-sm font-bold uppercase text-zinc-400"
-              style={{ fontFamily: 'var(--font-mono-tech)' }}
-            >
-              ÚJ SZPOT
-            </span>
-            <span
-              className="mt-1 text-xs text-lime-100 opacity-70"
-              style={{ fontFamily: 'var(--font-mono-tech)' }}
-            >
-              Új Hely Hozzáadása
-            </span>
-          </button>
-        ) : (
-          <div className="flex min-h-[84px] flex-col items-center justify-center px-2 py-4 text-zinc-600 opacity-60">
-            <span
-              className="text-sm font-bold uppercase"
-              style={{ fontFamily: 'var(--font-mono-tech)' }}
-            >
-              ÚJ SZPOT
-            </span>
-            <span
-              className="mt-1 text-xs"
-              style={{ fontFamily: 'var(--font-mono-tech)' }}
-            >
-              Csak admin / editor
-            </span>
-          </div>
-        )}
+            ÚJ SZPOT
+          </span>
+          <span
+            className="mt-1 text-xs text-lime-100 opacity-70"
+            style={{ fontFamily: 'var(--font-mono-tech)' }}
+          >
+            {userRole === 'user' ? 'Csak ingyenes' : 'Új Hely Hozzáadása'}
+          </span>
+        </button>
 
         <button
           type="button"

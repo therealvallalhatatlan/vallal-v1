@@ -72,14 +72,11 @@ export async function POST(req: NextRequest) {
 
   const { title, description, image_url, image_urls, lat, lng, radius_visibility, radius_claim, total_quantity } = body
   const role = getUserRoleByEmail(user.email)
-  if (role === 'user') {
-    return NextResponse.json({ error: 'spot_creation_forbidden' }, { status: 403 })
-  }
   const locationType: LocationSpotType = body.type === 'virtual' ? 'virtual' : 'physical'
   const contentType = body.content_type as VirtualSpotContentType | null
   const contentUrl = typeof body.content_url === 'string' ? body.content_url.trim() : ''
 
-  const spotType: SpotType = locationType === 'physical' && body.spot_type === 'paid' ? 'paid' : 'free'
+  const wantsPaid = locationType === 'physical' && body.spot_type === 'paid'
   const rawPriceHuf = Number(body.price_huf)
   const parsedPriceHuf = Number.isFinite(rawPriceHuf) ? Math.floor(rawPriceHuf) : 0
 
@@ -87,7 +84,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_price_huf' }, { status: 400 })
   }
 
-  if (spotType === 'paid') {
+  if (wantsPaid) {
     if (!canCreatePaidSpots(role)) {
       return NextResponse.json({ error: 'paid_spot_forbidden' }, { status: 403 })
     }
@@ -96,7 +93,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const effectivePriceHuf = spotType === 'paid' ? parsedPriceHuf : 0
+  const spotType: SpotType = wantsPaid ? 'paid' : 'free'
+  const effectivePriceHuf = wantsPaid ? parsedPriceHuf : 0
 
   if (typeof title !== 'string' || !title.trim()) {
     return NextResponse.json({ error: 'title_required' }, { status: 400 })
@@ -284,6 +282,9 @@ export async function DELETE(req: NextRequest) {
 
   const role = getUserRoleByEmail(user.email)
   const canManageAll = canManageAllSpots(role)
+  if (!canManageAll) {
+    return NextResponse.json({ error: 'not_allowed' }, { status: 403 })
+  }
 
   let body: Record<string, unknown>
   try {
@@ -303,11 +304,7 @@ export async function DELETE(req: NextRequest) {
     .delete()
     .eq('id', id.trim())
 
-  const scopedDeleteQuery = canManageAll
-    ? deleteQuery
-    : deleteQuery.eq('creator_id', user.id)
-
-  const { data, error } = await scopedDeleteQuery
+  const { data, error } = await deleteQuery
     .select('id')
     .maybeSingle()
 

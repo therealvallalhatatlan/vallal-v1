@@ -7,8 +7,8 @@
  * Uses a GeoJSON Polygon fill + line layer so the radius is geographically accurate.
  */
 
-import { useEffect } from 'react'
-import type mapboxgl from 'mapbox-gl'
+import { useEffect, useRef } from 'react'
+import mapboxgl from 'mapbox-gl'
 import { geoCirclePolygon } from '@/lib/matrica'
 import type { StickerSpot } from '@/lib/matrica'
 
@@ -24,6 +24,7 @@ export default function SpotCircle({ map, spot, radiusMeters, onSelect }: Props)
   const fillId = `spot-circle-fill-${spot.id}`
   const outlineId = `spot-circle-outline-${spot.id}`
 
+  const markerRef = useRef<mapboxgl.Marker | null>(null)
   useEffect(() => {
     if (!map) return
 
@@ -41,7 +42,7 @@ export default function SpotCircle({ map, spot, radiusMeters, onSelect }: Props)
         type: 'fill',
         source: sourceId,
         paint: {
-          'fill-color': '#a3e635',
+          'fill-color': spot.type === 'virtual' ? 'rgba(99,102,241,0.14)' : '#a3e635',
           'fill-opacity': 0.1,
         },
       })
@@ -54,7 +55,7 @@ export default function SpotCircle({ map, spot, radiusMeters, onSelect }: Props)
         type: 'line',
         source: sourceId,
         paint: {
-          'line-color': '#bef264',
+          'line-color': spot.type === 'virtual' ? 'rgba(129,140,248,0.78)' : '#bef264',
           'line-width': 1.5,
           'line-opacity': 0.62,
           'line-dasharray': [4, 4],
@@ -80,6 +81,61 @@ export default function SpotCircle({ map, spot, radiusMeters, onSelect }: Props)
       map.on('mouseleave', fillId, onCircleMouseLeave)
     }
 
+    // pulsing radio signal effect
+    const styleId = 'spot-marker-pulse-style'
+    if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
+      const style = document.createElement('style')
+      style.id = styleId
+      style.innerHTML = `
+          .spot-marker-physical.spot-marker-pulse::before,
+          .spot-marker-physical.spot-marker-pulse::after,
+          .spot-marker-virtual.spot-marker-pulse::before,
+          .spot-marker-virtual.spot-marker-pulse::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: spotPulse 1.4s infinite cubic-bezier(0.66, 0, 0, 1);
+            pointer-events: none;
+            z-index: 0;
+          }
+
+          .spot-marker-physical.spot-marker-pulse::before,
+          .spot-marker-physical.spot-marker-pulse::after {
+            background: rgba(163, 230, 53, 0.24);
+          }
+
+          .spot-marker-virtual.spot-marker-pulse::before,
+          .spot-marker-virtual.spot-marker-pulse::after {
+            background: rgba(99, 102, 241, 0.30);
+          }
+
+          .spot-marker-pulse::after {
+            animation-delay: 0.7s;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .spot-marker-pulse::before,
+            .spot-marker-pulse::after { animation: none; }
+          }
+          @keyframes spotPulse {
+            0% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.8); }
+            70%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+          }
+      `
+      document.head.appendChild(style)
+    }
+
+    const el = document.createElement('div')
+    el.className = 'spot-marker-pulse ' + (spot.type === 'virtual' ? 'spot-marker-virtual' : 'spot-marker-physical')
+    el.style.cssText = 'width:0;height:0;position:absolute;pointer-events:none;'
+    markerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
+      .setLngLat([spot.lng, spot.lat])
+      .addTo(map)
+
     return () => {
       if (map) {
         if (onSelect) {
@@ -91,10 +147,10 @@ export default function SpotCircle({ map, spot, radiusMeters, onSelect }: Props)
           if (map.getLayer(outlineId)) map.removeLayer(outlineId)
           if (map.getLayer(fillId)) map.removeLayer(fillId)
           if (map.getSource(sourceId)) map.removeSource(sourceId)
-        } catch (e) {
-          // ignore errors if map is in teardown
-        }
+        } catch {}
       }
+      markerRef.current?.remove()
+      markerRef.current = null
     }
   }, [map, spot, sourceId, fillId, outlineId, radiusMeters, onSelect])
 

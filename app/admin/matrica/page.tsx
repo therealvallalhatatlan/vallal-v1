@@ -719,9 +719,10 @@ interface SpotListProps {
   accessToken: string
   onStatusChanged: (id: string, status: SpotStatus) => void
   onDeleted: (id: string) => void
+  canManageAll: boolean
 }
 
-function SpotList({ spots, accessToken, onStatusChanged, onDeleted }: SpotListProps) {
+function SpotList({ spots, accessToken, onStatusChanged, onDeleted, canManageAll }: SpotListProps) {
   const [pending, setPending] = useState<Record<string, boolean>>({})
   const [editId, setEditId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
@@ -901,13 +902,15 @@ function SpotList({ spots, accessToken, onStatusChanged, onDeleted }: SpotListPr
                     Archiválás
                   </button>
                 )}
-                <button
-                  disabled={pending[spot.id]}
-                  onClick={() => deleteSpot(spot.id)}
-                  style={s.btn('#ef4444', pending[spot.id])}
-                >
-                  Spot törlése
-                </button>
+                {canManageAll && (
+                  <button
+                    disabled={pending[spot.id]}
+                    onClick={() => deleteSpot(spot.id)}
+                    style={s.btn('#ef4444', pending[spot.id])}
+                  >
+                    Spot törlése
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -954,6 +957,7 @@ export default function MatricaAdminPage() {
   const { session, loading: authLoading } = useSessionGuard()
   const [spots, setSpots] = useState<StickerSpot[]>([])
   const [userRole, setUserRole] = useState<UserRole>('user')
+  const canCreatePaid = userRole === 'admin' || userRole === 'editor'
   const [loadingSpots, setLoadingSpots] = useState(false)
   const accessToken = (session as any)?.access_token as string | undefined
 
@@ -1018,27 +1022,39 @@ export default function MatricaAdminPage() {
               onClick={() => router.push('/halozat')}
               style={{ ...s.btn('rgba(255,255,255,0.08)', false), color: '#d4d4d8' }}
             >
-              ✕ Bezár
+              ← Vissza a hálózathoz
             </button>
-            <button onClick={() => accessToken && fetchSpots(accessToken)} disabled={loadingSpots || !accessToken}
-              style={{ ...s.btn('rgba(255,255,255,0.08)', loadingSpots), color: '#a1a1aa' }}>
+            <button
+              type="button"
+              onClick={() => accessToken && fetchSpots(accessToken)}
+              disabled={loadingSpots || !accessToken}
+              style={{ ...s.btn('rgba(255,255,255,0.08)', loadingSpots), color: '#a1a1aa' }}
+            >
               {loadingSpots ? 'Frissítés…' : '↻ Frissítés'}
             </button>
           </div>
         </div>
 
-        {accessToken && (userRole === 'admin' || userRole === 'editor') ? (
+        {accessToken && (
           <CreateSpotForm
             accessToken={accessToken}
-            canCreatePaid={userRole === 'admin' || userRole === 'editor'}
+            canCreatePaid={canCreatePaid}
             onCreated={handleCreated}
           />
-        ) : null}
+        )}
 
         {loadingSpots ? (
-          <div style={{ ...s.card, color: '#71717a', fontSize: 14 }}>Betöltés…</div>
+          <div style={{ ...s.card, color: '#71717a', fontSize: 14 }}>
+            Betöltés…
+          </div>
         ) : (
-          <SpotList spots={spots} accessToken={accessToken ?? ''} onStatusChanged={handleStatusChanged} onDeleted={handleDeleted} />
+          <SpotList
+            spots={spots}
+            accessToken={accessToken ?? ''}
+            onStatusChanged={handleStatusChanged}
+            onDeleted={handleDeleted}
+            canManageAll={userRole === 'admin' || userRole === 'editor'}
+          />
         )}
       </div>
     </div>

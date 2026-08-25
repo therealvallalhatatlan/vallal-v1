@@ -34,7 +34,7 @@ export default function SpotMarker({ map, spot, onSelect, onHoverStart, onHoverE
     // Custom marker element
     const el = document.createElement('button')
     el.type = 'button'
-    el.className = 'spot-marker-root spot-marker-pulse'
+    el.className = 'spot-marker-root spot-marker-pulse ' + (spot.type === 'virtual' ? 'spot-marker-virtual' : 'spot-marker-physical')
     el.setAttribute('aria-label', `${spot.title} szpot`)
     el.style.cssText = `
       width: 44px;
@@ -60,7 +60,7 @@ export default function SpotMarker({ map, spot, onSelect, onHoverStart, onHoverE
       width: 38px;
       height: 38px;
       border-radius: 50%;
-      background: rgba(163,230,53,0.22);
+      background: ${spot.type === 'virtual' ? 'rgba(139,92,246,0.22)' : 'rgba(163,230,53,0.22)'};
       transform: translateZ(0);
       pointer-events: none;
     `
@@ -71,9 +71,8 @@ export default function SpotMarker({ map, spot, onSelect, onHoverStart, onHoverE
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      background: #a3e635;
-      border: 3px solid #fff;
-      box-shadow: 0 0 12px rgba(163,230,53,0.72);
+      background: ${spot.type === 'virtual' ? '#8B5CF6' : '#A3E635'};
+      box-shadow: ${spot.type === 'virtual' ? '0 0 12px rgba(139,92,246,0.72)' : '0 0 12px rgba(163,230,53,0.72)'};
       transition: transform 0.15s ease;
       transform: translateZ(0) scale(1);
       position: relative;
@@ -99,39 +98,35 @@ export default function SpotMarker({ map, spot, onSelect, onHoverStart, onHoverE
         const style = document.createElement('style')
         style.id = styleId
         style.innerHTML = `
-          .spot-marker-pulse::after {
+          .spot-marker-physical.spot-marker-pulse::before,
+          .spot-marker-physical.spot-marker-pulse::after {
             content: '';
             position: absolute;
-            left: 50%;
-            top: 50%;
-            width: 38px;
-            height: 38px;
-            background: rgba(163,230,53,0.24);
+            left: 50%; top: 50%;
+            width: 38px; height: 38px;
             border-radius: 50%;
+            background: rgba(163,230,53,0.24);
             transform: translate(-50%, -50%);
             animation: spotPulse 1.4s infinite cubic-bezier(0.66, 0, 0, 1);
-            z-index: 0;
             pointer-events: none;
+            z-index: 0;
+          }
+          .spot-marker-virtual.spot-marker-pulse::before,
+          .spot-marker-virtual.spot-marker-pulse::after {
+            background: rgba(139,92,246,0.24);
+          }
+          .spot-marker-pulse::after { animation-delay: 0.7s; }
+          @media (prefers-reduced-motion: reduce) {
+            .spot-marker-pulse::before,
+            .spot-marker-pulse::after { animation: none; }
           }
           @keyframes spotPulse {
-            0% {
-              opacity: 0.7;
-              transform: translate(-50%, -50%) scale(0.8);
-            }
-            70% {
-              opacity: 0;
-              transform: translate(-50%, -50%) scale(2.2);
-            }
-            100% {
-              opacity: 0;
-              transform: translate(-50%, -50%) scale(2.2);
-            }
+            0% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.8); }
+            70%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
           }
           .spot-marker-root:hover,
-          .spot-marker-root:focus-visible {
-            filter: brightness(1.08);
-          }
-        `;
+          .spot-marker-root:focus-visible { filter: brightness(1.08); }
+        `
         document.head.appendChild(style)
       }
     }

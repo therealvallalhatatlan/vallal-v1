@@ -97,5 +97,5 @@ export default function DashboardPage() {
     );
   }
 
-  return <DashboardContent data={data} />;
+  return <DashboardContent data={data} token={token} />;
 }
