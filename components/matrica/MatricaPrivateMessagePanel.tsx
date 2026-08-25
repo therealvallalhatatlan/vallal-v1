@@ -157,8 +157,8 @@ export default function MatricaPrivateMessagePanel({
           roomId={roomId}
           authToken={authToken}
           requireAuth
-          enableRealtime={false}
-          pollIntervalMs={2500}
+          enableRealtime
+          pollIntervalMs={0}
           hideHeader
           placeholder={`${recipient.nickname} üzenete...`}
           onUnreadChange={(count) => setUnreadCount(count)}

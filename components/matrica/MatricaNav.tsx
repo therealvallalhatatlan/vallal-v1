@@ -12,6 +12,7 @@ import { useSessionGuard } from '@/hooks/useSessionGuard.js'
 import { usePresence } from '@/hooks/usePresence'
 import { buildAuthHref, clearStoredAuthReturnTarget } from '@/lib/authRedirect'
 import MatricaPrivateMessagePanel from '@/components/matrica/MatricaPrivateMessagePanel'
+import { setUnreadSource } from '@/lib/notifications/unreadStore'
 
 // If StickerSpot is not imported from types, define a fallback type
 // Remove this if you have the correct import
@@ -34,7 +35,14 @@ type OnlineUserProfile = {
   accepted: number;
   lat?: number;
   lng?: number;
+  last_heartbeat?: string;
 };
+
+const RECONCILE_INTERVAL_MS = 40_000
+const REALTIME_DEBOUNCE_MS = 600
+const PM_UNREAD_SOURCE_KEY = 'personal-notifications'
+const PM_RECONCILE_INTERVAL_MS = 45_000
+const PM_REALTIME_DEBOUNCE_MS = 600
 
 type SpotEditDraft = {
   title: string;
@@ -60,10 +68,17 @@ export function OnlineUsersBar({
 
   const { session } = useSessionGuard()
   const currentUserId = (session as any)?.user?.id
+  const authToken: string | null =
+    (session as any)?.access_token ?? null
 
   const [users, setUsers] = useState<OnlineUserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
+  const supabaseRef = useRef(createClient())
+  const fetchAbortRef = useRef<AbortController | null>(null)
+  const mountedRef = useRef(true)
+  const realtimeDebounceRef = useRef<number | null>(null)
+  const reconcileIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const updateIsMobile = () => setIsMobile(window.innerWidth < 768)
@@ -75,134 +90,125 @@ export function OnlineUsersBar({
     return () => window.removeEventListener('resize', updateIsMobile)
   }, [])
 
-  useEffect(() => {
-    let cancelled = false
+  const fetchOnlineUsers = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!authToken) {
+        if (!silent) {
+          setLoading(false)
+        }
+        setUsers([])
+        return
+      }
 
-    async function fetchOnlineUsers() {
-      setLoading(true)
+      const controller = new AbortController()
+      fetchAbortRef.current?.abort()
+      fetchAbortRef.current = controller
+
+      if (!silent) {
+        setLoading(true)
+      }
 
       try {
-        const res = await fetch('/api/presence/online')
+        const res = await fetch('/api/matrica/online-users', {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+          signal: controller.signal,
+          cache: 'no-store',
+        })
+
         const json = await res.json()
 
-        if (!res.ok || !Array.isArray(json?.users)) {
+        if (
+          !res.ok ||
+          !json?.ok ||
+          !Array.isArray(json.users)
+        ) {
           setUsers([])
-          setLoading(false)
           return
         }
 
-        const onlineUsers = json.users
-          .map(
-            (u: {
-              id?: string;
-              user_id?: string;
-              email?: string;
-              lat?: number;
-              lng?: number;
-            }) => ({
-              id: u.id ?? u.user_id,
-              email: u.email,
-              lat: u.lat,
-              lng: u.lng,
-            })
-          )
-          .filter((u: { id?: string }) => !!u.id)
-          .sort((a: { id: string }, b: { id: string }) => {
-            if (!currentUserId) return 0
-            if (a.id === currentUserId) return -1
-            if (b.id === currentUserId) return 1
-            return 0
-          }) as Array<{
-          id: string;
-          email?: string;
-          lat?: number;
-          lng?: number;
-        }>
-
-        if (onlineUsers.length === 0) {
-          setUsers([])
-          setLoading(false)
-          return
-        }
-
-        const profiles: OnlineUserProfile[] = await Promise.all(
-          onlineUsers.map(
-            async (u: {
-              id: string;
-              email?: string;
-              lat?: number;
-              lng?: number;
-            }) => {
-              try {
-                const pres = await fetch(
-                  `/api/user/profile?userId=${encodeURIComponent(u.id)}`
-                )
-
-                const pjson = await pres.json()
-                const fallbackName =
-                  u.email || `user-${u.id.slice(0, 6)}`
-
-                if (pres.ok && pjson?.ok && pjson?.profile) {
-                  return {
-                    id: u.id,
-                    email: u.email || '',
-                    nickname:
-                      pjson.profile.nickname || fallbackName,
-                    avatarUrl:
-                      pjson.profile.avatar_url || null,
-                    badge:
-                      pjson.profile.accepted ??
-                      pjson.profile.badge ??
-                      0,
-                    score: pjson.profile.score ?? 0,
-                    accepted: pjson.profile.accepted ?? 0,
-                    lat: u.lat,
-                    lng: u.lng,
-                  }
-                }
-              } catch {}
-
-              return {
-                id: u.id,
-                email: u.email || '',
-                nickname:
-                  u.email || `user-${u.id.slice(0, 6)}`,
-                avatarUrl: null,
-                badge: 0,
-                score: 0,
-                accepted: 0,
-                lat: u.lat,
-                lng: u.lng,
-              }
-            }
-          )
-        )
-
-        if (!cancelled) {
-          setUsers(profiles)
+        if (mountedRef.current) {
+          setUsers(json.users)
         }
       } catch (error) {
-        console.error('Online users fetch failed:', error)
-
-        if (!cancelled) {
+        if (!silent && mountedRef.current) {
           setUsers([])
         }
       } finally {
-        if (!cancelled) {
+        if (!silent && mountedRef.current) {
           setLoading(false)
         }
+        fetchAbortRef.current = null
       }
+    },
+    [authToken]
+  )
+
+  const scheduleReconcile = useCallback(() => {
+    if (realtimeDebounceRef.current) {
+      window.clearTimeout(realtimeDebounceRef.current)
     }
 
-    fetchOnlineUsers()
+    realtimeDebounceRef.current = window.setTimeout(() => {
+      void fetchOnlineUsers({ silent: true })
+      realtimeDebounceRef.current = null
+    }, REALTIME_DEBOUNCE_MS)
+  }, [fetchOnlineUsers])
 
-    const interval = setInterval(fetchOnlineUsers, 8000)
+  useEffect(() => {
+    mountedRef.current = true
+
+    if (authToken) {
+      void fetchOnlineUsers()
+    }
+
+    reconcileIntervalRef.current = window.setInterval(() => {
+      void fetchOnlineUsers({ silent: true })
+    }, RECONCILE_INTERVAL_MS)
 
     return () => {
-      cancelled = true
-      clearInterval(interval)
+      mountedRef.current = false
+      if (realtimeDebounceRef.current) {
+        window.clearTimeout(realtimeDebounceRef.current)
+      }
+      if (reconcileIntervalRef.current) {
+        window.clearInterval(reconcileIntervalRef.current)
+      }
+      fetchAbortRef.current?.abort()
     }
-  }, [currentUserId])
+  }, [authToken, fetchOnlineUsers])
+
+  useEffect(() => {
+    const supabase = supabaseRef.current
+
+    if (!authToken) {
+      return
+    }
+
+    if (typeof supabase.channel !== 'function') {
+      return
+    }
+
+    const channel = supabase
+      .channel('public:reader_presence')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'reader_presence',
+        },
+        () => {
+          scheduleReconcile()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [authToken, scheduleReconcile])
 
   const visibleUsers = hideCurrentUser
     ? users.filter((u) => u.id !== currentUserId)
@@ -881,21 +887,26 @@ function MatricaNav({
     if (!authToken || !user?.id) return
 
     let cancelled = false
+    let realtimeDebounce: ReturnType<typeof setTimeout> | null = null
+    const controllerRef = { current: null as AbortController | null }
 
-    const loadUnreadFromServer = async () => {
+    const reconcileCounts = async ({ silent = false } = {}) => {
+      if (controllerRef.current) {
+        controllerRef.current.abort()
+      }
+      const controller = new AbortController()
+      controllerRef.current = controller
+
       try {
-        const res = await fetch(
-          '/api/matrica/pm-unread',
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          }
-        )
+        const res = await fetch('/api/matrica/pm-unread', {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+          signal: controller.signal,
+          cache: 'no-store',
+        })
 
-        const json = await res
-          .json()
-          .catch(() => null)
+        const json = await res.json().catch(() => null)
 
         if (
           cancelled ||
@@ -906,44 +917,69 @@ function MatricaNav({
           return
         }
 
-        const next: Record<
-          string,
-          number | undefined
-        > = {}
+        const next: Record<string, number | undefined> = {}
+        let totalUnread = 0
 
-        for (const [
-          key,
-          value,
-        ] of Object.entries(
-          json.unreadByUserId as Record<
-            string,
-            unknown
-          >
-        )) {
-          if (
-            typeof value === 'number' &&
-            Number.isFinite(value) &&
-            value > 0
-          ) {
+        for (const [key, value] of Object.entries(json.unreadByUserId as Record<string, unknown>)) {
+          if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
             next[key] = Math.floor(value)
+            totalUnread += Math.floor(value)
           }
         }
 
-        setPmUnreadCounts(next)
+        if (mountedRef.current) {
+          setPmUnreadCounts(next)
+          setUnreadSource(PM_UNREAD_SOURCE_KEY, totalUnread)
+        }
       } catch {
-        // Keep local fallback if server sync fails.
+        // silent
       }
     }
 
-    void loadUnreadFromServer()
+    void reconcileCounts()
 
-    const timer = setInterval(() => {
-      void loadUnreadFromServer()
-    }, 10000)
+    const interval = setInterval(() => {
+      void reconcileCounts({ silent: true })
+    }, PM_RECONCILE_INTERVAL_MS)
+
+    const scheduleRealtimeReconcile = () => {
+      if (realtimeDebounce) {
+        window.clearTimeout(realtimeDebounce)
+      }
+
+      realtimeDebounce = window.setTimeout(() => {
+        void reconcileCounts({ silent: true })
+      }, PM_REALTIME_DEBOUNCE_MS)
+    }
+
+    const supabase = createClient()
+    let channel: ReturnType<typeof supabase.channel> | null = null
+
+    if (supabase.channel) {
+      channel = supabase
+        .channel('public:pm_unread_counts')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'pm_unread_counts',
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (!payload?.new) return
+            scheduleRealtimeReconcile()
+          }
+        )
+        .subscribe()
+    }
 
     return () => {
       cancelled = true
-      clearInterval(timer)
+      clearInterval(interval)
+      realtimeDebounce && window.clearTimeout(realtimeDebounce)
+      controllerRef.current?.abort()
+      if (channel) channel.unsubscribe()
     }
   }, [authToken, user?.id])
 
