@@ -2,18 +2,40 @@
 
 import { BellIcon } from "lucide-react"
 import { formatDistanceToNowStrict } from "date-fns"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { useRouter } from "next/navigation"
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { setUnreadSource } from "@/lib/notifications/unreadStore"
+import { setUnreadSource, getUnreadSnapshot, subscribeUnread } from "@/lib/notifications/unreadStore"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 
 const AUTO_DISMISS_KEY = "network-inbox-dismissed"
 const AUTO_OPEN_DELAY_MS = 4200
 const NETWORK_ITEM_PREVIEW_LIMIT = 4
 const UNREAD_SOURCE_KEY = "personal-notifications"
+// PM unread source key
+const PM_UNREAD_SOURCE_KEY = "personal-pm"
 const badgeLimit = 99
+
+// React's useSyncExternalStore requires getSnapshot() to return a cached
+// value when the external store has not changed. The store may expose a
+// snapshot getter that creates a fresh object, so cache the reference here
+// and refresh it only when the store notifies subscribers.
+let cachedUnreadSnapshot = getUnreadSnapshot()
+
+function getCachedUnreadSnapshot() {
+  return cachedUnreadSnapshot
+}
+
+function subscribeCachedUnread(onStoreChange: () => void) {
+  return subscribeUnread(() => {
+    const next = getUnreadSnapshot()
+    if (next !== cachedUnreadSnapshot) {
+      cachedUnreadSnapshot = next
+    }
+    onStoreChange()
+  })
+}
 
 type NetworkActivityItem = {
   id: string
@@ -102,6 +124,28 @@ export default function NetworkInboxSheet() {
   const autoOpenTimer = useRef<number | undefined>(undefined)
 
   const isAuthenticated = Boolean(session?.user)
+
+  // Combined unread: normal notifications + personal PMs
+  // IMPORTANT: useSyncExternalStore requires BOTH getSnapshot and
+  // getServerSnapshot to return a cached/stable reference. Passing
+  // getUnreadSnapshot directly can cause React's infinite-loop warning
+  // when the store creates a new object on every call.
+  const unreadSnapshot = useSyncExternalStore(
+    subscribeCachedUnread,
+    getCachedUnreadSnapshot,
+    getCachedUnreadSnapshot,
+  )
+  const normalUnread = unreadSnapshot.sources[UNREAD_SOURCE_KEY] ?? 0
+  const pmUnread = unreadSnapshot.sources[PM_UNREAD_SOURCE_KEY] ?? 0
+  const unreadCount = normalUnread + pmUnread
+  // Debug: snapshot and counts
+  console.log('[BELL DEBUG]', {
+    snapshot: unreadSnapshot,
+    sources: unreadSnapshot.sources,
+    normalUnread,
+    pmUnread,
+    unreadCount,
+  })
 
   const fetchInbox = useCallback(async () => {
     if (!headers) return
@@ -289,25 +333,17 @@ export default function NetworkInboxSheet() {
       })
 
       if (!response.ok) {
-        console.error(
-          "[network-inbox] mark all read failed",
-          response.status,
-        )
+        console.error("[network-inbox] mark all read failed", response.status)
         return
       }
     } catch (error) {
-      console.error(
-        "[network-inbox] mark all read exception",
-        error,
-      )
+      console.error("[network-inbox] mark all read exception", error)
       return
     }
 
     const now = new Date().toISOString()
-
     setPayload((previous) => {
       if (!previous) return previous
-
       return {
         ...previous,
         unreadNotificationCount: 0,
@@ -319,11 +355,7 @@ export default function NetworkInboxSheet() {
     })
   }, [headers, payload])
 
-  if (loading || !isAuthenticated) {
-    return null
-  }
-
-  const unreadCount = payload?.unreadNotificationCount ?? 0
+  // Combined unread: normal notifications + personal PMs
   const networkSummary = payload?.networkActivity.summary ?? []
   const networkItems = payload?.networkActivity.items ?? []
   const messageOverview = payload?.messageOverview ?? null
@@ -451,11 +483,11 @@ export default function NetworkInboxSheet() {
             <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.4em] text-zinc-500">
               <span>Üzenetek</span>
 
-              {messageOverview?.unread && (
-                <span className="rounded-full border border-lime-200/60 bg-lime-400/80 px-2 py-1 text-[10px] font-semibold uppercase text-black">
-                  új
-                </span>
-              )}
+  {(messageOverview?.unread || pmUnread > 0) && (
+    <span className="rounded-full border border-lime-200/60 bg-lime-400/80 px-2 py-1 text-[10px] font-semibold uppercase text-black">
+      új
+    </span>
+  )}
             </div>
 
             {messageOverview ? (
@@ -573,8 +605,8 @@ export default function NetworkInboxSheet() {
           </button>
         </div>
       </SheetContent>
-    </Sheet>
-  )
+      </Sheet>
+  );
 }
 
 function getTargetUrl(data: Record<string, unknown>) {

@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useSyncExternalStore } from 'react'
-import { applyUnreadToFavicon, resetFaviconToBase } from '@/lib/notifications/faviconBadge'
-import { clearAppBadgeCount, setAppBadgeCount } from '@/lib/notifications/appBadge'
+import { applyUnreadToFavicon } from '@/lib/notifications/faviconBadge'
+import { setAppBadgeCount } from '@/lib/notifications/appBadge'
 import { applyUnreadToDocumentTitle } from '@/lib/notifications/titleBadge'
 import {
   clearAllUnreadSources,
@@ -31,22 +31,6 @@ export default function NotificationOrchestrator() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const resetUnreadIfVisible = () => {
-      if (document.visibilityState !== 'visible') return
-      clearAllUnreadSources()
-      applyUnreadToDocumentTitle(0)
-      resetFaviconToBase()
-      void clearAppBadgeCount()
-    }
-
-    const handleVisibilityChange = () => {
-      resetUnreadIfVisible()
-    }
-
-    const handleFocus = () => {
-      resetUnreadIfVisible()
-    }
-
     const handleSwMessage = (event: MessageEvent) => {
       const data = event.data as { type?: string; unreadCount?: number } | null
       if (!data || typeof data.type !== 'string') return
@@ -57,17 +41,17 @@ export default function NotificationOrchestrator() {
       }
 
       if (data.type === 'PUSH_CLICKED') {
+        console.log('[UNREAD STORE CLEAR]', {
+          reason: 'NotificationOrchestrator PUSH_CLICKED',
+          sourcesBeforeClear: getUnreadSnapshot().sources,
+        });
         clearAllUnreadSources()
       }
     }
 
-    window.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('focus', handleFocus)
     navigator.serviceWorker?.addEventListener('message', handleSwMessage)
 
     return () => {
-      window.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', handleFocus)
       navigator.serviceWorker?.removeEventListener('message', handleSwMessage)
     }
   }, [])

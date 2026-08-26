@@ -45,13 +45,17 @@ export default function MatricaPrivateMessagePanel({
   const roomId = useMemo(() => buildPrivateRoomId(currentUserId, recipient.id), [currentUserId, recipient.id])
   const selfRole = useMemo(() => getPrivateRoomSenderRole(roomId, currentUserId) || 'viewer', [roomId, currentUserId])
 
+  // Notify parent of local unreadCount changes
   useEffect(() => {
     onUnreadChange?.(unreadCount, recipient.id)
   }, [unreadCount, recipient.id, onUnreadChange])
 
-  useEffect(() => {
+  // Notify parent only on panel mount (open)
+ useEffect(() => {
+    console.log('[PM PANEL] open conversation for', recipient.id);
     onOpenConversation?.(recipient.id)
-  }, [recipient.id, onOpenConversation])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {

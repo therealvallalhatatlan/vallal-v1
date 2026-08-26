@@ -16,6 +16,8 @@ function sanitizeUnreadCount(count: number): number {
 }
 
 function emit(): void {
+  console.log('[UNREAD STORE] EMIT')
+  console.log('[UNREAD STORE EMIT]', { sources: { ...sources } })
   for (const listener of listeners) {
     listener()
   }
@@ -28,7 +30,9 @@ export function getUnreadSnapshot(): UnreadSnapshot {
     total += sanitizeUnreadCount(value)
   }
 
-  return { sources: copy, total }
+  const snapshot = { sources: copy, total }
+  console.log('[UNREAD STORE] SNAPSHOT', snapshot)
+  return snapshot
 }
 
 export function subscribeUnread(listener: Listener): () => void {
@@ -39,9 +43,13 @@ export function subscribeUnread(listener: Listener): () => void {
 }
 
 export function setUnreadSource(source: UnreadSourceKey, count: number): void {
+  console.log('[UNREAD STORE SET]', { source, count, sources: { ...sources } })
   const nextValue = sanitizeUnreadCount(count)
   const previous = sources[source] ?? 0
-  if (nextValue === previous) return
+  if (nextValue === previous) {
+    console.log('[UNREAD STORE] no change for', source, nextValue)
+    return
+  }
 
   if (nextValue <= 0) {
     delete sources[source]

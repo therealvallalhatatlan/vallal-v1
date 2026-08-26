@@ -40,7 +40,7 @@ type OnlineUserProfile = {
 
 const RECONCILE_INTERVAL_MS = 40_000
 const REALTIME_DEBOUNCE_MS = 600
-const PM_UNREAD_SOURCE_KEY = 'personal-notifications'
+const PM_UNREAD_SOURCE_KEY = 'personal-pm'
 const PM_RECONCILE_INTERVAL_MS = 45_000
 const PM_REALTIME_DEBOUNCE_MS = 600
 
@@ -669,6 +669,7 @@ function MatricaNav({
 
   const { session } = useSessionGuard()
   const user = (session as any)?.user ?? null
+  const currentUserId: string | null = user?.id ?? null
   const email: string = user?.email ?? ''
   const authToken: string | null =
     (session as any)?.access_token ?? null
@@ -731,11 +732,8 @@ function MatricaNav({
 
   const [pmRecipient, setPmRecipient] =
     useState<OnlineUserProfile | null>(null)
-
   const [pmUnreadCounts, setPmUnreadCounts] =
-    useState<
-      Record<string, number | undefined>
-    >({})
+    useState<Record<string, number | undefined>>({})
 
   const [pmToasts, setPmToasts] = useState<
     Array<{
@@ -750,6 +748,57 @@ function MatricaNav({
 
   const pmDeepLinkHandledRef =
     useRef<string | null>(null)
+
+  const lastMarkedReadUserIdRef = useRef<string | null>(null)
+  const lastRemoteUnreadRef = useRef<Record<string, number | undefined>>({})
+  const lastTotalUnreadRef = useRef<number>(0)
+
+  function isEqualShallow(
+    a: Record<string, number | undefined>,
+    b: Record<string, number | undefined>
+  ): boolean {
+    const aKeys = Object.keys(a)
+    const bKeys = Object.keys(b)
+    if (aKeys.length !== bKeys.length) return false
+    for (const key of aKeys) {
+      if (a[key] !== b[key]) return false
+    }
+    return true
+  }
+
+  const handleOpenConversation = useCallback(
+    (recipientUserId: string) => {
+      if (lastMarkedReadUserIdRef.current === recipientUserId) return
+      lastMarkedReadUserIdRef.current = recipientUserId
+      console.log('[PM UNREAD] mark-read', recipientUserId)
+      setPmUnreadCounts((prev) => ({
+        ...prev,
+        [recipientUserId]: undefined,
+      }))
+      void fetch('/api/matrica/pm-unread', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ otherUserId: recipientUserId }),
+      }).catch(() => {
+        // Ignore mark-as-read errors. Reconciliation will repair the state.
+      })
+    },
+    [authToken]
+  )
+
+  const handlePmUnreadChange = useCallback(
+    (count: number, userId: string) => {
+      console.log('[PM UNREAD] state changed', userId, count)
+      setPmUnreadCounts((prev) => ({
+        ...prev,
+        [userId]: count > 0 ? count : undefined,
+      }))
+    },
+    []
+  )
 
   const menuRef =
     useRef<HTMLDivElement>(null)
@@ -850,7 +899,7 @@ function MatricaNav({
     } finally {
       pmUnreadStorageReadyRef.current = true
     }
-  }, [user?.id])
+  }, [currentUserId])
 
   useEffect(() => {
     if (
@@ -881,7 +930,7 @@ function MatricaNav({
       `matrica:pm-unread:${user.id}`,
       JSON.stringify(serializable)
     )
-  }, [user?.id, pmUnreadCounts])
+  }, [currentUserId, pmUnreadCounts])
 
   useEffect(() => {
     if (!authToken || !user?.id) return
@@ -891,46 +940,65 @@ function MatricaNav({
     const controllerRef = { current: null as AbortController | null }
 
     const reconcileCounts = async ({ silent = false } = {}) => {
-      if (controllerRef.current) {
-        controllerRef.current.abort()
-      }
+      console.log('[PM UNREAD] reconciliation start', { silent })
+      if (controllerRef.current) controllerRef.current.abort()
       const controller = new AbortController()
       controllerRef.current = controller
 
       try {
         const res = await fetch('/api/matrica/pm-unread', {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
+          headers: { Authorization: `Bearer ${authToken}` },
           signal: controller.signal,
           cache: 'no-store',
         })
-
         const json = await res.json().catch(() => null)
+        console.log('[PM UNREAD] reconciliation end', { status: res.status, ok: json?.ok })
 
         if (
           cancelled ||
           !res.ok ||
           !json?.ok ||
-          typeof json?.unreadByUserId !== 'object'
-        ) {
-          return
-        }
+          typeof (json as any).unreadByUserId !== 'object'
+        ) return
 
         const next: Record<string, number | undefined> = {}
         let totalUnread = 0
 
-        for (const [key, value] of Object.entries(json.unreadByUserId as Record<string, unknown>)) {
+        for (const [key, value] of Object.entries(
+          (json as any).unreadByUserId as Record<string, unknown>
+        )) {
           if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
             next[key] = Math.floor(value)
             totalUnread += Math.floor(value)
           }
-        }
+      }
 
+      console.log('[PM UNREAD] RECON RESULT', { unreadByUserId: next, total: totalUnread })
+
+      // Always synchronize the global unread store after a successful
+      // reconciliation. Do not gate this on mountedRef: this function is
+      // running inside the live component effect and the store is the source
+      // consumed by the notification UI.
+      console.log('[PM UNREAD] unreadStore sync', {
+        source: PM_UNREAD_SOURCE_KEY,
+        total: totalUnread,
+      })
+      setUnreadSource(PM_UNREAD_SOURCE_KEY, totalUnread)
+      console.log('[PM UNREAD] STORE CALLED', {
+        totalUnread,
+        source: PM_UNREAD_SOURCE_KEY,
+      })
+
+      if (
+        !isEqualShallow(lastRemoteUnreadRef.current, next) ||
+        lastTotalUnreadRef.current !== totalUnread
+      ) {
+        lastRemoteUnreadRef.current = next
+        lastTotalUnreadRef.current = totalUnread
         if (mountedRef.current) {
           setPmUnreadCounts(next)
-          setUnreadSource(PM_UNREAD_SOURCE_KEY, totalUnread)
         }
+      }
       } catch {
         // silent
       }
@@ -956,6 +1024,7 @@ function MatricaNav({
     let channel: ReturnType<typeof supabase.channel> | null = null
 
     if (supabase.channel) {
+      console.log('[PM UNREAD REALTIME] SUBSCRIBING user=' + user.id);
       channel = supabase
         .channel('public:pm_unread_counts')
         .on(
@@ -968,10 +1037,11 @@ function MatricaNav({
           },
           (payload) => {
             if (!payload?.new) return
+            console.log('[PM UNREAD REALTIME] EVENT', payload.event, payload.new)
             scheduleRealtimeReconcile()
           }
         )
-        .subscribe()
+        .subscribe((status) => console.log('[PM UNREAD REALTIME] STATUS', status))
     }
 
     return () => {
@@ -981,7 +1051,7 @@ function MatricaNav({
       controllerRef.current?.abort()
       if (channel) channel.unsubscribe()
     }
-  }, [authToken, user?.id])
+  }, [authToken, currentUserId])
 
   useEffect(() => {
     if (!user?.id) return
@@ -1062,7 +1132,7 @@ function MatricaNav({
     return () => {
       cancelled = true
     }
-  }, [searchParams, user?.id])
+  }, [searchParams, currentUserId])
 
   useEffect(() => {
     const handleOpenPM = (event: Event) => {
@@ -1328,7 +1398,7 @@ function MatricaNav({
     return () => {
       cancelled = true
     }
-  }, [user?.id])
+  }, [currentUserId])
 
   async function handleSaveNickname() {
     const token = (session as any)?.access_token
@@ -2447,78 +2517,9 @@ function MatricaNav({
             currentUserId={user.id}
             displayName={pmDisplayName}
             authToken={authToken}
-            onClose={() =>
-              setPmRecipient(null)
-            }
-            onOpenConversation={(
-              recipientUserId
-            ) => {
-              setPmUnreadCounts((prev) => ({
-                ...prev,
-                [recipientUserId]:
-                  undefined,
-              }))
-
-              void fetch(
-                '/api/matrica/pm-unread',
-                {
-                  method: 'PATCH',
-                  headers: {
-                    'Content-Type':
-                      'application/json',
-                    Authorization: `Bearer ${authToken}`,
-                  },
-                  body: JSON.stringify({
-                    otherUserId:
-                      recipientUserId,
-                  }),
-                }
-              ).catch(() => {
-                // Keep optimistic clear to avoid blocking UX.
-              })
-            }}
-            onUnreadChange={(
-              count,
-              userId
-            ) => {
-              const prevCount =
-                pmUnreadCounts[userId] || 0
-
-              setPmUnreadCounts((prev) => ({
-                ...prev,
-                [userId]:
-                  count > 0
-                    ? count
-                    : undefined,
-              }))
-
-              if (
-                count > prevCount &&
-                count > 0 &&
-                pmRecipient
-              ) {
-                const toastId = `${Date.now()}-${userId}`
-
-                setPmToasts((prev) => [
-                  ...prev,
-                  {
-                    id: toastId,
-                    userId,
-                    nickname:
-                      pmRecipient.nickname,
-                  },
-                ])
-
-                setTimeout(() => {
-                  setPmToasts((prev) =>
-                    prev.filter(
-                      (t) =>
-                        t.id !== toastId
-                    )
-                  )
-                }, 4000)
-              }
-            }}
+            onClose={() => setPmRecipient(null)}
+            onOpenConversation={handleOpenConversation}
+            onUnreadChange={handlePmUnreadChange}
           />
         ) : null}
 

@@ -81,13 +81,31 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const requestId = req.headers.get('x-request-id') || crypto.randomUUID();
+  const t0 = Date.now();
+  // track sender user id for private room handling
+  let senderUserId: string | undefined;
+  console.log(`[${requestId}] [LIVE CHAT API] POST START`);
+  console.log(`[${requestId}] [LIVE CHAT API] guard START`);
+  const tGuard = Date.now();
   const guardResponse = await guardWriteOperation(req as any);
-  if (guardResponse) return guardResponse;
+  console.log(`[${requestId}] [LIVE CHAT API] guard END - ${Date.now() - tGuard}ms`);
+  if (guardResponse) {
+    console.error('[LIVE CHAT API ERROR]', { step: 'guardWriteOperation', result: true });
+    return NextResponse.json(
+      { ok: false, error: 'write_guard_active', debug: 'guardWriteOperation blocked the request' },
+      { status: 503 }
+    );
+  }
 
+  console.log(`[${requestId}] [LIVE CHAT API] bodyParse START`);
+  const tBody = Date.now();
   let payload: unknown;
   try {
     payload = await req.json();
+    console.log(`[${requestId}] [LIVE CHAT API] bodyParse END - ${Date.now() - tBody}ms`);
   } catch {
+    console.log(`[${requestId}] [LIVE CHAT API] bodyParse ERROR - ${Date.now() - tBody}ms`);
     return NextResponse.json({ ok: false, error: 'invalid_json' }, { status: 400 });
   }
 
@@ -104,23 +122,39 @@ export async function POST(req: Request) {
   const messageBody = (typeof body === 'string' ? body : '').trim().slice(0, MAX_MESSAGE_LENGTH);
   let effectiveDisplayName = displayName;
   let effectiveRole = role;
-  let senderUserId: string | null = null;
-
   if (requiresAuthenticatedWriter(roomId)) {
+    console.log(`[${requestId}] [LIVE CHAT API] auth START`);
+    const tAuth = Date.now();
     const { user, error } = await getAuthenticatedUser(req);
+    console.log(`[${requestId}] [LIVE CHAT API] auth END - ${Date.now() - tAuth}ms`);
     if (!user) {
-      return NextResponse.json({ ok: false, error }, { status: 401 });
+      console.error('[LIVE CHAT API ERROR]', { step: 'authenticate', room_id: roomId, error });
+      return NextResponse.json(
+        { ok: false, error, debug: 'authentication failed for private room' },
+        { status: 401 }
+      );
     }
     senderUserId = user.id;
 
     if (isPrivateRoomId(roomId)) {
+      console.log(`[${requestId}] [LIVE CHAT API] privateRoomValidation START`);
       if (!isPrivateRoomParticipant(roomId, user.id)) {
-        return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
+        console.log(`[${requestId}] [LIVE CHAT API] privateRoomValidation END - ${Date.now() - tAuth}ms`);
+        console.error('[LIVE CHAT API ERROR]', { step: 'participant', room_id: roomId, user: user.id });
+        return NextResponse.json(
+          { ok: false, error: 'forbidden', debug: 'user not in private room' },
+          { status: 403 }
+        );
       }
+      console.log(`[${requestId}] [LIVE CHAT API] privateRoomValidation END - ${Date.now() - tAuth}ms`);
 
       const privateRole = getPrivateRoomSenderRole(roomId, user.id);
       if (!privateRole) {
-        return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
+        console.error('[LIVE CHAT API ERROR]', { step: 'privateRole', room_id: roomId, user: user.id });
+        return NextResponse.json(
+          { ok: false, error: 'forbidden', debug: 'private room role missing' },
+          { status: 403 }
+        );
       }
       effectiveRole = privateRole;
     }
@@ -133,18 +167,25 @@ export async function POST(req: Request) {
 
     if (profileError) {
       console.error('Failed to fetch nickname for chat message:', profileError);
-      return NextResponse.json({ ok: false, error: 'db_error' }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: 'db_error' },
+        { status: 500 }
+      );
     }
 
     const nickname = typeof profile?.nickname === 'string' ? profile.nickname.trim() : '';
     if (!nickname) {
-      return NextResponse.json({ ok: false, error: 'nickname_required' }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: 'nickname_required' },
+        { status: 400 }
+      );
     }
     effectiveDisplayName = nickname.slice(0, 48);
   }
 
   if (!effectiveDisplayName || !isSenderRole(effectiveRole) || !messageBody) {
-    return NextResponse.json({ ok: false, error: 'missing_fields' }, { status: 400 });
+    console.error('[LIVE CHAT API ERROR]', { step: 'validation', room_id: roomId, payload: { displayName, effectiveRole, messageBody } });
+    return NextResponse.json({ ok: false, error: 'missing_fields', debug: 'display name or role missing' }, { status: 400 });
   }
 
   const ip =
@@ -157,10 +198,20 @@ export async function POST(req: Request) {
   recent.push(now);
   rateMap.set(ip, recent);
 
+  console.log(`[${requestId}] [LIVE CHAT API] rateLimit START`);
+  const tRate = Date.now();
   if (recent.length > RATE_LIMIT_MAX) {
-    return NextResponse.json({ ok: false, error: 'rate_limited' }, { status: 429 });
+    console.log(`[${requestId}] [LIVE CHAT API] rateLimit END - ${Date.now() - tRate}ms, count=${recent.length}`);
+    console.error('[LIVE CHAT API ERROR]', { step: 'rate_limit', ip, limit: RATE_LIMIT_MAX });
+    return NextResponse.json(
+      { ok: false, error: 'rate_limited', debug: 'rate limit exceeded' },
+      { status: 429 }
+    );
   }
+  console.log(`[${requestId}] [LIVE CHAT API] rateLimit END - ${Date.now() - tRate}ms, count=${recent.length}`);
 
+  console.log(`[${requestId}] [LIVE CHAT API] insert START`);
+  const tInsert = Date.now();
   const { data, error } = await supabaseAdmin
     .from('live_chat_messages')
     .insert([
@@ -173,12 +224,14 @@ export async function POST(req: Request) {
     ])
     .select('id,room_id,display_name,sender_role,body,created_at')
     .single();
+  console.log(`[${requestId}] [LIVE CHAT API] insert END - ${Date.now() - tInsert}ms`);
 
   if (error || !data) {
-    console.error('Failed to insert live chat message:', error);
-    return NextResponse.json({ ok: false, error: 'db_error' }, { status: 500 });
+    console.error('[LIVE CHAT API ERROR]', { step: 'insert', room_id: roomId, error });
+    return NextResponse.json({ ok: false, error: 'db_error', debug: 'live_chat_messages insert failed' }, { status: 500 });
   }
 
+  console.log(`[${requestId}] [LIVE CHAT API] INSERT SUCCESS`, { id: data.id });
   // Private messages can trigger a targeted push for the other participant.
   if (isPrivateRoomId(roomId)) {
     const participants = parsePrivateRoomId(roomId);
@@ -188,17 +241,20 @@ export async function POST(req: Request) {
       if (recipientUserId && recipientUserId !== normalizedSender) {
         let unreadCountForRecipient = 1;
 
+        console.log(`[${requestId}] [LIVE CHAT API] increment_pm_unread START`);
+        const tRpc = Date.now();
         const { data: unreadResult, error: unreadError } = await supabaseAdmin.rpc('increment_pm_unread', {
           p_recipient_user_id: recipientUserId,
           p_other_user_id: normalizedSender,
         });
-
+        console.log(`[${requestId}] [LIVE CHAT API] increment_pm_unread END - ${Date.now() - tRpc}ms`);
         if (unreadError) {
-          console.warn('[LIVE-CHAT] increment_pm_unread failed:', unreadError);
+          console.error('[LIVE CHAT API ERROR]', { step: 'increment_pm_unread', error: unreadError });
+          console.log(`[${requestId}] [LIVE CHAT API] UNREAD RPC ERROR`, { error: unreadError });
         } else if (typeof unreadResult === 'number' && Number.isFinite(unreadResult)) {
           unreadCountForRecipient = Math.max(1, Math.floor(unreadResult));
+          console.log(`[${requestId}] [LIVE CHAT API] UNREAD RPC SUCCESS`, { unreadCountForRecipient });
         }
-
         void dispatchPushNotification({
           userId: recipientUserId,
           title: `${effectiveDisplayName} uzenetet kuldott`,
@@ -209,9 +265,17 @@ export async function POST(req: Request) {
         }).catch((pushError) => {
           console.warn('[LIVE-CHAT] private push dispatch failed:', pushError);
         });
+        console.log(`[${requestId}] [LIVE CHAT API] push DISPATCHED`);
       }
     }
   }
 
-  return NextResponse.json({ ok: true, message: data });
+  console.log(`[${requestId}] [LIVE CHAT API] response SENT - total ${Date.now() - t0}ms`);
+  const responseBody = { ok: true, message: data };
+  console.log(`[${requestId}] [LIVE CHAT API] RESPONSE`, {
+    status: 200,
+    body: responseBody,
+    durationMs: Date.now() - t0,
+  });
+  return NextResponse.json(responseBody);
 }
