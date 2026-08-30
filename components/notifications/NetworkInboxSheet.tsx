@@ -3,7 +3,7 @@
 import { BellIcon } from "lucide-react"
 import { formatDistanceToNowStrict } from "date-fns"
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { setUnreadSource, getUnreadSnapshot, subscribeUnread } from "@/lib/notifications/unreadStore"
@@ -58,11 +58,12 @@ type MessageOverview = {
   timestamp: string | null
   unread: boolean
 }
-// Personal PM conversation data for Inbox
+
 type PMConversation = {
   userId: string
   unreadCount: number
   nickname: string
+  avatarUrl: string | null
   preview: string | null
   timestamp: string | null
   roomId: string
@@ -117,6 +118,7 @@ function renderRelativeTime(dateString?: string | null) {
 export default function NetworkInboxSheet() {
   const { session, loading } = useSessionGuard()
   const token = session?.access_token
+  const currentUserId = session?.user?.id ?? ""
 
   const headers = useMemo(
     () => (token ? { Authorization: `Bearer ${token}` } : undefined),
@@ -124,17 +126,19 @@ export default function NetworkInboxSheet() {
   )
 
   const router = useRouter()
+  const pathname = usePathname()
 
   const [payload, setPayload] = useState<InboxPayload | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [isFetching, setIsFetching] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
-  // Unread PM conversations for Üzenetek section
   const [pmConversations, setPmConversations] = useState<PMConversation[]>([])
-  const [loadingPM, setLoadingPM] = useState(false)
+  const [loadingPmConversations, setLoadingPmConversations] = useState(false)
 
   const autoOpenTriggered = useRef(false)
   const autoOpenTimer = useRef<number | undefined>(undefined)
+  const pmLoadRequestIdRef = useRef(0)
+  const pmLoadAbortRef = useRef<AbortController | null>(null)
 
   const isAuthenticated = Boolean(session?.user)
 
@@ -151,6 +155,128 @@ export default function NetworkInboxSheet() {
   const normalUnread = unreadSnapshot.sources[UNREAD_SOURCE_KEY] ?? 0
   const pmUnread = unreadSnapshot.sources[PM_UNREAD_SOURCE_KEY] ?? 0
   const unreadCount = normalUnread + pmUnread
+
+  const handleOpenPm = useCallback(
+    (conversation: PMConversation) => {
+      setSheetOpen(false)
+
+      if (typeof window !== "undefined" && (pathname?.startsWith("/halozat") || pathname?.startsWith("/admin/matrica"))) {
+        window.dispatchEvent(
+          new CustomEvent("matrica:open-pm", {
+            detail: {
+              userId: conversation.userId,
+              nickname: conversation.nickname,
+              avatarUrl: conversation.avatarUrl,
+            },
+          }),
+        )
+        return
+      }
+
+      const targetUrl = `/halozat?pm=${encodeURIComponent(conversation.userId)}`
+      router.push(targetUrl)
+    },
+    [pathname, router],
+  )
+
+  const loadPmConversations = useCallback(async () => {
+    if (!token || !currentUserId) {
+      setPmConversations([])
+      return
+    }
+
+    pmLoadAbortRef.current?.abort()
+    const controller = new AbortController()
+    pmLoadAbortRef.current = controller
+    const requestId = ++pmLoadRequestIdRef.current
+
+    setLoadingPmConversations(true)
+
+    try {
+      const response = await fetch("/api/matrica/pm-unread", {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+        cache: "no-store",
+      })
+
+      const data: unknown = await response.json().catch(() => null)
+
+      if (requestId !== pmLoadRequestIdRef.current) return
+
+      if (!response.ok || !isRecord(data) || !data.ok || !isRecord(data.unreadByUserId)) {
+        setPmConversations([])
+        return
+      }
+
+      const entries = Object.entries(data.unreadByUserId as Record<string, unknown>)
+        .map(([userId, count]) => {
+          const value = typeof count === "number" && Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0
+          return { userId, unreadCount: value }
+        })
+        .filter((entry) => entry.unreadCount > 0)
+
+      if (entries.length === 0) {
+        setPmConversations([])
+        return
+      }
+
+      const profileResults = await Promise.all(
+        entries.map(async (entry) => {
+          try {
+            const profileResponse = await fetch(`/api/user/profile?userId=${encodeURIComponent(entry.userId)}`, {
+              signal: controller.signal,
+              cache: "no-store",
+            })
+            const profileJson: unknown = await profileResponse.json().catch(() => null)
+            const profile = isRecord(profileJson) && profileJson.ok && isRecord(profileJson.profile) ? profileJson.profile : null
+            const nickname = typeof profile?.nickname === "string" && profile.nickname.trim()
+              ? profile.nickname.trim()
+              : `user-${entry.userId.slice(0, 6)}`
+            const avatarUrl = typeof profile?.avatar_url === "string" ? profile.avatar_url : null
+
+            return {
+              ...entry,
+              nickname,
+              avatarUrl,
+            }
+          } catch (error) {
+            if (error instanceof DOMException && error.name === "AbortError") return null
+            return {
+              ...entry,
+              nickname: `user-${entry.userId.slice(0, 6)}`,
+              avatarUrl: null,
+            }
+          }
+        }),
+      )
+
+      if (requestId !== pmLoadRequestIdRef.current) return
+
+      const nextConversations: PMConversation[] = profileResults
+        .filter((entry): entry is { userId: string; unreadCount: number; nickname: string; avatarUrl: string | null } => Boolean(entry))
+        .map((entry) => ({
+          userId: entry.userId,
+          unreadCount: entry.unreadCount,
+          nickname: entry.nickname,
+          avatarUrl: entry.avatarUrl,
+          preview: "Új privát üzenet",
+          timestamp: null,
+          roomId: buildPrivateRoomId(currentUserId, entry.userId),
+        }))
+        .sort((a, b) => b.unreadCount - a.unreadCount)
+
+      setPmConversations(nextConversations)
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return
+      }
+      setPmConversations([])
+    } finally {
+      if (requestId === pmLoadRequestIdRef.current) {
+        setLoadingPmConversations(false)
+      }
+    }
+  }, [currentUserId, token])
 
   const fetchInbox = useCallback(async () => {
     if (!headers) return
@@ -198,13 +324,19 @@ export default function NetworkInboxSheet() {
 
   useEffect(() => {
     if (!isAuthenticated || !headers) return
+
     let cancelled = false
-    const loadInbox = async () => {
+
+    const load = async () => {
       if (cancelled) return
       await fetchInbox()
     }
-    void loadInbox()
-    return () => { cancelled = true }
+
+    void load()
+
+    return () => {
+      cancelled = true
+    }
   }, [isAuthenticated, headers, fetchInbox])
 
   useEffect(() => {
@@ -212,51 +344,11 @@ export default function NetworkInboxSheet() {
       UNREAD_SOURCE_KEY,
       payload?.unreadNotificationCount ?? 0,
     )
+
     return () => {
       setUnreadSource(UNREAD_SOURCE_KEY, 0)
     }
   }, [payload])
-
-  // Fetch unread PM conversations when sheet opens or PM count changes
-  useEffect(() => {
-    if (!isAuthenticated || !headers || !session?.user?.id || !sheetOpen) return
-    let cancelled = false
-    const loadPM = async () => {
-      console.log('[NETWORK INBOX PM] FETCH START', { pmUnread })
-      setLoadingPM(true)
-      try {
-        const res = await fetch('/api/matrica/pm-unread', { headers, cache: 'no-store' })
-        const json = await res.json().catch(() => null)
-        console.log('[NETWORK INBOX PM] UNREAD RESULT', { json })
-        const entries = json?.unreadByUserId && typeof json.unreadByUserId === 'object'
-          ? Object.entries(json.unreadByUserId) as [string, number][]
-          : []
-        const convs: PMConversation[] = []
-        for (const [otherId, count] of entries) {
-          if (cancelled) break
-          console.log('[NETWORK INBOX PM] CONVERSATIONS for', otherId, count)
-          const pr = await fetch(`/api/user/profile?userId=${encodeURIComponent(otherId)}`, { cache: 'no-store' })
-          const pj = await pr.json().catch(() => null)
-          const nickname = pj?.profile?.nickname?.trim() || `user-${otherId.slice(0,6)}`
-          const roomId = buildPrivateRoomId(session.user.id, otherId)
-          console.log('[NETWORK INBOX PM] PREVIEW START', { roomId })
-          const cr = await fetch(`/api/live-chat?room_id=${encodeURIComponent(roomId)}&limit=1`, { headers, cache: 'no-store' })
-          const cj = await cr.json().catch(() => null)
-          console.log('[NETWORK INBOX PM] PREVIEW RESULT', { roomId, messages: cj?.messages })
-          const last = Array.isArray(cj?.messages) && cj.messages.length ? cj.messages[0] : null
-          convs.push({ userId: otherId, unreadCount: count, nickname, preview: last?.body ?? null, timestamp: last?.created_at ?? null, roomId })
-        }
-        if (!cancelled) {
-          setPmConversations(convs)
-          console.log('[NETWORK INBOX PM] CONVERSATIONS', convs)
-        }
-      } finally {
-        if (!cancelled) setLoadingPM(false)
-      }
-    }
-    loadPM()
-    return () => { cancelled = true }
-  }, [isAuthenticated, headers, session?.user?.id, sheetOpen, pmUnread])
 
   useEffect(() => {
     if (!isAuthenticated || !payload) return
@@ -268,6 +360,7 @@ export default function NetworkInboxSheet() {
     const hasMeaningfulContent =
       payload.unreadNotificationCount > 0 ||
       Boolean(payload.messageOverview?.unread) ||
+      pmUnread > 0 ||
       payload.networkActivity.items.length > 0
 
     if (!hasMeaningfulContent) return
@@ -283,7 +376,18 @@ export default function NetworkInboxSheet() {
         autoOpenTimer.current = undefined
       }
     }
-  }, [isAuthenticated, payload, sheetOpen])
+  }, [isAuthenticated, payload, pmUnread, sheetOpen])
+
+  useEffect(() => {
+    if (!isAuthenticated || !token || !currentUserId) return
+    if (!sheetOpen) return
+
+    void loadPmConversations()
+
+    return () => {
+      pmLoadAbortRef.current?.abort()
+    }
+  }, [currentUserId, isAuthenticated, loadPmConversations, sheetOpen, token])
 
   const handleOpenChange = useCallback((open: boolean) => {
     setSheetOpen(open)
@@ -521,57 +625,69 @@ export default function NetworkInboxSheet() {
           <section className="mt-6 space-y-3">
             <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.4em] text-zinc-500">
               <span>Üzenetek</span>
-              {pmConversations.length > 0 && (
-                <span className="rounded-full border border-lime-200/60 bg-lime-400/80 px-2 py-1 text-[10px] font-semibold uppercase text-black">
-                  új
-                </span>
-              )}
+
+  {(messageOverview?.unread || pmUnread > 0) && (
+    <span className="rounded-full border border-lime-200/60 bg-lime-400/80 px-2 py-1 text-[10px] font-semibold uppercase text-black">
+      új
+    </span>
+  )}
             </div>
 
             {pmConversations.length > 0 ? (
-              pmConversations.map((conv) => (
-                <button
-                  key={conv.userId}
-                  type="button"
-                  onClick={async () => {
-                    console.log('[NETWORK INBOX PM] MARK READ', { userId: conv.userId })
-                    try {
-                      const mark = await fetch('/api/matrica/pm-unread', {
-                        method: 'PATCH',
-                        headers: { ...headers, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ otherUserId: conv.userId }),
-                      })
-                      console.log('[NETWORK INBOX PM] MARK READ RESULT', { status: mark.status })
-                      if (mark.ok) {
-                        setPmConversations((c) => c.filter((x) => x.userId !== conv.userId))
-                        const remaining = pmConversations.reduce((acc, x) => acc + (x.userId === conv.userId ? 0 : x.unreadCount), 0)
-                        setUnreadSource(PM_UNREAD_SOURCE_KEY, remaining)
-                        console.log('[NETWORK INBOX PM] STORE SYNC', { remaining })
-                      }
-                    } catch (err) {
-                      console.error('[NETWORK INBOX PM] MARK READ ERROR', err)
-                    }
-                    setSheetOpen(false)
-                    router.push(`/matrica?pm=${encodeURIComponent(conv.userId)}`)
-                  }}
-                  className="w-full relative rounded border border-zinc-800 bg-zinc-900/70 px-3 py-4 text-left transition hover:border-lime-400/70"
-                >
-                  <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-zinc-400">
-                    <span>{conv.nickname}</span>
-                    <span>{renderRelativeTime(conv.timestamp)}</span>
-                  </div>
-                  <p className="mt-2 text-sm font-semibold leading-tight text-white">
-                    {conv.preview ?? `${conv.unreadCount} új üzenet`}
-                  </p>
-                  <span className="absolute right-3 top-3 rounded-full bg-lime-400 px-1 text-[10px] font-semibold text-black">
-                    {conv.unreadCount > 1 ? `${conv.unreadCount} új üzenetek` : 'ÚJ'}
+              <div className="space-y-2">
+                {pmConversations.map((conversation) => (
+                  <button
+                    key={conversation.userId}
+                    type="button"
+                    onClick={() => handleOpenPm(conversation)}
+                    className="w-full rounded border border-zinc-800 bg-zinc-900/70 px-3 py-4 text-left transition hover:border-lime-400/70"
+                  >
+                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-zinc-400">
+                      <span>{conversation.nickname}</span>
+                      <span>
+                        {conversation.unreadCount > 0
+                          ? `${conversation.unreadCount} új`
+                          : ""}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm font-semibold leading-tight text-white">
+                      {conversation.preview ?? "Új privát üzenet"}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            ) : messageOverview ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSheetOpen(false)
+                  router.push("/inbox")
+                }}
+                className="w-full rounded border border-zinc-800 bg-zinc-900/70 px-3 py-4 text-left transition hover:border-lime-400/70"
+              >
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-zinc-400">
+                  <span>
+                    {messageOverview.senderRole === "admin"
+                      ? "Admin"
+                      : "Te"}
                   </span>
-                </button>
-              ))
-            ) : loadingPM ? (
-              <p className="text-sm text-zinc-500">Üzenetek betöltése…</p>
+                  <span>
+                    {renderRelativeTime(messageOverview.timestamp)}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-sm font-semibold leading-tight text-white">
+                  {messageOverview.preview ?? "Új üzenet"}
+                </p>
+              </button>
+            ) : isFetching || loadingPmConversations ? (
+              <p className="text-sm text-zinc-500">
+                Üzenetek betöltése…
+              </p>
             ) : (
-              <p className="text-sm text-zinc-500">Nincs új üzenet.</p>
+              <p className="text-sm text-zinc-500">
+                Nincs új üzenet.
+              </p>
             )}
           </section>
 
