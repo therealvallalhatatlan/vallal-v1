@@ -17,6 +17,7 @@ import StatusBanner from "@/components/StatusBanner";
 import FacebookSDK from "@/components/FacebookSDK";
 import NotificationOrchestrator from "@/components/notifications/NotificationOrchestrator";
 import LayoutNavigationGuard from "@/components/LayoutNavigationGuard";
+import CuriosityLayer from "@/components/CuriosityLayer";
 
 
 const crimson = Crimson_Pro({
@@ -151,9 +152,9 @@ export default function RootLayout({
 
  _   _                  _ _       _ _           _        _   _             
 | | | | ___  _ __ _ __ | | | __ _| | |__   __ _| |_ __ _| |_| | __ _ _ __  
-| |_| |/ _ \| '__| '_ \| | |/ _\` | | '_ \ / _\` | __/ _\` | __| |/ _\` | '_ \ 
+| |_| |/ _ \\| '__| '_ \\| | |/ _\` | | '_ \\ / _\` | __/ _\` | __| |/ _\` | '_ \\ 
 |  _  | (_) | |  | | | | | | (_| | | | | | (_| | || (_| | |_| | (_| | | | |
-|_| |_|\___/|_|  |_| |_|_|_|\__,_|_|_| |_|\__,_|\__\__,_|\__|_|\__,_|_| |_|
+|_| |_|\\___/|_|  |_| |_|_|_|\\__,_|_|_| |_|\\__,_|\\__\\__,_|\\__|_|\\__,_|_| |_|
 
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -204,6 +205,7 @@ export default function RootLayout({
             <AuthUrlSessionSync />
             <PWAInstallManager />
             <LayoutNavigationGuard />
+            <CuriosityLayer />
             {children}
             <TrafficSourceHeuristics />
             <Analytics />
