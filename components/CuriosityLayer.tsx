@@ -4,8 +4,9 @@ import { useEffect, useRef } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { track as vercelTrack } from "@vercel/analytics"
 
-const STORAGE_KEY = "vh_curiosity_level_v1"
+const SCORE_KEY = "vh_curiosity_score_v1"
 const DISCOVERY_KEY = "vh_curiosity_discoveries_v1"
+const MAX_SCORE = 300
 
 const KONAMI_SEQUENCE = [
   "ArrowUp",
@@ -20,30 +21,32 @@ const KONAMI_SEQUENCE = [
   "a",
 ]
 
-function getStoredLevel(): number {
+function getStoredScore(): number {
   try {
-    const value = Number(localStorage.getItem(STORAGE_KEY) || "0")
-    return Number.isFinite(value) ? value : 0
+    const value = Number(localStorage.getItem(SCORE_KEY) || "0")
+    return Number.isFinite(value) ? Math.max(0, Math.min(MAX_SCORE, value)) : 0
   } catch {
     return 0
   }
 }
 
-function setStoredLevel(level: number) {
+function setStoredScore(score: number) {
   try {
-    localStorage.setItem(STORAGE_KEY, String(level))
+    localStorage.setItem(SCORE_KEY, String(score))
   } catch {}
 }
 
-function rememberDiscovery(name: string) {
+function rememberDiscovery(name: string): boolean {
   try {
     const current = JSON.parse(localStorage.getItem(DISCOVERY_KEY) || "[]")
     const discoveries = Array.isArray(current) ? current : []
-    if (!discoveries.includes(name)) {
-      discoveries.push(name)
-      localStorage.setItem(DISCOVERY_KEY, JSON.stringify(discoveries.slice(-30)))
-    }
-  } catch {}
+    if (discoveries.includes(name)) return false
+    discoveries.push(name)
+    localStorage.setItem(DISCOVERY_KEY, JSON.stringify(discoveries.slice(-50)))
+    return true
+  } catch {
+    return false
+  }
 }
 
 function getDiscoveries(): string[] {
@@ -55,15 +58,24 @@ function getDiscoveries(): string[] {
   }
 }
 
-function emitDiscovery(name: string, level: number) {
-  rememberDiscovery(name)
+function getScore(): number {
+  return getStoredScore()
+}
+
+function emitDiscovery(name: string, score: number, points = 0) {
+  const isNew = rememberDiscovery(name)
+  if (!isNew) return { isNew: false, score }
+
   try {
     vercelTrack("curiosity_easter_egg", {
       discovery: name,
-      curiosity_level: level,
+      curiosity_score: score,
+      points,
       path: window.location.pathname,
     })
   } catch {}
+
+  return { isNew: true, score }
 }
 
 function banner(title: string, lines: string[]) {
@@ -86,37 +98,70 @@ function banner(title: string, lines: string[]) {
 export default function CuriosityLayer() {
   const router = useRouter()
   const pathname = usePathname() || "/"
-  const levelRef = useRef(0)
+  const scoreRef = useRef(0)
   const konamiIndexRef = useRef(0)
   const rightClickCountRef = useRef(0)
 
   useEffect(() => {
-    levelRef.current = getStoredLevel()
+    scoreRef.current = getStoredScore()
 
-    const bump = (amount: number, reason: string) => {
-      const next = Math.min(levelRef.current + amount, 99)
-      levelRef.current = next
-      setStoredLevel(next)
-      emitDiscovery(reason, next)
-      return next
+    const award = (discovery: string, points: number) => {
+      const currentDiscoveries = getDiscoveries()
+      if (currentDiscoveries.includes(discovery)) return { score: scoreRef.current, awarded: 0 }
+
+      const next = Math.min(scoreRef.current + points, MAX_SCORE)
+      const result = emitDiscovery(discovery, next, points)
+      if (!result.isNew) return { score: scoreRef.current, awarded: 0 }
+
+      scoreRef.current = next
+      setStoredScore(next)
+      return { score: next, awarded: points }
+    }
+
+    const score = () => {
+      const current = getScore()
+      const remaining = Math.max(0, MAX_SCORE - current)
+      banner("SCOREBOARD", [
+        `CURRENT SCORE: ${current}`,
+        `MAXIMUM SCORE: ${MAX_SCORE}`,
+        `REMAINING: ${remaining}`,
+        "",
+        current >= MAX_SCORE
+          ? "MAXIMUM ACCESS ACHIEVED."
+          : current >= 150
+            ? "DEEP RABBIT HOLE ACCESS."
+            : "THERE ARE MORE POINTS TO FIND.",
+      ])
+      return { score: current, max: MAX_SCORE, remaining }
     }
 
     const openUnknown = () => {
-      emitDiscovery("console:unknown", levelRef.current)
+      const result = award("route:unknown", 50)
+      banner("NODE 07", [
+        "ROUTE DISCOVERED: /unknown",
+        result.awarded ? `+${result.awarded} POINTS` : "ALREADY DISCOVERED",
+        `SCORE: ${result.score}/${MAX_SCORE}`,
+        "",
+        "THE RABBIT HOLE CONTINUES.",
+      ])
       router.push("/unknown")
     }
 
     const help = () => {
+      const result = award("console:help", 10)
       banner("VÁLLALHATATLAN / INTERNAL NODE", [
         "AVAILABLE COMMANDS",
         "",
-        "  whoami()    identify the observer",
-        "  where()     locate the node",
-        "  remember()  list your discoveries",
-        "  scan()      inspect this node",
-        "  coffee()    probably nothing",
-        "  sudo()      absolutely nothing",
-        "  open(\"unknown\")  follow the signal",
+        "  whoami()       identify the observer   [+15]",
+        "  where()        locate the node         [+15]",
+        "  remember()     list your discoveries    [+10]",
+        "  scan()         inspect this node       [+25]",
+        "  score()        show the scoreboard      [+0]",
+        "  coffee()       probably nothing         [+5]",
+        "  sudo()         absolutely nothing        [+5]",
+        "  open(\"unknown\")  follow the signal   [+50]",
+        "",
+        result.awarded ? `+${result.awarded} POINTS  SCORE: ${result.score}/${MAX_SCORE}` : `ALREADY FOUND  SCORE: ${result.score}/${MAX_SCORE}`,
         "",
         "Hint: some doors only open when you stop looking for doors.",
       ])
@@ -124,25 +169,27 @@ export default function CuriosityLayer() {
     }
 
     const whoami = () => {
-      emitDiscovery("console:whoami", levelRef.current)
+      const result = award("console:whoami", 15)
       banner("IDENTITY UNKNOWN", [
-        `CURIOSITY LEVEL: ${levelRef.current}`,
+        `CURIOSITY SCORE: ${result.score}/${MAX_SCORE}`,
         "TECHNICAL CONFIDENCE: UNCALIBRATED",
         "SOURCE INSPECTION: POSSIBLE",
         "",
         "You came looking for a backdoor.",
         "You found a mirror.",
+        result.awarded ? `+${result.awarded} POINTS` : "ALREADY DISCOVERED",
       ])
       return "observer detected"
     }
 
     const where = () => {
-      emitDiscovery("console:where", levelRef.current)
+      const result = award("console:where", 15)
       banner("NODE LOCATION", [
         "NETWORK: VALLALHATATLAN",
         "NODE: 07",
         `PATH: ${pathname}`,
         "STATUS: STILL RUNNING",
+        `SCORE: ${result.score}/${MAX_SCORE}`,
         "",
         "There is no map for this one.",
       ])
@@ -151,41 +198,50 @@ export default function CuriosityLayer() {
 
     const remember = () => {
       const discoveries = getDiscoveries()
+      const result = award("console:remember", 10)
+      const updated = getDiscoveries()
       banner("MEMORY", [
-        discoveries.length ? discoveries.map((item) => `  ${item}`).join("\n") : "  nothing yet",
+        updated.length ? updated.map((item) => `  ${item}`).join("\n") : "  nothing yet",
         "",
-        discoveries.length >= 3
+        result.awarded ? `+${result.awarded} POINTS` : "ALREADY DISCOVERED",
+        `SCORE: ${result.score}/${MAX_SCORE}`,
+        "",
+        discoveries.length >= 3 || updated.length >= 3
           ? "You have been here longer than you think."
           : "Keep looking.",
       ])
-      return discoveries
+      return updated
     }
 
     const scan = () => {
-      emitDiscovery("console:scan", levelRef.current)
-      const next = bump(2, "console:scan:used")
+      const result = award("console:scan", 25)
       banner("NODE SCAN", [
         `TARGET: ${pathname}`,
-        `CURIOSITY LEVEL: ${next}`,
+        `CURIOSITY SCORE: ${result.score}/${MAX_SCORE}`,
         "PUBLIC SURFACE: ONLINE",
         "HIDDEN SURFACE: YES",
         "NODE 07: LISTENING",
         "",
-        next >= 8 ? "DEEP SCAN AVAILABLE." : "SCAN DEPTH: SHALLOW",
+        result.awarded ? `+${result.awarded} POINTS` : "ALREADY DISCOVERED",
+        result.score >= 100 ? "DEEP SCAN AVAILABLE." : "SCAN DEPTH: SHALLOW",
       ])
-      return { path: pathname, curiosity: next }
+      return { path: pathname, score: result.score }
     }
 
     const coffee = () => {
-      emitDiscovery("console:coffee", levelRef.current)
-      console.log("%ccoffee.exe was never installed", "color:#a3a3a3;font-family:monospace")
+      const result = award("console:coffee", 5)
+      console.log(
+        `%ccoffee.exe was never installed%c${result.awarded ? `\n+${result.awarded} POINTS` : "\nALREADY DISCOVERED"}\nSCORE: ${result.score}/${MAX_SCORE}`,
+        "color:#a3a3a3;font-family:monospace",
+        "color:#d9f99d;font-family:monospace;font-weight:800",
+      )
       return "404: caffeine not found"
     }
 
     const sudo = () => {
-      emitDiscovery("console:sudo", levelRef.current)
+      const result = award("console:sudo", 5)
       console.warn("permission denied")
-      console.log("root is not a role. root is a personality disorder.")
+      console.log(`root is not a role. root is a personality disorder.\n${result.awarded ? `+${result.awarded} POINTS` : "ALREADY DISCOVERED"}\nSCORE: ${result.score}/${MAX_SCORE}`)
       return false
     }
 
@@ -204,6 +260,7 @@ export default function CuriosityLayer() {
       banner("VÁLLALHATATLAN / INTERNAL NODE", [
         "You cleared the evidence.",
         "Cute.",
+        `SCORE: ${scoreRef.current}/${MAX_SCORE}`,
       ])
     }
 
@@ -214,6 +271,7 @@ export default function CuriosityLayer() {
       where,
       remember,
       scan,
+      score,
       coffee,
       sudo,
       open,
@@ -224,9 +282,12 @@ export default function CuriosityLayer() {
     target.where = where
     target.remember = remember
     target.scan = scan
+    target.score = score
     target.coffee = coffee
     target.sudo = sudo
     target.open = open
+
+    const consoleOpened = award("console:opened", 20)
 
     banner("VÁLLALHATATLAN / CONSOLE CHANNEL", [
       "TE MEGNYITOTTAD A KONZOLT.",
@@ -237,22 +298,25 @@ export default function CuriosityLayer() {
       "NODE STATUS: COMPROMISED",
       "OBSERVER: DETECTED",
       "",
+      consoleOpened.awarded ? `+${consoleOpened.awarded} POINTS` : "CONSOLE ALREADY DISCOVERED",
+      `SCORE: ${consoleOpened.score}/${MAX_SCORE}`,
+      "",
       "Írd be: help()",
     ])
-
-    emitDiscovery("console:opened", levelRef.current)
 
     const onContextMenu = () => {
       rightClickCountRef.current += 1
       const count = rightClickCountRef.current
-      const next = bump(1, `right-click:${count}`)
+      const rewards = [10, 15, 20]
+      const points = rewards[Math.min(count, 3) - 1]
+      const result = award(`right-click:${Math.min(count, 3)}`, points)
 
       if (count === 1) {
-        console.log("%cYOU CLICKED RIGHT.%c\nGOOD.\nMOST PEOPLE DO.", "color:#d9f99d;font-weight:800", "color:#a3a3a3")
+        console.log(`%cYOU CLICKED RIGHT.%c\nGOOD.\nMOST PEOPLE DO.\n+${result.awarded} POINTS\nSCORE: ${result.score}/${MAX_SCORE}`, "color:#d9f99d;font-weight:800", "color:#a3a3a3")
       } else if (count === 2) {
-        console.log("%cYOU CAME BACK.%c\nTHAT'S MORE INTERESTING.", "color:#d9f99d;font-weight:800", "color:#a3a3a3")
-      } else if (count >= 3) {
-        console.log("%cSOURCE IS NEVER THE WHOLE STORY.%c\nCURIOUSITY LEVEL: %d", "color:#d9f99d;font-weight:800", "color:#a3a3a3", next)
+        console.log(`%cYOU CAME BACK.%c\nTHAT'S MORE INTERESTING.\n+${result.awarded} POINTS\nSCORE: ${result.score}/${MAX_SCORE}`, "color:#d9f99d;font-weight:800", "color:#a3a3a3")
+      } else {
+        console.log(`%cSOURCE IS NEVER THE WHOLE STORY.%c\n+${result.awarded} POINTS\nSCORE: ${result.score}/${MAX_SCORE}`, "color:#d9f99d;font-weight:800", "color:#a3a3a3")
       }
     }
 
@@ -268,14 +332,15 @@ export default function CuriosityLayer() {
 
       if (konamiIndexRef.current === KONAMI_SEQUENCE.length) {
         konamiIndexRef.current = 0
-        const next = bump(5, "keyboard:konami")
+        const result = award("keyboard:konami", 50)
         banner("ACCESS PATTERN ACCEPTED", [
           "YOU HAVE UNLOCKED:",
           "NOTHING.",
           "",
           "BUT THAT WAS FUN.",
           "",
-          `CURIOSITY LEVEL: ${next}`,
+          result.awarded ? `+${result.awarded} POINTS` : "ALREADY DISCOVERED",
+          `SCORE: ${result.score}/${MAX_SCORE}`,
           "NODE 07 ONLINE",
           "",
           "Try scan().",
@@ -285,14 +350,14 @@ export default function CuriosityLayer() {
 
     const onVisibilityChange = () => {
       if (document.hidden) return
-      if (levelRef.current >= 5) {
-        console.log("%cYOU CAME BACK.%c\nWE NOTICED.", "color:#d9f99d;font-weight:800", "color:#a3a3a3")
+      if (scoreRef.current >= 50) {
+        console.log(`%cYOU CAME BACK.%c\nWE NOTICED.\nSCORE: ${scoreRef.current}/${MAX_SCORE}`, "color:#d9f99d;font-weight:800", "color:#a3a3a3")
       }
     }
 
     const onCopy = () => {
-      if (levelRef.current >= 3) {
-        console.log("%cCOPYING IS ALSO A FORM OF RESEARCH.", "color:#d9f99d;font-weight:800")
+      if (scoreRef.current >= 20) {
+        console.log(`%cCOPYING IS ALSO A FORM OF RESEARCH.%c\nSCORE: ${scoreRef.current}/${MAX_SCORE}`, "color:#d9f99d;font-weight:800", "color:#a3a3a3")
       }
     }
 
@@ -311,14 +376,18 @@ export default function CuriosityLayer() {
 
     for (const key of Object.keys(triggerMap)) {
       if (params.get(key) === "1" || params.get(key) === "true") {
-        const next = bump(2, triggerMap[key])
+        const result = award(triggerMap[key], 5)
         const messages: Record<string, string[]> = {
           debug: ["DEBUG MODE", "you asked for it.", "nothing is debugged."],
-          admin: ["NICE TRY.", "WHO GAVE YOU THE KEYBOARD?", `CURIOSITY LEVEL: ${next}`],
+          admin: ["NICE TRY.", "WHO GAVE YOU THE KEYBOARD?"],
           root: ["ROOT ACCESS", "██████████████████", "just kidding."],
           dev: ["DEVELOPER MODE ENABLED", "please develop something."],
         }
-        banner(messages[key][0], messages[key].slice(1))
+        banner(messages[key][0], [
+          ...messages[key].slice(1),
+          result.awarded ? `+${result.awarded} POINTS` : "ALREADY DISCOVERED",
+          `SCORE: ${result.score}/${MAX_SCORE}`,
+        ])
         break
       }
     }
