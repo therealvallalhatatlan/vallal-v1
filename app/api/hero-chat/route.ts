@@ -7,6 +7,7 @@ import { HERO_CHAT_CONTEXT } from "@/lib/hero-chat/context";
 import { HERO_CHAT_SYSTEM_PROMPT } from "@/lib/hero-chat/prompt";
 import { createClient } from "@/lib/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { checkRateLimit, getClientIp } from "@/lib/security/rateLimit";
 
 type HistoryEntry = {
   role: "user" | "assistant";
@@ -50,9 +51,7 @@ const parseToken = (request: NextRequest) => {
 };
 
 const fetchUser = async (token: string | null) => {
-  if (!token) {
-    return null;
-  }
+  if (!token) return null;
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser(token);
@@ -76,9 +75,7 @@ const fetchConversationForUser = async (
       .eq("id", conversationId)
       .maybeSingle();
 
-    if (data?.user_id === userId) {
-      return data;
-    }
+    if (data?.user_id === userId) return data;
   }
 
   const { data } = await db
@@ -112,9 +109,7 @@ const fetchConversationForAnonymous = async (
       .eq("id", conversationId)
       .maybeSingle();
 
-    if (data?.anonymous_id === anonymousId && !data.user_id) {
-      return data;
-    }
+    if (data?.anonymous_id === anonymousId && !data.user_id) return data;
   }
 
   const { data } = await db
@@ -132,9 +127,7 @@ const fetchConversationForAnonymous = async (
     .select("id", { count: "exact", head: true })
     .eq("anonymous_id", anonymousId);
 
-  if (count !== null && count >= ANONYMOUS_CONVERSATION_LIMIT) {
-    return null;
-  }
+  if (count !== null && count >= ANONYMOUS_CONVERSATION_LIMIT) return null;
 
   const { data: inserted } = await db
     .from("hero_chat_conversations")
@@ -180,11 +173,10 @@ const loadHistory = async (db: ReturnType<typeof supabaseAdmin>, conversationId:
     .limit(HISTORY_LIMIT);
 
   if (!data) return [];
-
-  return data
-    .slice()
-    .reverse()
-    .map((entry) => ({ role: entry.sender_role as "user" | "assistant", content: entry.body }));
+  return data.slice().reverse().map((entry) => ({
+    role: entry.sender_role as "user" | "assistant",
+    content: entry.body,
+  }));
 };
 
 const loadConversationMessages = async (db: ReturnType<typeof supabaseAdmin>, conversationId: string) => {
@@ -196,27 +188,23 @@ const loadConversationMessages = async (db: ReturnType<typeof supabaseAdmin>, co
     .limit(FETCH_MESSAGES_LIMIT);
 
   if (!data) return [];
-
-  return data
-    .slice()
-    .reverse()
-    .map((entry) => ({ role: entry.sender_role as "user" | "assistant", content: entry.body }));
+  return data.slice().reverse().map((entry) => ({
+    role: entry.sender_role as "user" | "assistant",
+    content: entry.body,
+  }));
 };
 
 const buildMessagesForAi = (history: HistoryEntry[]) => [...buildContextMessages(), ...history];
 
-const respondWithError = (status: number, payload: Record<string, unknown>) =>
-  NextResponse.json(payload, { status });
+const respondWithError = (status: number, payload: Record<string, unknown>, headers?: HeadersInit) =>
+  NextResponse.json(payload, { status, headers });
 
 const buildAiResponse = async (messages: Parameters<typeof generateText>[0]["messages"]) => {
   const model = openai("gpt-5.4");
   const result = await generateText({ model, messages, maxRetries: 0 });
 
   const reply = result.text?.trim();
-  if (!reply) {
-    throw new Error("Nincs válasz az AI-től.");
-  }
-
+  if (!reply) throw new Error("Nincs válasz az AI-től.");
   return reply;
 };
 
@@ -227,23 +215,17 @@ export async function GET(request: NextRequest) {
 
   if (!user) {
     const anonymousId = request.headers.get("x-anonymous-id")?.trim() ?? null;
-    if (!anonymousId) {
-      return NextResponse.json({ conversationId: null, messages: [] });
-    }
+    if (!anonymousId) return NextResponse.json({ conversationId: null, messages: [] });
 
     const conversation = await fetchConversationForAnonymous(admin, anonymousId);
-    if (!conversation) {
-      return NextResponse.json({ conversationId: null, messages: [] });
-    }
+    if (!conversation) return NextResponse.json({ conversationId: null, messages: [] });
 
     const messages = await loadConversationMessages(admin, conversation.id);
     return NextResponse.json({ conversationId: conversation.id, messages });
   }
 
   const conversation = await fetchConversationForUser(admin, user.id);
-  if (!conversation) {
-    return NextResponse.json({ conversationId: null, messages: [] });
-  }
+  if (!conversation) return NextResponse.json({ conversationId: null, messages: [] });
 
   const messages = await loadConversationMessages(admin, conversation.id);
   return NextResponse.json({ conversationId: conversation.id, messages });
@@ -255,6 +237,20 @@ export async function POST(request: NextRequest) {
     const user = await fetchUser(token);
     const admin = supabaseAdmin();
 
+    const ip = getClientIp(request);
+    const rateKey = user ? `hero-chat:user:${user.id}` : `hero-chat:ip:${ip}`;
+    const rate = checkRateLimit(rateKey, user ? 30 : 12, 10 * 60_000);
+
+    if (!rate.allowed) {
+      return respondWithError(429, {
+        error: "rate_limited",
+        retryAfterSeconds: rate.retryAfterSeconds,
+      }, {
+        "Retry-After": String(rate.retryAfterSeconds),
+        "Cache-Control": "no-store",
+      });
+    }
+
     const body = (await request.json()) as {
       message?: string;
       history?: unknown;
@@ -263,9 +259,7 @@ export async function POST(request: NextRequest) {
     };
 
     const rawMessage = typeof body.message === "string" ? body.message.trim() : "";
-    if (!rawMessage) {
-      return respondWithError(400, { error: "Üzenet szükséges." });
-    }
+    if (!rawMessage) return respondWithError(400, { error: "Üzenet szükséges." });
 
     const message = clampMessage(rawMessage);
     if (message.length > MAX_MESSAGE_LENGTH) {
@@ -278,28 +272,19 @@ export async function POST(request: NextRequest) {
     anonymousId = anonymousId ?? headerAnonymousId;
 
     if (user) {
-      if (anonymousId) {
-        await attachAnonymousToUser(admin, anonymousId, user.id);
-      }
+      if (anonymousId) await attachAnonymousToUser(admin, anonymousId, user.id);
       conversation = await fetchConversationForUser(admin, user.id, body.conversationId);
     } else {
-      if (!anonymousId) {
-        return respondWithError(401, { requiresAuth: true, reason: "anonymous required" });
-      }
-
+      if (!anonymousId) return respondWithError(401, { requiresAuth: true, reason: "anonymous required" });
       conversation = await fetchConversationForAnonymous(admin, anonymousId, body.conversationId);
-      if (!conversation) {
-        return respondWithError(403, { requiresAuth: true, reason: "anonymous_limit_reached" });
-      }
+      if (!conversation) return respondWithError(403, { requiresAuth: true, reason: "anonymous_limit_reached" });
     }
 
-    if (!conversation) {
-      return respondWithError(404, { error: "Konverzáció nem található." });
-    }
+    if (!conversation) return respondWithError(404, { error: "Konverzáció nem található." });
 
     await appendMessage(admin, conversation.id, "user", message, null);
     const history = await loadHistory(admin, conversation.id);
-    const messagesForAi = buildMessagesForAi([...history].map((entry) => ({ role: entry.role, content: entry.content })));
+    const messagesForAi = buildMessagesForAi(history);
     const reply = await buildAiResponse(messagesForAi);
     await appendMessage(admin, conversation.id, "assistant", reply, "gpt-5.4");
 
