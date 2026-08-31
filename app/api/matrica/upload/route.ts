@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic'
 const MAX_FILE_SIZE = 2 * 1024 * 1024
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 const ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp'])
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function normalizePath(raw: string): string | null {
   const path = raw.trim().replace(/\\/g, '/')
@@ -15,15 +16,14 @@ function normalizePath(raw: string): string | null {
   return path
 }
 
-function getPathOwnerId(path: string): string | null {
-  const [ownerId] = path.split('/')
-  return ownerId && /^[0-9a-f-]{36}$/i.test(ownerId) ? ownerId : null
-}
-
 function getExtension(path: string): string {
   const last = path.split('/').pop() ?? ''
   const dot = last.lastIndexOf('.')
   return dot === -1 ? '' : last.slice(dot + 1).toLowerCase()
+}
+
+function isSimpleFilename(value: string): boolean {
+  return value.length > 0 && value.length <= 160 && !value.includes('/') && !value.includes('\\')
 }
 
 export async function POST(req: NextRequest) {
@@ -76,21 +76,48 @@ export async function POST(req: NextRequest) {
   const path = normalizePath(rawPath)
   if (!path) return NextResponse.json({ error: 'invalid_path' }, { status: 400 })
 
+  const parts = path.split('/')
   const extension = getExtension(path)
   if (!ALLOWED_EXTENSIONS.has(extension)) {
     return NextResponse.json({ error: 'invalid_file_extension' }, { status: 400 })
   }
-
-  // Regular users may only upload below their own UUID directory.
-  // Admin uploads keep the existing flexible path behavior for Phantom/editor flows.
-  if (!isAdmin) {
-    const ownerId = getPathOwnerId(path)
-    if (!ownerId || ownerId !== authenticatedUserId) {
-      return NextResponse.json({ error: 'path_not_owned' }, { status: 403 })
-    }
+  if (!isSimpleFilename(parts[parts.length - 1])) {
+    return NextResponse.json({ error: 'invalid_filename' }, { status: 400 })
   }
 
   const db = supabaseAdmin()
+
+  if (!isAdmin) {
+    const [first, second] = parts
+
+    // Claim photos use: <spot UUID>/<filename>.
+    if (parts.length === 2 && UUID_RE.test(first)) {
+      const { data: spot, error: spotError } = await db
+        .from('sticker_spots')
+        .select('id')
+        .eq('id', first)
+        .maybeSingle()
+
+      if (spotError || !spot) {
+        return NextResponse.json({ error: 'spot_not_found' }, { status: 403 })
+      }
+    // Phantom photos use: phantom/<shadow session UUID>/<filename>.
+    } else if (parts.length === 3 && first === 'phantom' && UUID_RE.test(second)) {
+      const { data: profile, error: profileError } = await db
+        .from('shadow_profiles')
+        .select('session_id')
+        .eq('session_id', second)
+        .contains('metadata', { uid: authenticatedUserId })
+        .maybeSingle()
+
+      if (profileError || !profile) {
+        return NextResponse.json({ error: 'path_not_owned' }, { status: 403 })
+      }
+    } else {
+      return NextResponse.json({ error: 'invalid_path' }, { status: 400 })
+    }
+  }
+
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
