@@ -5,18 +5,14 @@ import { supabaseAdmin } from './lib/supabaseAdmin';
 import { isAdminEmail } from './lib/auth';
 import { TELEGRAM_MINI_APP_SESSION_COOKIE, verifyTelegramMiniAppSessionToken } from './lib/security/telegramMiniAppSession';
 
-// In-memory cache for system mode (30 second TTL)
 let cachedMode: { mode: 'SAFE' | 'READ_ONLY'; timestamp: number } | null = null;
-const CACHE_TTL = 30000; // 30 seconds
+const CACHE_TTL = 30000;
 
 async function getSystemMode(): Promise<'SAFE' | 'READ_ONLY'> {
   const now = Date.now();
-  
-  // Return cached value if still valid
-  if (cachedMode && (now - cachedMode.timestamp) < CACHE_TTL) {
-    return cachedMode.mode;
-  }
-  
+
+  if (cachedMode && (now - cachedMode.timestamp) < CACHE_TTL) return cachedMode.mode;
+
   try {
     const supabase = supabaseAdmin();
     const { data, error } = await supabase
@@ -24,59 +20,53 @@ async function getSystemMode(): Promise<'SAFE' | 'READ_ONLY'> {
       .select('mode')
       .eq('id', 1)
       .single();
-    
+
     if (error || !data) {
       console.error('[Kill Switch] Failed to fetch system mode:', error);
-      // Fail-safe: allow operations if DB is unreachable
-      return 'SAFE';
+      cachedMode = { mode: 'READ_ONLY', timestamp: now };
+      return 'READ_ONLY';
     }
-    
-    const mode = data.mode as 'SAFE' | 'READ_ONLY';
+
+    const mode = data.mode === 'SAFE' || data.mode === 'READ_ONLY' ? data.mode : 'READ_ONLY';
     cachedMode = { mode, timestamp: now };
     return mode;
   } catch (err) {
     console.error('[Kill Switch] Exception fetching system mode:', err);
-    return 'SAFE'; // Fail-safe
+    cachedMode = { mode: 'READ_ONLY', timestamp: now };
+    return 'READ_ONLY';
   }
 }
 
 async function isAdminRequest(req: NextRequest): Promise<boolean> {
-  // Check for admin email in session/auth
   const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
-  if (authHeader) {
-    const match = authHeader.match(/^Bearer\s+(.+)/i);
-    if (match) {
-      try {
-        const supabase = supabaseAdmin();
-        const { data } = await supabase.auth.getUser(match[1].trim());
-        if (data?.user?.email) {
-          return isAdminEmail(data.user.email);
-        }
-      } catch {
-        // Ignore auth errors
-      }
-    }
+  if (!authHeader) return false;
+
+  const match = authHeader.match(/^Bearer\s+(.+)/i);
+  if (!match) return false;
+
+  try {
+    const supabase = supabaseAdmin();
+    const { data } = await supabase.auth.getUser(match[1].trim());
+    return Boolean(data?.user?.email && isAdminEmail(data.user.email));
+  } catch {
+    return false;
   }
-  
-  return false;
 }
 
-// Ezeket az útvonalakat NEM védjük jelszóval.
 const PUBLIC_PATHS = new Set<string>([
   "/",
-  "/novellak",  // ha ezt szabadon akarod hagyni
-  "/checkout",  // ha ezt szabadon akarod hagyni
+  "/novellak",
+  "/checkout",
   "/visualizer",
   "/video.mp4",
   "/gift",
-  "/auth",      // Supabase magic link auth UI
-  "/dashboard", // Supabase protected in-app; allow page load
-  "/admin/inbox",     // admin felület
+  "/auth",
+  "/dashboard",
+  "/admin/inbox",
   "/messages",
-  "/ar",       // AR oldal
+  "/ar",
 ]);
 
-// Write operations to block in READ_ONLY mode
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function isTelegramAppRequest(req: NextRequest): boolean {
@@ -91,19 +81,11 @@ function isTelegramAppRequest(req: NextRequest): boolean {
 
   const userAgent = (req.headers.get('user-agent') || '').toLowerCase();
   const referer = (req.headers.get('referer') || '').toLowerCase();
-
-  const hasTelegramUa = userAgent.includes('telegram');
-  const hasTelegramReferer =
-    referer.includes('t.me') ||
-    referer.includes('telegram.me') ||
-    referer.includes('web.telegram.org');
-
-  return hasTelegramUa || hasTelegramReferer;
+  return userAgent.includes('telegram') || referer.includes('t.me') || referer.includes('telegram.me') || referer.includes('web.telegram.org');
 }
 
 function isLocalDevRequest(req: NextRequest): boolean {
   if (process.env.NODE_ENV === 'production') return false;
-
   const host = (req.headers.get('host') || req.nextUrl.host || '').toLowerCase();
   return host.startsWith('localhost:') || host.startsWith('127.0.0.1:');
 }
@@ -132,11 +114,8 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const method = req.method;
 
-  // Telegram Mini App pages are private entrypoints; hide them from public browsing.
   if (pathname === '/telegram-app' || pathname.startsWith('/telegram-app/')) {
-    if (isLocalDevRequest(req)) {
-      return NextResponse.next();
-    }
+    if (isLocalDevRequest(req)) return NextResponse.next();
 
     const sessionToken = req.cookies.get(TELEGRAM_MINI_APP_SESSION_COOKIE)?.value;
     const hasSessionCookie = Boolean(sessionToken);
@@ -144,22 +123,10 @@ export async function middleware(req: NextRequest) {
     const isCheckoutRoute = pathname.startsWith('/telegram-app/checkout');
     const isTelegramOrigin = isTelegramAppRequest(req);
 
-    if (isCheckoutRoute && !hasValidMiniAppSession && !isTelegramOrigin) {
-      return applyTelegramGateHeaders(new NextResponse('Not Found', {
-        status: 404,
-      }), {
-        decision: 'deny',
-        reason: hasSessionCookie ? 'checkout_invalid_session_and_non_telegram_origin' : 'checkout_missing_session_and_non_telegram_origin',
-        sessionCookie: hasSessionCookie ? 'present' : 'missing',
-        session: hasValidMiniAppSession ? 'valid' : 'invalid',
-        telegramOrigin: isTelegramOrigin ? 'yes' : 'no',
-      });
-    }
-
     if (!hasValidMiniAppSession && !isTelegramOrigin) {
       return applyTelegramGateHeaders(new NextResponse('Not Found', { status: 404 }), {
         decision: 'deny',
-        reason: hasSessionCookie ? 'invalid_session_and_non_telegram_origin' : 'missing_session_and_non_telegram_origin',
+        reason: isCheckoutRoute ? 'checkout_requires_session_or_telegram_origin' : 'requires_session_or_telegram_origin',
         sessionCookie: hasSessionCookie ? 'present' : 'missing',
         session: hasValidMiniAppSession ? 'valid' : 'invalid',
         telegramOrigin: isTelegramOrigin ? 'yes' : 'no',
@@ -175,42 +142,32 @@ export async function middleware(req: NextRequest) {
     });
   }
 
-  // 🔴 KRITIKUS: TELEGRAM ÉS STRIPE WEBHOOKOK AZONNALI KIVÉTELE (Bypass)
-  // Ezeknek mindig át kell menniük, POST kérésként is, tiltások nélkül!
-  if (
-    pathname.startsWith("/api/telegram") ||
-    pathname.startsWith("/api/stripe")
-  ) {
+  // Stripe/Telegram webhooks are independently authenticated by their own signatures/secrets.
+  if (pathname.startsWith("/api/telegram") || pathname.startsWith("/api/stripe")) {
     return NextResponse.next();
   }
 
-  // Next statikus cuccok és API-k menjenek szabadon
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml" || 
-    pathname === "/manifest.webmanifest" ||      // ⬅️ KELL
-    pathname.startsWith("/icons") ||             // ⬅️ ikonok is kellenek
-    pathname.endsWith(".png") ||                 // ⬅️ ha máshol hívjuk az ikonokat
+    pathname === "/sitemap.xml" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname.startsWith("/icons") ||
+    pathname.endsWith(".png") ||
     pathname.endsWith(".mp4") ||
-    pathname.endsWith(".webmanifest") ||          // ⬅️ ha máshol hívjuk a manifestet
-    pathname.startsWith("/api/") ||
+    pathname.endsWith(".webmanifest") ||
     pathname.startsWith("/static/") ||
-    pathname.startsWith("/icons/") ||
-    pathname.startsWith("/img/") ||  // vagy pontosan /og.png
+    pathname.startsWith("/img/") ||
     pathname.startsWith("/videos/") ||
     pathname.startsWith("/playlists/") ||
     pathname === "/og.png" ||
-    pathname.startsWith("/manifest.webmanifest") ||
-    pathname.startsWith("/favicon") ||
     pathname.startsWith("/public/") ||
-    pathname.startsWith("/service-worker.js")       
+    pathname.startsWith("/service-worker.js")
   ) {
     return NextResponse.next();
   }
 
-  // PUBLIC route-ok szabadon (ide NEM rakjuk a /reader-t!)
   if (
     PUBLIC_PATHS.has(pathname) ||
     pathname.startsWith("/gift/") ||
@@ -222,56 +179,35 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check system mode for write operations
   if (WRITE_METHODS.has(method)) {
     const mode = await getSystemMode();
-    
+
     if (mode === 'READ_ONLY') {
-      // Check if this is an admin request
       const isAdmin = await isAdminRequest(req);
-      
-      // Block non-admin write operations in READ_ONLY mode
+
       if (!isAdmin) {
-        // Special handling for auth endpoints - block entirely
-        if (pathname.startsWith('/api/auth/') || pathname.startsWith('/auth/')) {
-          return new NextResponse(
-            JSON.stringify({ 
-              error: 'System is in read-only mode. Authentication is temporarily disabled.' 
-            }),
-            { 
-              status: 503, 
-              headers: { 
-                'Content-Type': 'application/json',
-                'X-System-Mode': 'READ_ONLY'
-              } 
-            }
-          );
-        }
-        
-        // Block all other write operations
         return new NextResponse(
-          JSON.stringify({ 
+          JSON.stringify({
             error: 'System is in read-only mode. Write operations are temporarily disabled.',
-            mode: 'READ_ONLY'
+            mode: 'READ_ONLY',
           }),
-          { 
-            status: 503, 
-            headers: { 
+          {
+            status: 503,
+            headers: {
               'Content-Type': 'application/json',
               'X-System-Mode': 'READ_ONLY',
-              'Retry-After': '60'
-            } 
-          }
+              'Retry-After': '60',
+              'Cache-Control': 'no-store',
+            },
+          },
         );
       }
     }
   }
 
-  // All other routes are now public - cookie protection removed
   return NextResponse.next();
 }
 
-// Minden route-ra lefut, kivéve a Next statikus dolgokat.
 export const config = {
   matcher: ["/((?!_next/|favicon.ico|robots.txt|sitemap.xml).*)"],
 };
