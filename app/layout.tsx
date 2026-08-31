@@ -146,6 +146,35 @@ export default function RootLayout({
         `}
         style={{ touchAction: 'pan-y' }}
       >
+        {/* Source-code easter egg: rendered as a real HTML comment in Page Source. */}
+        <div
+          hidden
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{
+            __html: `<!--
+╔══════════════════════════════════════════════════════════╗
+║                  V // INTERNAL CHANNEL                  ║
+╠══════════════════════════════════════════════════════════╣
+║                                                          ║
+║  YOU OPENED THE SOURCE.                                  ║
+║                                                          ║
+║  MOST PEOPLE NEVER LOOK HERE.                            ║
+║                                                          ║
+║  THAT IS WHY THIS MESSAGE EXISTS.                        ║
+║                                                          ║
+║  NODE: 07                                                ║
+║  STATUS: STILL ACTIVE                                    ║
+║  OBSERVER: UNKNOWN                                       ║
+║                                                          ║
+║  > keep looking                                          ║
+║                                                          ║
+╚══════════════════════════════════════════════════════════╝
+
+  [source] -> [console] -> [node 07]
+-->`,
+          }}
+        />
+
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <FacebookSDK />
           {/* Háttérvideó – a Reader alatt nem rendereljük (perf/memory) */}
