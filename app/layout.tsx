@@ -149,43 +149,47 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `<!--
 
+ _   _                  _ _       _ _           _        _   _             
+| | | | ___  _ __ _ __ | | | __ _| | |__   __ _| |_ __ _| |_| | __ _ _ __  
+| |_| |/ _ \| '__| '_ \| | |/ _\` | | '_ \ / _\` | __/ _\` | __| |/ _\` | '_ \ 
+|  _  | (_) | |  | | | | | | (_| | | | | | (_| | || (_| | |_| | (_| | | | |
+|_| |_|\___/|_|  |_| |_|_|_|\__,_|_|_| |_|\__,_|\__\__,_|\__|_|\__,_|_| |_|
+
+
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                            ║
-║                   V Á L L A L H A T A T L A N                            ║
-║                                                                            ║
-║              SYSTEM STATUS // SOURCE NODE ACTIVE                          ║
-║                                                                            ║
-║  > YOU OPENED THE SOURCE.                                                  ║
-║                                                                            ║
-║  MOST PEOPLE NEVER LOOK HERE.                                              ║
-║                                                                            ║
-║  THAT IS PROBABLY A GOOD THING.                                            ║
-║                                                                            ║
-║  ------------------------------------------------------------------------  ║
-║                                                                            ║
-║  NODE STATUS:         ONLINE                                               ║
-║  TRACE STATUS:        UNKNOWN                                              ║
-║  CHANNEL:             INTERNAL                                             ║
-║  VISIBILITY:          0%                                                   ║
-║                                                                            ║
-║  ------------------------------------------------------------------------  ║
-║                                                                            ║
-║  THERE IS NOTHING TO STEAL HERE.                                           ║
-║                                                                            ║
-║  THERE IS ONLY SOMETHING TO FIND.                                          ║
-║                                                                            ║
-║  > KEEP LOOKING                                                           ║
-║                                                                            ║
-║  > OPEN THE CONSOLE                                                       ║
-║                                                                            ║
-║  > TYPE: help()                                                           ║
-║                                                                            ║
-║  ------------------------------------------------------------------------  ║
-║                                                                            ║
-║                         NODE_07                                            ║
-║                                                                            ║
-║                    1999 — 2000 — 2026                                     ║
-║                                                                            ║
+║                                                                              ║
+║                   V // INTERNAL CHANNEL // NODE_07                         ║
+║                                                                              ║
+║  > YOU OPENED THE SOURCE.                                                   ║
+║                                                                              ║
+║  THIS IS ONLY THE FIRST STEP INTO THE RABBIT HOLE.                          ║
+║                                                                              ║
+║  THERE ARE MORE LAYERS.                                                      ║
+║  THERE ARE MORE NODES.                                                       ║
+║  THERE ARE MORE POINTS.                                                      ║
+║                                                                              ║
+║  IF YOU WANT TO SEE HOW DEEP THIS GOES:                                     ║
+║                                                                              ║
+║  > OPEN THE CONSOLE                                                          ║
+║  > TYPE: help()                                                             ║
+║                                                                              ║
+║  YOUR OBJECTIVE: FIND AS MANY POINTS AS YOU CAN.                            ║
+║                                                                              ║
+║  MAXIMUM SCORE = MAXIMUM ACCESS.                                            ║
+║                                                                              ║
+║  ----------------------------------------------------------------------------║
+║                                                                              ║
+║  NODE STATUS:         ONLINE                                                ║
+║  TRACE STATUS:        UNKNOWN                                               ║
+║  CHANNEL:             INTERNAL                                              ║
+║  OBSERVER:            DETECTED                                              ║
+║  SCORE:               0                                                     ║
+║                                                                              ║
+║  ----------------------------------------------------------------------------║
+║                                                                              ║
+║                    THERE IS NOTHING TO STEAL.                               ║
+║                    THERE IS ONLY SOMETHING TO FIND.                         ║
+║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 -->`,
