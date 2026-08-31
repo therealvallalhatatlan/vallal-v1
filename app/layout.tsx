@@ -52,7 +52,6 @@ export const metadata: Metadata = {
   description:
     "Vállalhatatlan — Y2K: nyers, urbánus novellák a 90-es évek és az ezredforduló Budapestjéről. Rave/techno éjszakák, underground szcénák, drogkultúra, identitásválság és könyörtelen őszinteség.",
   keywords: [
-    // Hungarian focus
     "Vállalhatatlan",
     "Y2K",
     "90-es évek",
@@ -68,7 +67,6 @@ export const metadata: Metadata = {
     "kortárs irodalom",
     "novelláskötet",
     "sötét urbánus próza",
-    // English support
     "Budapest 1990s",
     "Y2K fiction",
     "underground culture",
@@ -79,7 +77,6 @@ export const metadata: Metadata = {
   alternates: {
     languages: {
       "hu-HU": "/",
-      // "en-US": "/en", // remove until /en exists
     },
   },
   openGraph: {
@@ -98,7 +95,6 @@ export const metadata: Metadata = {
       },
     ],
     locale: "hu_HU",
-
     alternateLocale: ["en_US"],
   },
   twitter: {
@@ -152,37 +148,55 @@ export default function RootLayout({
           aria-hidden="true"
           dangerouslySetInnerHTML={{
             __html: `<!--
-╔══════════════════════════════════════════════════════════╗
-║                  V // INTERNAL CHANNEL                  ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  YOU OPENED THE SOURCE.                                  ║
-║                                                          ║
-║  MOST PEOPLE NEVER LOOK HERE.                            ║
-║                                                          ║
-║  THAT IS WHY THIS MESSAGE EXISTS.                        ║
-║                                                          ║
-║  NODE: 07                                                ║
-║  STATUS: STILL ACTIVE                                    ║
-║  OBSERVER: UNKNOWN                                       ║
-║                                                          ║
-║  > keep looking                                          ║
-║                                                          ║
-╚══════════════════════════════════════════════════════════╝
 
-  [source] -> [console] -> [node 07]
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                   V Á L L A L H A T A T L A N                            ║
+║                                                                            ║
+║              SYSTEM STATUS // SOURCE NODE ACTIVE                          ║
+║                                                                            ║
+║  > YOU OPENED THE SOURCE.                                                  ║
+║                                                                            ║
+║  MOST PEOPLE NEVER LOOK HERE.                                              ║
+║                                                                            ║
+║  THAT IS PROBABLY A GOOD THING.                                            ║
+║                                                                            ║
+║  ------------------------------------------------------------------------  ║
+║                                                                            ║
+║  NODE STATUS:         ONLINE                                               ║
+║  TRACE STATUS:        UNKNOWN                                              ║
+║  CHANNEL:             INTERNAL                                             ║
+║  VISIBILITY:          0%                                                   ║
+║                                                                            ║
+║  ------------------------------------------------------------------------  ║
+║                                                                            ║
+║  THERE IS NOTHING TO STEAL HERE.                                           ║
+║                                                                            ║
+║  THERE IS ONLY SOMETHING TO FIND.                                          ║
+║                                                                            ║
+║  > KEEP LOOKING                                                           ║
+║                                                                            ║
+║  > OPEN THE CONSOLE                                                       ║
+║                                                                            ║
+║  > TYPE: help()                                                           ║
+║                                                                            ║
+║  ------------------------------------------------------------------------  ║
+║                                                                            ║
+║                         NODE_07                                            ║
+║                                                                            ║
+║                    1999 — 2000 — 2026                                     ║
+║                                                                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
 -->`,
           }}
         />
 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <FacebookSDK />
-          {/* Háttérvideó – a Reader alatt nem rendereljük (perf/memory) */}
           <BgVideoGate />
 
-          {/* Page content a legfelül */}
           <div className="content-above relative z-20">
-            {/*<StatusBanner />*/}
             <AuthUrlSessionSync />
             <PWAInstallManager />
             <LayoutNavigationGuard />
@@ -195,7 +209,6 @@ export default function RootLayout({
             <ServiceWorkerRegister />
           </div>
 
-          {/* JSON-LD: Organization + WebSite */}
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
