@@ -1,5 +1,6 @@
 'use client'
 
+import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { StickerSpot, VirtualSpotContentType } from '@/lib/matrica'
 import AudioPlayer from './AudioPlayer'
@@ -29,6 +30,7 @@ const formatTime = (value: number) => {
 export default function VirtualContentViewer({ spot, contentUrl, contentType, onClose }: Props) {
   const typeLabel = CONTENT_LABELS[contentType] ?? 'DIGITÁLIS'
   const accentColor = '#d9f99d'
+  const [portalReady, setPortalReady] = useState(false)
 
   const [textContent, setTextContent] = useState<string | null>(null)
   const [textLoading, setTextLoading] = useState(false)
@@ -37,6 +39,11 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
   const iframeTimeoutRef = useRef<number | null>(null)
 
   const [iframeFailed, setIframeFailed] = useState(false)
+
+  useEffect(() => {
+    setPortalReady(true)
+    return () => setPortalReady(false)
+  }, [])
 
   useEffect(() => {
     if (contentType !== 'text') return
@@ -278,7 +285,7 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
     spot.title,
   ])
 
-  return (
+  const viewer = (
     <div
       role="dialog"
       aria-modal="true"
@@ -481,4 +488,6 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
       `}</style>
     </div>
   )
+
+  return portalReady ? createPortal(viewer, document.body) : null
 }
