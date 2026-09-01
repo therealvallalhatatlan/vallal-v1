@@ -15,6 +15,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import NetworkInboxSheet from "@/components/notifications/NetworkInboxSheet"
+import DashboardPage from "@/app/dashboard/page"
 
 import { createClient } from "@/lib/browser";
 
@@ -138,28 +139,40 @@ export default function SiteHeader() {
           HALOZAT: ONLINE
         </span>
 
-        {/* Logged-in avatar */}
+        {/* Logged-in avatar: opens dashboard sheet */}
         {user && (
-          <Link
-            href="/dashboard"
-            aria-label="Open dashboard"
-            className="group relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900 transition-all hover:border-lime-400/70 hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]"
-          >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                className="h-full w-full object-cover grayscale transition-all group-hover:grayscale-0"
-              />
-            ) : (
-              <span className="text-xs font-bold text-lime-200">
-                {avatarLetter}
-              </span>
-            )}
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                aria-label="Open dashboard"
+                className="group relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900 transition-all hover:border-lime-400/70 hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    className="h-full w-full object-cover grayscale transition-all group-hover:grayscale-0"
+                  />
+                ) : (
+                  <span className="text-xs font-bold text-lime-200">
+                    {avatarLetter}
+                  </span>
+                )}
 
-            {/* Online indicator */}
-            <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.8)]" />
-          </Link>
+                {/* Online indicator */}
+                <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.8)]" />
+              </button>
+            </SheetTrigger>
+
+            <SheetContent
+              side="right"
+              className="z-[100] flex w-[min(25rem,92vw)] flex-col max-h-screen overflow-y-auto border-l border-zinc-800 bg-zinc-950 p-0 text-zinc-100 shadow-[-20px_0_60px_rgba(0,0,0,0.55)]"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              <DashboardPage />
+            </SheetContent>
+          </Sheet>
         )}
 
         {/* Logged-out login */}

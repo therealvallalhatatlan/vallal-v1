@@ -127,17 +127,14 @@ export default function UserDashboard({ data, token }: Props) {
               )}
             </div>
             <div className="flex-1 space-y-2">
-              <p className="text-4xl font-black uppercase tracking-[0.2em] text-zinc-100">
+              <p className="text-2xl font-black uppercase tracking-[0.1em] text-zinc-100">
                 {displayName}
               </p>
               <div className="flex items-center gap-3 text-sm uppercase tracking-[0.3em] text-lime-200/80">
                 <span>{user.nickname ? `@${user.nickname}` : '@node'}</span>
                 <span className="hidden h-1 w-10 border-t border-dotted border-zinc-800 sm:inline-block" />
-                <span className="text-sm tracking-[0.4em] text-zinc-500">
-                  NODE ACTIVE
-                </span>
               </div>
-              <div className="flex flex-wrap items-center gap-4 text-sm uppercase tracking-[0.3em] text-zinc-500">
+              <div className="flex flex-wrap items-center gap-4 text-sm uppercase tracking-[0.1em] text-zinc-500">
                 <span>BELÉPÉS: {formatJoinDate(user.created_at)}</span>
                 <span>{user.email ?? '—'}</span>
                 <span>| {user.role.toUpperCase()}</span>

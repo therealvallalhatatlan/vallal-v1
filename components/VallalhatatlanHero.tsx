@@ -34,7 +34,7 @@ const HERO_HEADLINES = [
   "SIRÁLYOK HANGJA A DUNA FELŐL",
 ] as const
 
-const DEFAULT_HEADLINE = "PÁNIKOLNÉK,\nDE TÚL\nFÁRADT VAGYOK"
+const DEFAULT_HEADLINE = "EZ NEM EGY KÖNYV."
 
 export default function VallalhatatlanHero() {
   const [activeDropCount, setActiveDropCount] = useState(17)
@@ -117,10 +117,6 @@ export default function VallalhatatlanHero() {
     }
   }, [])
 
-  useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * HERO_HEADLINES.length)
-    setHeadline(HERO_HEADLINES[randomIndex])
-  }, [])
 
   const formatHeroCount = (value: number | null) =>
     value === null ? "--" : String(value).padStart(2, "0")
@@ -190,6 +186,26 @@ export default function VallalhatatlanHero() {
         >
           PUBLIC ACCESS // NODE DISCOVERY
         </p>
+
+        <div className="mt-12 flex items-center justify-center gap-4 text-[17px] italic  text-zinc-300">
+          <p className="font-mono" style={{ fontFamily: "var(--font-mono-tech)" }}>
+-Jegyezd meg ezt a pillanatot, és azt amit most mondok. <br/><br/>
+A parázsló tábortűz fénye játszik Sophie arcán ahogy a kezét melengetve, bizakodóan, de azért kicsit félve attól mit fogok mondani, rámnéz. <br/><br/>
+-A valóság... csak egy narratíva. Újraírom bazdmeg. A saját emlékeim alapján újraírom az egészet. Ebben lesz valamiféle mintázat, amit ha felismerek - látni fogom a jövőt. 
+<br/><br/>
+Sophie elröhögi magát.<br/><br/>
+-Ne röhögj, ha látom a mintázatot, folytatni is tudom, sőt meg is változtathatom.<br/><br/>
+Beleszívok a cigimbe, és belül kicsit elkeseredek. Úgysem fogom látni. Úgyse ismerem majd fel.<br/><br/>
+-Mindegy. Le akarom írni. És ha a valóságot írom, és a narratívám helyes, akkor egy új világot hozok létre basszameg. <br/><br/>
+Sophie érdeklődve rámnéz.<br/><br/>
+-És tudod mire számítok? - Folytatom ezen fellelkesülve. 
+- Hogy ebbe az új világba, mások is beköltöznek majd! Megjelennek az első telepesek. Mint a vadnyugaton. És ezekből a felfedezőszellemű, bátor, vagy éppen totálisan kétségbeesett emberekből valami épülni fog.
+<br/><br/>
+-Egy hálózat?
+<br/><br/>
+-Egy hálózat... - Ismétlem halkan miközben egymás szemébe nézünk a parázsló tűz fölött. - Igen!
+          </p>
+        </div>
 
         <div className="mt-12 w-full">
           <VHeroChat />

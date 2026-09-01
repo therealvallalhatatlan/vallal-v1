@@ -63,7 +63,7 @@ export default function DashboardPage() {
       .catch((error) => {
         if (error?.name === "AbortError") return;
         console.error("/dashboard fetch error", error);
-        setMessage("Nem sikerült betölteni az adatokat. Próbáld újra később.");
+        setMessage("Valami elbaszódott. Próbáld újra később.");
         setFetchState("error");
       });
 
@@ -73,8 +73,8 @@ export default function DashboardPage() {
   if (loading || fetchState === "loading" || fetchState === "idle") {
     return (
       <div className="min-h-screen bg-black px-6 py-20 text-center text-zinc-200">
-        <p className="text-base uppercase tracking-[0.35em] text-zinc-500">dashboard betöltése</p>
-        <p className="mt-3 text-sm text-zinc-400">Kérlek várj, amint a rendszer hitelesít.</p>
+        <p className="text-base uppercase tracking-[0.35em] text-zinc-500">Csinálom bazdmeg...</p>
+        <p className="mt-3 text-sm text-zinc-400">Várj, amíg a rendszer hitelesít.</p>
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function DashboardPage() {
   if (!session) {
     return (
       <div className="min-h-screen bg-black px-6 py-20 text-center text-zinc-200">
-        <p className="text-base uppercase tracking-[0.35em] text-zinc-500">átirányítás</p>
+        <p className="text-base uppercase tracking-[0.35em] text-zinc-500">Átirányítás a gecibe</p>
         <p className="mt-3 text-sm text-zinc-400">Hitelesítés nélkül nem férhetsz hozzá a Hálózathoz.</p>
       </div>
     );
@@ -91,7 +91,7 @@ export default function DashboardPage() {
   if (fetchState === "error" || !data) {
     return (
       <div className="min-h-screen bg-black px-6 py-20 text-center text-zinc-200">
-        <p className="text-sm uppercase tracking-[0.4em] text-zinc-500">Hiba</p>
+        <p className="text-sm uppercase tracking-[0.4em] text-zinc-500">Valami van</p>
         <p className="mt-3 text-xl leading-tight text-zinc-100">{message ?? "Nem sikerült betölteni a dashboardot."}</p>
       </div>
     );
