@@ -9,7 +9,49 @@ export type SpotStatus = 'active' | 'empty' | 'archived'
 export type ClaimStatus = 'pending' | 'accepted' | 'rejected'
 export type SpotType = 'free' | 'paid'
 export type LocationSpotType = 'physical' | 'virtual'
-export type VirtualSpotContentType = 'video' | 'audio' | 'image' | 'text' | 'link'
+export type VirtualSpotContentType = 'video' | 'audio' | 'image' | 'text' | 'link' | 'rich'
+
+export type RichContentBlock =
+  | {
+      type: 'heading'
+      level: 1 | 2 | 3
+      text: string
+    }
+  | {
+      type: 'paragraph'
+      text: string
+    }
+  | {
+      type: 'quote'
+      text: string
+    }
+  | {
+      type: 'bulletList'
+      items: string[]
+    }
+  | {
+      type: 'orderedList'
+      items: string[]
+    }
+  | {
+      type: 'divider'
+    }
+  | {
+      type: 'image'
+      url: string
+      alt?: string
+      caption?: string
+    }
+  | {
+      type: 'video'
+      provider: 'youtube' | 'vimeo'
+      videoId: string
+    }
+
+export interface RichContentDocument {
+  version: 1
+  blocks: RichContentBlock[]
+}
 
 export interface StickerSpot {
   id: string
@@ -24,6 +66,7 @@ export interface StickerSpot {
   type?: LocationSpotType
   content_type?: VirtualSpotContentType | null
   content_url?: string | null
+  rich_content?: RichContentDocument | null
   price_huf?: number
   is_locked?: boolean
   unlock_expires_at?: string | null
