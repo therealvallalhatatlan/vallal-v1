@@ -99,7 +99,7 @@ function ProjectActions() {
         style={{ fontFamily: "var(--font-mono-tech)" }}
       >
         <span className="text-xs font-bold uppercase tracking-[0.14em]">
-          Részt veszek ebben
+          Részt vennék ebben
         </span>
 
         <span>+</span>
@@ -131,40 +131,67 @@ export default function Page() {
               className="text-[10px] uppercase tracking-[0.2em] text-zinc-500"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              [ LAB / PROJECTS ]
+              [ LABORATÓRIUM ]
             </span>
 
             <span
-              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-lime-300/70"
+              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-lime-300/40"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.7)]" />
-              BUILDING
+              RUNNING
             </span>
           </div>
 
           <div className="max-w-3xl">
             <h1
-              className={`${montserrat.className} text-4xl uppercase leading-[0.9] tracking-[-0.03em] text-zinc-100 md:text-6xl`}
+              className={`${montserrat.className} text-4xl pt-6 uppercase leading-[0.9] tracking-[-0.03em] text-zinc-100 md:text-6xl`}
             >
-              V. FÖLD ALATTI* AI LABORATÓRIUMA
+              V. FÖLD ALATTI LABORATÓRIUMA
             </h1>
 
             <p
-              className="mt-6 text-sm leading-relaxed text-zinc-400 md:text-base"
+              className="mt-6 text-md leading-relaxed text-zinc-400 md:text-base"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               Ahol a következő generációs cuccok készülnek.
               <br />
-              Problémamegoldás LEVEL 10000.
-              <br /><br />
+              Gyorsaság, pontosság, problémamegoldás LEVEL 10000.
               <span className="text-lime-200/80">
                 Oszd meg velem őrült tervedet. Megcsináljuk!
               </span>
             </p>
-
             <LabContact />
           </div>
+          
+
+          <div className="mt-24 flex items-center justify-between">
+            <span
+              className="text-[10px] uppercase tracking-[0.2em] text-zinc-500"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              [ PROJEKTEK ]
+            </span>
+
+            <span
+              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-lime-300/40"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.7)]" />
+              RUNNING
+            </span>
+          </div>
+
+
+          <div className="max-w-3xl border-t mt-4 border-zinc-600">
+            <p
+              className="pt-6 text-md leading-relaxed text-zinc-400 md:text-base"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              Saját fejlesztésű cuccok amikkel én dolgozom, de mások számára is érdekes lehet. 
+            </p>
+          </div>
+
         </section>
 
         {/* PROJECTS */}
@@ -182,11 +209,11 @@ export default function Page() {
                   </span>
 
                   <h2
-                    className={`${montserrat.className} max-w-2xl text-2xl uppercase leading-[0.95] tracking-[-0.025em] text-zinc-100 md:text-4xl`}
+                    className={`${montserrat.className} max-w-2xl text-2xl leading-[0.95] tracking-[-0.025em] text-zinc-100 md:text-4xl`}
                   >
                     Vállalhatatlan
                     <br />
-                    MikroFilm Intézet
+                    MikroFilm Stúdió
                   </h2>
                 </div>
 
@@ -198,28 +225,25 @@ export default function Page() {
                 </span>
               </div>
 
-              <div className="grid gap-8 border-t border-zinc-800 pt-6 md:grid-cols-[1fr_280px]">
-                <div>
-                  <p
-                    className="max-w-2xl text-sm leading-relaxed text-zinc-300 md:text-base"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    AI és hús-vér színészek együtt egy képernyőn. Rövid
-                    filmeket készítünk olyan gyártási módszerrel, ahol a
-                    generatív technológia nem helyettesíti az embert, hanem
-                    kibővíti azt.
-                    <br />
-                    <br />
-                    Saját történeteket akarunk megvalósítani olyan
-                    helyszínekkel, karakterekkel és vizuális ötletekkel,
-                    amelyek hagyományos filmgyártásban túl drágák vagy túl
-                    körülményesek lennének. A cél nem AI-videók gyártása,
-                    hanem egy saját filmes munkamódszer kialakítása.
-                  </p>
-
-                  <EntryPoints items={microfilmEntryPoints} />
+                {/* Insert microfilm preview video */}
+                <div className="mt-6">
+                  <video muted controls className="w-full rounded-md">
+                    <source src="/videos/film.mp4" type="video/mp4" />
+                    A böngésződ nem támogatja a videó lejátszást.
+                  </video>
                 </div>
-              </div>
+
+                <div className="grid gap-8 border-t border-zinc-800 pt-6 md:grid-cols-[1fr_280px]">
+                  <div>
+                    <p
+                      className="max-w-2xl text-sm leading-relaxed text-zinc-300 md:text-base"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      Egy olyan szoftverre volt szükségem amivel karakterhelyes figurákat tudok generálni, és a generált karaktereket animálni is tudom. 
+                      Ezzel a cuccal te is következetes, kontrollálható és felismerhető vizuális világokat építhetsz. 
+                    </p>
+                  </div>
+                </div>
             </div>
 
             <div className="grid border-t border-zinc-800 sm:grid-cols-3">

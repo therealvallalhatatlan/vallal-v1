@@ -41,10 +41,7 @@ export default function LabContact() {
 
   return (
     <section className="mt-6 mb-6" style={{ fontFamily: "var(--font-mono-tech)" }}>
-      <div className="flex flex-col gap-4 rounded-md bg-transparent p-5 text-zinc-100 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-[8px] uppercase tracking-[0.2em] text-zinc-500">Elektronikus Levél</p>
-        </div>
+      <div className="flex flex-col gap-4 rounded-md bg-transparent pb-6 pt-6 text-zinc-100 sm:flex-row sm:items-center sm:justify-between">
 
         <button
           type="button"
@@ -52,7 +49,7 @@ export default function LabContact() {
           aria-label="Másold a kapcsolat email címét"
           onClick={handleCopy}
         >
-          <span>{copied ? "Nyomassuk barátom!" : "therealvallalhatatlan@gmail.com"}</span>
+          <span>{copied ? "Emailcím kimásolva! Nyomassuk barátom!" : "therealvallalhatatlan@gmail.com"}</span>
           <svg
             aria-hidden="true"
             width="14"
