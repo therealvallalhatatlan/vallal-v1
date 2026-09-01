@@ -87,7 +87,8 @@ function normalizeVideoId(value: string, provider: 'youtube' | 'vimeo'): string 
     const url = new URL(trimmed)
     if (provider === 'youtube') {
       if (url.hostname === 'youtu.be') return url.pathname.replace(/^\//, '')
-      if (url.searchParams.get('v')) return url.searchParams.get('v') ?? ''
+      const queryId = url.searchParams.get('v')
+      if (queryId) return queryId
       const parts = url.pathname.split('/').filter(Boolean)
       const embedIndex = parts.indexOf('embed')
       if (embedIndex >= 0 && parts[embedIndex + 1]) return parts[embedIndex + 1]
@@ -96,7 +97,7 @@ function normalizeVideoId(value: string, provider: 'youtube' | 'vimeo'): string 
       if (match?.[1]) return match[1]
     }
   } catch {
-    // Already an ID.
+    // Value can already be a plain provider ID.
   }
 
   return trimmed.replace(/[^a-zA-Z0-9_-]/g, '')
@@ -159,6 +160,7 @@ export default function RichContentEditor({ spotId, accessToken, initialDocument
     if (target < 0 || target >= document.blocks.length) return
     const next = [...document.blocks]
     const [moved] = next.splice(index, 1)
+    if (!moved) return
     next.splice(target, 0, moved)
     setBlocks(next)
   }
@@ -325,7 +327,7 @@ export default function RichContentEditor({ spotId, accessToken, initialDocument
                 <option value="youtube">YouTube</option>
                 <option value="vimeo">Vimeo</option>
               </select>
-              <input value={block.videoId} onChange={(event) => setBlocks(updateBlock(document.blocks, index, (current) => current.type === 'video' ? { ...current, videoId: normalizeVideoId(event.target.value, block.provider) } : current))} style={inputStyle} placeholder={block.provider === 'youtube' ? 'YouTube URL vagy ID' : 'Vimeo URL vagy ID'} />
+              <input value={block.videoId} onChange={(event) => setBlocks(updateBlock(document.blocks, index, (current) => current.type === 'video' ? { ...current, videoId: normalizeVideoId(event.target.value, current.provider) } : current))} style={inputStyle} placeholder="URL vagy video ID" />
             </div>
           ) : null}
         </section>
