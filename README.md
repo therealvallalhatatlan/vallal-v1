@@ -23,7 +23,21 @@ pnpm dev
 
 ---
 
-## V AI ágens — architektúra (\`lib/gyontatoszek/\`)
+## Hálózat (/halozat)
+
+A `/halozat` oldalon a Vállalhatatlan interaktív térképes játék- és közösségi felülete Budapest utcáin elrejtett matricák (`StickerSpot`) felfedezéséhez érhető el. Főbb funkciók:
+
+- **Interaktív térkép:** `MapViewClient` dinamikusan tölti be a térképet, élő helymeghatározással.
+- **Matrica navigáció:** `MatricaNav` panel vezérli a játék állapotát, megjeleníti a live feedet, privát üzeneteket és activity feedet.
+- **Jelenlét nyomonkövetés:** valós idejű olvasói jelenlét (presence) mutatása.
+- **Jogosultságok kezelése:** `HalozatPermissionCenter` kéri a geolocation és push értesítések engedélyét.
+- **Bemutató (walkthrough):** `HalozatWalkthrough` vezeti be a felhasználót a felület használatába.
+- **Privát üzenetküldés:** `MatricaPrivateMessagePanel` privát chat lehetőség felfedezők között.
+- **Phantom Layer:** titkos ('dead drop') tartalmak felfedezése a hálózatban.
+
+---
+
+## V AI ágens — architektúra (`lib/gyontatoszek/`)
 
 A \`/v3\` útvonalon elérhető csevegő egy többrétegű ágensrendszer, ami minden felhasználói üzenetnél végigfut. Az útvonal \`/v\`-ről is elérhető (redirect).
 
