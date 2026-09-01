@@ -1,130 +1,84 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import type { LocationSpotType, SpotStatus, SpotType, VirtualSpotContentType } from '@/lib/matrica'
+import type { LocationSpotType, SpotStatus, SpotType, VirtualSpotContentType, RichContentDocument } from '@/lib/matrica'
 import { canCreatePaidSpots, canManageAllSpots, getUserRoleByEmail } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
-type AuthUser = {
-  id: string
-  email: string | null
-}
+type AuthUser = { id: string; email: string | null }
 
 async function requireAuthenticatedUser(req: NextRequest): Promise<AuthUser | null> {
   const authHeader = req.headers.get('authorization') ?? ''
   const token = authHeader.replace(/^Bearer\s+/i, '').trim()
   if (!token) return null
-
   const db = supabaseAdmin()
-  const {
-    data: { user },
-    error,
-  } = await db.auth.getUser(token)
-
+  const { data: { user }, error } = await db.auth.getUser(token)
   if (error || !user) return null
   return { id: user.id, email: user.email ?? null }
 }
 
-// ── GET /api/admin/matrica/spots  (all spots, any status) ─────────────────────
 export async function GET(req: NextRequest) {
   const user = await requireAuthenticatedUser(req)
-  if (!user) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
-
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const role = getUserRoleByEmail(user.email)
   const canManageAll = canManageAllSpots(role)
-
   const db = supabaseAdmin()
-  const query = db
-    .from('sticker_spots')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  const { data, error } = canManageAll
-    ? await query
-    : await query.eq('creator_id', user.id)
-
+  const query = db.from('sticker_spots').select('*').order('created_at', { ascending: false })
+  const { data, error } = canManageAll ? await query : await query.eq('creator_id', user.id)
   if (error) {
     console.error('[admin/matrica/spots] GET error', error)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
-
-  return NextResponse.json({
-    spots: data ?? [],
-    userRole: role,
-  })
+  return NextResponse.json({ spots: data ?? [], userRole: role })
 }
 
-// ── POST /api/admin/matrica/spots  (create a new spot) ────────────────────────
 export async function POST(req: NextRequest) {
   const user = await requireAuthenticatedUser(req)
-  if (!user) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
   let body: Record<string, unknown>
-  try {
-    body = await req.json()
-  } catch {
-    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
-  }
+  try { body = await req.json() } catch { return NextResponse.json({ error: 'invalid_json' }, { status: 400 }) }
 
   const { title, description, image_url, image_urls, lat, lng, radius_visibility, radius_claim, total_quantity } = body
   const role = getUserRoleByEmail(user.email)
   const locationType: LocationSpotType = body.type === 'virtual' ? 'virtual' : 'physical'
   const contentType = body.content_type as VirtualSpotContentType | null
   const contentUrl = typeof body.content_url === 'string' ? body.content_url.trim() : ''
+  const richContent = body.rich_content as RichContentDocument | null
 
   const wantsPaid = locationType === 'physical' && body.spot_type === 'paid'
   const rawPriceHuf = Number(body.price_huf)
   const parsedPriceHuf = Number.isFinite(rawPriceHuf) ? Math.floor(rawPriceHuf) : 0
-
-  if (parsedPriceHuf < 0) {
-    return NextResponse.json({ error: 'invalid_price_huf' }, { status: 400 })
-  }
-
+  if (parsedPriceHuf < 0) return NextResponse.json({ error: 'invalid_price_huf' }, { status: 400 })
   if (wantsPaid) {
-    if (!canCreatePaidSpots(role)) {
-      return NextResponse.json({ error: 'paid_spot_forbidden' }, { status: 403 })
-    }
-    if (parsedPriceHuf <= 0) {
-      return NextResponse.json({ error: 'paid_price_required' }, { status: 400 })
-    }
+    if (!canCreatePaidSpots(role)) return NextResponse.json({ error: 'paid_spot_forbidden' }, { status: 403 })
+    if (parsedPriceHuf <= 0) return NextResponse.json({ error: 'paid_price_required' }, { status: 400 })
   }
 
   const spotType: SpotType = wantsPaid ? 'paid' : 'free'
   const effectivePriceHuf = wantsPaid ? parsedPriceHuf : 0
-
-  if (typeof title !== 'string' || !title.trim()) {
-    return NextResponse.json({ error: 'title_required' }, { status: 400 })
-  }
+  if (typeof title !== 'string' || !title.trim()) return NextResponse.json({ error: 'title_required' }, { status: 400 })
   const latN = Number(lat)
   const lngN = Number(lng)
-  if (!Number.isFinite(latN) || !Number.isFinite(lngN)) {
-    return NextResponse.json({ error: 'invalid_coordinates' }, { status: 400 })
-  }
+  if (!Number.isFinite(latN) || !Number.isFinite(lngN)) return NextResponse.json({ error: 'invalid_coordinates' }, { status: 400 })
 
   if (locationType === 'virtual') {
-    const allowedContentTypes: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link']
-    if (!contentType || !allowedContentTypes.includes(contentType)) {
-      return NextResponse.json({ error: 'content_type_required' }, { status: 400 })
-    }
-    if (!contentUrl) {
+    const allowedContentTypes: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link', 'rich']
+    if (!contentType || !allowedContentTypes.includes(contentType)) return NextResponse.json({ error: 'content_type_required' }, { status: 400 })
+    if (contentType === 'rich') {
+      if (!richContent || richContent.version !== 1 || !Array.isArray(richContent.blocks)) {
+        return NextResponse.json({ error: 'rich_content_required' }, { status: 400 })
+      }
+    } else if (!contentUrl) {
       return NextResponse.json({ error: 'content_url_required' }, { status: 400 })
     }
   }
 
   const qty = locationType === 'virtual' ? 1 : Math.max(1, Number(total_quantity) || 1)
-
   const normalizedImageUrls = Array.isArray(image_urls)
     ? image_urls.filter((url): url is string => typeof url === 'string' && !!url.trim()).slice(0, 5)
     : []
-
-  const primaryImageUrl =
-    (typeof image_url === 'string' && image_url.trim())
-      ? image_url.trim()
-      : normalizedImageUrls[0] ?? null
+  const primaryImageUrl = typeof image_url === 'string' && image_url.trim() ? image_url.trim() : normalizedImageUrls[0] ?? null
 
   const db = supabaseAdmin()
   const basePayload = {
@@ -142,44 +96,24 @@ export async function POST(req: NextRequest) {
     price_huf: effectivePriceHuf,
     type: locationType,
     content_type: locationType === 'virtual' ? contentType : null,
-    content_url: locationType === 'virtual' ? contentUrl : null,
+    content_url: locationType === 'virtual' && contentType !== 'rich' ? contentUrl : null,
+    rich_content: locationType === 'virtual' && contentType === 'rich' ? richContent : null,
     creator_id: user.id,
   }
 
   let data: any = null
   let error: any = null
-
   if (normalizedImageUrls.length > 0) {
-    const resultWithGallery = await db
-      .from('sticker_spots')
-      .insert({
-        ...basePayload,
-        image_urls: normalizedImageUrls,
-      })
-      .select()
-      .single()
-
+    const resultWithGallery = await db.from('sticker_spots').insert({ ...basePayload, image_urls: normalizedImageUrls }).select().single()
     data = resultWithGallery.data
     error = resultWithGallery.error
-
-    // Backward compatibility if the image_urls column is not yet migrated.
     if (error && typeof error.message === 'string' && error.message.toLowerCase().includes('image_urls')) {
-      const fallbackResult = await db
-        .from('sticker_spots')
-        .insert(basePayload)
-        .select()
-        .single()
-
+      const fallbackResult = await db.from('sticker_spots').insert(basePayload).select().single()
       data = fallbackResult.data
       error = fallbackResult.error
     }
   } else {
-    const result = await db
-      .from('sticker_spots')
-      .insert(basePayload)
-      .select()
-      .single()
-
+    const result = await db.from('sticker_spots').insert(basePayload).select().single()
     data = result.data
     error = result.error
   }
@@ -188,134 +122,63 @@ export async function POST(req: NextRequest) {
     console.error('[admin/matrica/spots] POST error', error)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
-
   return NextResponse.json({ spot: data }, { status: 201 })
 }
 
-// ── PATCH /api/admin/matrica/spots  (update status) ───────────────────────────
 export async function PATCH(req: NextRequest) {
   const user = await requireAuthenticatedUser(req)
-  if (!user) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
-
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const role = getUserRoleByEmail(user.email)
   const canManageAll = canManageAllSpots(role)
-
   let body: Record<string, unknown>
-  try {
-    body = await req.json()
-  } catch {
-    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
-  }
-
+  try { body = await req.json() } catch { return NextResponse.json({ error: 'invalid_json' }, { status: 400 }) }
   const { id, status, title, description, price_huf } = body
-  if (typeof id !== 'string' || !id.trim()) {
-    return NextResponse.json({ error: 'id_required' }, { status: 400 })
-  }
-
+  if (typeof id !== 'string' || !id.trim()) return NextResponse.json({ error: 'id_required' }, { status: 400 })
   const updates: Record<string, unknown> = {}
-
   if (typeof status !== 'undefined') {
     const allowedStatuses: SpotStatus[] = ['active', 'empty', 'archived']
-    if (!allowedStatuses.includes(status as SpotStatus)) {
-      return NextResponse.json({ error: 'invalid_status' }, { status: 400 })
-    }
+    if (!allowedStatuses.includes(status as SpotStatus)) return NextResponse.json({ error: 'invalid_status' }, { status: 400 })
     updates.status = status as SpotStatus
   }
-
   if (typeof title !== 'undefined') {
-    if (typeof title !== 'string' || !title.trim()) {
-      return NextResponse.json({ error: 'title_required' }, { status: 400 })
-    }
+    if (typeof title !== 'string' || !title.trim()) return NextResponse.json({ error: 'title_required' }, { status: 400 })
     updates.title = title.trim()
   }
-
-  if (typeof description !== 'undefined') {
-    updates.description = typeof description === 'string' ? description.trim() || null : null
-  }
-
+  if (typeof description !== 'undefined') updates.description = typeof description === 'string' ? description.trim() || null : null
   if (typeof price_huf !== 'undefined') {
     const parsedPrice = Number(price_huf)
-    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
-      return NextResponse.json({ error: 'invalid_price_huf' }, { status: 400 })
-    }
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) return NextResponse.json({ error: 'invalid_price_huf' }, { status: 400 })
     updates.price_huf = Math.floor(parsedPrice)
   }
-
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ error: 'no_updates' }, { status: 400 })
-  }
-
+  if (Object.keys(updates).length === 0) return NextResponse.json({ error: 'no_updates' }, { status: 400 })
   const db = supabaseAdmin()
-  const patchQuery = db
-    .from('sticker_spots')
-    .update(updates)
-    .eq('id', id.trim())
-
-  const scopedPatchQuery = canManageAll
-    ? patchQuery
-    : patchQuery.eq('creator_id', user.id)
-
-  const { data, error } = await scopedPatchQuery
-    .select('id, status, title, description, spot_type, price_huf, creator_id')
-    .maybeSingle()
-
+  const patchQuery = db.from('sticker_spots').update(updates).eq('id', id.trim())
+  const scopedPatchQuery = canManageAll ? patchQuery : patchQuery.eq('creator_id', user.id)
+  const { data, error } = await scopedPatchQuery.select('id, status, title, description, spot_type, price_huf, creator_id').maybeSingle()
   if (error) {
     console.error('[admin/matrica/spots] PATCH error', error)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
-
-  if (!data) {
-    return NextResponse.json({ error: 'not_allowed' }, { status: 403 })
-  }
-
+  if (!data) return NextResponse.json({ error: 'not_allowed' }, { status: 403 })
   return NextResponse.json({ spot: data })
 }
 
-// ── DELETE /api/admin/matrica/spots  (delete a spot) ─────────────────────────
 export async function DELETE(req: NextRequest) {
   const user = await requireAuthenticatedUser(req)
-  if (!user) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
-
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const role = getUserRoleByEmail(user.email)
   const canManageAll = canManageAllSpots(role)
-  if (!canManageAll) {
-    return NextResponse.json({ error: 'not_allowed' }, { status: 403 })
-  }
-
+  if (!canManageAll) return NextResponse.json({ error: 'not_allowed' }, { status: 403 })
   let body: Record<string, unknown>
-  try {
-    body = await req.json()
-  } catch {
-    return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
-  }
-
+  try { body = await req.json() } catch { return NextResponse.json({ error: 'invalid_json' }, { status: 400 }) }
   const { id } = body
-  if (typeof id !== 'string' || !id.trim()) {
-    return NextResponse.json({ error: 'id_required' }, { status: 400 })
-  }
-
+  if (typeof id !== 'string' || !id.trim()) return NextResponse.json({ error: 'id_required' }, { status: 400 })
   const db = supabaseAdmin()
-  const deleteQuery = db
-    .from('sticker_spots')
-    .delete()
-    .eq('id', id.trim())
-
-  const { data, error } = await deleteQuery
-    .select('id')
-    .maybeSingle()
-
+  const { data, error } = await db.from('sticker_spots').delete().eq('id', id.trim()).select('id').maybeSingle()
   if (error) {
     console.error('[admin/matrica/spots] DELETE error', error)
     return NextResponse.json({ error: 'server_error' }, { status: 500 })
   }
-
-  if (!data) {
-    return NextResponse.json({ error: 'not_allowed' }, { status: 403 })
-  }
-
+  if (!data) return NextResponse.json({ error: 'not_allowed' }, { status: 403 })
   return NextResponse.json({ ok: true })
 }
