@@ -306,6 +306,16 @@ const RichContentEditor = forwardRef<RichContentEditorHandle, RichContentEditorP
       }
       editor.chain().focus().setImage({ src: payload.url, alt: '' }).run()
       transitionUploadState('success')
+    } catch (err) {
+      console.error('[rich-content upload] error', err)
+      transitionUploadState('error')
+    } finally {
+      if (event.target) {
+        event.target.value = ''
+      }
+    }
+  }
+
   const buildButton = (
     label: string,
     execute: () => void,
@@ -362,51 +372,7 @@ const RichContentEditor = forwardRef<RichContentEditorHandle, RichContentEditorP
             placeholder="YouTube vagy Vimeo link"
             value={videoUrl}
             onChange={(event) => {
-              setVideoUrl(event.target.value)
-              setVideoDialogError('')
-            }}
-          />
-          {videoDialogError ? <p style={videoDialogErrorStyle}>{videoDialogError}</p> : null}
-          <div style={videoDialogFooterStyle}>
-            <button
-              type="button"
-              onClick={() => {
-                setVideoDialogOpen(false)
-                setVideoDialogError('')
-                setVideoUrl('')
-              }}
-              style={toolbarButtonStyle(false)}
-            >
-              MÉGSE
-            </button>
-            <button
-              type="button"
-              onClick={handleVideoConfirm}
-              style={toolbarButtonStyle(false)}
-            >
-              BEILLESZTÉS
-            </button>
-          </div>
-        </div>
-      ) : null}
-    </div>
-  )
-})
-          {uploadStatusMessages[uploadState]}
-        </span>
-      ) : null}
-      <EditorContent editor={editor} style={contentStyle} />
-      {videoDialogOpen ? (
-        <div style={videoDialogStyle}>
-          <p style={{ margin: 0, letterSpacing: '0.2em', fontSize: 11, color: '#d4d4d8' }}>
-            VIDEÓ BEÁGYAZÁSA
-          </p>
-          <input
-            style={videoDialogInputStyle}
-            placeholder="YouTube vagy Vimeo link"
-            value={videoUrl}
-            onChange={(event) => {
-              setVideoUrl(event.target.value)
+              setVideoUrl(event.target value)
               setVideoDialogError('')
             }}
           />
@@ -440,6 +406,3 @@ const RichContentEditor = forwardRef<RichContentEditorHandle, RichContentEditorP
 RichContentEditor.displayName = 'RichContentEditor'
 
 export default RichContentEditor
-
-
-// end
