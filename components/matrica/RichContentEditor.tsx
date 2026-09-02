@@ -1,0 +1,374 @@
+'use client'
+
+import {
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  forwardRef,
+} from 'react'
+import type { ChangeEvent } from 'react'
+import { EditorContent, useEditor } from '@tiptap/react'
+import { Node } from '@tiptap/core'
+import StarterKit from '@tiptap/starter-kit'
+import Image from '@tiptap/extension-image'
+import YouTube from '@tiptap/extension-youtube'
+import { DEFAULT_RICH_CONTENT } from '@/lib/matrica'
+import type { RichContentDocument } from '@/lib/matrica'
+import { parseVideoUrl } from '@/lib/richContentVideo'
+
+export interface RichContentEditorProps {
+  spotId: string
+  accessToken: string
+  initialDocument?: RichContentDocument | null
+  onSaved?: (document: RichContentDocument) => void
+  onDirtyChange?: (dirty: boolean) => void
+}
+
+export interface RichContentEditorHandle {
+  getDocument: () => RichContentDocument | null
+  markSaved: () => void
+}
+
+const toolbarButtonStyle = (active: boolean, disabled = false) => ({
+  padding: '6px 10px',
+  borderRadius: 6,
+  border: '1px solid rgba(255,255,255,0.08)',
+  background: active ? 'rgba(163,230,53,0.16)' : 'transparent',
+  color: '#f3f4f6',
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase' as const,
+  cursor: disabled ? 'not-allowed' : 'pointer',
+  opacity: disabled ? 0.45 : 1,
+})
+
+const toolbarStyle: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: 6,
+  padding: '10px 12px 8px',
+  borderBottom: '1px solid rgba(255,255,255,0.08)',
+}
+
+const editorWrapperStyle: React.CSSProperties = {
+  background: '#0b0c10',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 10,
+  padding: 12,
+  marginTop: 12,
+}
+
+const contentStyle: React.CSSProperties = {
+  minHeight: 600,
+  maxWidth: 900,
+  margin: '0 auto',
+  fontFamily: 'inherit',
+  color: '#f8fafc',
+  fontSize: 16,
+  lineHeight: 1.7,
+}
+
+type UploadState = 'idle' | 'uploading' | 'success' | 'error'
+
+const uploadStatusMessages: Record<UploadState, string> = {
+  idle: '',
+  uploading: 'KÉP FELTÖLTÉSE...',
+  success: '✓ KÉP BESZÚRVA',
+  error: 'Képfeltöltés sikertelen.',
+}
+
+const uploadStatusColors: Record<UploadState, string> = {
+  idle: 'transparent',
+  uploading: '#fde047',
+  success: '#86efac',
+  error: '#fca5a5',
+}
+
+const uploadStatusStyle: React.CSSProperties = {
+  margin: '8px 12px 0',
+  fontSize: 11,
+  letterSpacing: '0.22em',
+  textTransform: 'uppercase',
+}
+
+const videoDialogStyle: React.CSSProperties = {
+  margin: '16px 12px',
+  padding: 12,
+  border: '1px solid rgba(255,255,255,0.18)',
+  borderRadius: 10,
+  background: 'rgba(9,9,11,0.85)',
+  boxShadow: '0 20px 40px rgba(0,0,0,0.45)',
+  maxWidth: 460,
+}
+
+const videoDialogInputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 12px',
+  borderRadius: 8,
+  border: '1px solid rgba(255,255,255,0.16)',
+  background: 'rgba(0,0,0,0.35)',
+  color: '#f4f4f5',
+  fontSize: 14,
+  marginTop: 8,
+}
+
+const videoDialogFooterStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  gap: 8,
+  marginTop: 12,
+}
+
+const videoDialogErrorStyle: React.CSSProperties = {
+  color: '#fca5a5',
+  marginTop: 8,
+  fontSize: 12,
+  letterSpacing: '0.1em',
+}
+
+const VIDEO_IFRAME_STYLE = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;'
+
+const VimeoVideo = Node.create({
+  name: 'vimeo',
+  group: 'block',
+  atom: true,
+  draggable: true,
+  selectable: true,
+  addAttributes() {
+    return {
+      videoId: { default: '' },
+    }
+  },
+  parseHTML() {
+    return [{ tag: 'div[data-vimeo-video]' }]
+  },
+  renderHTML({ HTMLAttributes }) {
+    const { videoId } = HTMLAttributes
+    return [
+      'div',
+      {
+        'data-vimeo-video': videoId,
+        style:
+          'position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:16px 0;border-radius:8px;background:#000;',
+      },
+      [
+        'iframe',
+        {
+          src: `https://player.vimeo.com/video/${videoId}`,
+          frameborder: '0',
+          allow: 'autoplay; fullscreen; picture-in-picture',
+          allowfullscreen: 'true',
+          title: 'Vimeo video',
+          style: VIDEO_IFRAME_STYLE,
+        },
+      ],
+    ]
+  },
+  addCommands() {
+    return {
+      setVimeoVideo:
+        (attrs: { videoId: string }) =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs,
+          })
+        },
+    }
+  },
+})
+const RichContentEditor = forwardRef<RichContentEditorHandle, RichContentEditorProps>((props, ref) => {
+  const { spotId, accessToken, initialDocument, onSaved, onDirtyChange } = props
+  void accessToken
+  const [dirty, setDirty] = useState(false)
+  const [uploadState, setUploadState] = useState<UploadState>('idle')
+  const [videoDialogOpen, setVideoDialogOpen] = useState(false)
+  const [videoUrl, setVideoUrl] = useState('')
+  const [videoDialogError, setVideoDialogError] = useState('')
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const uploadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const memoContent = useMemo(() => initialDocument ?? DEFAULT_RICH_CONTENT, [initialDocument])
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+      }),
+      Image.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {
+          loading: 'lazy',
+          style: 'max-width: 100%; height: auto; display: block; margin: 16px auto;',
+        },
+      }),
+      YouTube,
+      VimeoVideo,
+    ],
+    content: memoContent,
+    editorProps: {
+      attributes: {
+        class: 'rich-editor-content',
+      },
+    },
+    onUpdate({ editor }) {
+      if (!dirty) {
+        setDirty(true)
+        onDirtyChange?.(true)
+      }
+    },
+  })
+
+  useEffect(() => {
+    if (!editor) return
+    editor.commands.setContent(memoContent, false)
+    setDirty(false)
+    onDirtyChange?.(false)
+  }, [editor, memoContent, onDirtyChange, spotId])
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      getDocument: () => (editor ? (editor.getJSON() as RichContentDocument) : null),
+      markSaved: () => {
+        setDirty(false)
+        onDirtyChange?.(false)
+        const doc = editor?.getJSON()
+        if (doc && typeof doc === 'object') {
+          onSaved?.(doc as RichContentDocument)
+        }
+      },
+    }),
+    [editor, onDirtyChange, onSaved],
+  )
+
+  useEffect(() => () => {
+    if (uploadTimerRef.current) {
+      clearTimeout(uploadTimerRef.current)
+      uploadTimerRef.current = null
+    }
+  }, [])
+
+  const clearUploadTimer = () => {
+    if (uploadTimerRef.current) {
+      clearTimeout(uploadTimerRef.current)
+      uploadTimerRef.current = null
+    }
+  }
+
+  const scheduleUploadReset = () => {
+    clearUploadTimer()
+    uploadTimerRef.current = setTimeout(() => {
+      setUploadState('idle')
+      uploadTimerRef.current = null
+    }, 2200)
+  }
+
+  const startUpload = () => {
+    clearUploadTimer()
+    setUploadState('uploading')
+  }
+
+  const transitionUploadState = (next: UploadState) => {
+    setUploadState(next)
+    if (next !== 'idle') {
+      scheduleUploadReset()
+    }
+  }
+
+  const handleImageButtonClick = () => {
+    if (uploadState === 'uploading') return
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    startUpload()
+    try {
+      const formData = new FormData()
+      formData.append('spotId', spotId)
+      formData.append('file', file)
+      const res = await fetch('/api/admin/matrica/rich-content/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      })
+      const payload = await res.json()
+      if (!res.ok || !payload?.success || typeof payload.url !== 'string') {
+        throw new Error(payload?.error || 'upload_failed')
+      }
+      editor.chain().focus().setImage({ src: payload.url, alt: '' }).run()
+      transitionUploadState('success')
+    } catch (err) {
+      console.error('[rich-content upload] error', err)
+      transitionUploadState('error')
+    } finally {
+      if (event.target) {
+        event.target.value = ''
+      }
+    }
+  }
+
+  const buildButton = (
+    label: string,
+    execute: () => void,
+    active: boolean,
+    disabled = false,
+  ) => (
+    <button
+      type="button"
+      onClick={() => execute()}
+      style={toolbarButtonStyle(active, disabled)}
+      disabled={disabled}
+    >
+      {label}
+    </button>
+  )
+
+      <div style={toolbarStyle}>
+        {buildButton('B', () => editor.chain().focus().toggleBold().run(), editor.isActive('bold'))}
+        {buildButton('I', () => editor.chain().focus().toggleItalic().run(), editor.isActive('italic'))}
+        {buildButton('H1', () => editor.chain().focus().toggleHeading({ level: 1 }).run(), editor.isActive('heading', { level: 1 }))}
+        {buildButton('H2', () => editor.chain().focus().toggleHeading({ level: 2 }).run(), editor.isActive('heading', { level: 2 }))}
+        {buildButton('H3', () => editor.chain().focus().toggleHeading({ level: 3 }).run(), editor.isActive('heading', { level: 3 }))}
+        {buildButton('•', () => editor.chain().focus().toggleBulletList().run(), editor.isActive('bulletList'))}
+        {buildButton('1.', () => editor.chain().focus().toggleOrderedList().run(), editor.isActive('orderedList'))}
+        {buildButton('QUOTE', () => editor.chain().focus().toggleBlockquote().run(), editor.isActive('blockquote'))}
+        {buildButton('—', () => editor.chain().focus().setHorizontalRule().run(), editor.isActive('horizontalRule'))}
+        {buildButton('VIDEO', () => setVideoDialogOpen(true), false)}
+        {buildButton('IMAGE', handleImageButtonClick, false, uploadState === 'uploading')}
+        {buildButton('UNDO', () => editor.chain().focus().undo().run(), false)}
+        {buildButton('REDO', () => editor.chain().focus().redo().run(), false)}
+      </div>
+        {buildButton('—', () => editor.chain().focus().setHorizontalRule().run(), editor.isActive('horizontalRule'))}
+        {buildButton('IMAGE', handleImageButtonClick, false, uploadState === 'uploading')}
+        {buildButton('UNDO', () => editor.chain().focus().undo().run(), false)}
+        {buildButton('REDO', () => editor.chain().focus().redo().run(), false)}
+      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+      {uploadStatusMessages[uploadState] ? (
+        <span style={{ ...uploadStatusStyle, color: uploadStatusColors[uploadState] }}>
+          {uploadStatusMessages[uploadState]}
+        </span>
+      ) : null}
+      <EditorContent editor={editor} style={contentStyle} />
+    </div>
+  )
+})
+
+RichContentEditor.displayName = 'RichContentEditor'
+
+export default RichContentEditor

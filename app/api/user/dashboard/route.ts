@@ -27,7 +27,7 @@ type SpotRow = {
 
 const VALID_CLAIM_STATUSES: ClaimStatus[] = ['pending', 'accepted', 'rejected']
 const VALID_LOCATION_TYPES: LocationSpotType[] = ['physical', 'virtual']
-const VALID_VIRTUAL_CONTENT_TYPES: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link']
+const VALID_VIRTUAL_CONTENT_TYPES: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link', 'rich']
 const VALID_SPOT_STATUSES: SpotStatus[] = ['active', 'empty', 'archived']
 
 const isClaimStatus = (value: unknown): value is ClaimStatus =>

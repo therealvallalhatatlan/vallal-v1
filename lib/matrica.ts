@@ -3,13 +3,28 @@
  * Shared types and utilities for the sticker hunt feature.
  */
 
+import type { JSONContent } from '@tiptap/core'
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type SpotStatus = 'active' | 'empty' | 'archived'
 export type ClaimStatus = 'pending' | 'accepted' | 'rejected'
 export type SpotType = 'free' | 'paid'
 export type LocationSpotType = 'physical' | 'virtual'
-export type VirtualSpotContentType = 'video' | 'audio' | 'image' | 'text' | 'link'
+export type VirtualSpotContentType = 'video' | 'audio' | 'image' | 'text' | 'link' | 'rich'
+
+export type RichContentDocument = JSONContent
+
+export const DEFAULT_RICH_CONTENT: RichContentDocument = { type: 'doc', content: [] }
+
+export function isRichContentDocument(value: unknown): value is RichContentDocument {
+  if (typeof value !== 'object' || value === null) return false
+  const record = value as Record<string, unknown>
+  if (record.type !== 'doc') return false
+  if (typeof record.content === 'undefined') return true
+  if (!Array.isArray(record.content)) return false
+  return record.content.every((node) => typeof node === 'object' && node !== null)
+}
 
 export interface StickerSpot {
   id: string
@@ -24,6 +39,7 @@ export interface StickerSpot {
   type?: LocationSpotType
   content_type?: VirtualSpotContentType | null
   content_url?: string | null
+  rich_content?: RichContentDocument | null
   price_huf?: number
   is_locked?: boolean
   unlock_expires_at?: string | null

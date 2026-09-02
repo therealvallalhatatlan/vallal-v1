@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import type { LocationSpotType, SpotStatus, SpotType, VirtualSpotContentType } from '@/lib/matrica'
+import {
+  DEFAULT_RICH_CONTENT,
+  isRichContentDocument,
+} from '@/lib/matrica'
+import type {
+  LocationSpotType,
+  RichContentDocument,
+  SpotStatus,
+  SpotType,
+  VirtualSpotContentType,
+} from '@/lib/matrica'
 import { canCreatePaidSpots, canManageAllSpots, getUserRoleByEmail } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
@@ -75,6 +85,7 @@ export async function POST(req: NextRequest) {
   const locationType: LocationSpotType = body.type === 'virtual' ? 'virtual' : 'physical'
   const contentType = body.content_type as VirtualSpotContentType | null
   const contentUrl = typeof body.content_url === 'string' ? body.content_url.trim() : ''
+  const rawRichContent = body.rich_content
 
   const wantsPaid = locationType === 'physical' && body.spot_type === 'paid'
   const rawPriceHuf = Number(body.price_huf)
@@ -105,12 +116,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_coordinates' }, { status: 400 })
   }
 
+  let normalizedRichContent: RichContentDocument | null = null
+
   if (locationType === 'virtual') {
-    const allowedContentTypes: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link']
+    const allowedContentTypes: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link', 'rich']
     if (!contentType || !allowedContentTypes.includes(contentType)) {
       return NextResponse.json({ error: 'content_type_required' }, { status: 400 })
     }
-    if (!contentUrl) {
+
+    if (contentType === 'rich') {
+      if (rawRichContent === undefined || rawRichContent === null) {
+        normalizedRichContent = DEFAULT_RICH_CONTENT
+      } else if (isRichContentDocument(rawRichContent)) {
+        normalizedRichContent = rawRichContent
+      } else {
+        return NextResponse.json({ error: 'invalid_rich_content' }, { status: 400 })
+      }
+    } else if (!contentUrl) {
       return NextResponse.json({ error: 'content_url_required' }, { status: 400 })
     }
   }
@@ -127,6 +149,11 @@ export async function POST(req: NextRequest) {
       : normalizedImageUrls[0] ?? null
 
   const db = supabaseAdmin()
+  const richContentPayload =
+    locationType === 'virtual' && contentType === 'rich'
+      ? normalizedRichContent ?? DEFAULT_RICH_CONTENT
+      : null
+
   const basePayload = {
     title: title.trim(),
     description: typeof description === 'string' ? description.trim() || null : null,
@@ -142,7 +169,8 @@ export async function POST(req: NextRequest) {
     price_huf: effectivePriceHuf,
     type: locationType,
     content_type: locationType === 'virtual' ? contentType : null,
-    content_url: locationType === 'virtual' ? contentUrl : null,
+    content_url: locationType === 'virtual' && contentType !== 'rich' ? contentUrl : null,
+    rich_content: richContentPayload,
     creator_id: user.id,
   }
 

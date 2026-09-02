@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { parseBearerToken, getUserFromToken } from '@/lib/auth'
-import { getDistanceMeters, type VirtualSpotContentType } from '@/lib/matrica'
+import {
+  DEFAULT_RICH_CONTENT,
+  getDistanceMeters,
+  isRichContentDocument,
+  type RichContentDocument,
+  type VirtualSpotContentType,
+} from '@/lib/matrica'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +53,7 @@ export async function POST(req: NextRequest) {
 
   const { data: spot, error: spotError } = await db
     .from('sticker_spots')
-    .select('id, lat, lng, radius_claim, type, content_type, content_url')
+    .select('id, lat, lng, radius_claim, type, content_type, content_url, rich_content')
     .eq('id', spotId)
     .maybeSingle()
 
@@ -64,7 +70,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_spot_type' }, { status: 400 })
   }
 
-  const SUPPORTED_CONTENT_TYPES: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link']
+  const SUPPORTED_CONTENT_TYPES: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link', 'rich']
   const contentType = spot.content_type as VirtualSpotContentType | null
 
   if (!contentType || !SUPPORTED_CONTENT_TYPES.includes(contentType)) {
@@ -84,7 +90,16 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  if (!spot.content_url) {
+  let richContent: RichContentDocument | null = null
+  if (contentType === 'rich') {
+    if (!spot.rich_content) {
+      return NextResponse.json({ error: 'missing_rich_content' }, { status: 500 })
+    }
+    if (!isRichContentDocument(spot.rich_content)) {
+      return NextResponse.json({ error: 'invalid_rich_content' }, { status: 500 })
+    }
+    richContent = spot.rich_content
+  } else if (!spot.content_url) {
     return NextResponse.json({ error: 'missing_content_url' }, { status: 500 })
   }
 
@@ -92,7 +107,8 @@ export async function POST(req: NextRequest) {
     {
       success: true,
       content_type: spot.content_type,
-      content_url: spot.content_url,
+      content_url: contentType === 'rich' ? null : spot.content_url,
+      rich_content: contentType === 'rich' ? richContent ?? DEFAULT_RICH_CONTENT : null,
     },
     { status: 200 },
   )

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
+import { DEFAULT_RICH_CONTENT } from '@/lib/matrica'
 import type { LocationSpotType, StickerSpot, SpotStatus, SpotType, VirtualSpotContentType } from '@/lib/matrica'
 import type { UserRole } from '@/lib/auth'
 import MatricaNav from '@/components/matrica/MatricaNav'
@@ -204,6 +205,7 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
   const [locationType, setLocationType] = useState<LocationSpotType>('physical')
   const [contentType, setContentType] = useState<VirtualSpotContentType | ''>('')
   const [contentUrl, setContentUrl] = useState('')
+  const [thumbnailDocument, setThumbnailDocument] = useState(JSON.stringify(DEFAULT_RICH_CONTENT))
   const [spotType, setSpotType] = useState<SpotType>('free')
   const [priceHuf, setPriceHuf] = useState(1500)
   const [lat, setLat] = useState<number | null>(null)
@@ -410,36 +412,46 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
 
     setUploadProgress('Spot mentése…')
     try {
-      const res = await fetch('/api/admin/matrica/spots', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() || null,
-          type: locationType,
-          content_type: locationType === 'virtual' ? contentType : null,
-          content_url: locationType === 'virtual' ? contentUrl.trim() : null,
-          spot_type: locationType === 'physical' ? spotType : 'free',
-          price_huf: locationType === 'physical' && spotType === 'paid' ? Math.max(0, Math.floor(priceHuf)) : 0,
-          image_url: imageUrls[0] ?? null,
-          image_urls: imageUrls,
-          lat,
-          lng,
-          radius_visibility: radiusVisibility,
-          radius_claim: locationType === 'virtual' ? 50 : radiusClaim,
-          total_quantity: locationType === 'physical' ? totalQty : 1,
-        }),
-      })
+        const res = await fetch('/api/admin/matrica/spots', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({
+            title: title.trim(),
+            description: description.trim() || null,
+            type: locationType,
+            content_type: locationType === 'virtual' ? contentType : null,
+            content_url:
+              locationType === 'virtual' && contentType !== 'rich'
+                ? contentUrl.trim()
+                : null,
+            rich_content:
+              locationType === 'virtual' && contentType === 'rich'
+                ? DEFAULT_RICH_CONTENT
+                : null,
+            spot_type: locationType === 'physical' ? spotType : 'free',
+            price_huf: locationType === 'physical' && spotType === 'paid' ? Math.max(0, Math.floor(priceHuf)) : 0,
+            image_url: imageUrls[0] ?? null,
+            image_urls: imageUrls,
+            lat,
+            lng,
+            radius_visibility: radiusVisibility,
+            radius_claim: locationType === 'virtual' ? 50 : radiusClaim,
+            total_quantity: locationType === 'physical' ? totalQty : 1,
+          }),
+        })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`)
-      setSuccess(true)
-      onCreated(json.spot)
-      // Reset form
-      setTitle(''); setDescription(''); setLocationType('physical'); setContentType(''); setContentUrl(''); setSpotType('free'); setPriceHuf(1500); setLat(null); setLng(null)
-      setRadiusVisibility(500); setRadiusClaim(50); setTotalQty(1); setCoordinatesInput('')
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview))
-      setImageFiles([]); setImagePreviews([])
-      setTimeout(() => setSuccess(false), 3000)
+        setSuccess(true)
+        onCreated(json.spot)
+        if (locationType === 'virtual' && contentType === 'rich' && json?.spot?.id) {
+          router.push(`/admin/matrica/rich/${json.spot.id}`)
+        }
+        // Reset form
+        setTitle(''); setDescription(''); setLocationType('physical'); setContentType(''); setContentUrl(''); setSpotType('free'); setPriceHuf(1500); setLat(null); setLng(null)
+        setRadiusVisibility(500); setRadiusClaim(50); setTotalQty(1); setCoordinatesInput('')
+        imagePreviews.forEach((preview) => URL.revokeObjectURL(preview))
+        setImageFiles([]); setImagePreviews([])
+        setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
       setError(`Mentési hiba: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
@@ -490,42 +502,42 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
 
         {locationType === 'physical' ? (
           <>
-        <div style={{ display: 'grid', gridTemplateColumns: canCreatePaid ? '1fr 1fr' : '1fr', gap: 10 }}>
-          <div>
-            <label style={s.label} htmlFor="sp-type">Szpot tipus</label>
-            <select
-              id="sp-type"
-              style={s.input}
-              value={spotType}
-              onChange={(e) => setSpotType(e.target.value === 'paid' ? 'paid' : 'free')}
-            >
-              <option value="free">Ingyenes</option>
-              <option value="paid" disabled={!canCreatePaid}>Fizetos</option>
-            </select>
-          </div>
+            <div style={{ display: 'grid', gridTemplateColumns: canCreatePaid ? '1fr 1fr' : '1fr', gap: 10 }}>
+              <div>
+                <label style={s.label} htmlFor="sp-type">Szpot tipus</label>
+                <select
+                  id="sp-type"
+                  style={s.input}
+                  value={spotType}
+                  onChange={(e) => setSpotType(e.target.value === 'paid' ? 'paid' : 'free')}
+                >
+                  <option value="free">Ingyenes</option>
+                  <option value="paid" disabled={!canCreatePaid}>Fizetos</option>
+                </select>
+              </div>
 
-          {canCreatePaid ? (
-            <div>
-              <label style={s.label} htmlFor="sp-price">Ar (HUF)</label>
-              <input
-                id="sp-price"
-                type="number"
-                min={0}
-                step={1}
-                style={{ ...s.input, opacity: spotType === 'paid' ? 1 : 0.6 }}
-                value={spotType === 'paid' ? priceHuf : 0}
-                onChange={(e) => setPriceHuf(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-                disabled={spotType !== 'paid'}
-              />
+              {canCreatePaid ? (
+                <div>
+                  <label style={s.label} htmlFor="sp-price">Ar (HUF)</label>
+                  <input
+                    id="sp-price"
+                    type="number"
+                    min={0}
+                    step={1}
+                    style={{ ...s.input, opacity: spotType === 'paid' ? 1 : 0.6 }}
+                    value={spotType === 'paid' ? priceHuf : 0}
+                    onChange={(e) => setPriceHuf(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                    disabled={spotType !== 'paid'}
+                  />
+                </div>
+              ) : null}
             </div>
-          ) : null}
-        </div>
 
-        {!canCreatePaid ? (
-          <p style={{ margin: 0, fontSize: 12, color: '#a1a1aa' }}>
-            Jelenlegi jogosultsaggal csak ingyenes szpot hozhato letre.
-          </p>
-        ) : null}
+            {!canCreatePaid ? (
+              <p style={{ margin: 0, fontSize: 12, color: '#a1a1aa' }}>
+                Jelenlegi jogosultsaggal csak ingyenes szpot hozhato letre.
+              </p>
+            ) : null}
           </>
         ) : (
           <>
@@ -543,19 +555,22 @@ function CreateSpotForm({ accessToken, canCreatePaid, onCreated }: CreateFormPro
                 <option value="image">IMAGE</option>
                 <option value="text">TEXT</option>
                 <option value="link">LINK</option>
+                <option value="rich">RICH CONTENT</option>
               </select>
             </div>
-            <div>
-              <label style={s.label} htmlFor="sp-content-url">Content URL *</label>
-          <input
-            id="sp-content-url"
-            type="text"
-            style={s.input}
-            value={contentUrl}
-            onChange={(e) => setContentUrl(e.target.value)}
-            placeholder="/videos/video.mp4 vagy https://..."
-          />
-            </div>
+            {contentType !== 'rich' && (
+              <div>
+                <label style={s.label} htmlFor="sp-content-url">Content URL *</label>
+                <input
+                  id="sp-content-url"
+                  type="text"
+                  style={s.input}
+                  value={contentUrl}
+                  onChange={(e) => setContentUrl(e.target.value)}
+                  placeholder="/videos/video.mp4 vagy https://..."
+                />
+              </div>
+            )}
           </>
         )}
 

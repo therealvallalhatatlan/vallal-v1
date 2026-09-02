@@ -19,6 +19,7 @@ const CONTENT_LABELS: Record<VirtualSpotContentType, string> = {
   image: 'KÉP',
   text: 'SZÖVEG',
   link: 'LINK',
+  rich: 'RICH CONTENT',
 }
 
 const formatShortDate = (value: string | null | undefined) => {
