@@ -1,16 +1,18 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import VHSTrackingLines from "@/components/VHSTrackingLines"
 
 const MESSAGES = [
-  'A valóság hajlítható. Üdv a fedélzeten.',
-  'Nem véletlen, hogy te találtad meg.',
-  'Tarts velem testvérem.',
-  'Jól csinálod, és büszke vagyok rád.',
+  "A valóság hajlítható. Üdv a fedélzeten.",
+  "Nem véletlen, hogy te találtad meg.",
+  "Tarts velem testvérem.",
+  "Jól csinálod, és büszke vagyok rád.",
 ]
 
-const SIGNAL_USERNAME = "vallalhatatlan.01"
+const SIGNAL_URL =
+  "https://signal.me/#eu/ZyslIrELnciM82jQeo3L_WHrgE5wCxPl478bJ6diwOxAsksYK0dDj6NyWZMtNeak"
 
 function createDropId() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -19,124 +21,156 @@ function createDropId() {
   return Array.from(values, (value) => chars[value % chars.length]).join("")
 }
 
+function formatTimestamp(date: Date) {
+  return new Intl.DateTimeFormat("hu-HU", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date)
+}
+
 export default function Qr001Page() {
   const [dropId, setDropId] = useState("------")
+  const [timestamp, setTimestamp] = useState("")
   const [message, setMessage] = useState("")
   const [phase, setPhase] = useState(0)
 
   useEffect(() => {
     setDropId(createDropId())
+    setTimestamp(formatTimestamp(new Date()))
     setMessage(MESSAGES[Math.floor(Math.random() * MESSAGES.length)])
 
     const timers = [
-      window.setTimeout(() => setPhase(1), 650),
-      window.setTimeout(() => setPhase(2), 1500),
-      window.setTimeout(() => setPhase(3), 2350),
-      window.setTimeout(() => setPhase(4), 3250),
+      window.setTimeout(() => setPhase(1), 500),
+      window.setTimeout(() => setPhase(2), 1250),
+      window.setTimeout(() => setPhase(3), 2050),
+      window.setTimeout(() => setPhase(4), 2850),
+      window.setTimeout(() => setPhase(5), 3750),
     ]
 
-    return () => timers.forEach(window.clearTimeout)
+    const clock = window.setInterval(() => {
+      setTimestamp(formatTimestamp(new Date()))
+    }, 1000)
+
+    return () => {
+      timers.forEach(window.clearTimeout)
+      window.clearInterval(clock)
+    }
   }, [])
 
-  const signalUrl = useMemo(() => "https://signal.me", [])
-
   return (
-    <main className="relative min-h-screen overflow-hidden bg-black text-lime-300">
+    <main
+      className="relative min-h-screen overflow-x-hidden bg-black text-green-200"
+      style={{
+        background:
+          "linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%)",
+        fontFamily: "var(--font-mono-tech)",
+      }}
+    >
       <div
+        className="pointer-events-none fixed inset-0 z-40 fx-stripes"
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 opacity-80"
         style={{
-          backgroundImage:
-            "repeating-linear-gradient(to bottom, rgba(163,230,53,0.045) 0 1px, transparent 1px 4px)",
+          backgroundImage: `repeating-linear-gradient(
+            to bottom,
+            rgba(0,0,0,.28) 0 1px,
+            rgba(0,0,0,0) 3px 4px
+          )`,
+          opacity: 0.55,
+          mixBlendMode: "multiply",
         }}
       />
 
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0"
-        style={{
-          background:
-            "radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.65) 100%)",
-        }}
-      />
+      <div className="pointer-events-none fixed inset-0 z-50 fx-vhs" aria-hidden="true" />
+      <VHSTrackingLines />
 
-      <section className="content-above mx-auto flex min-h-screen w-full max-w-3xl items-center px-5 py-12 sm:px-8">
-        <div className="w-full border border-lime-400/25 bg-black/80 p-5 font-mono shadow-[0_0_50px_rgba(163,230,53,0.05)] sm:p-8">
-          <div className="mb-6 flex items-center justify-between border-b border-lime-400/15 pb-3 text-[10px] uppercase tracking-[0.28em] text-lime-500/60 sm:text-xs">
-            <span>V // UNAUTHORIZED ACCESS</span>
-            <span>QR-001</span>
-          </div>
+      <div className="relative z-20 min-h-screen px-6 pb-12 pt-6 sm:px-8 sm:pt-8">
+        <header className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-lime-100/75 sm:text-xs">
+          <span>DROP {dropId}</span>
+          <time>{timestamp || "----. --. --. --:--"}</time>
+        </header>
 
-          <div className="min-h-[380px] text-sm leading-7 sm:text-base sm:leading-8">
-            {phase >= 0 && (
-              <p className="animate-[fadeIn_0.45s_ease-out_both] text-lime-500/70">
-                &gt; establishing connection...
+        <section className="mt-10 max-w-3xl text-sm leading-[1.9] sm:mt-14 sm:text-base">
+          {phase >= 0 && (
+            <p className="animate-[fadeIn_0.45s_ease-out_both] text-lime-100/65">
+              &gt; establishing connection...
+            </p>
+          )}
+
+          {phase >= 1 && (
+            <p
+              className="animate-[fadeIn_0.45s_ease-out_both] mt-1 text-lime-100/65"
+              style={{ animationDelay: "80ms" }}
+            >
+              &gt; signal acquired
+            </p>
+          )}
+
+          {phase >= 2 && (
+            <p
+              className="animate-[fadeIn_0.45s_ease-out_both] mt-1 text-lime-100/65"
+              style={{ animationDelay: "80ms" }}
+            >
+              &gt; decrypting dead drop<span className="cursor">_</span>
+            </p>
+          )}
+
+          {phase >= 3 && (
+            <div
+              className="mt-8 animate-[fadeIn_0.5s_ease-out_both]"
+              style={{ animationDelay: "100ms" }}
+            >
+              <p className="font-semibold tracking-[0.08em] text-lime-100">
+                &gt;DEAD DROP {dropId}
               </p>
-            )}
+            </div>
+          )}
 
-            {phase >= 1 && (
-              <p className="mt-2 animate-[fadeIn_0.45s_ease-out_both] text-lime-500/70">
-                &gt; signal acquired
+          {phase >= 4 && (
+            <div
+              className="mt-1 animate-[fadeIn_0.55s_ease-out_both]"
+              style={{ animationDelay: "100ms" }}
+            >
+              <p className="text-lime-100/75">
+                &gt;Megtalálva ekkor: {timestamp || "----. --. --. --:--"}
               </p>
-            )}
-
-            {phase >= 2 && (
-              <p className="mt-2 animate-[fadeIn_0.45s_ease-out_both] text-lime-500/70">
-                &gt; decrypting dead drop<span className="cursor">_</span>
+              <p className="mt-1 text-lime-100/75">
+                &gt;Vállalhatatlan itt járt, nem sokkal előtted.
               </p>
-            )}
+              <p className="mt-5 max-w-2xl text-lime-100/90">
+                &gt;&quot;{message}&quot;
+              </p>
+              <p className="mt-1 text-lime-100/55">&gt;V.</p>
+            </div>
+          )}
 
-            {phase >= 3 && (
-              <div className="mt-8 animate-[fadeIn_0.65s_ease-out_both]">
-                <div className="text-xl font-semibold tracking-[0.16em] text-lime-300 sm:text-2xl">
-                  DEAD DROP {dropId}
-                </div>
-                <div className="mt-2 text-xs uppercase tracking-[0.14em] text-lime-500/70 sm:text-sm">
-                  Megtalálva ekkor: 2026. 08.02. 07:43
-                </div>
-              </div>
-            )}
+          {phase >= 5 && (
+            <div
+              className="mt-12 flex flex-col gap-4 animate-[fadeIn_0.55s_ease-out_both] sm:flex-row sm:items-center"
+              style={{ animationDelay: "120ms" }}
+            >
+              <Link
+                href="https://www.vallalhatatlan.online/"
+                className="inline-flex w-fit items-center text-xs uppercase tracking-[0.18em] text-lime-100/80 transition-colors hover:text-lime-100"
+              >
+                &gt; ENTER VÁLL.
+              </Link>
 
-            {phase >= 4 && (
-              <div className="mt-9 animate-[fadeIn_0.8s_ease-out_both]">
-                <p className="text-lime-500/75">Vállalhatatlan itt járt, és ezt üzeni neked:</p>
-                <blockquote className="mt-5 border-l border-lime-400/35 pl-4 text-lg leading-8 text-lime-200 sm:pl-5 sm:text-xl">
-                  &quot;{message}&quot;
-                </blockquote>
-                <div className="mt-3 text-sm uppercase tracking-[0.22em] text-lime-500/70">
-                  V.
-                </div>
-
-                <div className="mt-12 grid gap-3 border-t border-lime-400/15 pt-5 sm:grid-cols-2">
-                  <Link
-                    href="https://www.vallalhatatlan.online/"
-                    className="group border border-lime-400/25 px-4 py-3 text-center text-xs uppercase tracking-[0.2em] text-lime-300 transition hover:border-lime-300 hover:bg-lime-300/10 hover:text-lime-100"
-                  >
-                    &gt; ENTER VÁLLALHATATLAN
-                  </Link>
-
-                  <a
-                    href={signalUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="border border-lime-400/25 px-4 py-3 text-center text-xs uppercase tracking-[0.2em] text-lime-300 transition hover:border-lime-300 hover:bg-lime-300/10 hover:text-lime-100"
-                  >
-                    &gt; SIGNAL / {SIGNAL_USERNAME}
-                  </a>
-                </div>
-
-                <p className="mt-5 text-[10px] leading-5 tracking-[0.12em] text-lime-500/45">
-                  A rendszer minden megnyitáskor új üzenetet generál.
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-6 border-t border-lime-400/10 pt-3 text-[9px] uppercase tracking-[0.2em] text-lime-500/30">
-            V-INT // DEAD DROP PROTOCOL // ONLINE
-          </div>
-        </div>
-      </section>
+              <a
+                href={SIGNAL_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex w-fit items-center text-xs uppercase tracking-[0.18em] text-lime-100/80 transition-colors hover:text-lime-100"
+              >
+                &gt; SIGNAL / vallalhatatlan.01
+              </a>
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   )
 }
