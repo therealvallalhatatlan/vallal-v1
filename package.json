@@ -48,6 +48,7 @@
     "@stripe/stripe-js": "^9.13.0",
     "@supabase/supabase-js": "^2.56.1",
     "@telegram-apps/sdk-react": "^3.3.9",
+    "@tiptap/core": "3.31.0",
     "@tiptap/extension-image": "^3.31.0",
     "@tiptap/extension-youtube": "^3.31.0",
     "@tiptap/pm": "^3.31.0",
