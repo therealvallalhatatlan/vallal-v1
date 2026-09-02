@@ -283,6 +283,45 @@ const RichContentEditor = forwardRef<RichContentEditorHandle, RichContentEditorP
   const handleImageButtonClick = () => {
     if (uploadState === 'uploading') return
     fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    startUpload()
+    try {
+      const formData = new FormData()
+      formData.append('spotId', spotId)
+      formData.append('file', file)
+      const res = await fetch('/api/admin/matrica/rich-content/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      })
+      const payload = await res.json()
+      if (!res.ok || !payload?.success || typeof payload.url !== 'string') {
+        throw new Error(payload?.error || 'upload_failed')
+      }
+      editor.chain().focus().setImage({ src: payload.url, alt: '' }).run()
+      transitionUploadState('success')
+  const buildButton = (
+    label: string,
+    execute: () => void,
+    active: boolean,
+    disabled = false,
+  ) => (
+    <button
+      type="button"
+      onClick={() => execute()}
+      style={toolbarButtonStyle(active, disabled)}
+      disabled={disabled}
+    >
+      {label}
+    </button>
+  )
+
   return (
     <div style={editorWrapperStyle}>
       <div style={toolbarStyle}>
@@ -290,6 +329,28 @@ const RichContentEditor = forwardRef<RichContentEditorHandle, RichContentEditorP
         {buildButton('I', () => editor.chain().focus().toggleItalic().run(), editor.isActive('italic'))}
         {buildButton('H1', () => editor.chain().focus().toggleHeading({ level: 1 }).run(), editor.isActive('heading', { level: 1 }))}
         {buildButton('H2', () => editor.chain().focus().toggleHeading({ level: 2 }).run(), editor.isActive('heading', { level: 2 }))}
+        {buildButton('H3', () => editor.chain().focus().toggleHeading({ level: 3 }).run(), editor.isActive('heading', { level: 3 }))}
+        {buildButton('•', () => editor.chain().focus().toggleBulletList().run(), editor.isActive('bulletList'))}
+        {buildButton('1.', () => editor.chain().focus().toggleOrderedList().run(), editor.isActive('orderedList'))}
+        {buildButton('QUOTE', () => editor.chain().focus().toggleBlockquote().run(), editor.isActive('blockquote'))}
+        {buildButton('—', () => editor.chain().focus().setHorizontalRule().run(), editor.isActive('horizontalRule'))}
+        {buildButton('VIDEO', () => setVideoDialogOpen(true), false)}
+        {buildButton('IMAGE', handleImageButtonClick, false, uploadState === 'uploading')}
+        {buildButton('UNDO', () => editor.chain().focus().undo().run(), false)}
+        {buildButton('REDO', () => editor.chain().focus().redo().run(), false)}
+      </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+      {uploadStatusMessages[uploadState] ? (
+        <span style={{ ...uploadStatusStyle, color: uploadStatusColors[uploadState] }}>
+          {uploadStatusMessages[uploadState]}
+        </span>
+      ) : null}
       <EditorContent editor={editor} style={contentStyle} />
       {videoDialogOpen ? (
         <div style={videoDialogStyle}>
@@ -331,6 +392,47 @@ const RichContentEditor = forwardRef<RichContentEditorHandle, RichContentEditorP
     </div>
   )
 })
+          {uploadStatusMessages[uploadState]}
+        </span>
+      ) : null}
+      <EditorContent editor={editor} style={contentStyle} />
+      {videoDialogOpen ? (
+        <div style={videoDialogStyle}>
+          <p style={{ margin: 0, letterSpacing: '0.2em', fontSize: 11, color: '#d4d4d8' }}>
+            VIDEÓ BEÁGYAZÁSA
+          </p>
+          <input
+            style={videoDialogInputStyle}
+            placeholder="YouTube vagy Vimeo link"
+            value={videoUrl}
+            onChange={(event) => {
+              setVideoUrl(event.target.value)
+              setVideoDialogError('')
+            }}
+          />
+          {videoDialogError ? <p style={videoDialogErrorStyle}>{videoDialogError}</p> : null}
+          <div style={videoDialogFooterStyle}>
+            <button
+              type="button"
+              onClick={() => {
+                setVideoDialogOpen(false)
+                setVideoDialogError('')
+                setVideoUrl('')
+              }}
+              style={toolbarButtonStyle(false)}
+            >
+              MÉGSE
+            </button>
+            <button
+              type="button"
+              onClick={handleVideoConfirm}
+              style={toolbarButtonStyle(false)}
+            >
+              BEILLESZTÉS
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 })

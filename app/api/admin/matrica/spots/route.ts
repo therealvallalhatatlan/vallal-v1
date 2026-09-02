@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import type { LocationSpotType, SpotStatus, SpotType, VirtualSpotContentType, RichContentDocument } from '@/lib/matrica'
+import {
+  DEFAULT_RICH_CONTENT,
+  isRichContentDocument,
+} from '@/lib/matrica'
+import type {
+  LocationSpotType,
+  RichContentDocument,
+  SpotStatus,
+  SpotType,
+  VirtualSpotContentType,
+} from '@/lib/matrica'
 import { canCreatePaidSpots, canManageAllSpots, getUserRoleByEmail } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
@@ -23,12 +33,6 @@ async function requireAuthenticatedUser(req: NextRequest): Promise<AuthUser | nu
 
   if (error || !user) return null
   return { id: user.id, email: user.email ?? null }
-}
-
-function isRichContentDocument(value: unknown): value is RichContentDocument {
-  if (!value || typeof value !== 'object') return false
-  const document = value as { version?: unknown; blocks?: unknown }
-  return document.version === 1 && Array.isArray(document.blocks) && document.blocks.length <= 200
 }
 
 // ── GET /api/admin/matrica/spots  (all spots, any status) ─────────────────────
@@ -81,7 +85,7 @@ export async function POST(req: NextRequest) {
   const locationType: LocationSpotType = body.type === 'virtual' ? 'virtual' : 'physical'
   const contentType = body.content_type as VirtualSpotContentType | null
   const contentUrl = typeof body.content_url === 'string' ? body.content_url.trim() : ''
-  const richContent = body.rich_content
+  const rawRichContent = body.rich_content
 
   const wantsPaid = locationType === 'physical' && body.spot_type === 'paid'
   const rawPriceHuf = Number(body.price_huf)
@@ -112,13 +116,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_coordinates' }, { status: 400 })
   }
 
+  let normalizedRichContent: RichContentDocument | null = null
+
   if (locationType === 'virtual') {
     const allowedContentTypes: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link', 'rich']
     if (!contentType || !allowedContentTypes.includes(contentType)) {
       return NextResponse.json({ error: 'content_type_required' }, { status: 400 })
     }
+
     if (contentType === 'rich') {
-      if (typeof richContent !== 'undefined' && !isRichContentDocument(richContent)) {
+      if (rawRichContent === undefined || rawRichContent === null) {
+        normalizedRichContent = DEFAULT_RICH_CONTENT
+      } else if (isRichContentDocument(rawRichContent)) {
+        normalizedRichContent = rawRichContent
+      } else {
         return NextResponse.json({ error: 'invalid_rich_content' }, { status: 400 })
       }
     } else if (!contentUrl) {
@@ -138,6 +149,11 @@ export async function POST(req: NextRequest) {
       : normalizedImageUrls[0] ?? null
 
   const db = supabaseAdmin()
+  const richContentPayload =
+    locationType === 'virtual' && contentType === 'rich'
+      ? normalizedRichContent ?? DEFAULT_RICH_CONTENT
+      : null
+
   const basePayload = {
     title: title.trim(),
     description: typeof description === 'string' ? description.trim() || null : null,
@@ -154,9 +170,7 @@ export async function POST(req: NextRequest) {
     type: locationType,
     content_type: locationType === 'virtual' ? contentType : null,
     content_url: locationType === 'virtual' && contentType !== 'rich' ? contentUrl : null,
-    rich_content: locationType === 'virtual' && contentType === 'rich'
-      ? (isRichContentDocument(richContent) ? richContent : { version: 1, blocks: [] })
-      : null,
+    rich_content: richContentPayload,
     creator_id: user.id,
   }
 
@@ -176,6 +190,7 @@ export async function POST(req: NextRequest) {
     data = resultWithGallery.data
     error = resultWithGallery.error
 
+    // Backward compatibility if the image_urls column is not yet migrated.
     if (error && typeof error.message === 'string' && error.message.toLowerCase().includes('image_urls')) {
       const fallbackResult = await db
         .from('sticker_spots')
@@ -205,7 +220,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ spot: data }, { status: 201 })
 }
 
-// ── PATCH /api/admin/matrica/spots  (update metadata/content) ─────────────────
+// ── PATCH /api/admin/matrica/spots  (update status) ───────────────────────────
 export async function PATCH(req: NextRequest) {
   const user = await requireAuthenticatedUser(req)
   if (!user) {
@@ -222,7 +237,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
   }
 
-  const { id, status, title, description, price_huf, content_type, rich_content } = body
+  const { id, status, title, description, price_huf } = body
   if (typeof id !== 'string' || !id.trim()) {
     return NextResponse.json({ error: 'id_required' }, { status: 400 })
   }
@@ -256,23 +271,6 @@ export async function PATCH(req: NextRequest) {
     updates.price_huf = Math.floor(parsedPrice)
   }
 
-  if (typeof content_type !== 'undefined') {
-    const allowedContentTypes: VirtualSpotContentType[] = ['video', 'audio', 'image', 'text', 'link', 'rich']
-    if (!allowedContentTypes.includes(content_type as VirtualSpotContentType)) {
-      return NextResponse.json({ error: 'invalid_content_type' }, { status: 400 })
-    }
-    updates.content_type = content_type as VirtualSpotContentType
-  }
-
-  if (typeof rich_content !== 'undefined') {
-    if (!isRichContentDocument(rich_content)) {
-      return NextResponse.json({ error: 'invalid_rich_content' }, { status: 400 })
-    }
-    updates.rich_content = rich_content
-    updates.content_url = null
-    updates.content_type = 'rich'
-  }
-
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'no_updates' }, { status: 400 })
   }
@@ -288,7 +286,7 @@ export async function PATCH(req: NextRequest) {
     : patchQuery.eq('creator_id', user.id)
 
   const { data, error } = await scopedPatchQuery
-    .select('id, status, title, description, spot_type, price_huf, creator_id, type, content_type, content_url, rich_content')
+    .select('id, status, title, description, spot_type, price_huf, creator_id')
     .maybeSingle()
 
   if (error) {
@@ -329,10 +327,12 @@ export async function DELETE(req: NextRequest) {
   }
 
   const db = supabaseAdmin()
-  const { data, error } = await db
+  const deleteQuery = db
     .from('sticker_spots')
     .delete()
     .eq('id', id.trim())
+
+  const { data, error } = await deleteQuery
     .select('id')
     .maybeSingle()
 

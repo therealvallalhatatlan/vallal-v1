@@ -3,6 +3,8 @@
  * Shared types and utilities for the sticker hunt feature.
  */
 
+import type { JSONContent } from '@tiptap/core'
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type SpotStatus = 'active' | 'empty' | 'archived'
@@ -11,46 +13,17 @@ export type SpotType = 'free' | 'paid'
 export type LocationSpotType = 'physical' | 'virtual'
 export type VirtualSpotContentType = 'video' | 'audio' | 'image' | 'text' | 'link' | 'rich'
 
-export type RichContentBlock =
-  | {
-      type: 'heading'
-      level: 1 | 2 | 3
-      text: string
-    }
-  | {
-      type: 'paragraph'
-      text: string
-    }
-  | {
-      type: 'quote'
-      text: string
-    }
-  | {
-      type: 'bulletList'
-      items: string[]
-    }
-  | {
-      type: 'orderedList'
-      items: string[]
-    }
-  | {
-      type: 'divider'
-    }
-  | {
-      type: 'image'
-      url: string
-      alt?: string
-      caption?: string
-    }
-  | {
-      type: 'video'
-      provider: 'youtube' | 'vimeo'
-      videoId: string
-    }
+export type RichContentDocument = JSONContent
 
-export interface RichContentDocument {
-  version: 1
-  blocks: RichContentBlock[]
+export const DEFAULT_RICH_CONTENT: RichContentDocument = { type: 'doc', content: [] }
+
+export function isRichContentDocument(value: unknown): value is RichContentDocument {
+  if (typeof value !== 'object' || value === null) return false
+  const record = value as Record<string, unknown>
+  if (record.type !== 'doc') return false
+  if (typeof record.content === 'undefined') return true
+  if (!Array.isArray(record.content)) return false
+  return record.content.every((node) => typeof node === 'object' && node !== null)
 }
 
 export interface StickerSpot {

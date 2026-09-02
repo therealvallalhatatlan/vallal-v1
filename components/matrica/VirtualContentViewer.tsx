@@ -2,13 +2,15 @@
 
 import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { StickerSpot, VirtualSpotContentType } from '@/lib/matrica'
+import type { RichContentDocument, StickerSpot, VirtualSpotContentType } from '@/lib/matrica'
 import AudioPlayer from './AudioPlayer'
+import RichContentRenderer from './RichContentRenderer'
 
 interface Props {
   spot: StickerSpot
   contentUrl: string
   contentType: VirtualSpotContentType
+  richContent?: RichContentDocument | null
   onClose: () => void
 }
 
@@ -18,6 +20,7 @@ const CONTENT_LABELS: Record<VirtualSpotContentType, string> = {
   image: 'KÉP',
   text: 'SZÖVEG',
   link: 'LINK',
+  rich: 'RICH CONTENT',
 }
 
 const formatTime = (value: number) => {
@@ -27,7 +30,7 @@ const formatTime = (value: number) => {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-export default function VirtualContentViewer({ spot, contentUrl, contentType, onClose }: Props) {
+export default function VirtualContentViewer({ spot, contentUrl, contentType, richContent, onClose }: Props) {
   const typeLabel = CONTENT_LABELS[contentType] ?? 'DIGITÁLIS'
   const accentColor = '#d9f99d'
   const [portalReady, setPortalReady] = useState(false)
@@ -271,6 +274,27 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
           </div>
         )
 
+      case 'rich':
+        if (!richContent) {
+          return <div style={{ color: '#f87171', fontSize: 16 }}>Rich Content nem elérhető.</div>
+        }
+        return (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              overflowY: 'auto',
+              padding: '8px 24px 32px',
+              color: '#f4f4f5',
+              fontSize: 'clamp(18px, 1.8vw, 24px)',
+              lineHeight: 1.6,
+              boxSizing: 'border-box',
+            }}
+          >
+            <RichContentRenderer content={richContent} />
+          </div>
+        )
+
       default:
         return null
     }
@@ -283,6 +307,7 @@ export default function VirtualContentViewer({ spot, contentUrl, contentType, on
     handleIframeLoad,
     handleIframeError,
     spot.title,
+    richContent,
   ])
 
   const viewer = (
