@@ -8,6 +8,11 @@ const nextConfig = {
   },
   // mapbox-gl 3.x needs transpilation in Next.js / Turbopack
   transpilePackages: ['mapbox-gl'],
+  // The homepage random-story API reads these directories at runtime.
+  // Explicitly include them in Vercel's serverless output tracing.
+  outputFileTracingIncludes: {
+    '/*': ['./content/konyv2/**/*', './content/stories/**/*'],
+  },
   async redirects() {
     return [
       {
