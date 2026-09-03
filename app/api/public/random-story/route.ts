@@ -11,15 +11,6 @@ const SOURCE_DIRS = ["konyv2", "stories"] as const
 
 const EXCLUDED_KONYV2 = new Set(["galeria-oldal", "szoveg-oldal", "video-oldal", "private-link-netcafe"])
 
-function excerpt(text: string, maxLength = 620) {
-  const normalized = text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim()
-  if (normalized.length <= maxLength) return normalized
-
-  const candidate = normalized.slice(0, maxLength)
-  const lastSpace = candidate.lastIndexOf(" ")
-  return `${candidate.slice(0, lastSpace > 0 ? lastSpace : maxLength).trim()}…`
-}
-
 function titleFromFilename(filename: string) {
   return filename
     .replace(/\.txt$/i, "")
@@ -29,7 +20,12 @@ function titleFromFilename(filename: string) {
 
 export async function GET() {
   try {
-    const candidates: Array<{ source: "konyv2" | "stories"; slug: string; title: string; text: string }> = []
+    const candidates: Array<{
+      source: "konyv2" | "stories"
+      slug: string
+      title: string
+      text: string
+    }> = []
 
     for (const source of SOURCE_DIRS) {
       const directory = path.join(CONTENT_ROOT, source)
@@ -46,7 +42,10 @@ export async function GET() {
         const text = parsed.content.replace(/\s+$/u, "").trim()
         if (!text) continue
 
-        const registryEntry = source === "konyv2" ? konyv2Novellak.find((entry) => entry.slug === slug) : null
+        const registryEntry = source === "konyv2"
+          ? konyv2Novellak.find((entry) => entry.slug === slug)
+          : null
+
         const title =
           typeof parsed.data?.title === "string" && parsed.data.title.trim()
             ? parsed.data.title.trim()
@@ -67,7 +66,8 @@ export async function GET() {
         source: selected.source,
         slug: selected.slug,
         title: selected.title,
-        text: excerpt(selected.text),
+        // The complete story is returned. The homepage renders the entire text.
+        text: selected.text,
       },
       {
         headers: {
