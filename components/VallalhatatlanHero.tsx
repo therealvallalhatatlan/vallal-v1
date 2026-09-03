@@ -167,6 +167,16 @@ export default function VallalhatatlanHero() {
           ))}
         </h2>
 
+        <video
+          className="relative left-1/2 mt-8 block w-screen -translate-x-1/2"
+          src="/videos/film.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
+
         <div
           className="mt-8 mb-4 font-mono text-sm font-medium uppercase leading-[1.85] tracking-wide text-lime-100/80"
           style={{ fontFamily: "var(--font-mono-tech)" }}
