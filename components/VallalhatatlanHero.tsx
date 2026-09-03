@@ -214,9 +214,19 @@ export default function VallalhatatlanHero() {
 
 
         <section className="w-full" aria-label="Magyarázat">
-          <div className="pt-6 font-mono text-[17px] italic leading-relaxed text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+          <div className="pt-6 font-mono italic leading-relaxed text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
             
-            <div className="mt-4 text-[15px] leading-relaxed text-right text-zinc-100">
+            <div className="mt-8 text-lg">
+                  <div className="">
+                  <Image 
+                    src="/img/avatar.webp"
+                    alt="Könyv"
+                    width={60}
+                    height={60}
+                    className="rounded-full float-right mb-6"
+                  />
+                  </div>
+
                   <p>
                     Egy könyv aminek nincs címe,<br/> 
                     nincs írója, és nincs kiadója. 
@@ -246,12 +256,13 @@ export default function VallalhatatlanHero() {
 
                 <Link
                   href="/halozat"
-                  className="flex gap-6 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-colors hover:border-zinc-100 hover:bg-zinc-100/70 hover:text-zinc-900"
+                  className="flex gap-6 w-full items-center justify-between bg-white/80 rounded-md border-2 border-lime-100/80 px-6 font-mono text-xl font-medium tracking-[0.08em] text-zinc-800"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   <span className="flex flex-col items-start">
                     <span className="text-4xl text-lime-100/70">#038</span>
                     <span className="text-sm">EZ A TE PÉLDÁNYOD</span>
+                    <span aria-hidden="true">←</span>
                   </span>
                 </Link>
             </div>
