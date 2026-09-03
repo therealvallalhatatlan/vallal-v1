@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useState } from "react"
 import Link from "next/link"
 import { Montserrat } from "next/font/google"
+import { RefreshCw } from "lucide-react"
 import VHeroChat from "@/components/VHeroChat"
 
 const montserrat = Montserrat({
@@ -36,12 +37,40 @@ const HERO_HEADLINES = [
 
 const DEFAULT_HEADLINE = "EZ NEM EGY KÖNYV."
 
+type RandomStory = {
+  source: "konyv2" | "stories"
+  slug: string
+  title: string
+  text: string
+}
+
 export default function VallalhatatlanHero() {
   const [activeDropCount, setActiveDropCount] = useState(17)
   const [physicalSpotCount, setPhysicalSpotCount] = useState<number | null>(null)
   const [virtualSpotCount, setVirtualSpotCount] = useState<number | null>(null)
   const [registeredUsers, setRegisteredUsers] = useState<number | null>(null)
   const [headline, setHeadline] = useState(DEFAULT_HEADLINE)
+  const [randomStory, setRandomStory] = useState<RandomStory | null>(null)
+  const [storyLoading, setStoryLoading] = useState(false)
+
+  const loadRandomStory = async () => {
+    setStoryLoading(true)
+
+    try {
+      const response = await fetch("/api/public/random-story", {
+        cache: "no-store",
+      })
+
+      if (!response.ok) throw new Error("Random story unavailable")
+
+      const data = (await response.json()) as RandomStory
+      setRandomStory(data)
+    } catch (error) {
+      console.error("Failed to load random story:", error)
+    } finally {
+      setStoryLoading(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -70,11 +99,7 @@ export default function VallalhatatlanHero() {
 
         const data = await response.json()
 
-        if (
-          !cancelled &&
-          response.ok &&
-          typeof data?.users === "number"
-        ) {
+        if (!cancelled && response.ok && typeof data?.users === "number") {
           setRegisteredUsers(data.users)
         }
       } catch {
@@ -111,12 +136,12 @@ export default function VallalhatatlanHero() {
     void loadActiveDropCount()
     void loadRegisteredUsers()
     void loadSpotCounts()
+    void loadRandomStory()
 
     return () => {
       cancelled = true
     }
   }, [])
-
 
   const formatHeroCount = (value: number | null) =>
     value === null ? "--" : String(value).padStart(2, "0")
@@ -169,14 +194,12 @@ export default function VallalhatatlanHero() {
           <p>67 ONLINE SZTORI</p>
         </div>
 
-        {/* Main Network CTA */}
         <Link
           href="/halozat"
           className="mt-6 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-colors hover:border-zinc-100 hover:bg-zinc-100/70 hover:text-zinc-900"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           <span>BELÉPÉS A HÁLÓZATBA</span>
-
           <span aria-hidden="true">→</span>
         </Link>
 
@@ -187,36 +210,58 @@ export default function VallalhatatlanHero() {
           PUBLIC ACCESS // NODE DISCOVERY
         </p>
 
-        <div className="mt-12 flex items-center justify-center gap-4 text-[17px] italic  text-zinc-300">
-          <p className="font-mono" style={{ fontFamily: "var(--font-mono-tech)" }}>
--Jegyezd meg ezt a pillanatot, és azt amit most mondok. <br/><br/>
-A parázsló tábortűz fénye játszik Sophie arcán ahogy a kezét melengetve, bizakodóan, de azért kicsit félve attól mit fogok mondani, rámnéz. <br/><br/>
--A valóság... csak egy narratíva. Újraírom bazdmeg. A saját emlékeim alapján újraírom az egészet. Ebben lesz valamiféle mintázat, amit ha felismerek - látni fogom a jövőt. 
-<br/><br/>
-Sophie elröhögi magát.<br/><br/>
--Ne röhögj, ha látom a mintázatot, folytatni is tudom, sőt meg is változtathatom.<br/><br/>
-Beleszívok a cigimbe, és belül kicsit elkeseredek. Úgysem fogom látni. Úgyse ismerem majd fel.<br/><br/>
--Mindegy. Le akarom írni. És ha a valóságot írom, és a narratívám helyes, akkor egy új világot hozok létre basszameg. <br/><br/>
-Sophie érdeklődve rámnéz.<br/><br/>
--És tudod mire számítok? - Folytatom ezen fellelkesülve. 
-- Hogy ebbe az új világba, mások is beköltöznek majd! Megjelennek az első telepesek. Mint a vadnyugaton. És ezekből a felfedezőszellemű, bátor, vagy éppen totálisan kétségbeesett emberekből valami épülni fog.
-<br/><br/>
--Egy hálózat?
-<br/><br/>
--Egy hálózat... - Ismétlem halkan miközben egymás szemébe nézünk a parázsló tűz fölött. - Igen!
-          </p>
-        </div>
+        <section className="mt-12 w-full" aria-label="Random Sztorik">
+          <div
+            className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-500"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            <span>Random Sztorik</span>
+            <button
+              type="button"
+              onClick={() => void loadRandomStory()}
+              disabled={storyLoading}
+              aria-label="Új random sztori"
+              title="Új random sztori"
+              className="group flex h-7 w-7 items-center justify-center text-zinc-500 transition-colors hover:text-lime-100 disabled:opacity-40"
+            >
+              <RefreshCw
+                size={14}
+                strokeWidth={1.5}
+                className={`transition-transform duration-500 ${storyLoading ? "animate-spin" : "group-hover:rotate-180"}`}
+              />
+            </button>
+          </div>
+
+          {randomStory ? (
+            <article className="border-t border-zinc-800 pt-4">
+              <h3
+                className="text-[18px] font-medium italic leading-tight text-zinc-200"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                {randomStory.title}
+              </h3>
+              <p
+                className="mt-4 whitespace-pre-line text-[15px] italic leading-relaxed text-zinc-400"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                {randomStory.text}
+              </p>
+            </article>
+          ) : (
+            <div className="border-t border-zinc-800 pt-4 font-mono text-sm italic text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              {storyLoading ? "Sztori betöltése..." : "Nincs elérhető sztori."}
+            </div>
+          )}
+        </section>
 
         <div className="mt-12 w-full">
           <VHeroChat />
         </div>
 
-        {/* About / project description */}
         <div
           className="mt-8 pb-8 pt-6 font-mono text-md leading-relaxed text-zinc-400"
-          style={{ fontFamily: "var(--font-mono-tech)"}}
+          style={{ fontFamily: "var(--font-mono-tech)" }}
         >
-
           <div className="mt-8 border-t border-zinc-900 pt-4 text-[10px] uppercase tracking-[0.12em] text-zinc-600">
             SIGNAL ORIGIN: REDDIT
             <br />
@@ -225,7 +270,6 @@ Sophie érdeklődve rámnéz.<br/><br/>
         </div>
       </div>
 
-      {/* Bottom navigation bar */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-60 border-t border-zinc-700 bg-zinc-950 px-3 py-6 pt-3"
         style={{
@@ -243,7 +287,6 @@ Sophie érdeklődve rámnéz.<br/><br/>
             >
               [ ARCHIVUM ]
             </span>
-
             <span
               className="text-xs text-lime-100/80"
               style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -262,7 +305,6 @@ Sophie érdeklődve rámnéz.<br/><br/>
             >
               [ HALOZAT ]
             </span>
-
             <span
               className="text-xs text-lime-100/80"
               style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -281,7 +323,6 @@ Sophie érdeklődve rámnéz.<br/><br/>
             >
               [ LAB ]
             </span>
-
             <span
               className="text-xs text-lime-100/80"
               style={{ fontFamily: "var(--font-mono-tech)" }}
