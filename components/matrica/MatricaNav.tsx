@@ -233,7 +233,7 @@ export function OnlineUsersBar({
             '1px solid rgba(255,255,255,0.08)',
         }}
       >
-        NINCS ONLINE FELHASZNALO
+        FELHASZNÁLÓK KERESÉSE...
       </div>
     )
   }
@@ -247,14 +247,13 @@ export function OnlineUsersBar({
         zIndex: 1,
         pointerEvents: 'auto',
         background: 'rgba(6,7,9,0.96)',
-        borderBottom:
-          '1px solid rgba(255,255,255,0.08)',
         padding: isMobile
           ? `4px ${reserveRightSpace}px 4px 0`
           : `6px ${reserveRightSpace}px 6px 0`,
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
+        paddingLeft:15,
+        gap: 2,
         overflowX: 'auto',
         boxShadow:
           'inset 0 -1px 0 rgba(255,255,255,0.04)',
@@ -268,8 +267,8 @@ export function OnlineUsersBar({
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 4,
-            marginRight: 10,
+            gap: 2,
+            marginRight: 5,
             padding:
               u.id === currentUserId
                 ? isMobile
@@ -415,8 +414,8 @@ export function OnlineUsersBar({
             }}
             title={`${u.nickname} - ${
               u.lat && u.lng
-                ? 'Kattints a tĂ©rkĂ©pen valĂł megjelenĂ­tĂ©shez'
-                : 'Nincs pozĂ­ciĂł adat'
+                ? 'Írj neki privát üzenetet'
+                : 'Nincs pozíciós adat'
             }`}
           >
             {u.avatarUrl ? (
@@ -430,8 +429,8 @@ export function OnlineUsersBar({
                   objectFit: 'cover',
                   border:
                     u.id === currentUserId
-                      ? `3px solid ${currentUserAccent}`
-                      : '2px solid #4b5563',
+                      ? `0px solid ${currentUserAccent}`
+                      : '0px solid #4b5563',
                   background: '#23232a',
                   cursor: 'pointer',
                 }}
@@ -454,8 +453,8 @@ export function OnlineUsersBar({
                   fontSize: isMobile ? 17 : 15,
                   border:
                     u.id === currentUserId
-                      ? `3px solid ${currentUserAccent}`
-                      : '2px solid #4b5563',
+                      ? `0px solid ${currentUserAccent}`
+                      : '0px solid #4b5563',
                   cursor: 'pointer',
                 }}
               >
@@ -506,8 +505,8 @@ export function OnlineUsersBar({
                   e.stopPropagation()
                   onMessageUser(u)
                 }}
-                aria-label={`${u.nickname} ĂĽzenete`}
-                title={`${u.nickname} ĂĽzenete`}
+                aria-label={`Üzenet neki: ${u.nickname}`}
+                title={`Üzenet neki: ${u.nickname}`}
                 style={{
                   position: 'absolute',
                   top: -6,
@@ -613,14 +612,14 @@ export function OnlineUsersBar({
             title={
               u.id === currentUserId
                 ? u.nickname
-                : `${u.nickname} privat uzenet`
+                : `Privat üzenet ${u.nickname}`
             }
             style={{
               fontSize: isMobile ? 12 : 13,
               color:
                 u.id === currentUserId
                   ? '#e5e7eb'
-                  : '#d4d4d8',
+                  : '#838383',
               fontWeight:
                 u.id === currentUserId ? 700 : 500,
               maxWidth: isMobile ? 56 : 70,
@@ -639,7 +638,7 @@ export function OnlineUsersBar({
                   ? 'none'
                   : 'underline',
               textDecorationColor:
-                'rgba(190,242,100,0.5)',
+                'rgba(190,242,100,0)',
               textUnderlineOffset: 2,
             }}
           >
@@ -2579,7 +2578,7 @@ function MatricaNav({
                   <strong>
                     {toast.nickname}
                   </strong>{' '}
-                  ĂĽzenetet kĂĽldĂ¶tt
+                  üzenetet küldött neked.
                 </span>
               </div>
             </div>

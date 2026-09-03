@@ -117,38 +117,51 @@ export async function GET(req: NextRequest) {
 
   const metadataMap = new Map<string, { avatarUrl: string | null }>()
 
-  const { data: authUsers, error: authUsersError } = await supabase
-    .from('auth.users')
-    .select('id,user_metadata')
-    .in('id', userIds)
+  if (userIds.length > 0) {
+    await Promise.all(
+      userIds.map(async (userId) => {
+        try {
+          const { data: authUser, error: authUserError } = await supabase.auth.admin.getUserById(userId)
 
-  if (authUsersError) {
-    console.error('[matrica/online-users] auth metadata error', authUsersError)
-  } else {
-    for (const authUser of authUsers ?? []) {
-      if (!authUser?.id) continue
+          if (authUserError) {
+            console.error('[matrica/online-users] avatar lookup', {
+              userId,
+              error: authUserError.message ?? authUserError,
+            })
+            metadataMap.set(userId, { avatarUrl: null })
+            return
+          }
 
-      const metadataRaw = authUser.user_metadata
-      const metadata =
-        typeof metadataRaw === 'string'
-          ? (() => {
-              try {
-                return JSON.parse(metadataRaw)
-              } catch {
-                return null
-              }
-            })()
-          : metadataRaw
+          const metadataRaw = authUser?.user?.user_metadata
+          const metadata: Record<string, unknown> | null =
+            typeof metadataRaw === 'string'
+              ? (() => {
+                  try {
+                    return JSON.parse(metadataRaw) as Record<string, unknown>
+                  } catch {
+                    return null
+                  }
+                })()
+              : (metadataRaw as Record<string, unknown>) ?? null
 
-      const avatarCandidate =
-        metadata && typeof metadata.avatar_url === 'string' && metadata.avatar_url
-          ? metadata.avatar_url
-          : metadata && typeof metadata.avatarUrl === 'string'
-            ? metadata.avatarUrl
-            : null
+          const avatarCandidate =
+            metadata && typeof metadata['avatar_url'] === 'string' && metadata['avatar_url']
+              ? (metadata['avatar_url'] as string)
+              : metadata && typeof metadata['avatarUrl'] === 'string'
+                ? (metadata['avatarUrl'] as string)
+                : null
 
-      metadataMap.set(authUser.id, { avatarUrl: avatarCandidate })
-    }
+          metadataMap.set(userId, { avatarUrl: avatarCandidate })
+          console.debug('[matrica/online-users] avatar lookup', {
+            userId,
+            hasAvatar: Boolean(avatarCandidate),
+          })
+        } catch (error) {
+          console.error('[matrica/online-users] avatar lookup', { userId, error })
+          metadataMap.set(userId, { avatarUrl: null })
+        }
+      })
+    )
   }
 
   const users = userIds.map((id) => {
