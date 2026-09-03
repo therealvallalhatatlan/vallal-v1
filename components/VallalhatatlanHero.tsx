@@ -1,6 +1,7 @@
 "use client"
 
 import { Fragment, useEffect, useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { Montserrat } from "next/font/google"
 import { RefreshCw } from "lucide-react"
@@ -154,10 +155,21 @@ export default function VallalhatatlanHero() {
       }}
     >
       <div className="pointer-events-none absolute inset-0 fx-stripes opacity-10 mix-blend-plus-darker" />
+      <div className="relative z-20 flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
 
-      <div className="relative z-20 flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-6">
+        <video
+          className="rounded-3xl relative left-1/2 mt-0 block w-screen -translate-x-1/2"
+          src="/videos/film2.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          controls={true}
+          preload="metadata"
+        />
+
         <h2
-          className={`${montserrat.className} text-6xl uppercase leading-tighter text-zinc-100`}
+          className={`${montserrat.className} pt-8 text-6xl uppercase leading-tighter text-zinc-100`}
         >
           {headline.split("\n").map((line, index, array) => (
             <Fragment key={line + index}>
@@ -167,21 +179,12 @@ export default function VallalhatatlanHero() {
           ))}
         </h2>
 
-        <video
-          className="relative left-1/2 mt-8 block w-screen -translate-x-1/2"
-          src="/videos/film.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-        />
 
         <div
           className="mt-8 mb-4 font-mono text-sm font-medium uppercase leading-[1.85] tracking-wide text-lime-100/80"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
-          <p className="text-zinc-100">ARCHÍVUM / HÁLÓZAT / LABOR</p>
+          <p className="text-zinc-100">ARCHÍVUM / HÁLÓZAT / LABORATÓRIUM</p>
 
           <p>
             {registeredUsers === null
@@ -213,16 +216,61 @@ export default function VallalhatatlanHero() {
           <span aria-hidden="true">→</span>
         </Link>
 
-        <p
-          className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-lime-100/40"
-          style={{ fontFamily: "var(--font-mono-tech)" }}
-        >
-          PUBLIC ACCESS // NODE DISCOVERY
-        </p>
+
+        <section className="mt-16 w-full" aria-label="Magyarázat">
+          <div className="border-t border-zinc-800 pt-6 font-mono text-[17px] italic leading-relaxed text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <p>
+              Nincs címe, nincs írója, és nincs kiadója. 
+            </p>
+   
+            <p>
+              Ne keresd a könyvesboltokban.
+            </p>
+            <br/>
+            <p>
+              Elrejtem, te meg megtalálod.
+            </p>
+            <p className="mt-4">
+              A cél hogy jól érezzük magunkat, visszavegyük a várost, és visszaszerezzük a kontrollt a valóságérzékelésünk felett.
+            </p> 
+
+            <div className="flex flex-row gap-4 mt-16">
+
+                <div className="h-40 w-40 overflow-hidden relative bg-zinc-900/0">
+                  <video
+                    className="rounded-md absolute left-0 top-0 block"
+                    src="/videos/konyv2.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    controls={false}
+                    preload="metadata"
+                  />
+                </div>
+
+                <Link
+                  href="/halozat"
+                  className="flex gap-6 w-1/2 items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-colors hover:border-zinc-100 hover:bg-zinc-100/70 hover:text-zinc-900"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  <span aria-hidden="true">←</span>
+                  <span className="flex flex-col items-start">
+                    <span className="text-4xl text-lime-100/70">#038</span>
+                    <span className="text-sm">EZ A TE PÉLDÁNYOD</span>
+                  </span>
+                </Link>
+            </div>
+
+            
+
+            </div>
+        </section>
+
 
         <section className="mt-12 w-full" aria-label="Random Sztorik">
           <div
-            className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-500"
+            className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-500 border-t border-zinc-800 pt-4"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             <span>Random Sztorik</span>
@@ -243,15 +291,15 @@ export default function VallalhatatlanHero() {
           </div>
 
           {randomStory ? (
-            <article className="border-t border-zinc-800 pt-4">
+            <article className="border-t border-zinc-800 pt-6">
               <h3
-                className="text-[18px] font-medium italic leading-tight text-zinc-200"
+                className={`${montserrat.className} py-2 text-3xl leading-tighter text-zinc-100`}
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 {randomStory.title}
               </h3>
               <p
-                className="mt-4 whitespace-pre-line text-[15px] italic leading-relaxed text-zinc-400"
+                className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-zinc-300"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 {randomStory.text}
