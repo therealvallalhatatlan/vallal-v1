@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Montserrat } from "next/font/google"
 import { RefreshCw } from "lucide-react"
 import VHeroChat from "@/components/VHeroChat"
+import Reviews from "@/components/Reviews"
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -14,29 +15,24 @@ const montserrat = Montserrat({
 })
 
 const HERO_HEADLINES = [
-  "STÁZI MINDENT HALL ÉS LÁT.",
-  "MA KI KELL VINNED A KUKÁT.",
-  "BUZIBÁCSI A KAPUBAN VÁR.",
-  "MI A FASZT OLVASTAM MEGINT?",
-  "UGORJUNK FASZUL NYULAK!",
-  "PIPACSOK KÖZT EGY SZÁL GATYÁBAN.",
-  "A TÁRSADALOM SZÉLSŐ- ÉRTÉKEI.",
-  "GOMBAÁRUS MAFFIÓZÓ.",
-  "POLITOXI- KOMÁN MAGATARTÁS- MINTÁZAT.",
+  "MA KI KELL VINNEM A KUKÁT.",
+  "ÖTTŐL VAGYOK.",
+  "EZ MOST A VALÓSÁG?",
   "NE KÉRDEZD, KI ÍRTA.",
+  "HOL VAN CICA ÚR?!",
   "SPEED- FŰ- BLOODY MARY KOMBÓ.",
-  "EGY MÁSIK DIMENZIÓ.",
   "MINTHA A TESZ-VESZ VÁROSBAN LENNÉK.",
-  "VÁLLALHATATLAN ÁLLAPOTBA KERÜLTEM.",
   "A MÁSODIK AJTÓ MÖGÖTT NEM VOLT SEMMI.",
-  "FELSZIKRÁZNAK A NEURONJAIM",
-  "2002. ZSIBRIK, REHAB",
-  "A CSUPASZ PADLÓN ÜLÜNK A TÖKÜRES BEM-RAKPARTI LAKÁSBAN.",
   "VADNYUGAT VOLT, MINT MA A DARKNET.",
-  "SIRÁLYOK HANGJA A DUNA FELŐL",
+  "Hozhatok még egy bloody maryt?",
 ] as const
 
-const DEFAULT_HEADLINE = "EZ NEM EGY KÖNYV."
+const DEFAULT_HEADLINE = "EZ NEM EGY KÖNYV. EZ EGY HÁLÓZAT."
+
+const getRandomHeadline = () => {
+  const randomIndex = Math.floor(Math.random() * HERO_HEADLINES.length)
+  return HERO_HEADLINES[randomIndex] ?? DEFAULT_HEADLINE
+}
 
 type RandomStory = {
   source: "konyv2" | "stories"
@@ -50,7 +46,7 @@ export default function VallalhatatlanHero() {
   const [physicalSpotCount, setPhysicalSpotCount] = useState<number | null>(null)
   const [virtualSpotCount, setVirtualSpotCount] = useState<number | null>(null)
   const [registeredUsers, setRegisteredUsers] = useState<number | null>(null)
-  const [headline, setHeadline] = useState(DEFAULT_HEADLINE)
+  const [headline, setHeadline] = useState(getRandomHeadline)
   const [randomStory, setRandomStory] = useState<RandomStory | null>(null)
   const [storyLoading, setStoryLoading] = useState(false)
 
@@ -217,26 +213,25 @@ export default function VallalhatatlanHero() {
         </Link>
 
 
-        <section className="mt-16 w-full" aria-label="Magyarázat">
-          <div className="border-t border-zinc-800 pt-6 font-mono text-[17px] italic leading-relaxed text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
-            <p>
-              Nincs címe, nincs írója, és nincs kiadója. 
-            </p>
-   
-            <p>
-              Ne keresd a könyvesboltokban.
-            </p>
-            <br/>
-            <p>
-              Elrejtem, te meg megtalálod.
-            </p>
-            <p className="mt-4">
-              A cél hogy jól érezzük magunkat, visszavegyük a várost, és visszaszerezzük a kontrollt a valóságérzékelésünk felett.
-            </p> 
+        <section className="w-full" aria-label="Magyarázat">
+          <div className="pt-6 font-mono text-[17px] italic leading-relaxed text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            
+            <div className="mt-4 text-[15px] leading-relaxed text-right text-zinc-100">
+                  <p>
+                    Egy könyv aminek nincs címe,<br/> 
+                    nincs írója, és nincs kiadója. 
+                  </p>
+                  <p>
+                    Ne keresd a könyvesboltokban.
+                  </p>
+                  <p>
+                    Elrejtem, és te megtalálod.
+                  </p>
+            </div>
 
             <div className="flex flex-row gap-4 mt-16">
 
-                <div className="h-40 w-40 overflow-hidden relative bg-zinc-900/0">
+                <div className="h-40 w-60 overflow-hidden relative bg-zinc-900/0">
                   <video
                     className="rounded-md absolute left-0 top-0 block"
                     src="/videos/konyv2.mp4"
@@ -251,10 +246,9 @@ export default function VallalhatatlanHero() {
 
                 <Link
                   href="/halozat"
-                  className="flex gap-6 w-1/2 items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-colors hover:border-zinc-100 hover:bg-zinc-100/70 hover:text-zinc-900"
+                  className="flex gap-6 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-colors hover:border-zinc-100 hover:bg-zinc-100/70 hover:text-zinc-900"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
-                  <span aria-hidden="true">←</span>
                   <span className="flex flex-col items-start">
                     <span className="text-4xl text-lime-100/70">#038</span>
                     <span className="text-sm">EZ A TE PÉLDÁNYOD</span>
@@ -268,12 +262,15 @@ export default function VallalhatatlanHero() {
         </section>
 
 
+        <Reviews />
+
+
         <section className="mt-12 w-full" aria-label="Random Sztorik">
           <div
             className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-500 border-t border-zinc-800 pt-4"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            <span>Random Sztorik</span>
+            <span>Random Sztori</span>
             <button
               type="button"
               onClick={() => void loadRandomStory()}

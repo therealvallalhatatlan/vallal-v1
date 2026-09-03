@@ -62,7 +62,7 @@ export default function MainContent({ children }: MainContentProps) {
 
       {/* Main content */}
       <div className="w-full h-20"></div>
-      <div className="relative z-20">{children}</div>
+      <div className="relative z-20 max-w-4xl">{children}</div>
     </main>
   );
 }
