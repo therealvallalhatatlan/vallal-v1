@@ -30,7 +30,7 @@ export function SupportersTicker({
         >
           <div className="flex shrink-0 items-center gap-8 pr-8">
             {names.map((name, index) => (
-              <span key={`a-${name}-${index}`} className="font-mono text-xl uppercase tracking-[0em] text-zinc-100">
+              <span key={`a-${name}-${index}`} className="font-mono text-2xl italic tracking-[0em] text-LIME-100">
                 {name}
               </span>
             ))}

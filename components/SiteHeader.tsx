@@ -38,12 +38,12 @@ const menuItems = [
   {
     href: "/shop",
     label: "BOLT",
-    description: "Saját márkás cuccaink.",
+    description: "Saját márkás cuccok.",
   },
   {
     href: "/tamogatas",
     label: "CREW",
-    description: "Támogasd te is ezt a faszt!",
+    description: "Önts olajat a tűzre!",
   },
 ];
 
