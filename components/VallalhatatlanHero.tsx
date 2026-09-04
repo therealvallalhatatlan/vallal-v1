@@ -5,7 +5,6 @@ import Image from "next/image"
 import Link from "next/link"
 import { Montserrat } from "next/font/google"
 import { RefreshCw } from "lucide-react"
-import VHeroChat from "@/components/VHeroChat"
 import Reviews from "@/components/Reviews"
 
 const montserrat = Montserrat({
@@ -341,10 +340,6 @@ export default function VallalhatatlanHero() {
           )}
         </section>
 
-        <div className="mt-12 w-full">
-          <VHeroChat />
-        </div>
-
         <div
           className="mt-8 pb-8 pt-6 font-mono text-md leading-relaxed text-zinc-400"
           style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -358,7 +353,7 @@ export default function VallalhatatlanHero() {
       </div>
 
       <nav
-        className="fixed bottom-0 left-0 right-0 z-60 bg-zinc-950 px-6 py-6 pt-3"
+        className="fixed bottom-0 left-0 right-0 z-60 bg-zinc-950 px-2 py-6 pt-3"
         style={{
           paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)",
         }}
