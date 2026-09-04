@@ -44,15 +44,15 @@ export default function Reviews() {
   const featured = reviews[2]; // válaszd ki, melyik legyen kiemelt
 
   return (
-    <section id="velemenyek" className="mt-16">
+    <section id="velemenyek" className="mt-20">
       
       <div className="flex flex-col md:flex-row md:items-end md:justify-between">
         <div>
           <div
-            className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-500 border-b border-t border-zinc-800 pb-4 pt-4"
+            className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-b border-t border-zinc-800 pb-4 pt-4"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            <span>AZ OLVASÓK MONDJÁK</span>
+            <span>ILYENEKET MONDTOK</span>
           </div>
         </div>
       </div>
@@ -66,8 +66,8 @@ export default function Reviews() {
               key={i}
               className="min-w-[80%]"
             >
-              <p className="pt-6 font-mono text-[17px] italic leading-relaxed text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>“{r.text}”</p>
-              <p className="text-lime-100 text-[19px] pt-2 italic text-left">{r.author}</p>
+              <p className="pt-6 font-mono text-xl italic leading-tight text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>“{r.text}”</p>
+              <p className="text-lime-100 text-[19px] pt-2 italic text-left">— {r.author}</p>
             </article>
           ))}
         </div>

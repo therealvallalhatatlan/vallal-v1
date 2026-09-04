@@ -178,7 +178,7 @@ export default function VallalhatatlanHero() {
 
 
         <div
-          className="mt-8 mb-4 font-mono text-sm font-medium uppercase leading-[1.85] tracking-wide text-lime-100/80"
+          className="mt-8 mb-6 font-mono text-sm font-medium uppercase leading-[1.85] tracking-wide text-lime-100/80"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           <p className="text-zinc-100">ARCHÍVUM / HÁLÓZAT / LABORATÓRIUM</p>
@@ -188,6 +188,21 @@ export default function VallalhatatlanHero() {
               ? "— REGISZTRÁLT FELHASZNÁLÓ"
               : `${registeredUsers} REGISZTRÁLT FELHASZNÁLÓ`}
           </p>
+
+          <p>
+            <span>{formatHeroCount(physicalSpotCount)}</span>{" "}
+            ELREJTETT TÁRGY
+          </p>
+
+          <p>
+            <span>{formatHeroCount(virtualSpotCount)}</span>{" "}
+            ELÉRHETŐ TARTALOM
+          </p>
+
+          <p>39 KINYOMTATOTT TÖRTÉNET</p>
+
+          <p>28 ONLINE SZTORI</p>
+
         <Link
           href="/halozat"
           className="mt-6 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-all hover:border-zinc-100/70 hover:bg-zinc-100/10 hover:text-lime-100"
@@ -200,7 +215,7 @@ export default function VallalhatatlanHero() {
 
         <section className="w-full" aria-label="Magyarázat">
           <div className="pt-6 font-mono italic leading-relaxed text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
-            <div className="mt-8 text-lg text-right">
+            <div className="py-12 text-xl text-right">
               <p>
                 Ennek a könyvnek nincs szerzője,<br />
                 nincs címe, és nincs kiadója.
@@ -209,11 +224,11 @@ export default function VallalhatatlanHero() {
             </div>
 
             {/* Könyv tabok */}
-            <div className="mt-8 flex space-x-4">
+            <div className="mt-8 flex space-x-8 border-b border-t pt-4 border-zinc-800 pb-2">
               <button
                 onClick={() => setActiveBookTab("first")}
-                className={`font-mono text-sm uppercase pb-1 ${
-                  activeBookTab === "first" ? "border-b-2 border-lime-100" : "text-zinc-500"
+                className={`font-mono text-sm uppercase not-italic line-through pb-1 ${
+                  activeBookTab === "first" ? "" : "text-rose-300"
                 }`}
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
@@ -221,8 +236,8 @@ export default function VallalhatatlanHero() {
               </button>
               <button
                 onClick={() => setActiveBookTab("second")}
-                className={`font-mono text-sm uppercase pb-1 ${
-                  activeBookTab === "second" ? "border-b-2 border-lime-100" : "text-zinc-500"
+                className={`font-mono text-sm uppercase not-italic pb-1 ${
+                  activeBookTab === "second" ? "" : "text-zinc-400"
                 }`}
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
@@ -230,44 +245,61 @@ export default function VallalhatatlanHero() {
               </button>
             </div>
 
-            <div className="mt-4">
+            <div className="mt-6">
               {activeBookTab === "first" ? (
-                <div className="space-y-4">
-                  <p className="font-mono text-lg italic text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                    100 darab számozott példányt nyomtattam, mind elfogyott. Ha szeretnél mégis hozzájutni, vedd fel velem a kapcsolatot.
+                <div className="space-y-6">
+                  <p className="font-mono text-sm not-italic text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    <Image
+                      src="/vallalhatatlan.png"
+                      alt="Vállalhatatlan Második Könyv borító"
+                      width={571}
+                      height={614}
+                      className="w-36 h-auto float-left mr-4 mb-4 rounded-md border border-zinc-800"
+                    />
+                    <span className="text-2xl text-zinc-100">000<span className="opacity-50">/100</span></span><br/>  
+                    Az első könyv elfogyott.<br/>Ha szeretnél mégis hozzájutni, írj Vállalhatatlannak.
                   </p>
                   <Link
                     href="mailto:therealvallalhatatlan@gmail.com"
-                    className="inline-flex items-center px-4 py-2 border-2 border-lime-100/80 font-mono text-sm uppercase tracking-[0.08em] text-lime-100/80 hover:bg-zinc-100/10 hover:border-zinc-100/70 transition-colors"
+                    className="flex min-h-16 w-full items-center justify-between px-4 py-4 border-2 rounded-md border-lime-100/80 font-mono text-md not-italic uppercase tracking-[0.08em] text-lime-100/80 hover:bg-zinc-100/10 hover:border-zinc-100/70 transition-colors"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    KAPCSOLATFELVÉTEL
+                    <span>DOBJ EGY MAILT</span>
+                    <span aria-hidden="true">@</span>
                   </Link>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="font-mono text-lg italic text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                    Már csak 32 darab van a második évadból. 68 példány már megtalálta a gazdáját.
+                  <p className="font-mono text-sm not-italic text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    <Image
+                      src="/vallalhatatlan2.png"
+                      alt="Vállalhatatlan Második Könyv borító"
+                      width={194}
+                      height={200}
+                      className="w-36 h-auto float-left mr-4 mb-4 rounded-md border border-zinc-800"
+                    />
+                    <span className="text-2xl text-zinc-100">032<span className="opacity-50">/100</span></span><br/>
+                    Már csak 32 darab van a második könyvből. 68 példány már megtalálta a gazdáját.
                   </p>
                   <Link
                     href="/konyv"
-                    className="inline-flex items-center px-4 py-2 border-2 border-lime-100/80 font-mono text-sm uppercase tracking-[0.08em] text-lime-100/80 hover:bg-zinc-100/10 hover:border-zinc-100/70 transition-colors"
+                    className="flex min-h-16 w-full items-center justify-between px-4 py-4 border-2 rounded-md border-lime-100/80 font-mono text-md not-italic uppercase tracking-[0.08em] text-lime-100/80 hover:bg-zinc-100/10 hover:border-zinc-100/70 transition-colors"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    A KÖNYV MEGSZERZÉSE
+                    <span>A KÖNYV MEGSZERZÉSE</span>
+                    <span aria-hidden="true">➤</span>
                   </Link>
                 </div>
               )}
             </div>
           </div>
         </section>
-        
         <Reviews />
 
 
         <section className="mt-12 w-full" aria-label="Random Sztorik">
           <div
-            className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.28em] text-zinc-500 border-t border-zinc-800 pt-4"
+            className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t border-zinc-800 pt-4"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             <span>Random Sztori</span>
@@ -277,11 +309,11 @@ export default function VallalhatatlanHero() {
               disabled={storyLoading}
               aria-label="Új random sztori"
               title="Új random sztori"
-              className="group flex h-7 w-7 items-center justify-center text-zinc-500 transition-colors hover:text-lime-100 disabled:opacity-40"
+              className="group flex h-7 w-7 items-center justify-center text-zinc-200 transition-colors hover:text-lime-100 disabled:opacity-40"
             >
               <RefreshCw
                 size={14}
-                strokeWidth={1.5}
+                strokeWidth={2.5}
                 className={`transition-transform duration-500 ${storyLoading ? "animate-spin" : "group-hover:rotate-180"}`}
               />
             </button>
@@ -290,13 +322,13 @@ export default function VallalhatatlanHero() {
           {randomStory ? (
             <article className="border-t border-zinc-800 pt-6">
               <h3
-                className={`${montserrat.className} py-2 text-3xl leading-tighter text-zinc-100`}
+                className={`${montserrat.className} py-2 text-3xl leading-tighter text-zinc-100 line-through`}
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 {randomStory.title}
               </h3>
               <p
-                className="mt-4 whitespace-pre-line text-[15px] leading-relaxed text-zinc-300"
+                className="mt-4 whitespace-pre-line text-md leading-relaxed text-zinc-300"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 {randomStory.text}
