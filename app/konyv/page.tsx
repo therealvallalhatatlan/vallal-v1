@@ -65,7 +65,7 @@ export default function Page() {
                 <span className="font-mono not-italic text-zinc-200 text-2xl" style={{ fontFamily: "var(--font-mono-tech)" }}>032<span className="opacity-50">/100</span></span>
 
                 <p className="mt-5 text-sm leading-relaxed text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                  Rendeld meg a saját dedikált példányodat dead drop* kalanddal. Kurvajó buli, tetszeni fog.
+                  Rendeld meg a saját dedikált példányodat <span className="text-lime-100/90 font-bold">dead drop</span>* kalanddal. Kurvajó buli, imádni fogod!
                 </p>
               </div>
             </div>
@@ -78,6 +78,13 @@ export default function Page() {
               <span>MEGSZERZEM A KÖNYVET</span>
               <span aria-hidden="true">→</span>
             </Link>
+
+            <div className="">
+              <p className="mt-8 text-xs leading-tight text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                *A dead drop egy titkos helyszín, ahol Vállalhatatlan gondosan elrejti neked a könyvet, majd megadja a koordinátáit, pár fotót és egy leírást. <br/>
+                48 órád van elmenni érte.
+              </p>
+            </div>
 
           </article>
         </section>

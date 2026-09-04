@@ -45,34 +45,12 @@ export default function LabContact() {
 
         <button
           type="button"
-          className="flex items-center gap-2 rounded-full border-2 border-lime-100/60 px-5 py-4 text-sm uppercase tracking-[0.15em] text-lime-200 transition-colors hover:bg-lime-400/10"
+          className="flex items-center justify-between gap-2 rounded-full border-2 border-lime-100/60 px-5 py-4 text-sm tracking-normal text-lime-200 transition-colors hover:bg-lime-400/10"
           aria-label="Másold a kapcsolat email címét"
           onClick={handleCopy}
         >
           <span>{copied ? "Emailcím kimásolva! Nyomassuk barátom!" : "therealvallalhatatlan@gmail.com"}</span>
-          <svg
-            aria-hidden="true"
-            width="14"
-            height="14"
-            viewBox="0 0 16 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M3 2.5H9.5C10.3284 2.5 11 3.17157 11 4V12.5H12.5C13.3284 12.5 14 13.1716 14 14V14.5H4C3.17157 14.5 2.5 13.8284 2.5 13V3.5H3V2.5Z"
-              stroke="currentColor"
-              strokeWidth="1.2"
-            />
-            <rect
-              x="2"
-              y="3"
-              width="9"
-              height="9"
-              rx="1"
-              stroke="currentColor"
-              strokeWidth="1.2"
-            />
-          </svg>
+          <span>@</span>
         </button>
       </div>
 

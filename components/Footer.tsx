@@ -9,34 +9,22 @@ const montserrat = Montserrat({
 export default function Footer() {
   return (
     <footer
-      className="px-6 py-16 bg-transparent border-t border-zinc-800 mt-20 font-mono text-gray-200"
-      style={{
-        backgroundImage: "url('/img/footer-bg.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <div className="max-w-5xl mx-auto text-start">
-        <h3
-          className={`${montserrat.className} text-xl font-extrabold italic mb-4 mt-12 text-lime-100/80`}
-        >
-          Vállalhatatlan
-        </h3>
+      className="px-6 py-6 bg-black border-t border-zinc-800 font-mono text-gray-200">
+      <div className="max-w-5xl mx-auto text-center">
 
-        <div className="space-x-6 text-zinc-100 mb-6">
+        <div className="space-x-6 text-zinc-100/50 hover:text-zinc-100 uppercase mb-6" style={{ fontFamily: "var(--font-mono-tech)" }}>
           <a
             href="https://reddit.com/r/vallalhatatlan"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-lime-300 transition-colors"
+            className="hover:text-lime-100 transition-colors"
           >
             Reddit
           </a>
 
           <a
             href="mailto:therealvallalhatatlan@gmail.com"
-            className="hover:text-lime-300 transition-colors"
+            className="hover:text-lime-100 transition-colors"
           >
             Email
           </a>
@@ -45,7 +33,7 @@ export default function Footer() {
             href="https://www.youtube.com/@V%C3%A1llalhatatlan01"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-lime-300 transition-colors"
+            className="hover:text-lime-100 transition-colors"
           >
             Youtube
           </a>
@@ -54,7 +42,7 @@ export default function Footer() {
             href="https://www.facebook.com/vallalhatatlan2000"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-lime-300 transition-colors"
+            className="hover:text-lime-100 transition-colors"
           >
             Facebook
           </a>
@@ -63,7 +51,7 @@ export default function Footer() {
             href="https://vallalhatatlan.substack.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-lime-300 transition-colors"
+            className="hover:text-lime-100 transition-colors"
           >
             Substack
           </a>

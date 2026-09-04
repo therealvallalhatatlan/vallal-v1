@@ -125,46 +125,31 @@ export default function Page() {
     <MainContent>
       <div className="mx-auto w-full max-w-6xl px-6 pb-16 md:px-8 ">
         {/* HEADER / INTRO */}
-        <section className="mb-10">
-          <div className="mb-5 flex items-center justify-between">
-            <span
-              className="text-[10px] uppercase tracking-[0.2em] text-zinc-500"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              [ LABORATÓRIUM ]
-            </span>
+        <section className="mb-8">
 
-            <span
-              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-lime-300/40"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.7)]" />
-              RUNNING
-            </span>
-          </div>
+          <h2 className={`${montserrat.className} pt-8 text-6xl uppercase not-italic leading-tighter text-zinc-100`}>
+            V. FÖLD ALATTI LABORJA
+          </h2>
 
-          <div className="max-w-3xl">
-            <h1
-              className={`${montserrat.className} text-4xl pt-6 uppercase leading-[0.9] tracking-[-0.03em] text-zinc-100 md:text-6xl`}
-            >
-              V. FÖLD ALATTI LABORATÓRIUMA
-            </h1>
-
-            <p
-              className="mt-6 text-md leading-relaxed text-zinc-400 md:text-base"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              Ahol a következő generációs cuccok készülnek.
-              <br />
+          <p
+            className="max-w-3xl text-lg leading-relaxed text-zinc-400 md:text-base py-6"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            Ahol a következő generációs cuccok készülnek.
+            <br />
               Gyorsaság, pontosság, problémamegoldás LEVEL 10000.
               <span className="text-lime-200/80">
                 Oszd meg velem őrült tervedet. Megcsináljuk!
               </span>
-            </p>
+          </p>
+        </section>
+
+        <section className="mb-10">
+
+          <div className="max-w-3xl">
             <LabContact />
           </div>
           
-
           <div className="mt-24 flex items-center justify-between">
             <span
               className="text-[10px] uppercase tracking-[0.2em] text-zinc-500"
