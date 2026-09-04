@@ -49,6 +49,7 @@ export default function VallalhatatlanHero() {
   const [headline, setHeadline] = useState(getRandomHeadline)
   const [randomStory, setRandomStory] = useState<RandomStory | null>(null)
   const [storyLoading, setStoryLoading] = useState(false)
+  const [activeBookTab, setActiveBookTab] = useState<'first' | 'second'>('second')
 
   const loadRandomStory = async () => {
     setStoryLoading(true)
@@ -187,92 +188,80 @@ export default function VallalhatatlanHero() {
               ? "— REGISZTRÁLT FELHASZNÁLÓ"
               : `${registeredUsers} REGISZTRÁLT FELHASZNÁLÓ`}
           </p>
-
-          <p>
-            <span>{formatHeroCount(physicalSpotCount)}</span>{" "}
-            ELREJTETT TÁRGY
-          </p>
-
-          <p>
-            <span>{formatHeroCount(virtualSpotCount)}</span>{" "}
-            ELÉRHETŐ TARTALOM
-          </p>
-
-          <p>39 KINYOMTATOTT TÖRTÉNET</p>
-
-          <p>67 ONLINE SZTORI</p>
-        </div>
-
         <Link
           href="/halozat"
-          className="mt-6 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-colors hover:border-zinc-100 hover:bg-zinc-100/70 hover:text-zinc-900"
+          className="mt-6 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-all hover:border-zinc-100/70 hover:bg-zinc-100/10 hover:text-lime-100"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           <span>BELÉPÉS A HÁLÓZATBA</span>
           <span aria-hidden="true">→</span>
         </Link>
-
+        </div>
 
         <section className="w-full" aria-label="Magyarázat">
           <div className="pt-6 font-mono italic leading-relaxed text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
-            
-            <div className="mt-8 text-lg">
-                  <div className="">
-                  <Image 
-                    src="/img/avatar.webp"
-                    alt="Könyv"
-                    width={60}
-                    height={60}
-                    className="rounded-full float-right mb-6"
-                  />
-                  </div>
-
-                  <p>
-                    Egy könyv aminek nincs címe,<br/> 
-                    nincs írója, és nincs kiadója. 
-                  </p>
-                  <p>
-                    Ne keresd a könyvesboltokban.
-                  </p>
-                  <p>
-                    Elrejtem, és te megtalálod.
-                  </p>
+            <div className="mt-8 text-lg text-right">
+              <p>
+                Ennek a könyvnek nincs szerzője,<br />
+                nincs címe, és nincs kiadója.
+              </p>
+              <p>Vállalhatatlan.</p>
             </div>
 
-            <div className="flex flex-row gap-4 mt-16">
+            {/* Könyv tabok */}
+            <div className="mt-8 flex space-x-4">
+              <button
+                onClick={() => setActiveBookTab("first")}
+                className={`font-mono text-sm uppercase pb-1 ${
+                  activeBookTab === "first" ? "border-b-2 border-lime-100" : "text-zinc-500"
+                }`}
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                Első Könyv
+              </button>
+              <button
+                onClick={() => setActiveBookTab("second")}
+                className={`font-mono text-sm uppercase pb-1 ${
+                  activeBookTab === "second" ? "border-b-2 border-lime-100" : "text-zinc-500"
+                }`}
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                Második Könyv
+              </button>
+            </div>
 
-                <div className="h-40 w-60 overflow-hidden relative bg-zinc-900/0">
-                  <video
-                    className="rounded-md absolute left-0 top-0 block"
-                    src="/videos/konyv2.mp4"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    controls={false}
-                    preload="metadata"
-                  />
+            <div className="mt-4">
+              {activeBookTab === "first" ? (
+                <div className="space-y-4">
+                  <p className="font-mono text-lg italic text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    100 darab számozott példányt nyomtattam, mind elfogyott. Ha szeretnél mégis hozzájutni, vedd fel velem a kapcsolatot.
+                  </p>
+                  <Link
+                    href="mailto:therealvallalhatatlan@gmail.com"
+                    className="inline-flex items-center px-4 py-2 border-2 border-lime-100/80 font-mono text-sm uppercase tracking-[0.08em] text-lime-100/80 hover:bg-zinc-100/10 hover:border-zinc-100/70 transition-colors"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    KAPCSOLATFELVÉTEL
+                  </Link>
                 </div>
-
-                <Link
-                  href="/halozat"
-                  className="flex gap-6 w-full items-center justify-between bg-white/80 rounded-md border-2 border-lime-100/80 px-6 font-mono text-xl font-medium tracking-[0.08em] text-zinc-800"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  <span className="flex flex-col items-start">
-                    <span className="text-4xl text-lime-100/70">#038</span>
-                    <span className="text-sm">EZ A TE PÉLDÁNYOD</span>
-                    <span aria-hidden="true">←</span>
-                  </span>
-                </Link>
+              ) : (
+                <div className="space-y-4">
+                  <p className="font-mono text-lg italic text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    Már csak 32 darab van a második évadból. 68 példány már megtalálta a gazdáját.
+                  </p>
+                  <Link
+                    href="/konyv"
+                    className="inline-flex items-center px-4 py-2 border-2 border-lime-100/80 font-mono text-sm uppercase tracking-[0.08em] text-lime-100/80 hover:bg-zinc-100/10 hover:border-zinc-100/70 transition-colors"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    A KÖNYV MEGSZERZÉSE
+                  </Link>
+                </div>
+              )}
             </div>
-
-            
-
-            </div>
+          </div>
         </section>
-
-
+        
         <Reviews />
 
 
@@ -337,21 +326,21 @@ export default function VallalhatatlanHero() {
       </div>
 
       <nav
-        className="fixed bottom-0 left-0 right-0 z-60 border-t border-zinc-700 bg-zinc-950 px-3 py-6 pt-3"
+        className="fixed bottom-0 left-0 right-0 z-60 bg-zinc-950 px-6 py-6 pt-3"
         style={{
           paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)",
         }}
       >
-        <div className="grid min-h-[94px] grid-cols-3 items-center divide-x divide-zinc-700 rounded-md border border-zinc-700 bg-zinc-950 text-center">
+        <div className="grid min-h-[94px] grid-cols-3 items-center divide-x divide-zinc-700 rounded-md border-2 border-zinc-700 bg-zinc-950 text-center hover:border-zinc-200/40 transition-all">
           <Link
             href="/konyv"
-            className="flex min-h-[84px] flex-col items-center justify-center px-2 py-4"
+            className="flex min-h-[84px] flex-col items-center justify-center px-2 py-4 hover:bg-zinc-100/10 transition-colors"
           >
             <span
-              className="text-sm font-bold uppercase text-zinc-400"
+              className="text-sm font-bold uppercase text-zinc-100"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              [ ARCHIVUM ]
+              [ KÖNYV ]
             </span>
             <span
               className="text-xs text-lime-100/80"
@@ -363,7 +352,7 @@ export default function VallalhatatlanHero() {
 
           <Link
             href="/halozat"
-            className="flex min-h-[84px] flex-col items-center justify-center bg-zinc-800/90 px-2"
+            className="flex min-h-[84px] flex-col items-center justify-center bg-zinc-800/0 px-2 py-4 hover:bg-zinc-100/10 transition-colors"
           >
             <span
               className="text-sm font-bold uppercase text-zinc-100"
@@ -381,10 +370,10 @@ export default function VallalhatatlanHero() {
 
           <Link
             href="/lab"
-            className="flex min-h-[84px] flex-col items-center justify-center px-2"
+            className="flex min-h-[84px] flex-col items-center justify-center px-2 py-4 hover:bg-zinc-100/10 transition-colors"
           >
             <span
-              className="text-sm font-bold uppercase text-zinc-400"
+              className="text-sm font-bold uppercase text-zinc-100"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               [ LAB ]
