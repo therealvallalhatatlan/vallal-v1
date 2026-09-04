@@ -125,7 +125,7 @@ export default function Page() {
     <MainContent>
       <div className="mx-auto w-full max-w-6xl px-6 pb-16 md:px-8 ">
         {/* HEADER / INTRO */}
-        <section className="mb-8">
+        <section className="">
 
           <h2 className={`${montserrat.className} pt-8 text-6xl uppercase not-italic leading-tighter text-zinc-100`}>
             V. FÖLD ALATTI LABORJA
@@ -135,59 +135,29 @@ export default function Page() {
             className="max-w-3xl text-lg leading-relaxed text-zinc-400 md:text-base py-6"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            Ahol a következő generációs cuccok készülnek.
-            <br />
-              Gyorsaság, pontosság, problémamegoldás LEVEL 10000.
-              <span className="text-lime-200/80">
+            Ahol a következő generációs cuccok készülnek.Gyorsaság, pontosság, problémamegoldás LEVEL 10000.
+            <br/>
+              <span className="text-lime-100/80">
                 Oszd meg velem őrült tervedet. Megcsináljuk!
               </span>
           </p>
         </section>
 
         <section className="mb-10">
-
           <div className="max-w-3xl">
             <LabContact />
           </div>
-          
-          <div className="mt-24 flex items-center justify-between">
-            <span
-              className="text-[10px] uppercase tracking-[0.2em] text-zinc-500"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              [ PROJEKTEK ]
-            </span>
-
-            <span
-              className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-lime-300/40"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.7)]" />
-              RUNNING
-            </span>
-          </div>
-
-
-          <div className="max-w-3xl border-t mt-4 border-zinc-600">
-            <p
-              className="pt-6 text-md leading-relaxed text-zinc-400 md:text-base"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              Saját fejlesztésű cuccok amikkel én dolgozom, de mások számára is érdekes lehet. 
-            </p>
-          </div>
-
         </section>
 
         {/* PROJECTS */}
         <section className="space-y-6">
           {/* PROJECT 01 */}
-          <article className="mt-8 overflow-hidden rounded-md border border-zinc-800 bg-zinc-950/70 transition-colors duration-300 hover:border-lime-400/30">
+          <article className="mt-8 overflow-hidden rounded-md border-2 border-zinc-800 bg-zinc-950/70 transition-colors duration-300 hover:border-lime-400/30">
             <div className="p-5 md:p-7">
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
                   <span
-                    className="mb-3 block text-[10px] uppercase tracking-[0.18em] text-lime-400/70"
+                    className="mb-3 block text-xs uppercase tracking-[0.18em] text-lime-100/70"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
                     [ PROJECT 01 / FILM ]
