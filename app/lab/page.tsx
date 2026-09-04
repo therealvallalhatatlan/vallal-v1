@@ -138,7 +138,7 @@ export default function Page() {
             Ahol a következő generációs cuccok készülnek.Gyorsaság, pontosság, problémamegoldás LEVEL 10000.
             <br/>
               <span className="text-lime-100/80">
-                Oszd meg velem őrült tervedet. Megcsináljuk!
+                Oszd meg velem őrült tervedet!
               </span>
           </p>
         </section>
@@ -213,10 +213,10 @@ export default function Page() {
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
                   <span
-                    className="mb-3 block text-[10px] uppercase tracking-[0.18em] text-lime-400/70"
+                    className="mb-3 block text-xs uppercase tracking-[0.18em] text-lime-100/70"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    [ PROJECT 02 / SOFTWARE ]
+                    [ PROJECT 02 / FILM ]
                   </span>
 
                   <h2

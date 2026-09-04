@@ -22,7 +22,7 @@ import { createClient } from "@/lib/browser";
 const menuItems = [
   {
     href: "/konyv",
-    label: "ARCHÍVUM",
+    label: "KÖNYV",
     description: "A Könyv, és egyéb írások.",
   },
   {
@@ -32,18 +32,18 @@ const menuItems = [
   },
   {
     href: "/lab",
-    label: "LABORATÓRIUM",
+    label: "LABOR",
     description: "Szoftver és neuromarketing.",
   },
   {
     href: "/shop",
-    label: "ELADÓ CUCCOK",
+    label: "BOLT",
     description: "Saját márkás cuccaink.",
   },
   {
     href: "/tamogatas",
-    label: "TETSZIK EZ?",
-    description: "Támogasd ezt a faszt.",
+    label: "CREW",
+    description: "Támogasd te is ezt a faszt!",
   },
 ];
 
@@ -213,11 +213,8 @@ export default function SiteHeader() {
 
             {/* Header */}
             <SheetHeader className="relative border-b border-zinc-800 px-6 pb-5 pt-7 pr-14 text-left">
-              <SheetTitle className="text-[11px] font-bold tracking-[0.22em] text-lime-100/60">
-                [ HOZZÁFÉRÉS ENGEDÉLYEZVE ]
-              </SheetTitle>
 
-              <SheetDescription className="mt-2 text-sm tracking-[0.08em] text-zinc-500">
+              <SheetDescription className="text-sm tracking-[0.08em] text-zinc-500">
                 Vállalhatatlan Projekt v3.7.4
               </SheetDescription>
             </SheetHeader>
