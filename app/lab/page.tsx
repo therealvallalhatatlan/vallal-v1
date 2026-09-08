@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import MainContent from "@/components/MainContent";
 import Footer from "@/components/Footer";
 import LabContact from "@/components/LabContact";
 import { Montserrat } from "next/font/google";
+import Image from "next/image";
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -17,55 +19,8 @@ export const metadata: Metadata = {
 
 const MICROFILM_SUPPORT_URL = "/tamogatas";
 const ILLUSTRATION_ENGINE_SUPPORT_URL = "/tamogatas";
-
-const microfilmEntryPoints = [
-  "FINANSZÍROZÁS",
-  "SZAKMAI TUDÁS",
-  "TECHNOLÓGIA",
-  "KAPCSOLATOK",
-];
-
-const engineEntryPoints = [
-  "FINANSZÍROZÁS",
-  "FEJLESZTÉS",
-  "HARDVER",
-  "SZAKMAI TUDÁS",
-];
-
-function EntryPoints({ items }: { items: string[] }) {
-  return (
-    <div className="mt-8 max-w-sm">
-      <div className="mb-3 flex items-center gap-3">
-        <span
-          className="text-[9px] uppercase tracking-[0.2em] text-zinc-500"
-          style={{ fontFamily: "var(--font-mono-tech)" }}
-        >
-          BESZÁLLÁSI PONTOK
-        </span>
-
-        <span className="h-px flex-1 bg-zinc-800" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-px overflow-hidden border border-zinc-800 bg-zinc-800">
-        {items.map((item) => (
-          <div
-            key={item}
-            className="flex items-center gap-2 bg-zinc-950/80 px-3 py-2.5"
-          >
-            <span className="h-1 w-1 shrink-0 bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.7)]" />
-
-            <span
-              className="text-[9px] tracking-[0.12em] text-zinc-400"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              {item}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+const SHARE_URL = "https://vallalhatatlan.online/lab";
+const SHARE_TEXT = "Vállalhatatlan LAB | Projekt 01 / MikroFilm Stúdió";
 
 function SupportButton({ href }: { href: string }) {
   return (
@@ -81,41 +36,108 @@ function SupportButton({ href }: { href: string }) {
         >
           ♥
         </span>
-
         Támogatom
       </span>
-
       <span className="text-lime-300">↗</span>
     </a>
   );
 }
 
-function ProjectActions() {
+function ProjectActions({
+  interestLabel = "Részt vennék ebben",
+}: {
+  interestLabel?: string;
+}) {
+  const encodedUrl = encodeURIComponent(SHARE_URL);
+  const encodedText = encodeURIComponent(`${SHARE_TEXT}\n${SHARE_URL}`);
+  const encodedMailBody = encodeURIComponent(
+    `Nézd meg a Vállalhatatlan LAB-ot:\n\n${SHARE_URL}`
+  );
+
   return (
     <>
-      <button
-        type="button"
+      <Link
+        href="/kapcsolat"
         className="flex items-center justify-between border-b border-zinc-800 px-5 py-4 text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-lime-200 sm:border-b-0 sm:border-r"
         style={{ fontFamily: "var(--font-mono-tech)" }}
       >
         <span className="text-xs font-bold uppercase tracking-[0.14em]">
-          Részt vennék ebben
+          {interestLabel}
         </span>
-
-        <span>+</span>
-      </button>
-
-      <button
-        type="button"
-        className="flex items-center justify-between px-5 py-4 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
-        style={{ fontFamily: "var(--font-mono-tech)" }}
-      >
-        <span className="text-xs font-bold uppercase tracking-[0.14em]">
-          Megosztás
+        <span className="text-base" aria-hidden="true">
+          +
         </span>
+      </Link>
 
-        <span>↗</span>
-      </button>
+      <details className="group relative">
+        <summary
+          className="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 [&::-webkit-details-marker]:hidden"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em]">
+            <span aria-hidden="true" className="text-sm">
+              ↗
+            </span>
+            Megosztás
+          </span>
+          <span
+            className="text-xs transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          >
+            ⌄
+          </span>
+        </summary>
+
+        <div className="grid grid-cols-4 gap-px border-t border-zinc-800 bg-zinc-800 p-px">
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Megosztás Facebookon"
+            className="flex min-h-12 items-center justify-center bg-zinc-950 px-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-lime-200"
+          >
+            <span className="text-sm font-bold" aria-hidden="true">
+              f
+            </span>
+          </a>
+
+          <a
+            href={`mailto:?subject=${encodeURIComponent(SHARE_TEXT)}&body=${encodedMailBody}`}
+            aria-label="Megosztás emailben"
+            className="flex min-h-12 items-center justify-center bg-zinc-950 px-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-lime-200"
+          >
+            <span className="text-base" aria-hidden="true">
+              ✉
+            </span>
+          </a>
+
+          <a
+            href={`https://wa.me/?text=${encodedText}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Megosztás WhatsAppon"
+            className="flex min-h-12 items-center justify-center bg-zinc-950 px-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-lime-200"
+          >
+            <span className="text-sm font-bold" aria-hidden="true">
+              WA
+            </span>
+          </a>
+
+          <a
+            href={`https://t.me/share/url?url=${encodedUrl}&text=${encodeURIComponent(
+              SHARE_TEXT
+            )}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Megosztás Telegramon"
+            className="flex min-h-12 items-center justify-center bg-zinc-950 px-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-lime-200"
+          >
+            <span className="text-base" aria-hidden="true">
+              ➤
+            </span>
+          </a>
+        </div>
+      </details>
     </>
   );
 }
@@ -123,23 +145,25 @@ function ProjectActions() {
 export default function Page() {
   return (
     <MainContent>
-      <div className="mx-auto w-full max-w-6xl px-6 pb-16 md:px-8 ">
+      <div className="mx-auto w-full max-w-6xl px-6 pb-16 md:px-8">
         {/* HEADER / INTRO */}
-        <section className="">
-
-          <h2 className={`${montserrat.className} pt-8 text-6xl uppercase not-italic leading-tighter text-zinc-100`}>
+        <section>
+          <h2
+            className={`${montserrat.className} pt-8 text-6xl uppercase not-italic leading-tighter text-zinc-100`}
+          >
             V. FÖLD ALATTI LABORJA
           </h2>
 
           <p
-            className="max-w-3xl text-lg leading-relaxed text-zinc-400 md:text-base py-6"
+            className="max-w-3xl py-6 text-lg leading-relaxed text-zinc-400 md:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            Ahol a következő generációs cuccok készülnek.Gyorsaság, pontosság, problémamegoldás LEVEL 10000.
-            <br/>
-              <span className="text-lime-100/80">
-                Oszd meg velem őrült tervedet!
-              </span>
+            Ahol a következő generációs cuccok készülnek.Gyorsaság, pontosság,
+            problémamegoldás LEVEL 10000.
+            <br />
+            <span className="text-lime-100/80">
+              Oszd meg velem őrült tervedet!
+            </span>
           </p>
         </section>
 
@@ -180,60 +204,12 @@ export default function Page() {
                 </span>
               </div>
 
-                {/* Insert microfilm preview video */}
-                <div className="mt-6">
-                  <video muted controls className="w-full rounded-md">
-                    <source src="/videos/film.mp4" type="video/mp4" />
-                    A böngésződ nem támogatja a videó lejátszást.
-                  </video>
-                </div>
-
-                <div className="grid gap-8 border-t border-zinc-800 pt-6 md:grid-cols-[1fr_280px]">
-                  <div>
-                    <p
-                      className="max-w-2xl text-sm leading-relaxed text-zinc-300 md:text-base"
-                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                    >
-                      Egy olyan szoftverre volt szükségem amivel karakterhelyes figurákat tudok generálni, és a generált karaktereket animálni is tudom. 
-                      Ezzel a cuccal te is következetes, kontrollálható és felismerhető vizuális világokat építhetsz. 
-                    </p>
-                  </div>
-                </div>
-            </div>
-
-            <div className="grid border-t border-zinc-800 sm:grid-cols-3">
-              <SupportButton href={MICROFILM_SUPPORT_URL} />
-              <ProjectActions />
-            </div>
-          </article>
-
-          {/* PROJECT 02 */}
-          <article className="overflow-hidden rounded-md border border-zinc-800 bg-zinc-950/90 transition-colors duration-300 hover:border-lime-400/30">
-            <div className="p-5 md:p-7">
-              <div className="mb-6 flex items-start justify-between gap-4">
-                <div>
-                  <span
-                    className="mb-3 block text-xs uppercase tracking-[0.18em] text-lime-100/70"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    [ PROJECT 02 / FILM ]
-                  </span>
-
-                  <h2
-                    className={`${montserrat.className} max-w-2xl text-2xl uppercase leading-[0.95] tracking-[-0.025em] text-zinc-100 md:text-4xl`}
-                  >
-                    Vállalhatatlan
-                    <br />
-                    Illustration Engine
-                  </h2>
-                </div>
-
-                <span
-                  className="hidden shrink-0 border border-zinc-800 px-2 py-1 text-[8px] uppercase tracking-[0.15em] text-zinc-600 md:block"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  VIE / 02
-                </span>
+              {/* Insert microfilm preview video */}
+              <div className="mt-6">
+                <video muted controls className="w-full rounded-md">
+                  <source src="/videos/film.mp4" type="video/mp4" />
+                  A böngésződ nem támogatja a videó lejátszást.
+                </video>
               </div>
 
               <div className="grid gap-8 border-t border-zinc-800 pt-6 md:grid-cols-[1fr_280px]">
@@ -242,37 +218,80 @@ export default function Page() {
                     className="max-w-2xl text-sm leading-relaxed text-zinc-300 md:text-base"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    A képeink és videóink mögött álló saját fejlesztésű
-                    szoftverrendszer.
-                    <br />
-                    <br />
-                    Fine-tuningolt saját modellekkel és kép-, hang- és
-                    videogenerálással dolgozunk. A cél egy olyan saját
-                    eszközrendszer, amellyel nem egyszerűen generálni tudunk,
-                    hanem következetes, kontrollálható és felismerhető vizuális
-                    világokat építhetünk.
-                    <br />
-                    <br />
-                    Amit jelenleg különböző modellekből, szolgáltatásokból és
-                    saját workaroundokból rakunk össze, azt egyetlen
-                    használható rendszerbe akarjuk rendezni.
+                    Egy olyan szoftverre volt szükségem amivel karakterhelyes
+                    figurákat tudok generálni, és a generált karaktereket
+                    animálni is tudom.
+                    Ezzel a cuccal te is következetes, kontrollálható és
+                    felismerhető vizuális világokat építhetsz.
                   </p>
+                </div>
+              </div>
+            </div>
 
-                  <p
-                    className="mt-5 text-[11px] uppercase tracking-[0.12em] text-lime-200/70"
+            <div className="grid border-t border-zinc-800 sm:grid-cols-3">
+              <SupportButton href={MICROFILM_SUPPORT_URL} />
+              <ProjectActions />
+            </div>
+          </article>
+
+          {/* PROJECT 02 / TÉRKÉP */}
+          <article className="overflow-hidden rounded-md border border-zinc-800 bg-zinc-950/90 transition-colors duration-300 hover:border-lime-400/30">
+            <div className="p-5 md:p-7">
+              <div className="mb-6 flex items-start justify-between gap-4">
+                <div>
+                  <span
+                    className="mb-3 block text-xs uppercase tracking-[0.18em] text-lime-100/70"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    NEM PROMPTOKAT GYÁRTUNK. ESZKÖZT ÉPÍTÜNK.
-                  </p>
+                    [ PROJECT 02 / NETWORK ]
+                  </span>
 
-                  <EntryPoints items={engineEntryPoints} />
+                  <h2
+                    className={`${montserrat.className} max-w-2xl text-2xl uppercase leading-[0.95] tracking-[-0.025em] text-zinc-100 md:text-4xl`}
+                  >
+                    Vállalhatatlan
+                    <br />
+                    Térkép Motor
+                  </h2>
+                </div>
+
+                <span
+                  className="hidden shrink-0 border border-zinc-800 px-2 py-1 text-[8px] uppercase tracking-[0.15em] text-zinc-600 md:block"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  VTM / 02
+                </span>
+              </div>
+
+              <div className="grid gap-8 border-t border-zinc-800 pt-6 md:grid-cols-[1fr_280px]">
+                <div>
+                    <Image
+                      src="/img/map.png"
+                      alt="Vállalhatatlan Második Könyv borító"
+                      width={1910}
+                      height={901}
+                      className="w-full h-auto mb-4 rounded-md border border-zinc-800"
+                    />
+
+                  <p
+                    className="max-w-2xl text-sm leading-relaxed text-zinc-300 md:text-base"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    Egy térkép, ahol a helyekhez digitális tartalmakat és fizikai tárgyakat köthetünk.
+                    Hogy mire jó? 
+
+                    Egy élő, közösségi térkép, ahol nem csak helyeket találsz,
+                    hanem embereket, sztorikat és saját felfedeznivalókat is.
+                    Jelölj meg helyeket, csatlakozz másokhoz, fedezd fel a
+                    hálózatot, és építsd vele a saját városi térképedet.
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="grid border-t border-zinc-800 sm:grid-cols-3">
               <SupportButton href={ILLUSTRATION_ENGINE_SUPPORT_URL} />
-              <ProjectActions />
+              <ProjectActions interestLabel="Érdekel" />
             </div>
           </article>
         </section>
@@ -291,8 +310,8 @@ export default function Page() {
               className="text-sm leading-relaxed text-zinc-400"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              Nagyobb összegű támogatásnál egyedi megállapodást kötünk arról, hogy pontosan mit
-              kapsz a beszállásért.
+              Nagyobb összegű támogatásnál egyedi megállapodást kötünk arról,
+              hogy pontosan mit kapsz a beszállásért.
             </p>
           </div>
         </section>

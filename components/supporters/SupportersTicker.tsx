@@ -18,7 +18,7 @@ export function SupportersTicker({
   if (!names.length) return null
 
   return (
-    <section className={`relative overflow-hidden border border-zinc-700/0 bg-black/0 p-3 sm:p-4 ${className ?? ''}`}>
+    <section className={`relative overflow-hidden border-b border-zinc-700/0 bg-black/0 p-3 sm:p-4 ${className ?? ''}`}>
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-[#07080c] to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-[#07080c] to-transparent" />
 
@@ -30,7 +30,7 @@ export function SupportersTicker({
         >
           <div className="flex shrink-0 items-center gap-8 pr-8">
             {names.map((name, index) => (
-              <span key={`a-${name}-${index}`} className="font-mono text-2xl italic tracking-[0em] text-LIME-100">
+              <span key={`a-${name}-${index}`} className=" text-2xl italic tracking-[0em] text-LIME-100">
                 {name}
               </span>
             ))}

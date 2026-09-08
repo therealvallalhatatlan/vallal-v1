@@ -16,7 +16,7 @@ const montserrat = Montserrat({
 });
 
 const MIN_AMOUNT_HUF = 1000;
-const MAX_AMOUNT_HUF = 999000;
+const MAX_AMOUNT_HUF = 500000;
 const SLIDER_STEP_HUF = 1000;
 const DEFAULT_AMOUNT_HUF = 5000;
 
@@ -153,22 +153,16 @@ export default function TamogatasPage() {
   return (
     <MainContent>
       <main className="min-h-screen overflow-hidden bg-zinc-950 text-zinc-100">
-        <section className="relative z-10 mx-auto w-full max-w-5xl px-6">
+        <section className="relative z-10 mx-auto w-full max-w-5xl px-6 mb-24">
                   {/* HEADER / INTRO */}
           <section className="mb-2">
             <h2 className={`${montserrat.className} pt-8 text-6xl uppercase not-italic leading-tighter text-zinc-100`}>
               <span className="not-italic">Önts olajat a tűzre!</span>
             </h2>
-            <p
-              className="max-w-lg text-lg leading-relaxed text-zinc-400 md:text-base py-6"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              Ha valami értehetetlen okból<br/>tetszene ez neked... 
-            </p>
           </section>
 
           {/* SUPPORTERS */}
-          <div className="mb-5 overflow-hidden border-t border-zinc-800 bg-zinc-950/80">
+          <div className="mb-5 mt-6 overflow-hidden border-t border-zinc-800 bg-zinc-950/80">
             <div className="py-3 border-b border-zinc-800">
               <div className="flex items-center justify-between">
                 <span
@@ -188,20 +182,28 @@ export default function TamogatasPage() {
             </div>
           </div>
 
+          <div className="pt-0 pb-12 text-lg text-left w-10/12">
+            <p>
+              Támogatásod közvetlenül a Vállalhatatlan projektjeinek készítésére és működtetésére megy. 
+              Könyvek, filmek, technológia, szerverek, kísérletek.
+              A hálózatot nem egy nagy gép tartja életben - sok kicsi.
+            </p>
+          </div>
+
           {/* CHANNELS */}
           <div className="grid gap-5 lg:grid-cols-2">
             {/* DIRECT FUNDING */}
-            <article className="group overflow-hidden rounded-md border border-zinc-800 bg-zinc-950/80 transition-colors duration-300 hover:border-lime-400/30">
+            <article className="group overflow-hidden rounded-md border-2 border-zinc-800 bg-zinc-950/80">
               <div className="relative p-5 sm:p-6">
                 <div className="pointer-events-none absolute inset-0 opacity-[0.025] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:100%_4px]" />
-
-                <div className="relative">
+  
+                <div className="relative pb-2">
                   <div className="mb-6 flex items-start justify-between">
                     <span
-                      className="text-[9px] uppercase tracking-[0.2em] text-lime-400/80"
+                      className="font-mono text-sm font-medium uppercase leading-[1.85] tracking-wide text-zinc-500"
                       style={{ fontFamily: "var(--font-mono-tech)" }}
                     >
-                      [ 02 / DIRECT FUNDING ]
+                      [ 01 / DIREKT TÁMOGATÁS ]
                     </span>
 
                     <span
@@ -212,16 +214,9 @@ export default function TamogatasPage() {
                     </span>
                   </div>
 
-                  <h2
-                    className={`${montserrat.className} text-[26px] uppercase leading-[0.95] tracking-[-0.03em] text-zinc-100 md:text-[34px]`}
-                  >
-                    🤍 KÖZVETLEN
-                    <br />
-                    TÁMOGATÁS
-                  </h2>
 
                   <div
-                    className="mt-5 border-t border-zinc-800 pt-5"
+                    className="mt-5 pt-2"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
                     <div className="mb-3 flex items-end justify-between">
@@ -229,7 +224,7 @@ export default function TamogatasPage() {
                         TÁMOGATÁSI ÖSSZEG
                       </span>
 
-                      <span className="text-sm font-bold tracking-[0.08em] text-lime-300">
+                      <span className="text-sm font-bold tracking-[0.08em] text-lime-100">
                         {formatHuf(amount)}
                       </span>
                     </div>
@@ -313,13 +308,13 @@ export default function TamogatasPage() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={isLoading}
-                    className="group/button mt-5 flex min-h-[58px] w-full items-center justify-between rounded-md border border-lime-400/50 bg-lime-400/[0.025] px-4 transition-all duration-200 hover:border-lime-400/80 hover:bg-lime-400/[0.08] hover:shadow-[0_0_30px_rgba(163,230,53,0.07)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="group/button mt-5 flex min-h-[58px] w-full items-center justify-between rounded-md border-2 border-lime-100/70 bg-lime-400/[0.025] px-4 transition-all duration-200 hover:border-lime-400/80 hover:bg-lime-400/[0.08] hover:shadow-[0_0_30px_rgba(163,230,53,0.07)] disabled:cursor-not-allowed disabled:opacity-50"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-lime-200">
+                    <span className="text-sn uppercase tracking-[0.18em] text-lime-100">
                       {isLoading
-                        ? "[ ÁTIRÁNYÍTÁS STRIPE... ]"
-                        : "[ STRIPE FIZETÉS INDÍTÁSA ]"}
+                        ? "ÁTIRÁNYÍTÁS..."
+                        : "TÁMOGATOM EZT A FASZT"}
                     </span>
 
                     <span className="py-4 text-lime-300 transition-transform group-hover/button:translate-x-1">
@@ -328,62 +323,43 @@ export default function TamogatasPage() {
                   </button>
                 </div>
               </div>
-
-              <div className="border-t border-zinc-800 px-5 py-3 sm:px-6">
-                <span
-                  className="text-xs uppercase tracking-[0.16em] text-zinc-700"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  MIN. 1 000 FT // MAX. 1 000 000 FT
-                </span>
-              </div>
             </article>
 
+            <div className="pt-10 ml-12 pb-0 text-lg text-right">
+              <p>
+                Van egy boltunk is, aminek a bevételeit szintén visszaforgatjuk.
+                Ha vásárolsz egy könyvet, pólót, kitűzőt, nyakláncot vagy egy táskát - szintén a megalkuvás nélküli művészetet támogatod.
+              </p>
+            </div>
+
             {/* SHOP */}
-            <article className="group overflow-hidden rounded-md border border-zinc-800 bg-zinc-950/80 transition-colors duration-300 hover:border-lime-400/30">
-              <div className="relative p-5 sm:p-6">
+            <article className="mt-6 group overflow-hidden rounded-md border-2 border-zinc-800 bg-zinc-950/80">
+              <div className="relative p-5 mb-2 sm:p-6">
                 <div className="pointer-events-none absolute inset-0 opacity-[0.025] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:100%_4px]" />
 
                 <div className="relative">
                   <div className="mb-6 flex items-start justify-between">
                     <span
-                      className="text-[9px] uppercase tracking-[0.2em] text-lime-400/80"
+                      className="font-mono text-sm font-medium uppercase leading-[1.85] tracking-wide text-zinc-500"
                       style={{ fontFamily: "var(--font-mono-tech)" }}
                     >
-                      [ 01 / SHOP CHANNEL ]
+                      [ 02 / VÁSÁRLÁS ]
                     </span>
 
                     <span
-                      className="text-[8px] uppercase tracking-[0.15em] text-zinc-700"
+                      className="text-xs uppercase tracking-[0.15em] text-zinc-700"
                       style={{ fontFamily: "var(--font-mono-tech)" }}
                     >
-                      OBJECTS
+                      STRIPE
                     </span>
-                  </div>
-
-                  <h2
-                    className={`${montserrat.className} text-[26px] uppercase leading-[0.95] tracking-[-0.03em] text-zinc-100 md:text-[34px]`}
-                  >
-                    TÁRGYI
-                    <br />
-                    TÁMOGATÁS
-                  </h2>
-
-                  <div
-                    className="mt-5 border-t border-zinc-800 pt-5 text-md leading-[1.8] text-zinc-500"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    <p>
-                      Póló, táska, kitűző, könyv és egyéb cuccok.
-                    </p>
                   </div>
 
                   <Link
                     href="/shop"
-                    className="group/button mt-6 flex min-h-[56px] items-center justify-between rounded-md border border-lime-400/40 bg-lime-400/[0.025] px-4 transition-all duration-200 hover:border-lime-400/70 hover:bg-lime-400/[0.07] hover:shadow-[0_0_25px_rgba(163,230,53,0.06)]"
+                    className="group/button mt-6 flex min-h-[56px] items-center justify-between rounded-md border-2 border-lime-100/70 bg-lime-400/[0.025] px-4 transition-all duration-200 hover:border-lime-400/70 hover:bg-lime-400/[0.07] hover:shadow-[0_0_25px_rgba(163,230,53,0.06)]"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    <span className="py-6 text-[10px] font-bold uppercase tracking-[0.18em] text-lime-200">
+                    <span className="py-6 text-sm uppercase tracking-[0.18em] text-lime-100">
                       [ SHOP MEGNYITÁSA ]
                     </span>
 
@@ -393,58 +369,8 @@ export default function TamogatasPage() {
                   </Link>
                 </div>
               </div>
-
-              <div className="border-t border-zinc-800 px-5 py-3 sm:px-6">
-                <span
-                  className="text-xs uppercase tracking-[0.16em] text-zinc-700"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  KÖNYVEK / MERCH / EGYEDI CUCCOK
-                </span>
-              </div>
             </article>
           </div>
-
-          {/* BOTTOM NOTE */}
-          <section className="mt-5 overflow-hidden rounded-md border border-zinc-800 bg-zinc-950/80">
-            <div className="p-5 sm:p-6">
-              <div className="flex gap-4">
-                <div className="mt-1 h-1 w-1 shrink-0 rounded-full bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.7)]" />
-
-                <div>
-                  <span
-                    className="block text-[9px] uppercase tracking-[0.18em] text-zinc-500"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    [ MIRE MEGY A PÉNZ? ]
-                  </span>
-
-                  <p
-                    className="mt-3 max-w-3xl text-[10px] leading-[1.9] text-zinc-600"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    A támogatás közvetlenül a Vállalhatatlan projektjeinek
-                    készítésére és működtetésére megy. Könyvek, filmek,
-                    technológia, szerverek, kísérletek. A hálózatot nem egy nagy
-                    gép tartja életben. Sok kicsi.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-zinc-800 px-5 py-3 sm:px-6">
-              <div
-                className="flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-[0.16em] text-zinc-700"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                <span>SUPPORT</span>
-                <span>BUILD</span>
-                <span>RELEASE</span>
-                <span>REPEAT</span>
-              </div>
-            </div>
-          </section>
-
 
         </section>
 
