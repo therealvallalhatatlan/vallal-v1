@@ -4,8 +4,8 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen bg-black px-6 py-16 font-mono text-zinc-300">
-      <div className="mx-auto max-w-2xl">
+    <main className="min-h-screen bg-black px-6 pt-20 font-mono text-zinc-300">
+      <div className="mx-auto">
         <div className="text-[10px] uppercase tracking-[0.2em] text-lime-100/40">
           VÁLLALHATATLAN / NODE ERROR
         </div>

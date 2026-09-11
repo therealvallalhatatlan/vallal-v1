@@ -3,6 +3,7 @@ import MainContent from "@/components/MainContent";
 import Footer from "@/components/Footer";
 import { Montserrat } from "next/font/google";
 import Link from "next/link";
+import Image from "next/image"
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -21,7 +22,7 @@ const SECOND_BOOK_STRIPE_URL = "https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h";
 export default function Page() {
   return (
     <MainContent>
-      <div className="mx-auto w-full max-w-6xl px-6 pb-16">
+      <div className="mx-auto w-full max-w-6xl px-6 pb-16 rounded-md">
         {/* HEADER / INTRO */}
         <section className="mb-8">
 
@@ -33,8 +34,7 @@ export default function Page() {
             className="max-w-3xl text-lg leading-relaxed text-zinc-400 md:text-base py-6"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            A diliházból kikerülő V. egy szürreális pénzmosodaként működő, éjjel-nappali internetkávézó élére kerül üzletvezetőként.<br/><br/>
-            Az elbaszott pornóforgatások, fura orgiák és drogoktól fűtött éjszakák kaotikus világát végül egy elcsalt routercsere, a felhalmozott adósságok és egy rendőrségi razziával végződő drogbalhé borítja lángokba.
+            A diliházból kikerülő V. egy szürreális pénzmosodaként működő, éjjel-nappali internetkávézó élére kerül üzletvezetőként.
           </p>
         </section>
 
@@ -79,15 +79,52 @@ export default function Page() {
               <span aria-hidden="true">→</span>
             </Link>
 
-            <div className="">
-              <p className="mt-8 text-xs leading-tight text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                *A dead drop egy titkos helyszín, ahol Vállalhatatlan gondosan elrejti neked a könyvet, majd megadja a koordinátáit, pár fotót és egy leírást. <br/>
-                48 órád van elmenni érte.
-              </p>
-            </div>
-
           </article>
         </section>
+      </div>
+
+      <div className="px-5 py-12 text-right">
+            <Image
+              src="/img/deaddrop.webp"
+              alt="Mi az a dead drop?"
+              width={640}
+              height={467}
+              className="w-full h-auto float-left mr-4 mb-4 rounded-md border border-zinc-800 saturate-0"
+            />
+
+          <h2 className={`${montserrat.className} break-words text-3xl italic leading-relaxed tracking-[-0.25em] text-zinc-100 md:text-3xl`}>Mi az a dead drop?</h2>
+
+          <p className="mt-4 mb-6 text-lg leading-tight text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                Mondjuk képzeld azt, hogy randizol.<br/>Mi a faszt csináljatok?<br/><br/>
+                Valami izgalmasat kéne,<br/>amivel az intellektuális<br/>képességeidet is megvillanthatod.
+                <br/><br/>
+                Áhá! Vállalhatatlan!<br/><br/>
+                Megnyomtok egy gombot és<br/>hamarosan érkezik egy üzenet.
+                <br/><br/>
+                ...
+                </p>
+            <Image
+              src="/img/deaddrop2.webp"
+              alt="Mi az a dead drop?"
+              width={402}
+              height={529}
+              className="w-full h-auto float-left mr-4 mb-4 rounded-md border border-zinc-800 saturate-0"
+            />
+          <p className="mt-4 mb-12 text-lg leading-tight text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>
+          Egy GPS pozíció, és egy fotó <br/>egy nagy lapos kőröl, a Duna-parton.<br/><br/>
+          Odasétáltok este, csókolózást imitálva körbenéztek, és amikor nem látja senki,
+          megvillantva a fizikai képességeidet is, felemeled a követ.<br/><br/>A kő alatt egy fekete nylonfóliába tekert, vákumfóliázott csomag. A #18-as példány. Ti találtátok meg.
+          </p>
+
+          <Link
+              href={SECOND_BOOK_STRIPE_URL}
+              className="mt-6 mb-12 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-all hover:border-zinc-100/70 hover:bg-zinc-100/10 hover:text-lime-100"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              <span>MEGSZERZEM A KÖNYVET</span>
+              <span aria-hidden="true">→</span>
+          </Link>
+
       </div>
 
       <Footer />

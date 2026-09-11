@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { createClient } from '@/lib/server'
 import { checkRateLimit, getClientIp } from '@/lib/security/rateLimit'
+import type { UserRole } from '@/lib/auth'
+import { getUserRoleByEmail, canManageAllSpots } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,10 +39,11 @@ export async function POST(req: NextRequest) {
   }
 
   const adminKey = req.headers.get('x-admin-key')
-  const isAdmin = Boolean(adminKey && adminKey === process.env.DEMO_ADMIN_KEY)
+  const isSystemAdmin = Boolean(adminKey && adminKey === process.env.DEMO_ADMIN_KEY)
 
   let authenticatedUserId: string | null = null
-  if (!isAdmin) {
+  let userRole: UserRole = 'user'
+  if (!isSystemAdmin) {
     const authHeader = req.headers.get('authorization') ?? ''
     const token = authHeader.replace(/^Bearer\s+/i, '').trim()
     if (!token) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
@@ -49,7 +52,12 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error } = await supabase.auth.getUser(token)
     if (error || !user) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
     authenticatedUserId = user.id
+    userRole = getUserRoleByEmail(user.email ?? null)
+  } else {
+    userRole = 'admin'
   }
+
+  const isAdminUpload = isSystemAdmin || canManageAllSpots(userRole)
 
   let formData: FormData
   try {
@@ -87,10 +95,10 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin()
 
-  if (!isAdmin) {
+  if (!isAdminUpload) {
     const [first, second] = parts
 
-    // Claim photos use: <spot UUID>/<filename>.
+    // Claim photos: <spot UUID>/<filename>
     if (parts.length === 2 && UUID_RE.test(first)) {
       const { data: spot, error: spotError } = await db
         .from('sticker_spots')
@@ -101,7 +109,7 @@ export async function POST(req: NextRequest) {
       if (spotError || !spot) {
         return NextResponse.json({ error: 'spot_not_found' }, { status: 403 })
       }
-    // Phantom photos use: phantom/<shadow session UUID>/<filename>.
+    // Phantom photos: phantom/<shadow session UUID>/<filename>
     } else if (parts.length === 3 && first === 'phantom' && UUID_RE.test(second)) {
       const { data: profile, error: profileError } = await db
         .from('shadow_profiles')

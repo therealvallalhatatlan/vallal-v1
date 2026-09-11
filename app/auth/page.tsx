@@ -83,7 +83,7 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
       setError(error.message);
       setStatus(null);
     } else {
-      setStatus("Küldtünk egy magic linket az email címedre. Nézd meg a postaládád!");
+      setStatus("Okés, küldtem egy magic linket az email címedre.");
     }
 
     setLoading(false);
@@ -104,7 +104,7 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 w-full rounded-none border border-neutral-700 bg-neutral-900 px-3 py-2 text-neutral-100 focus:border-lime-400 focus:outline-none"
+              className="mt-2 w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-3 text-neutral-100 focus:border-lime-400 focus:outline-none"
               placeholder="you@example.com"
             />
           </label>
@@ -112,26 +112,27 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex items-center justify-center rounded-none border border-lime-500 bg-lime-500 px-4 py-2 text-sm font-semibold text-black transition hover:border-lime-400 hover:bg-lime-400 disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-md border border-lime-500 bg-lime-500 px-4 py-3 text-xs uppercase tracking-[1px] font-semibold text-black transition hover:border-lime-400 hover:bg-lime-400 disabled:opacity-60"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             {loading ? "Küldés..." : "Link Küldése"}
           </button>
 
-          <div className="flex items-center gap-3 pt-2">
-            <div className="h-px flex-1 bg-neutral-800" />
-            <span className="text-[11px] uppercase tracking-[0.22em] text-neutral-500">
+          <div className="flex items-center gap-3 pt-2 pb-2">
+            <div className="h-px flex-1 bg-neutral-700" />
+            <span className="text-[11px] uppercase tracking-[0.22em] text-neutral-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
               vagy
             </span>
-            <div className="h-px flex-1 bg-neutral-800" />
+            <div className="h-px flex-1 bg-neutral-700" />
           </div>
 
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading || oauthLoading}
-            className="inline-flex w-full items-center justify-center rounded-none border border-lime-500/60 bg-neutral-900 px-5 py-4 text-base font-semibold text-neutral-50 shadow-[0_0_22px_rgba(132,204,22,0.16)] transition hover:border-lime-400 hover:bg-neutral-800 hover:shadow-[0_0_28px_rgba(132,204,22,0.24)] disabled:opacity-60"
+            className="mx-auto w-full items-center justify-center rounded-full border border-lime-100/70 bg-neutral-900 px-5 py-4 text-lg font-semibold text-lime-100 shadow-[0_0_22px_rgba(132,204,22,0.16)] transition hover:border-lime-400 hover:bg-neutral-800 hover:shadow-[0_0_28px_rgba(132,204,22,0.24)] disabled:opacity-60"
           >
-            {oauthLoading ? "Google belépés…" : "Belépés Google-lel"}
+            {oauthLoading ? "Google belépés…" : "Google Login"}
           </button>
         </form>
       )}
@@ -176,14 +177,17 @@ function AuthStatus({
       <div className="absolute inset-0 bg-black/60" />
 
       {/* CONTENT */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-6 py-10">
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-0 py-6">
         <section className="mx-auto w-full max-w-lg">
         <div className="rounded-none border-0 bg-transparent p-6 shadow-none backdrop-blur-0">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">Zárt Közösség</p>
-          <h1 className="text-3xl font-semibold text-lime-400">Azonosítás</h1>
-          <p className="mt-2 text-[13px] leading-relaxed text-neutral-300">
+          <p 
+          className="text-[14px] uppercase tracking-[0.25em] text-lime-100/100 mb-4"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+          >Zárt Közösség</p>
+          <h1 className="text-3xl font-semibold text-lime-100" style={{ fontFamily: "var(--font-mono-tech)" }}>Azonosítás szükséges</h1>
+          <p className="mt-2 text-[13px] italic leading-relaxed text-neutral-300">
             Erre azért van szükség, hogy védjük magunkat a botoktól, és az illetéktelen szemektől. Ha nem férsz hozzá írj a:{" "}
-            <a href="mailto:therealvallalhatatlan@gmail.com" className="text-lime-400 hover:text-lime-300">
+            <a href="mailto:therealvallalhatatlan@gmail.com" className="text-lime-100 hover:text-lime-300">
               therealvallalhatatlan@gmail.com
             </a>
           </p>

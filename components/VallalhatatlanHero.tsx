@@ -288,6 +288,7 @@ export default function VallalhatatlanHero() {
                     <span>A KÖNYV MEGSZERZÉSE</span>
                     <span aria-hidden="true">➤</span>
                   </Link>
+
                 </div>
               )}
             </div>

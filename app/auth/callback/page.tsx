@@ -11,7 +11,7 @@ export default function AuthCallbackPage() {
   return (
     <Suspense
       fallback={
-        <StatusView message="Magic link feldolgozása..." />
+        <StatusView message="" />
       }
     >
       <AuthCallbackContent />
@@ -153,7 +153,7 @@ function StatusView({ message }: { message: string }) {
       <section className="mx-auto w-full max-w-lg">
         <div className="rounded-3xl border border-neutral-800 bg-black/60 p-6 shadow-[0_0_30px_rgba(0,0,0,0.35)] backdrop-blur-sm">
           <p className="text-[11px] uppercase tracking-[0.25em] text-lime-100/100 mb-4">belépés</p>
-          <h1 className="text-3xl font-semibold text-lime-400">Magic link feldolgozása</h1>
+          <h1 className="text-3xl font-semibold text-lime-400">Üdv a fedélzeten!</h1>
           <p className="mt-4 text-sm text-neutral-300">{message}</p>
         </div>
       </section>
