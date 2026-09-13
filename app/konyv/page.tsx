@@ -3,7 +3,8 @@ import MainContent from "@/components/MainContent";
 import Footer from "@/components/Footer";
 import { Montserrat } from "next/font/google";
 import Link from "next/link";
-import Image from "next/image"
+import Image from "next/image";
+import Reviews from "@/components/Reviews";
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -125,7 +126,11 @@ export default function Page() {
               <span aria-hidden="true">→</span>
           </Link>
 
+          <Reviews/>
+
       </div>
+
+      
 
       <Footer />
     </MainContent>

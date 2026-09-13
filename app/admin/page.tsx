@@ -127,12 +127,11 @@ export default function AdminPage() {
   if (!isAuthenticated) {
     return (
       <Container className="py-12">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md mx-auto mt-12">
           <Card>
             <div className="space-y-6">
               <div className="text-center">
-                <h1 className="text-2xl font-bold text-green-400 mb-2">Admin Access</h1>
-                <p className="text-green-300/60">Enter admin key to continue</p>
+                <h1 className="text-2xl font-bold text-lime-100 mb-2">Semmi keresnivalód itt.</h1>
               </div>
 
               <div className="space-y-4">

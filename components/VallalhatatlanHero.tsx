@@ -180,7 +180,7 @@ export default function VallalhatatlanHero() {
           className="mt-8 mb-6 font-mono text-sm font-medium uppercase leading-[1.85] tracking-wide text-lime-100/80"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
-          <p className="text-zinc-100">ARCHÍVUM / HÁLÓZAT / LABORATÓRIUM</p>
+          <p className="text-zinc-100">KÖNYV / HÁLÓZAT / LABORATÓRIUM</p>
 
           <p>
             {registeredUsers === null
@@ -359,10 +359,10 @@ export default function VallalhatatlanHero() {
           paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)",
         }}
       >
-        <div className="grid min-h-[94px] grid-cols-3 items-center divide-x divide-zinc-700 rounded-md border-2 border-zinc-700 bg-zinc-950 text-center hover:border-zinc-200/40 transition-all">
+        <div className="grid min-h-[74px] grid-cols-3 items-center divide-x divide-zinc-700 rounded-md border-2 border-zinc-700 bg-zinc-950 text-center hover:border-zinc-200/40 transition-all">
           <Link
             href="/konyv"
-            className="flex min-h-[84px] flex-col items-center justify-center px-2 py-4 hover:bg-zinc-100/10 transition-colors"
+            className="flex min-h-[64px] flex-col items-center justify-center px-2 py-4 hover:bg-zinc-100/10 transition-colors"
           >
             <span
               className="text-sm font-bold uppercase text-zinc-100"

@@ -45,6 +45,11 @@ const menuItems = [
     label: "CREW",
     description: "Önts olajat a tűzre!",
   },
+  {
+    href: "/vallalhatatlan",
+    label: "KI ÁLL EMÖGÖTT?",
+    description: "Lerántjuk a leplet",
+  },
 ];
 
 type AuthUser = {

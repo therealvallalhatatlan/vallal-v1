@@ -48,8 +48,6 @@ export default function VmfiContent() {
         Vállalhatatlan Mikro Film Intézet
       </h1>
 
-      <h2 className="text-xl font-bold text-lime-400 mb-4">A mozilátogatás halott. A passzív fogyasztás rák.</h2>
-
       <div className="text-zinc-300 space-y-4 text-sm lg:text-base leading-relaxed">
         <p>
           A VMFI egy kísérleti mikro-mozihálózat — rövidfilmek, élmények és találkozások hálózata. Célunk, hogy a
