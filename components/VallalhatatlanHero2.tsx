@@ -170,7 +170,7 @@ export default function VallalhatatlanHero2() {
       <div className="relative z-20 flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
         <div className="w-full pt-14 pb-14 relative">
           <video
-          className="absolute right-1 top-6 w-22 h-22 rounded-full float-right border border-zinc-700/40"
+          className="absolute right-1 top-6 w-27 h-27 rounded-full float-right border border-zinc-700/40"
           src="/videos/avatar/avatar.mp4"
           autoPlay
           muted
@@ -180,10 +180,10 @@ export default function VallalhatatlanHero2() {
           preload="metadata"
           />
           <p
-            className="pt-22 ml-auto max-w-xl text-right text-xl font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
+            className="pt-24 ml-auto max-w-xl text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            Ennek a könyvnek nincs írója,<br/>és nem kapható a boltokban.<br/>
+            Ennek a könyvnek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
             <span className="text-lime-100 mr-4">→</span>
             <span className="text-lime-100">Meg kell találnod.</span>
           </p>
@@ -193,10 +193,10 @@ export default function VallalhatatlanHero2() {
           <div className="flex items-end justify-between gap-6 pt-6 border-t border-zinc-800">
             <div>
               <p
-                className="mb-3 text-[14px] uppercase tracking-[0.24em] text-zinc-300"
+                className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                A TE PÉLDÁNYOD
+                A TE PÉLDÁNYOD:
               </p>
 
               <div className="flex items-center gap-4">
