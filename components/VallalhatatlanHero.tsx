@@ -222,75 +222,127 @@ export default function VallalhatatlanHero() {
               <p>Vállalhatatlan.</p>
             </div>
 
-            {/* Könyv tabok */}
-            <div className="mt-8 flex space-x-8 border-b border-t pt-4 border-zinc-800 pb-2">
-              <button
-                onClick={() => setActiveBookTab("first")}
-                className={`font-mono text-sm uppercase not-italic line-through pb-1 ${
-                  activeBookTab === "first" ? "" : "text-rose-300"
-                }`}
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                Első Könyv
-              </button>
-              <button
-                onClick={() => setActiveBookTab("second")}
-                className={`font-mono text-sm uppercase not-italic pb-1 ${
-                  activeBookTab === "second" ? "" : "text-zinc-400"
-                }`}
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                Második Könyv
-              </button>
-            </div>
+            {/* Könyv archívum / iratmappa */}
+            <div className="relative mt-10">
+              {/* Mappa felső pereme */}
+              <div className="relative z-10 flex items-end border-b border-zinc-700/80">
 
-            <div className="mt-6">
-              {activeBookTab === "first" ? (
-                <div className="space-y-6">
-                  <p className="font-mono text-sm not-italic text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                    <Image
-                      src="/vallalhatatlan.png"
-                      alt="Vállalhatatlan Második Könyv borító"
-                      width={571}
-                      height={614}
-                      className="w-36 h-auto float-left mr-4 mb-4 rounded-md border border-zinc-800"
-                    />
-                    <span className="text-2xl text-zinc-100">000<span className="opacity-50">/100</span></span><br/>  
-                    Az első könyv elfogyott.<br/>Ha szeretnél mégis hozzájutni, írj Vállalhatatlannak.
-                  </p>
-                  <Link
-                    href="mailto:therealvallalhatatlan@gmail.com"
-                    className="flex min-h-16 w-full items-center justify-between px-4 py-4 border-2 rounded-md border-lime-100/80 font-mono text-md not-italic uppercase tracking-[0.08em] text-lime-100/80 hover:bg-zinc-100/10 hover:border-zinc-100/70 transition-colors"
+                <div className="flex items-end gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveBookTab("first")}
+                    className={`rounded-tr-md rounded-tl-md group relative min-w-1/3 border-x border-t px-10 py-2 text-left text-[11px] uppercase tracking-[0.12em] transition-all duration-300 sm:min-w-[142px] sm:text-xs ${
+                      activeBookTab === "first"
+                        ? "-mb-px border-zinc-600/40 bg-[#000000] text-zinc-100"
+                        : "border-transparent bg-transparent text-zinc-600 hover:border-zinc-800 hover:bg-zinc-900/40 hover:text-zinc-400"
+                    }`}
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    <span>DOBJ EGY MAILT</span>
-                    <span aria-hidden="true">@</span>
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="font-mono text-sm not-italic text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                    <Image
-                      src="/vallalhatatlan2.png"
-                      alt="Vállalhatatlan Második Könyv borító"
-                      width={194}
-                      height={200}
-                      className="w-36 h-auto float-left mr-4 mb-4 rounded-md border border-zinc-800"
-                    />
-                    <span className="text-2xl text-zinc-100">032<span className="opacity-50">/100</span></span><br/>
-                    Már csak 32 darab van a második könyvből. 68 példány már megtalálta a gazdáját.
-                  </p>
-                  <Link
-                    href="/konyv"
-                    className="flex min-h-16 w-full items-center justify-between px-4 py-4 border-2 rounded-md border-lime-100/80 font-mono text-md not-italic uppercase tracking-[0.08em] text-lime-100/80 hover:bg-zinc-100/10 hover:border-zinc-100/70 transition-colors"
+                    <span className="block text-[8px] tracking-[0.18em] text-zinc-600 group-hover:text-zinc-500">
+                      DOSSIER 01
+                    </span>
+                    <span className={activeBookTab === "first" ? "text-zinc-200" : "line-through decoration-rose-300/50"}>
+                      Első könyv
+                    </span>
+                    {activeBookTab === "first" && (
+                      <span className="absolute bottom-0 left-3 right-3 h-px bg-lime-100/50" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveBookTab("second")}
+                    className={`rounded-tr-md rounded-tl-md group relative min-w-1/3 border-x border-t px-10 py-2 text-left text-[11px] uppercase tracking-[0.12em] transition-all duration-300 sm:min-w-[154px] sm:text-xs ${
+                      activeBookTab === "second"
+                        ? "-mb-px border-zinc-600/40 bg-[#000000] text-zinc-100"
+                        : "border-transparent bg-transparent text-zinc-600 hover:border-zinc-800 hover:bg-zinc-900/40 hover:text-zinc-400"
+                    }`}
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    <span>A KÖNYV MEGSZERZÉSE</span>
-                    <span aria-hidden="true">➤</span>
-                  </Link>
-
+                    <span className="block text-[8px] tracking-[0.18em] text-zinc-600 group-hover:text-zinc-500">
+                      DOSSIER 02
+                    </span>
+                    <span>Második könyv</span>
+                    {activeBookTab === "second" && (
+                      <span className="absolute bottom-0 left-3 right-3 h-px bg-lime-100/70" />
+                    )}
+                  </button>
                 </div>
-              )}
+              </div>
+
+              {/* A mappa belseje */}
+              <div className="rounded-br-md rounded-bl-md relative overflow-hidden border-x border-b border-zinc-700/40 bg-black px-5 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.025),0_20px_60px_rgba(0,0,0,0.25)] sm:px-7 sm:py-7">
+                <div className="pointer-events-none absolute inset-0 opacity-[0.035] [background-image:repeating-linear-gradient(0deg,transparent,transparent_3px,#fff_4px)]" />
+                <div className="pointer-events-none absolute right-0 top-0 h-full w-24 bg-gradient-to-l from-white/[0.025] to-transparent" />
+
+                {activeBookTab === "first" ? (
+                  <div className="relative">
+                    <div className="mb-5 flex items-center justify-between border-b border-zinc-800/80 pb-3 text-[9px] uppercase tracking-[0.18em] text-zinc-600 not-italic">
+                      <span>STATUS / ELFOGYOTT</span>
+                      <span>FILE 001</span>
+                    </div>
+
+                    <div className="flow-root">
+                      <Image
+                        src="/vallalhatatlan.png"
+                        alt="Vállalhatatlan első könyv borító"
+                        width={571}
+                        height={614}
+                        className="float-left mr-5 mb-3 h-auto w-32 rounded-sm border border-zinc-700/80 opacity-90 shadow-[8px_8px_0_rgba(0,0,0,0.22)] sm:w-36"
+                      />
+                      <p className="font-mono text-sm leading-[1.75] text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                        <span className="text-3xl leading-none text-zinc-100">000<span className="text-zinc-600">/100</span></span>
+                        <br />
+                        <span className="text-zinc-400">Az első könyv elfogyott.</span>
+                        <br />
+                        Ha szeretnél mégis hozzájutni, írj Vállalhatatlannak.
+                      </p>
+                    </div>
+
+                    <Link
+                      href="mailto:therealvallalhatatlan@gmail.com"
+                      className="mt-7 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 px-4 py-4 font-mono text-md uppercase tracking-[0.08em] text-lime-100/80 transition-colors hover:border-zinc-100/70 hover:bg-zinc-100/10"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      <span>DOBJ EGY MAILT</span>
+                      <span aria-hidden="true">@</span>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div className="mb-5 flex items-center justify-between border-b border-zinc-800/80 pb-3 text-[9px] uppercase tracking-[0.18em] text-zinc-600 not-italic">
+                      <span>STATUS / ELÉRHETŐ</span>
+                      <span>FILE 002</span>
+                    </div>
+
+                    <div className="flow-root">
+                      <Image
+                        src="/vallalhatatlan2.png"
+                        alt="Vállalhatatlan második könyv borító"
+                        width={194}
+                        height={200}
+                        className="float-left mr-5 mb-3 h-auto w-32 rounded-sm border border-zinc-700/80 shadow-[8px_8px_0_rgba(0,0,0,0.22)] sm:w-36"
+                      />
+                      <p className="font-mono text-sm leading-[1.75] text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                        <span className="text-3xl leading-none text-zinc-100">032<span className="text-zinc-600">/100</span></span>
+                        <br />
+                        <span className="text-zinc-200">Már csak 32 darab van a második könyvből.</span>
+                        <br />
+                        68 példány már megtalálta a gazdáját.
+                      </p>
+                    </div>
+
+                    <Link
+                      href="/konyv"
+                      className="mt-7 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 px-4 py-4 font-mono text-md uppercase tracking-[0.08em] text-lime-100/80 transition-colors hover:border-zinc-100/70 hover:bg-zinc-100/10"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      <span>A KÖNYV MEGSZERZÉSE</span>
+                      <span aria-hidden="true">➤</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>
