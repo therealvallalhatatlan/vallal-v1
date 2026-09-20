@@ -7,6 +7,7 @@ export interface CheckoutSessionParams {
   cancelUrl: string
   productName?: string
   metadata?: Record<string, string>
+  collectShippingAddress?: boolean
 }
 
 export interface CheckoutSessionResult {
@@ -77,6 +78,9 @@ export async function createCheckoutSession(
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
       metadata: params.metadata || {},
+      ...(params.collectShippingAddress
+        ? { shipping_address_collection: { allowed_countries: ["HU"] as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection["allowed_countries"] } }
+        : {}),
     })
 
     return { url: session.url ?? params.successUrl, sessionId: session.id }
