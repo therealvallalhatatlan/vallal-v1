@@ -8,8 +8,8 @@ const montserrat = Montserrat({
 export default function Reviews() {
   const reviews = [
     {
-      text: "Ellógtam melóból céges kocsival, mert nem bírtam kivárni. Már a keresés maga egy kaland volt.",
-      author: "bober",
+      text: "Egy olyan kor lenyomata ami lehet csak nekunk fontos de kortörténet okán szerintem másnak is vicces lehet. Vagy tanulságos...",
+      author: "Sior",
     },
     {
       text: "A könyv felénél tartok és azt kell mondjam majdnem komolyabb élmény mint az Irvine Welsh vagy Bukowski könyvek.",
