@@ -392,6 +392,18 @@ export default function VallalhatatlanHero2() {
             </p>
           </div>
         </section>
+        
+        <section className="mt-12 w-full">
+          <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t pt-4 pb-1 border-b border-zinc-800">
+            <p
+                className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                MIRŐL SZÓL A KÖNYV?
+              </p>
+          </div>
+        </section>
+
 
         <section className="mt-6 w-full">
           <Reviews />
