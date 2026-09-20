@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Montserrat } from "next/font/google"
 import { RefreshCw } from "lucide-react"
 import Reviews from "@/components/Reviews"
+import { Badge } from "@/components/Badge"
 import Image from "next/image"
 
 const montserrat = Montserrat({
@@ -377,19 +378,60 @@ export default function VallalhatatlanHero2() {
               controls={false}
               preload="metadata"
             />
-            <p className="mt-6 text-right text-[19px] font-semibold italic leading-relaxed text-lime-100 sm:text-base"
+            <p className="mt-6 text-right text-[19px] font-semibold italic leading-relaxed text-zinc-100 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              Terjesztés: Dead Drop [ˈdɛd drɒp]
+              Terjesztés: <span className="text-lime-100">Dead Drop [ˈdɛd drɒp]</span>
             </p>
-            <p className="text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"style={{ fontFamily: "var(--font-mono-tech)" }}>
-              Kapsz egy koordinátát,<br/>pár fotót és<br/>egy rövid leírást.<br/>48 órád van megtalálni a cuccot.
+            <p className="text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              Kapsz egy koordinátát, pár fotót<br/>és egy pontos leírást.<br/>48 órád van megtalálni a cuccot.
             </p>
-            <p className="py-3 text-sm leading-[1.8] text-zinc-400 text-right"
+
+            
+
+            <p className="py-6 text-sm leading-[1.8] text-zinc-400 text-right"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               Nem szivatás - KALAND, amiről mesélni fogsz!<br/>Ha 48 órán belül mész és nincs ott - újraküldöm. 
             </p>
+
+            <div className="flex justify-end gap-2 mt-2 mb-6">
+              <div className="relative group">
+                <Badge className="text-[12px] tracking-widest px-4 py-1 uppercase border border-lime-100/60 bg-transparent text-zinc-300">Budapest</Badge>
+                <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
+                  Aktív
+                </span>
+              </div>
+              <div className="relative group">
+                <Badge className="text-[12px] tracking-widest px-4 py-1 uppercase border border-zinc-800 bg-transparent text-zinc-600">Szeged</Badge>
+                <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
+                  Hamarosan
+                </span>
+              </div>
+              <div className="relative group">
+                <Badge className="text-[12px] tracking-widest px-4 py-1 uppercase border border-zinc-800 bg-transparent text-zinc-600">Pécs</Badge>
+                <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
+                  Hamarosan
+                </span>
+              </div>
+              <div className="relative group">
+                <Badge className="text-[12px] tracking-widest px-4 py-1 uppercase border border-zinc-800 bg-transparent text-zinc-600">London</Badge>
+                <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
+                  Hamarosan
+                </span>
+              </div>
+            </div>
+
+            <p className="py-6 text-sm leading-[1.8] text-zinc-400 text-right" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              <Link
+                href="/kapcsolat"
+                className=" text-zinc-400 text-xs hover:text-lime-100"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                Jelentkezz terjesztőnek! <span className="text-lime-100 text-lg" aria-hidden="true">🐇</span>
+              </Link>
+            </p>
+            
           </div>
         </section>
         
