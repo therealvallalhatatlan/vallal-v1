@@ -931,6 +931,37 @@ function MatricaNav({
     )
   }, [currentUserId, pmUnreadCounts])
 
+  // Keep the installed PWA's app-icon badge synchronized with the real
+  // private-message unread count, not only with incoming push events.
+  useEffect(() => {
+    if (!user?.id || typeof window === 'undefined' || !('serviceWorker' in navigator)) return
+
+    let cancelled = false
+    const totalUnread = Object.values(pmUnreadCounts).reduce((sum, value) => {
+      return sum + (typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : 0)
+    }, 0)
+
+    const syncBadge = async () => {
+      try {
+        const registration = await navigator.serviceWorker.ready
+        if (cancelled) return
+
+        if (totalUnread > 0 && typeof registration.setAppBadge === 'function') {
+          await registration.setAppBadge(totalUnread)
+        } else if (totalUnread === 0 && typeof registration.clearAppBadge === 'function') {
+          await registration.clearAppBadge()
+        }
+      } catch {
+        // Badging is best-effort and browser dependent.
+      }
+    }
+
+    void syncBadge()
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id, pmUnreadCounts])
+
   useEffect(() => {
     if (!authToken || !user?.id) return
 
