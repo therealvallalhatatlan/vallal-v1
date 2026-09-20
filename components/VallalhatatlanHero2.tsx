@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
 import { Montserrat } from "next/font/google"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, Volume2, VolumeX } from "lucide-react"
 import Reviews from "@/components/Reviews"
 import { Badge } from "@/components/Badge"
 import Image from "next/image"
@@ -36,6 +36,8 @@ export default function VallalhatatlanHero2() {
   const [selectedCopy, setSelectedCopy] = useState<number | null>(null)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [muted, setMuted] = useState(true)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
 
   const loadRandomStory = async () => {
     setStoryLoading(true)
@@ -389,13 +391,13 @@ export default function VallalhatatlanHero2() {
 
             
 
-            <p className="py-6 text-sm leading-[1.8] text-zinc-400 text-right"
+            <p className="py-9 text-sm leading-[1.8] text-zinc-400 text-right"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               Nem szivatás - KALAND, amiről mesélni fogsz!<br/>Ha 48 órán belül mész és nincs ott - újraküldöm. 
             </p>
 
-            <div className="flex justify-end gap-2 mt-2 mb-6">
+            <div className="flex justify-end gap-2 mb-6">
               <div className="relative group">
                 <Badge className="text-[12px] tracking-widest px-4 py-1 uppercase border border-lime-100/60 bg-transparent text-zinc-300">Budapest</Badge>
                 <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
@@ -422,7 +424,7 @@ export default function VallalhatatlanHero2() {
               </div>
             </div>
 
-            <p className="py-6 text-sm leading-[1.8] text-zinc-400 text-right" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <p className="pt-2 text-sm leading-[1.8] text-zinc-400 text-right" style={{ fontFamily: "var(--font-mono-tech)" }}>
               <Link
                 href="/kapcsolat"
                 className=" text-zinc-400 text-xs hover:text-lime-100"
@@ -435,14 +437,50 @@ export default function VallalhatatlanHero2() {
           </div>
         </section>
         
-        <section className="mt-12 w-full">
+        <section className="mt-16 w-full">
           <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t pt-4 pb-1 border-b border-zinc-800">
             <p
                 className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 MIRŐL SZÓL A KÖNYV?
-              </p>
+            </p>
+          </div>
+            <div className="relative">
+              <video
+                className="rounded-lg relative left-1/2 mt-0 block w-screen -translate-x-1/2"
+                src="/videos/film2.mp4"
+                autoPlay
+                muted={muted}
+                loop
+                playsInline
+                controls={false}
+                preload="metadata"
+                ref={videoRef}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (videoRef.current) videoRef.current.muted = !muted
+                  setMuted(!muted)
+                }}
+                className="absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-full border border-zinc-700/0 bg-zinc-900/0 px-3 py-1 text-xs uppercase font-semibold tracking-widest text-zinc-300 backdrop-blur-sm transition hover:border-lime-100/80"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+                aria-label={muted ? "Hang bekapcsolása" : "Hang kikapcsolása"}
+              >
+                {muted ? <VolumeX size={16} className="text-zinc-400" /> : <Volume2 size={16} className="text-lime-100" />}
+                <span>{muted ? "Hang be" : "Hang ki"}</span>
+              </button>
+            </div>
+            <div className="w-full pb-18 pt-10 relative">
+            <p
+              className="ml-auto max-w-xl text-left text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              Ennek a könyvnek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
+              <span className="text-lime-100/80 mr-4">→</span>
+              <span className="text-lime-100/80">Meg kell találnod.</span>
+            </p>
           </div>
         </section>
 
