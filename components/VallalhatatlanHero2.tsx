@@ -369,7 +369,7 @@ export default function VallalhatatlanHero2() {
           <div className="">
             <video
               className="rounded-lg relative left-1/2 mt-0 block w-screen -translate-x-1/2"
-              src="/videos/dd2.mp4"
+              src="/videos/dd3.mp4"
               autoPlay
               muted
               loop
