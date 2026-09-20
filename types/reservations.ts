@@ -17,8 +17,11 @@ export interface ReservationRequest {
   copy_number: number;
 }
 
+export type CheckoutDeliveryMethod = 'dead-drop' | 'automata';
+
 export interface CheckoutCopyRequest {
   copy_number: number;
+  delivery_method?: CheckoutDeliveryMethod;
 }
 
 export interface CheckoutCopyResponse {
