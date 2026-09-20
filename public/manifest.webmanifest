@@ -2,7 +2,7 @@
   "name": "Vállalhatatlan Reader",
   "short_name": "Vállalhatatlan",
   "description": "Vállalhatatlan Reader — olvasd kedvenc történeteidet offline és app-szerű élményben.",
-  "start_url": "/reader?standalone=1",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
