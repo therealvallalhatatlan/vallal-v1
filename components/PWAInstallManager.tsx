@@ -283,72 +283,48 @@ export default function PWAInstallManager({
     <>
       {/* Android install banner */}
       {showAndroidBanner && (
-        <div className="fixed left-4 right-4 bottom-6 z-50 max-w-3xl mx-auto">
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900/95 p-4 shadow-lg backdrop-blur-sm text-sm text-white flex items-start gap-3">
-            <div className="flex-shrink-0 mt-1">
-              <div className="w-10 h-10 rounded-md bg-lime-600 flex items-center justify-center font-bold text-black">
-                ⬇
-              </div>
+        <div className="fixed left-2 right-2 bottom-2 z-50 mx-auto max-w-md">
+          <div className="rounded-lg border border-white/10 bg-neutral-950/90 px-3 py-2 shadow-2xl backdrop-blur-md text-xs text-white flex items-center gap-2">
+            <div className="flex-shrink-0 w-7 h-7 rounded-md bg-lime-500 flex items-center justify-center font-bold text-black">
+              ↓
             </div>
-            <div className="flex-1">
-              <div className="flex items-start justify-between">
-                <div>
-                  <strong className="text-lime-300">Telepíthető alkalmazás</strong>
-                  <p className="text-xs text-gray-300 mt-1">
-                    Telepítsd a Reader alkalmazást a kezdőképernyőre — jobb élmény, offline tartalom.
-                  </p>
-                </div>
-                <button onClick={dismissAll} className="text-gray-400 hover:text-gray-200">✕</button>
-              </div>
-
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={handleAndroidInstall}
-                  className="rounded-md bg-lime-500 px-3 py-2 text-xs font-semibold text-black"
-                >
-                  Telepítés
-                </button>
-              
-                <button
-                  onClick={() => dismissTemporarily(1)}
-                  className="rounded-md bg-neutral-800 px-3 py-2 text-xs text-gray-200"
-                >
-                  Emlékeztess később
-                </button>
-              </div>
+            <div className="min-w-0 flex-1">
+              <strong className="block text-lime-300 text-[11px] leading-tight">Telepíthető alkalmazás</strong>
+              <span className="block text-[10px] text-gray-400 leading-tight mt-0.5">Tedd ki a kezdőképernyőre.</span>
             </div>
+            <button
+              onClick={handleAndroidInstall}
+              className="shrink-0 rounded-md bg-lime-500 px-2.5 py-1.5 text-[10px] font-bold text-black"
+            >
+              Telepítés
+            </button>
+            <button
+              onClick={() => dismissTemporarily(1)}
+              aria-label="Később"
+              className="shrink-0 px-1.5 py-1 text-gray-500 hover:text-gray-200"
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}
 
       {/* in-app browser banner */}
       {showInAppBanner && (
-        <div className="fixed left-4 right-4 bottom-6 z-50 max-w-3xl mx-auto">
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900/95 p-4 shadow-lg backdrop-blur-sm text-sm text-white flex items-start gap-3">
-            <div className="flex-shrink-0 mt-1">
-              <div className="w-10 h-10 rounded-md bg-lime-600 flex items-center justify-center font-bold text-black">↗</div>
-            </div>
+        <div className="fixed left-2 right-2 bottom-2 z-50 mx-auto max-w-md">
+          <div className="rounded-lg border border-white/10 bg-neutral-950/90 px-3 py-2 shadow-2xl backdrop-blur-md text-xs text-white flex items-center gap-2">
+            <div className="flex-shrink-0 w-7 h-7 rounded-md bg-lime-500 flex items-center justify-center font-bold text-black">↗</div>
 
-            <div className="flex-1">
-              <div className="flex items-start justify-between">
-                <div>
-                  <strong className="text-lime-300">Jobb böngészőben nyisd meg?</strong>
-                  <p className="text-xs text-gray-300 mt-1">
-                    Az alkalmazás beágyazott böngészőjéből jöttél — nyisd meg Chrome vagy Safari-ban a teljes funkcionalitásért.
-                  </p>
-                </div>
-                <button onClick={dismissAll} className="text-gray-400 hover:text-gray-200">✕</button>
-              </div>
-
-              <div className="mt-3 flex gap-2">
-                <button onClick={openIosGuide} className="rounded-md border border-neutral-700 px-3 py-2 text-xs text-gray-200">
-                  Hogyan? (iOS)
-                </button>
-                <button onClick={() => dismissTemporarily(1)} className="rounded-md bg-neutral-800 px-3 py-2 text-xs text-gray-200">
-                  Később
-                </button>
-              </div>
+            <div className="min-w-0 flex-1">
+              <strong className="block text-lime-300 text-[11px] leading-tight">Nyisd meg böngészőben</strong>
+              <span className="block text-[10px] text-gray-400 leading-tight mt-0.5 truncate">Teljes funkcionalitás Chrome vagy Safari alatt.</span>
             </div>
+            <button onClick={openIosGuide} className="shrink-0 rounded-md border border-white/10 px-2 py-1 text-[10px] text-gray-300">
+              Hogyan?
+            </button>
+            <button onClick={() => dismissTemporarily(1)} aria-label="Később" className="shrink-0 px-1.5 py-1 text-gray-500 hover:text-gray-200">
+              ✕
+            </button>
           </div>
         </div>
       )}
