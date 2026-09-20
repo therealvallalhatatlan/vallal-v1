@@ -118,7 +118,10 @@ export async function reserveCopy(copyNumber: number, sessionId: string): Promis
     return { success: false, error: 'Copy not available for reservation.' };
   }
 
-  return { success: truexport async function createCheckoutForCopy(
+  return { success: true };
+}
+
+export async function createCheckoutForCopy(
   copyNumber: number,
   sessionId: string,
   deliveryMethod: CheckoutDeliveryMethod = 'dead-drop',
