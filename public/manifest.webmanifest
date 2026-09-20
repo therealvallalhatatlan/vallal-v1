@@ -1,7 +1,7 @@
 {
-  "name": "Vállalhatatlan Reader",
+  "name": "Vállalhatatlan App",
   "short_name": "Vállalhatatlan",
-  "description": "Vállalhatatlan Reader — olvasd kedvenc történeteidet offline és app-szerű élményben.",
+  "description": "Vállalhatatlan App — olvasd kedvenc történeteidet offline és app-szerű élményben.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
