@@ -22,8 +22,8 @@ import { createClient } from "@/lib/browser";
 const menuItems = [
   {
     href: "/konyv",
-    label: "KÖNYV",
-    description: "A Könyv, és egyéb írások.",
+    label: "A MÁSODIK KÖNYV",
+    description: "A könyvben áll össze a történet. Szerezz egyet a 100-ból.",
   },
   {
     href: "/halozat",
@@ -46,9 +46,9 @@ const menuItems = [
     description: "Önts olajat a tűzre!",
   },
   {
-    href: "/vallalhatatlan",
-    label: "KI ÁLL EMÖGÖTT?",
-    description: "Lerántjuk a leplet",
+    href: "/reader",
+    label: "AZ ELSŐ KÖNYV",
+    description: "Itt olvashatod az első könyvet online.",
   },
 ];
 
@@ -126,7 +126,7 @@ export default function SiteHeader() {
       {/* Logo */}
       <Link href="/" className="group">
         <h1
-          className="text-lg font-bold italic text-zinc-100 transition-colors group-hover:text-lime-200"
+          className="text-[22px] font-bold italic text-zinc-100 transition-colors group-hover:text-lime-200"
           style={{ fontFamily: "var(--font-logo)" }}
         >
           {pathname === '/halozat' ? 'Hálózat' : 'Vállalhatatlan'}

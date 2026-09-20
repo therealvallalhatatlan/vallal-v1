@@ -168,72 +168,49 @@ export default function VallalhatatlanHero2() {
       <div className="pointer-events-none absolute inset-0 fx-stripes opacity-10 mix-blend-plus-lighter" />
 
       <div className="relative z-20 flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
-        <div className="w-full pt-14 pb-14 relative">
-          <video
-          className="absolute right-1 top-6 w-27 h-27 rounded-full float-right border border-zinc-700/40"
-          src="/videos/avatar/avatar.mp4"
-          autoPlay
-          muted
-          loop
-          playsInline
-          controls={false}
-          preload="metadata"
-          />
+        <div className="w-full pb-18 pt-10 relative">
           <p
-            className="pt-24 ml-auto max-w-xl text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
+            className="ml-auto max-w-xl text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             Ennek a könyvnek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
-            <span className="text-lime-100 mr-4">→</span>
-            <span className="text-lime-100">Meg kell találnod.</span>
+            <span className="text-lime-100/80 mr-4">→</span>
+            <span className="text-lime-100/80">Meg kell találnod.</span>
           </p>
         </div>
 
-        <section aria-label="Sorszám kiválasztása">
-          <div className="flex items-end justify-between gap-6 pt-6 border-t border-zinc-800">
+        <section className="bg-black" aria-label="Sorszám kiválasztása">
+          <div className="pt-6">
             <div>
-              <p
-                className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                A TE PÉLDÁNYOD:
-              </p>
+              <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t pt-4 pb-1 border-b border-zinc-800">
+                <p
+                  className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                 A TE KÖNYVED SORSZÁMA
+                </p>
+              </div>
 
               <div className="flex items-center gap-4">
                 <span
-                  className="block text-8xl leading-none tracking-[-0.1m] text-zinc-100 sm:text-8xl"
+                  className="block text-8xl leading-none tracking-wide text-zinc-100"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   {String(selectedCopy ?? 67).padStart(3, "0")}
                 </span>
-
+                <span className="-ml-4 text-xl text-zinc-600"style={{ fontFamily: "var(--font-mono-tech)" }}>/100</span>
                 <button
                   type="button"
                   onClick={randomizeCopy}
                   disabled={availableCopies.length < 2}
                   aria-label="Másik szabad sorszám"
                   title="Másik szabad sorszám"
-                  className="mb-1 flex h-11 w-32 items-center justify-center rounded-full border border-zinc-700/40 text-zinc-400 transition-all hover:border-lime-100/70 hover:text-lime-100 disabled:cursor-not-allowed disabled:opacity-30"
+                  className="mb-1 flex h-10 w-28 opacity-70 hover:opacity-100 text-xs uppercase border p-2 border-zinc-800 items-center justify-center rounded-full text-zinc-400 transition-all disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                  <span className="mr-3 text-[11px] tracking-wider uppercase">Random</span>
-                  <RefreshCw size={20} strokeWidth={1} />
+                  <RefreshCw size={18} strokeWidth={2} />
+                  <span className="ml-2 text-zinc-700"style={{ fontFamily: "var(--font-mono-tech)" }}>Másikat</span>
                 </button>
               </div>
-            </div>
-
-            <div className="hidden text-right sm:block">
-              <p
-                className="text-[9px] uppercase tracking-[0.18em] text-zinc-600"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                SZABAD PÉLDÁNYOK
-              </p>
-              <p
-                className="mt-1 text-sm text-zinc-400"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                {availableCopies.length} / 100
-              </p>
             </div>
           </div>
 
@@ -241,8 +218,8 @@ export default function VallalhatatlanHero2() {
             className="mt-8 max-w-xl border-l border-lime-100/20 pl-4 text-sm leading-[1.8] text-zinc-400 sm:pl-5"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            <p>100 darab sorszámozott példány készül.</p>
-            <p>Átvétel: Dead Drop vagy automata.</p>
+            <p>100 darab sorszámozott könyv,<br/>amiben öszeáll a történet.</p>
+            <p>Átvétel: <span className="text-lime-100">Dead Drop</span> vagy Posta automata.</p>
           </div>
         </section>
 
@@ -251,12 +228,12 @@ export default function VallalhatatlanHero2() {
             type="button"
             onClick={handleAcquire}
             disabled={availableCopies.length === 0}
-            className="group relative flex min-h-20 w-full items-center justify-between overflow-hidden rounded-sm border-2 border-lime-100/80 bg-lime-100 px-5 py-5 text-left text-black transition-all duration-300 hover:border-zinc-100 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600"
+            className="group relative flex min-h-20 w-full items-center justify-between overflow-hidden rounded-sm border-2 border-lime-100/80 bg-zinc-100 px-5 py-5 text-left text-black transition-all duration-300 hover:border-zinc-100 hover:bg-lime-100 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             <span className="text-lg font-bold uppercase tracking-[0.08em] sm:text-xl">
               <span className="mr-6 rounded-md bg-white border border-zinc-200 text-zinc-800 p-3">
-              #{String(selectedCopy ?? 67).padStart(3, "0")}
+              {String(selectedCopy ?? 67).padStart(3, "0")}
               </span>
               Levadászom
             </span>
@@ -399,7 +376,35 @@ export default function VallalhatatlanHero2() {
           )}
         </section>
 
-        <section className="mt-16 w-full">
+        <section className="pt-20">
+          <div className="">
+            <video
+              className="rounded-lg relative left-1/2 mt-0 block w-screen -translate-x-1/2"
+              src="/videos/dd2.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls={false}
+              preload="metadata"
+            />
+            <p className="mt-6 text-right text-[19px] font-semibold italic leading-relaxed text-lime-100 sm:text-base"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              Dead Drop [ˈdɛd drɒp]
+            </p>
+            <p className="text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"style={{ fontFamily: "var(--font-mono-tech)" }}>
+              Kapsz egy koordinátát, pár fotót és egy rövid, pontos leírást.<br/>48 órád van megtalálni a cuccot.
+            </p>
+            <p className="py-3 text-sm leading-[1.8] text-zinc-400 text-right"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              Kaland, amiről mesélni fogsz!<br/>Ha 48 órán belül mész és nincs ott - újraküldöm. 
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-6 w-full">
           <Reviews />
         </section>
 
@@ -459,68 +464,7 @@ export default function VallalhatatlanHero2() {
         </div>
       </div>
 
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-60 bg-zinc-950 px-2 py-6 pt-3"
-        style={{
-          paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)",
-        }}
-      >
-        <div className="grid min-h-[74px] grid-cols-3 items-center divide-x divide-zinc-700 rounded-md border-2 border-zinc-700 bg-zinc-950 text-center hover:border-zinc-200/40 transition-all">
-          <Link
-            href="/konyv"
-            className="flex min-h-[64px] flex-col items-center justify-center px-2 py-4 hover:bg-zinc-100/10 transition-colors"
-          >
-            <span
-              className="text-sm font-bold uppercase text-zinc-100"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              [ KÖNYV ]
-            </span>
-            <span
-              className="text-xs text-lime-100/80"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              67 Történet
-            </span>
-          </Link>
 
-          <Link
-            href="/halozat"
-            className="flex min-h-[84px] flex-col items-center justify-center bg-zinc-800/0 px-2 py-4 hover:bg-zinc-100/10 transition-colors"
-          >
-            <span
-              className="text-sm font-bold uppercase text-zinc-100"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              [ HALOZAT ]
-            </span>
-            <span
-              className="text-xs text-lime-100/80"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              00 AKTIV SZPOT
-            </span>
-          </Link>
-
-          <Link
-            href="/lab"
-            className="flex min-h-[84px] flex-col items-center justify-center px-2 py-4 hover:bg-zinc-100/10 transition-colors"
-          >
-            <span
-              className="text-sm font-bold uppercase text-zinc-100"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              [ LAB ]
-            </span>
-            <span
-              className="text-xs text-lime-100/80"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              03 Projekt
-            </span>
-          </Link>
-        </div>
-      </nav>
     </section>
   )
 }
