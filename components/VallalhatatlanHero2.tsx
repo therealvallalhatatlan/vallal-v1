@@ -106,30 +106,19 @@ export default function VallalhatatlanHero2() {
   }
 
   const startCheckout = async () => {
-    if (!selectedCopy || !availableCopies.includes(selectedCopy) || checkoutLoading) return
+    if (!selectedCopy || checkoutLoading) return
 
     setCheckoutLoading(true)
     setCheckoutError(null)
 
     try {
-      const reserveResponse = await fetch("/api/reserve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ copy_number: selectedCopy }),
-      })
-      const reserveData = (await reserveResponse.json()) as {
-        success?: boolean
-        error?: string
-      }
-
-      if (!reserveResponse.ok || !reserveData.success) {
-        throw new Error(reserveData.error || "A kiválasztott példányt közben elvitték.")
-      }
-
       const response = await fetch("/api/checkout-copy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ copy_number: selectedCopy }),
+        body: JSON.stringify({
+          copy_number: selectedCopy,
+          delivery_method: pickupMethod,
+        }),
       })
 
       const data = (await response.json()) as {
