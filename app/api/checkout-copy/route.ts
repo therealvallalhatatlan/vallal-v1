@@ -20,7 +20,11 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const body: CheckoutCopyRequest = await request.json();
-    const result = await createCheckoutForCopy(body.copy_number, sessionId);
+    const result = await createCheckoutForCopy(
+      body.copy_number,
+      sessionId,
+      body.delivery_method ?? 'dead-drop',
+    );
 
     return Response.json(result);
   } catch (error) {
