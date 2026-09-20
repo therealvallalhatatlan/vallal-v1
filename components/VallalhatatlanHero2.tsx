@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Montserrat } from "next/font/google"
 import { RefreshCw } from "lucide-react"
@@ -35,6 +35,9 @@ export default function VallalhatatlanHero2() {
   const [selectedCopy, setSelectedCopy] = useState<number | null>(null)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const bookVideoScrollRef = useRef<HTMLDivElement | null>(null)
+  const bookVideoRefs = useRef<Array<HTMLVideoElement | null>>([])
+  const [activeBookVideo, setActiveBookVideo] = useState(0)
 
   const loadRandomStory = async () => {
     setStoryLoading(true)
@@ -141,6 +144,65 @@ export default function VallalhatatlanHero2() {
       setCheckoutLoading(false)
       void loadAvailableCopies()
     }
+  }
+
+  const syncActiveBookVideo = useCallback(() => {
+    const container = bookVideoScrollRef.current
+    if (!container) return
+
+    const center = container.scrollLeft + container.clientWidth / 2
+    let closestIndex = 0
+    let closestDistance = Number.POSITIVE_INFINITY
+
+    bookVideoRefs.current.forEach((video, index) => {
+      if (!video) return
+
+      const card = video.closest<HTMLElement>("[data-book-video-card]")
+      if (!card) return
+
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2
+      const distance = Math.abs(center - cardCenter)
+
+      if (distance < closestDistance) {
+        closestDistance = distance
+        closestIndex = index
+      }
+    })
+
+    setActiveBookVideo((current) =>
+      current === closestIndex ? current : closestIndex,
+    )
+  }, [])
+
+  useEffect(() => {
+    bookVideoRefs.current.forEach((video, index) => {
+      if (!video) return
+
+      if (index !== activeBookVideo) {
+        video.muted = true
+        video.pause()
+      }
+    })
+
+    const activeVideo = bookVideoRefs.current[activeBookVideo]
+    if (activeVideo) {
+      activeVideo.muted = false
+    }
+  }, [activeBookVideo])
+
+  const handleBookVideoPlay = (index: number) => {
+    bookVideoRefs.current.forEach((video, videoIndex) => {
+      if (!video) return
+
+      if (videoIndex === index) {
+        video.muted = false
+      } else {
+        video.muted = true
+        video.pause()
+      }
+    })
+
+    setActiveBookVideo(index)
   }
 
   useEffect(() => {
@@ -393,14 +455,133 @@ export default function VallalhatatlanHero2() {
           </div>
         </section>
         
-        <section className="mt-12 w-full">
-          <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t pt-4 pb-1 border-b border-zinc-800">
-            <p
-                className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
+        <section className="mt-12 w-full" aria-labelledby="book-video-carousel-title">
+          <div className="mb-4 border-t border-zinc-800 pt-4">
+            <div className="flex items-end justify-between gap-4">
+              <p
+                id="book-video-carousel-title"
+                className="text-[11px] uppercase tracking-[0.24em] text-zinc-400"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 MIRŐL SZÓL A KÖNYV?
               </p>
+
+              <span
+                className="shrink-0 text-[9px] uppercase tracking-[0.2em] text-zinc-600"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                LAPOZD →
+              </span>
+            </div>
+          </div>
+
+          <div
+            ref={bookVideoScrollRef}
+            onScroll={syncActiveBookVideo}
+            className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-3 pr-[12%]"
+            style={{ scrollPaddingLeft: "6%" }}
+            aria-label="A könyvről szóló videók"
+          >
+            {[
+              {
+                title: "Dead Drop / Budapest",
+                src: "/videos/carousel/Dead_Drop_Budapest.mp4",
+                description:
+                  "A könyv nem érkezik meg az ajtódig. Kapsz egy nyomot, elindulsz, és megtalálod. Budapest utcái részei a történetnek.",
+              },
+              {
+                title: "Nem vettem át",
+                src: "/videos/carousel/Nem_Vettem_At.mp4",
+                description:
+                  "Aki nem megy érte időben, lemarad. A Vállalhatatlan világa ilyen: nincs kényelmes útvonal, neked kell végigmenni rajta.",
+              },
+            ].map((video, index, videos) => (
+              <article
+                key={video.src}
+                data-book-video-card
+                className="w-[88%] shrink-0 snap-center"
+              >
+                <div
+                  className={
+                    "overflow-hidden rounded-sm border transition-colors " +
+                    (activeBookVideo === index
+                      ? "border-zinc-600 bg-zinc-950"
+                      : "border-zinc-900 bg-black")
+                  }
+                >
+                  <div className="relative aspect-[16/10] bg-black">
+                    <video
+                      ref={(element) => {
+                        bookVideoRefs.current[index] = element
+                      }}
+                      src={video.src}
+                      className="h-full w-full object-cover"
+                      controls
+                      playsInline
+                      preload="metadata"
+                      muted={index !== activeBookVideo}
+                      onPlay={() => handleBookVideoPlay(index)}
+                      aria-label={video.title}
+                    />
+
+                    <div
+                      className="pointer-events-none absolute left-3 top-3 rounded-full border border-white/10 bg-black/65 px-2.5 py-1 text-[8px] uppercase tracking-[0.18em] text-zinc-300 backdrop-blur-sm"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      {String(index + 1).padStart(2, "0")} / {String(videos.length).padStart(2, "0")}
+                    </div>
+
+                    {activeBookVideo === index && (
+                      <div
+                        className="pointer-events-none absolute right-3 top-3 rounded-full border border-lime-100/15 bg-black/65 px-2.5 py-1 text-[8px] uppercase tracking-[0.18em] text-lime-100/80 backdrop-blur-sm"
+                        style={{ fontFamily: "var(--font-mono-tech)" }}
+                      >
+                        HANG AKTÍV
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t border-zinc-900 px-4 py-4">
+                    <p
+                      className="text-sm uppercase tracking-[0.12em] text-zinc-100"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      {video.title}
+                    </p>
+
+                    <p
+                      className="mt-2 max-w-xl text-xs leading-[1.8] text-zinc-500"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      {video.description}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div
+            className="mt-2 flex items-center justify-between gap-4"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            <div className="flex items-center gap-1.5" aria-hidden="true">
+              {[0, 1].map((index) => (
+                <span
+                  key={index}
+                  className={
+                    "h-1 rounded-full transition-all " +
+                    (activeBookVideo === index
+                      ? "w-6 bg-lime-100/70"
+                      : "w-2 bg-zinc-800")
+                  }
+                />
+              ))}
+            </div>
+
+            <span className="text-[9px] uppercase tracking-[0.16em] text-zinc-700">
+              HÚZD BALRA
+            </span>
           </div>
         </section>
 
