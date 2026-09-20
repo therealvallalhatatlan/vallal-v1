@@ -380,15 +380,15 @@ export default function VallalhatatlanHero2() {
             <p className="mt-6 text-right text-[19px] font-semibold italic leading-relaxed text-lime-100 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              Dead Drop [ˈdɛd drɒp]
+              Terjesztés: Dead Drop [ˈdɛd drɒp]
             </p>
             <p className="text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"style={{ fontFamily: "var(--font-mono-tech)" }}>
-              Kapsz egy koordinátát, pár fotót és egy rövid, pontos leírást.<br/>48 órád van megtalálni a cuccot.
+              Kapsz egy koordinátát,<br/>pár fotót és<br/>egy rövid leírást.<br/>48 órád van megtalálni a cuccot.
             </p>
             <p className="py-3 text-sm leading-[1.8] text-zinc-400 text-right"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              Kaland, amiről mesélni fogsz!<br/>Ha 48 órán belül mész és nincs ott - újraküldöm. 
+              Nem szivatás - KALAND, amiről mesélni fogsz!<br/>Ha 48 órán belül mész és nincs ott - újraküldöm. 
             </p>
           </div>
         </section>
