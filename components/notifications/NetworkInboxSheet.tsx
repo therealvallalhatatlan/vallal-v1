@@ -147,6 +147,8 @@ export default function NetworkInboxSheet() {
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [pmConversations, setPmConversations] = useState<PMConversation[]>([])
   const [loadingPmConversations, setLoadingPmConversations] = useState(false)
+  const [pushLoading, setPushLoading] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState(false)
 
   const autoOpenTriggered = useRef(false)
   const autoOpenTimer = useRef<number | undefined>(undefined)
@@ -402,6 +404,64 @@ export default function NetworkInboxSheet() {
     }
   }, [payload])
 
+  const enablePushNotifications = useCallback(async () => {
+    if (!isAuthenticated || !token || !currentUserId) return false
+    if (typeof window === "undefined" || typeof navigator === "undefined") return false
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) return false
+
+    setPushLoading(true)
+
+    try {
+      const permission = Notification.permission === "granted"
+        ? "granted"
+        : await Notification.requestPermission()
+
+      if (permission !== "granted") {
+        setPushEnabled(false)
+        return false
+      }
+
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!vapidKey) {
+        console.error("[network-inbox] missing NEXT_PUBLIC_VAPID_PUBLIC_KEY")
+        return false
+      }
+
+      const registration = await navigator.serviceWorker.ready
+      let subscription = await registration.pushManager.getSubscription()
+
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
+        })
+      }
+
+      const response = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ subscription }),
+        cache: "no-store",
+      })
+
+      if (!response.ok) {
+        console.error("[network-inbox] push subscription failed", response.status)
+        return false
+      }
+
+      setPushEnabled(true)
+      return true
+    } catch (error) {
+      console.error("[network-inbox] push enable failed", error)
+      return false
+    } finally {
+      setPushLoading(false)
+    }
+  }, [currentUserId, isAuthenticated, token])
+
   useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId || typeof navigator === "undefined") return
 
@@ -422,29 +482,27 @@ export default function NetworkInboxSheet() {
   useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId) return
     if (typeof window === "undefined" || typeof navigator === "undefined") return
-    if (!("Notification" in window) || Notification.permission !== "granted") return
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return
-
-    const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-    if (!vapidKey) return
+    if (!("Notification" in window) || Notification.permission !== "granted") {
+      setPushEnabled(false)
+      return
+    }
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setPushEnabled(false)
+      return
+    }
 
     let cancelled = false
 
-    const ensurePushSubscription = async () => {
+    const syncExistingPushSubscription = async () => {
       try {
         const registration = await navigator.serviceWorker.ready
         if (cancelled) return
 
-        let subscription = await registration.pushManager.getSubscription()
-
+        const subscription = await registration.pushManager.getSubscription()
         if (!subscription) {
-          subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
-          })
+          setPushEnabled(false)
+          return
         }
-
-        if (cancelled) return
 
         const response = await fetch("/api/push/subscribe", {
           method: "POST",
@@ -456,8 +514,8 @@ export default function NetworkInboxSheet() {
           cache: "no-store",
         })
 
-        if (!response.ok) {
-          console.error("[network-inbox] push subscription sync failed", response.status)
+        if (!cancelled && response.ok) {
+          setPushEnabled(true)
         }
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return
@@ -465,7 +523,7 @@ export default function NetworkInboxSheet() {
       }
     }
 
-    void ensurePushSubscription()
+    void syncExistingPushSubscription()
 
     return () => {
       cancelled = true
@@ -833,9 +891,25 @@ export default function NetworkInboxSheet() {
           </section>
 
           <section className="mt-6 space-y-3">
-            <div className="text-[10px] uppercase tracking-[0.4em] text-zinc-500">
-              Értesítések
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.4em] text-zinc-500">
+              <span>Értesítések</span>
+              {pushEnabled ? (
+                <span className="text-lime-300">AKTÍV</span>
+              ) : null}
             </div>
+
+            {!pushEnabled && (
+              <button
+                type="button"
+                onClick={() => void enablePushNotifications()}
+                disabled={pushLoading}
+                className="w-full rounded border border-lime-400/50 bg-lime-400/5 px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-lime-200 transition hover:border-lime-300 hover:bg-lime-400/10 disabled:cursor-wait disabled:opacity-60"
+              >
+                {pushLoading
+                  ? "ÉRTESÍTÉSEK AKTIVÁLÁSA..."
+                  : "ÉRTESÍTÉSEK ENGEDÉLYEZÉSE"}
+              </button>
+            )}
 
             <div className="space-y-2">
               {fetchError && (
