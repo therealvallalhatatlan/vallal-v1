@@ -48,9 +48,18 @@ export default function HomeActiveSpotsSection() {
   }, [])
 
   useEffect(() => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) return
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') return
 
-    const watchId = navigator.geolocation.watchPosition(
+    const startWatching = (): number | null => {
+      if (
+        window.localStorage.getItem('vallalhatatlan:location-enabled') !== 'true' ||
+        !navigator.geolocation
+      ) {
+        setUserLocation(null)
+        return null
+      }
+
+      return navigator.geolocation.watchPosition(
       (position) => {
         setUserLocation({
           lat: position.coords.latitude,
@@ -63,8 +72,27 @@ export default function HomeActiveSpotsSection() {
       { enableHighAccuracy: true, maximumAge: 60000, timeout: 12000 },
     )
 
+    }
+
+    let watchId: number | null = null
+    const syncLocationPreference = () => {
+      if (watchId !== null) {
+        navigator.geolocation?.clearWatch(watchId)
+        watchId = null
+      }
+      watchId = startWatching()
+    }
+
+    syncLocationPreference()
+    window.addEventListener('storage', syncLocationPreference)
+    window.addEventListener('vallalhatatlan:location-preference', syncLocationPreference)
+
     return () => {
-      navigator.geolocation.clearWatch(watchId)
+      if (watchId !== null) {
+        navigator.geolocation?.clearWatch(watchId)
+      }
+      window.removeEventListener('storage', syncLocationPreference)
+      window.removeEventListener('vallalhatatlan:location-preference', syncLocationPreference)
     }
   }, [])
 
