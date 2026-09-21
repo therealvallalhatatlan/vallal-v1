@@ -7,6 +7,7 @@ import { RefreshCw, Volume2, VolumeX } from "lucide-react"
 import Reviews from "@/components/Reviews"
 import { Badge } from "@/components/Badge"
 import Image from "next/image"
+import { createClient } from "@/lib/browser"
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -59,6 +60,9 @@ export default function VallalhatatlanHero2() {
   }>>([])
   const [onlineUsersLoading, setOnlineUsersLoading] = useState(false)
   const [storyExpanded, setStoryExpanded] = useState(false)
+  const [signalDraft, setSignalDraft] = useState("")
+  const [signalSending, setSignalSending] = useState(false)
+  const [signalStatus, setSignalStatus] = useState<string | null>(null)
   const loadAvailableCopies = async () => {
     try {
       const response = await fetch("/api/inventory", {
@@ -816,6 +820,102 @@ export default function VallalhatatlanHero2() {
           )}
         </section>
 
+        <section className="mt-16 w-full border-t border-zinc-800 pt-4" aria-label="Küldj egy jelet">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                KÜLDJ EGY JELET
+              </p>
+              <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                Hagyj valamit a következő nyúlnak.
+              </p>
+            </div>
+            <span className="text-[9px] uppercase tracking-[0.16em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              FEED // LIVE
+            </span>
+          </div>
+
+          <div className="mt-5 border border-zinc-800 bg-black">
+            <textarea
+              value={signalDraft}
+              onChange={(event) => {
+                setSignalDraft(event.target.value)
+                if (signalStatus) setSignalStatus(null)
+              }}
+              maxLength={240}
+              rows={3}
+              placeholder="> írj valamit a következő nyúlnak..."
+              className="w-full resize-none border-0 bg-transparent px-4 py-4 text-sm leading-relaxed text-zinc-200 outline-none placeholder:text-zinc-700 focus:ring-0"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+              disabled={signalSending}
+            />
+            <div className="flex items-center justify-between border-t border-zinc-900 px-3 py-2">
+              <span className="text-[9px] uppercase tracking-[0.12em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                {signalDraft.length}/240
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  const body = signalDraft.trim()
+                  if (!body || signalSending) return
+
+                  const supabase = createClient()
+                  const { data: sessionData } = await supabase.auth.getSession()
+                  const token = sessionData?.session?.access_token
+
+                  if (!token) {
+                    setSignalStatus("BEJELENTKEZÉS SZÜKSÉGES")
+                    return
+                  }
+
+                  setSignalSending(true)
+                  setSignalStatus(null)
+
+                  try {
+                    const response = await fetch("/api/feed", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer " + token,
+                      },
+                      body: JSON.stringify({ body }),
+                    })
+                    const data = (await response.json()) as { ok?: boolean; error?: string }
+
+                    if (!response.ok || !data.ok) {
+                      throw new Error(data.error || "send_failed")
+                    }
+
+                    setSignalDraft("")
+                    setSignalStatus("JEL ELKÜLDVE")
+                  } catch (error) {
+                    console.error("Failed to send signal:", error)
+                    setSignalStatus("A JEL NEM MENT EL")
+                  } finally {
+                    setSignalSending(false)
+                  }
+                }}
+                disabled={signalSending || !signalDraft.trim()}
+                className="border border-lime-100/30 bg-lime-100/[0.04] px-3 py-2 text-[9px] uppercase tracking-[0.16em] text-lime-100/70 transition-all hover:border-lime-100/60 hover:bg-lime-100/[0.08] hover:text-lime-100 disabled:cursor-not-allowed disabled:opacity-30"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                {signalSending ? "KÜLDÉS..." : "KÜLDÉS →"}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-4">
+            <span
+              className={signalStatus === "JEL ELKÜLDVE" ? "text-[9px] uppercase tracking-[0.12em] text-lime-100/70" : "text-[9px] uppercase tracking-[0.12em] text-zinc-700"}
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              {signalStatus || "A jel nyilvános lesz a közösségi feedben."}
+            </span>
+            <Link href="/feed" className="shrink-0 text-[9px] uppercase tracking-[0.16em] text-zinc-600 transition-colors hover:text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              FEED →
+            </Link>
+          </div>
+        </section>
         <div
           className="mt-8 pb-8 pt-6 font-mono text-md leading-relaxed text-zinc-400"
           style={{ fontFamily: "var(--font-mono-tech)" }}
