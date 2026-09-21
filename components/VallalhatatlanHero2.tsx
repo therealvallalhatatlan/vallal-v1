@@ -39,6 +39,94 @@ export default function VallalhatatlanHero2() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [purchaseBook, setPurchaseBook] = useState<"01" | "02" | null>(null)
   const [activeBookTab, setActiveBookTab] = useState<"01" | "02">("01")
+  const loadAvailableCopies = async () => {
+    try {
+      const response = await fetch("/api/inventory", {
+        cache: "no-store",
+      })
+
+      if (!response.ok) throw new Error("Inventory unavailable")
+
+      const data = (await response.json()) as { copies?: BookCopy[] }
+      const copies = Array.isArray(data.copies) ? data.copies : []
+      const available = copies
+        .filter((copy) => copy.status === "available")
+        .map((copy) => copy.copy_number)
+        .filter((number) => Number.isInteger(number) && number >= 1 && number <= 100)
+
+      setAvailableCopies(available)
+
+      if (available.length > 0) {
+        setSelectedCopy((current) =>
+          current && available.includes(current)
+            ? current
+            : available[Math.floor(Math.random() * available.length)],
+        )
+      } else {
+        setSelectedCopy(null)
+      }
+    } catch (error) {
+      console.error("Failed to load available copies:", error)
+    }
+  }
+
+  const randomizeCopy = () => {
+    if (availableCopies.length < 2) return
+
+    const choices = availableCopies.filter((copyNumber) => copyNumber !== selectedCopy)
+    const next = choices[Math.floor(Math.random() * choices.length)]
+    if (next) setSelectedCopy(next)
+  }
+
+  const handleAcquire = (bookNumber: "01" | "02") => {
+    if (availableCopies.length === 0) return
+
+    if (!selectedCopy || !availableCopies.includes(selectedCopy)) {
+      const next = availableCopies[Math.floor(Math.random() * availableCopies.length)]
+      if (next) setSelectedCopy(next)
+    }
+
+    setPurchaseBook(bookNumber)
+  }
+
+  const startCheckout = async () => {
+    if (!selectedCopy || checkoutLoading) return
+
+    setCheckoutLoading(true)
+    setCheckoutError(null)
+
+    try {
+      const response = await fetch("/api/checkout-copy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          copy_number: selectedCopy,
+          delivery_method: pickupMethod,
+        }),
+      })
+
+      const data = (await response.json()) as {
+        success?: boolean
+        url?: string
+        error?: string
+      }
+
+      if (!response.ok || !data.success || !data.url) {
+        throw new Error(data.error || "A fizetés indítása nem sikerült.")
+      }
+
+      window.location.href = data.url
+    } catch (error) {
+      setCheckoutError(
+        error instanceof Error
+          ? error.message
+          : "A fizetés indítása nem sikerült.",
+      )
+      setCheckoutLoading(false)
+      void loadAvailableCopies()
+    }
+  }
+
   const loadRandomStory = async () => {
     setStoryLoading(true)
 
