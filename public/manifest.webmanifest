@@ -1,6 +1,7 @@
 {
   "name": "Vállalhatatlan App",
   "short_name": "Vállalhatatlan",
+  "id": "/",
   "description": "Vállalhatatlan App — olvasd kedvenc történeteidet offline és app-szerű élményben.",
   "start_url": "/",
   "scope": "/",
