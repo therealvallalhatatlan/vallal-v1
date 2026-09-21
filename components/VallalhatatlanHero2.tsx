@@ -38,6 +38,7 @@ export default function VallalhatatlanHero2() {
   const [muted, setMuted] = useState(true)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [purchaseBook, setPurchaseBook] = useState<"01" | "02" | null>(null)
+  const [activeBookTab, setActiveBookTab] = useState<"01" | "02">("01")
   const loadRandomStory = async () => {
     setStoryLoading(true)
 
@@ -150,7 +151,9 @@ export default function VallalhatatlanHero2() {
     void loadRandomStory()
   }, [])
   return (
-    <section
+    <>
+      <style jsx>{`@keyframes tabIn { from { opacity: 0; transform: translateY(8px); filter: blur(3px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }`}</style>
+      <section
       className="relative flex min-h-screen flex-col overflow-hidden bg-[#010101] text-green-200"
       style={{
         paddingBottom: "calc(7.5rem + env(safe-area-inset-bottom))",
@@ -171,115 +174,34 @@ export default function VallalhatatlanHero2() {
         </div>
 
         <section className="mt-2 w-full" aria-label="Vállalhatatlan könyvek">
-          <div className="flex flex-col gap-8">
-            {[
-              {
-                number: "01",
-                edition: "Első Könyv",
-                subtitle: "második kiadás",
-                video: "/videos/bg2.mp4",
-                description:
-                  "Az első rész a céltalan útkeresésről szól. Szerelem, drogok, csodás feltámadások és kis híján meghalások.",
-                href: "/konyv",
-                cover: "/cover.png",
-              },
-              {
-                number: "02",
-                edition: "Második Könyv",
-                subtitle: "második kiadás",
-                video: "/videos/film2.mp4",
-                description:
-                  "A második részben megpróbáljuk meghackelni a rendszert, egy éjjel-nappali internetkávézó pultja mögül.",
-                href: "/konyv-2",
-                cover: "/vallalhatatlan2.png",
-              },
-            ].map((book) => (
-              <article
-                key={book.number}
-                className="mb-12 relative overflow-hidden border border-zinc-800 rounded-md bg-transparent shadow-none"
-              >
+          <div className="pt-5">
+            <div className="flex items-end justify-between px-4">
+              <div className="flex items-end gap-10" role="tablist" aria-label="Könyvkiadások">
+                {[{ number: "01", label: "Első Könyv" }, { number: "02", label: "Második Könyv" }].map((tab) => {
+                  const active = activeBookTab === tab.number
+                  return <button key={tab.number} type="button" role="tab" aria-selected={active} onClick={() => setActiveBookTab(tab.number as "01" | "02")} className="group relative pb-0 text-left">
+                    <span className={`block text-[4.5rem] leading-[0.72] tracking-[-0.09em] transition-all duration-500 sm:text-[4.5rem] ${active ? "text-zinc-100" : "text-zinc-800 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.number}</span>
+                  </button>
+                })}
+              </div>
+            </div>
+            {(() => {
+              const books = [{ number: "01", edition: "Első Könyv", subtitle: "második kiadás", video: "/videos/bg2.mp4", description: "Az első rész a céltalan útkeresésről szól. Szerelem, drogok, csodás feltámadások és kis híján meghalások.", href: "/konyv", cover: "/cover.png" }, { number: "02", edition: "Második Könyv", subtitle: "második kiadás", video: "/videos/film2.mp4", description: "A második részben megpróbáljuk meghackelni a rendszert, egy éjjel-nappali internetkávézó pultja mögül.", href: "/konyv-2", cover: "/vallalhatatlan2.png" }]
+              const activeBook = books.find((book) => book.number === activeBookTab) ?? books[0]
+              return <article key={activeBook.number} role="tabpanel" className="relative mt-7 overflow-hidden rounded-md border border-zinc-800 bg-[#050505] shadow-[0_24px_70px_rgba(0,0,0,0.35)] animate-[tabIn_500ms_ease-out]">
                 <div className="relative aspect-video w-full overflow-hidden border-b border-zinc-800 bg-black">
-                  <video
-                    className="absolute inset-0 h-full w-full object-cover"
-                    src={book.video}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    controls={false}
-                    preload="metadata"
-                  />
-
-                  <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between p-4 sm:p-5">
-                    <div className="text-left">
-                      <p
-                        className="text-[11px] uppercase tracking-[0.16em] text-white sm:text-xs"
-                        style={{
-                          fontFamily: "var(--font-mono-tech)",
-                          textShadow: "0 2px 14px rgba(0,0,0,0.9)",
-                        }}
-                      >
-                        {book.edition}
-                      </p>
-                      <p
-                        className="mt-1 text-[8px] uppercase tracking-[0.2em] text-zinc-300 sm:text-[9px]"
-                        style={{
-                          fontFamily: "var(--font-mono-tech)",
-                          textShadow: "0 2px 12px rgba(0,0,0,0.9)",
-                        }}
-                      >
-                        {book.subtitle}
-                      </p>
-                      <Image
-                        src={book.cover}
-                        alt={`${book.edition} borító`}
-                        width={80}
-                        height={120}
-                        className="mt-2 object-contain shadow-2xl shadow-black"
-                      />
+                  <video className="absolute inset-0 h-full w-full object-cover" src={activeBook.video} autoPlay muted loop playsInline controls={false} preload="metadata" />
+                <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-end p-4 sm:p-5">
+                    <div className="text-right">
+                      <p className="text-[18px] uppercase tracking-[0.16em] text-white sm:text-xs" style={{ fontFamily: "var(--font-mono-tech)", textShadow: "0 2px 14px rgba(0,0,0,0.9)" }}>{activeBook.edition}</p>
+                      <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-zinc-300 sm:text-[9px]" style={{ fontFamily: "var(--font-mono-tech)", textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}>{activeBook.subtitle}</p>
+                      <Image src={activeBook.cover} alt={`${activeBook.edition} borító`} width={80} height={120} className="mt-2 float-right object-contain shadow-2xl shadow-black" />
                     </div>
-
-                    <span
-                      className="text-[4.8rem] leading-[0.68] tracking-[-0.09em] text-white sm:text-[5.8rem]"
-                      style={{
-                        fontFamily: "var(--font-mono-tech)",
-                        textShadow: "0 3px 18px rgba(0,0,0,0.95)",
-                      }}
-                      aria-hidden="true"
-                    >
-                      {book.number}
-                    </span>
                   </div>
                 </div>
-
-                <div className="px-0 pt-4">
-                  <p
-                    className="max-w-2xl px-4 text-md leading-relaxed text-zinc-200 sm:text-sm"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    {book.description}
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => handleAcquire(book.number as "01" | "02")}
-                    disabled={availableCopies.length === 0}
-                    className="group mt-5 flex min-h-14 w-full items-center justify-between border border-lime-100/70 bg-lime-100 px-5 py-4 text-left text-black transition-all duration-300 hover:bg-white disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    <span className="text-base font-bold uppercase tracking-[0.12em] sm:text-lg">
-                      Levadászom
-                    </span>
-                    <span
-                      className="text-2xl transition-transform duration-300 group-hover:translate-x-1"
-                      aria-hidden="true"
-                    >
-                      →
-                    </span>
-                  </button>
-                </div>
+                <div className="px-0 pt-4"><p className="max-w-2xl px-4 text-md leading-relaxed text-zinc-200 sm:text-sm" style={{ fontFamily: "var(--font-mono-tech)" }}>{activeBook.description}</p><button type="button" onClick={() => handleAcquire(activeBook.number as "01" | "02")} disabled={availableCopies.length === 0} className="group mt-5 flex min-h-14 w-full items-center justify-between border border-lime-100/70 bg-lime-100 px-5 py-4 text-left text-black transition-all duration-300 hover:bg-white disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]" style={{ fontFamily: "var(--font-mono-tech)" }}><span className="text-base font-bold uppercase tracking-[0.12em] sm:text-lg">Levadászom</span><span className="text-2xl transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span></button></div>
               </article>
-            ))}
+            })()}
           </div>
         </section>
 
@@ -293,7 +215,7 @@ export default function VallalhatatlanHero2() {
           >
             <button
               type="button"
-              onClick={() => setShowAcquire(false)}
+              onClick={() => setPurchaseBook(null)}
               className="absolute inset-0 cursor-default"
               aria-label="Bezárás"
             />
@@ -312,7 +234,7 @@ export default function VallalhatatlanHero2() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowAcquire(false)}
+                  onClick={() => setPurchaseBook(null)}
                   className="flex h-8 w-8 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-100"
                   aria-label="Bezárás"
                 >
@@ -401,20 +323,29 @@ export default function VallalhatatlanHero2() {
           </div>
         )}
 
+        <section className="mt-6 w-full">
+          <Reviews />
+        </section>
+
         <section className="pt-20">
           <div className="">
-            <p className="mt-6 text-right text-[19px] font-semibold italic leading-relaxed text-zinc-100 sm:text-base"
+            <Image
+              src="/img/deaddrop.webp"
+              alt="Vállalhatatlan első könyv borító"
+              width={640}
+              height={467}
+              className="h-auto w-full rounded-md saturate-0"
+            />
+            <p className="mt-6 text-left text-[19px] font-semibold italic leading-relaxed text-zinc-100 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               Terjesztés: <span className="text-lime-100">Dead Drop [ˈdɛd drɒp]</span>
             </p>
-            <p className="text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <p className="text-left text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
               Kapsz egy koordinátát, pár fotót<br/>és egy pontos leírást.<br/>48 órád van megtalálni a cuccot.
             </p>
 
-            
-
-            <p className="py-9 text-sm leading-[1.8] text-zinc-400 text-right"
+            <p className="py-9 text-sm leading-[1.8] text-zinc-400 text-left"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               Nem szivatás - KALAND, amiről mesélni fogsz!<br/>Ha 48 órán belül mész és nincs ott - újraküldöm. 
@@ -460,58 +391,6 @@ export default function VallalhatatlanHero2() {
           </div>
         </section>
         
-        <section className="mt-16 w-full">
-          <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t pt-4 pb-1 border-b border-zinc-800">
-            <p
-                className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                MIRŐL SZÓL A KÖNYV?
-            </p>
-          </div>
-            <div className="relative">
-              <video
-                className="rounded-lg relative left-1/2 mt-0 block w-screen -translate-x-1/2"
-                src="/videos/film2.mp4"
-                autoPlay
-                muted={muted}
-                loop
-                playsInline
-                controls={false}
-                preload="metadata"
-                ref={videoRef}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (videoRef.current) videoRef.current.muted = !muted
-                  setMuted(!muted)
-                }}
-                className="absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-full border border-zinc-700/0 bg-zinc-900/0 px-3 py-1 text-xs uppercase font-semibold tracking-widest text-zinc-300 backdrop-blur-sm transition hover:border-lime-100/80"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-                aria-label={muted ? "Hang bekapcsolása" : "Hang kikapcsolása"}
-              >
-                {muted ? <VolumeX size={16} className="text-zinc-400" /> : <Volume2 size={16} className="text-lime-100" />}
-                <span>{muted ? "Hang be" : "Hang ki"}</span>
-              </button>
-            </div>
-            <div className="w-full pb-18 pt-10 relative">
-            <p
-              className="ml-auto max-w-xl text-left text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              Ennek a könyvnek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
-              <span className="text-lime-100/80 mr-4">→</span>
-              <span className="text-lime-100/80">Meg kell találnod.</span>
-            </p>
-          </div>
-        </section>
-
-
-        <section className="mt-6 w-full">
-          <Reviews />
-        </section>
-
         <section className="mt-12 w-full" aria-label="Random Sztorik">
           <div
             className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t border-zinc-800 pt-4"
@@ -569,6 +448,7 @@ export default function VallalhatatlanHero2() {
       </div>
 
 
-    </section>
+      </section>
+    </>
   )
 }

@@ -53,7 +53,7 @@ export default function Reviews() {
                 className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                AKIK MÁR LEVADÁSZTÁK
+                AKIK MÁR LEVADÁSZTÁK A VÁLLALHATATLANT
               </p>
           </div>
         </div>
