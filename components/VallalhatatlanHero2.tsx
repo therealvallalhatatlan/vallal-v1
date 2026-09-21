@@ -41,6 +41,7 @@ export default function VallalhatatlanHero2() {
   const [activeBookTab, setActiveBookTab] = useState<"01" | "02">("01")
   const [networkSpots, setNetworkSpots] = useState<Array<{ id: string; spot_type?: "free" | "paid"; type?: "physical" | "virtual"; remaining_quantity?: number | null }>>([])
   const [networkLoading, setNetworkLoading] = useState(false)
+  const [storyExpanded, setStoryExpanded] = useState(false)
   const loadAvailableCopies = async () => {
     try {
       const response = await fetch("/api/inventory", {
@@ -155,6 +156,7 @@ export default function VallalhatatlanHero2() {
 
       const data = (await response.json()) as RandomStory
       setRandomStory(data)
+      setStoryExpanded(false)
     } catch (error) {
       console.error("Failed to load random story:", error)
     } finally {
@@ -480,7 +482,7 @@ export default function VallalhatatlanHero2() {
           </div>
         </section>
 
-        <section className="mt-16 w-full" aria-label="Random Sztorik">
+        <section className="mt-16 w-full" aria-label="Random Vállalhatatlan Sztori">
           <div
             className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-[0.24em] not-italic text-zinc-200 border-t border-zinc-800 pt-4"
             style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -510,15 +512,64 @@ export default function VallalhatatlanHero2() {
               >
                 {randomStory.title}
               </h3>
-              <p
-                className="mt-4 whitespace-pre-line text-md leading-relaxed text-zinc-300"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                {randomStory.text}
-              </p>
+
+              {(() => {
+                const paragraphs = randomStory.text
+                  .split(/\n\s*\n/)
+                  .map((paragraph) => paragraph.trim())
+                  .filter(Boolean)
+                const visibleParagraphs = storyExpanded
+                  ? paragraphs
+                  : paragraphs.slice(0, 2)
+
+                return (
+                  <>
+                    <div className="relative">
+                      <div
+                        className={storyExpanded ? "" : "relative max-h-[390px] overflow-hidden"}
+                      >
+                        {visibleParagraphs.map((paragraph, index) => (
+                          <p
+                            key={index}
+                            className="mt-4 whitespace-pre-line text-md leading-relaxed text-zinc-300"
+                            style={{ fontFamily: "var(--font-mono-tech)" }}
+                          >
+                            {paragraph}
+                          </p>
+                        ))}
+                      </div>
+
+                      {!storyExpanded && paragraphs.length > 2 && (
+                        <div
+                          className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#010101] via-[#010101]/80 to-transparent"
+                          aria-hidden="true"
+                        />
+                      )}
+                    </div>
+
+                    {paragraphs.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => setStoryExpanded((value) => !value)}
+                        className="mt-5 flex w-full items-center justify-between border border-zinc-800 px-4 py-4 text-left text-[10px] uppercase tracking-[0.2em] text-zinc-400 transition-all duration-300 hover:border-lime-100/50 hover:bg-lime-100/[0.03] hover:text-lime-100"
+                        style={{ fontFamily: "var(--font-mono-tech)" }}
+                        aria-expanded={storyExpanded}
+                      >
+                        <span>{storyExpanded ? "BEZÁROM" : "OLVASOM TOVÁBB"}</span>
+                        <span className="text-base transition-transform duration-300">
+                          {storyExpanded ? "↑" : "→"}
+                        </span>
+                      </button>
+                    )}
+                  </>
+                )
+              })()}
             </article>
           ) : (
-            <div className="border-t border-zinc-800 pt-4 font-mono text-sm italic text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <div
+              className="border-t border-zinc-800 pt-4 font-mono text-sm italic text-zinc-600"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
               {storyLoading ? "Sztori betöltése..." : "Nincs elérhető sztori."}
             </div>
           )}
