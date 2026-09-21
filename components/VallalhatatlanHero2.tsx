@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, type PointerEvent, type MouseEvent } from "react"
+import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
 import { Montserrat } from "next/font/google"
 import { RefreshCw, Volume2, VolumeX } from "lucide-react"
@@ -38,60 +38,6 @@ export default function VallalhatatlanHero2() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [muted, setMuted] = useState(true)
   const videoRef = useRef<HTMLVideoElement | null>(null)
-  const carouselRef = useRef<HTMLDivElement | null>(null)
-  const carouselDrag = useRef({
-    active: false,
-    startX: 0,
-    startScrollLeft: 0,
-    moved: false,
-  })
-
-  const handleCarouselPointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === "mouse" && event.button !== 0) return
-
-    const element = event.currentTarget
-    carouselDrag.current = {
-      active: true,
-      startX: event.clientX,
-      startScrollLeft: element.scrollLeft,
-      moved: false,
-    }
-
-    element.setPointerCapture?.(event.pointerId)
-    element.style.cursor = "grabbing"
-  }
-
-  const handleCarouselPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const element = event.currentTarget
-    const drag = carouselDrag.current
-    if (!drag.active) return
-
-    const delta = event.clientX - drag.startX
-    if (Math.abs(delta) > 5) drag.moved = true
-
-    if (drag.moved) {
-      element.scrollLeft = drag.startScrollLeft - delta
-    }
-  }
-
-  const finishCarouselPointer = (event: React.PointerEvent<HTMLDivElement>) => {
-    const element = event.currentTarget
-    carouselDrag.current.active = false
-    element.style.cursor = "grab"
-
-    if (element.hasPointerCapture?.(event.pointerId)) {
-      element.releasePointerCapture(event.pointerId)
-    }
-  }
-
-  const handleCarouselClick = (event: MouseEvent<HTMLDivElement>) => {
-    if (!carouselDrag.current.moved) return
-
-    event.preventDefault()
-    event.stopPropagation()
-    carouselDrag.current.moved = false
-  }
-
   const loadRandomStory = async () => {
     setStoryLoading(true)
 
@@ -248,23 +194,7 @@ export default function VallalhatatlanHero2() {
             </span>
           </div>
 
-          <div
-            ref={carouselRef}
-            className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 pt-1 select-none cursor-grab"
-            onPointerDown={handleCarouselPointerDown}
-            onPointerMove={handleCarouselPointerMove}
-            onPointerUp={finishCarouselPointer}
-            onPointerCancel={finishCarouselPointer}
-            onClick={handleCarouselClick}
-            style={{
-              scrollbarWidth: "none",
-              msOverflowStyle: "none",
-              WebkitOverflowScrolling: "touch",
-              touchAction: "pan-y",
-              userSelect: "none",
-            }}
-          >
-            {[
+          <div className="flex flex-col gap-5 pb-2 pt-1">
               {
                 number: "01",
                 edition: "ELSŐ KÖNYV",
@@ -290,7 +220,7 @@ export default function VallalhatatlanHero2() {
             ].map((book) => (
               <article
                 key={book.number}
-                className="relative flex w-[82vw] max-w-[520px] flex-none snap-start flex-col overflow-hidden rounded-[18px] border border-zinc-800/90 bg-[#070707] shadow-[0_18px_55px_rgba(0,0,0,0.45)] transition-transform duration-300 hover:-translate-y-0.5 sm:w-[68vw] md:w-[54vw] lg:w-[46vw]"
+                className="relative flex w-full flex-col overflow-hidden rounded-[18px] border border-zinc-800/90 bg-[#070707] shadow-[0_18px_55px_rgba(0,0,0,0.45)] transition-transform duration-300 hover:-translate-y-0.5"
               >
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_8%,rgba(163,230,53,0.08),transparent_30%),linear-gradient(145deg,rgba(255,255,255,0.02),transparent_40%)]" />
 
@@ -377,12 +307,6 @@ export default function VallalhatatlanHero2() {
             ))}
           </div>
 
-          <div
-            className="mt-2 text-right text-[8px] uppercase tracking-[0.22em] text-zinc-700"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            HÚZD BALRA → A MÁSIK KAPU OTT VAN
-          </div>
         </section>
 
         <section className="bg-black" aria-label="Sorszám kiválasztása">
