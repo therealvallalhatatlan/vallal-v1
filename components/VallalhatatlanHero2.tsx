@@ -643,7 +643,6 @@ export default function VallalhatatlanHero2() {
               {networkActivityLoading ? "SYNC..." : "LIVE"}
             </button>
           </div>
-
           <div className="divide-y divide-zinc-900">
             {networkActivity.length === 0 ? (
               <div className="py-4 text-[10px] uppercase tracking-[0.14em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
@@ -670,7 +669,6 @@ export default function VallalhatatlanHero2() {
               ))
             )}
           </div>
-
           <Link href="/halozat" className="group flex items-center justify-between border-t border-zinc-900 py-3">
             <span className="text-[9px] uppercase tracking-[0.14em] text-zinc-600 transition-colors group-hover:text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
               TELJES AKTIVITÁS
@@ -678,28 +676,6 @@ export default function VallalhatatlanHero2() {
             <span className="text-[12px] text-zinc-700 transition-colors group-hover:text-lime-100">→</span>
           </Link>
         </section>
-          <div className="flex items-center justify-between border-t border-zinc-800 px-0 py-3" style={{ fontFamily: "var(--font-mono-tech)" }}>
-            <div className="flex items-center gap-3">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-200/40" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-lime-100" />
-              </span>
-              <span className="text-[11px] uppercase tracking-[0.24em] text-zinc-200">MOST TÖRTÉNIK</span>
-            </div>
-            <span className="text-[9px] uppercase tracking-[0.18em] text-zinc-600">LIVE</span>
-          </div>
-          <div className="divide-y divide-zinc-900">
-            <div className="flex items-baseline justify-between gap-4 py-3">
-              <span className="text-[11px] text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>ÚJ PONTOK ÉS FELFEDEZÉSEK</span>
-              <Link href="/halozat" className="shrink-0 text-[9px] uppercase tracking-[0.16em] text-lime-100/60 hover:text-lime-100" style={{ fontFamily: "var(--font-mono-tech)" }}>HÁLÓZAT →</Link>
-            </div>
-            <div className="flex items-baseline justify-between gap-4 py-3">
-              <span className="text-[11px] text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>{networkSpots.length} aktív pont a hálózatban</span>
-              <span className="text-[9px] uppercase tracking-[0.16em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>SIGNAL</span>
-            </div>
-          </div>
-        </section>
-
         <section className="w-full border-b border-zinc-800" aria-label="Online nyuszik">
           <div className="flex items-center justify-between border-t border-zinc-900 px-0 py-3">
             <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
