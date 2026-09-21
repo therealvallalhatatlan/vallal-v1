@@ -390,6 +390,23 @@ export default function NetworkInboxSheet() {
   }, [payload])
 
   useEffect(() => {
+    if (!isAuthenticated || !token || !currentUserId || typeof navigator === "undefined") return
+
+    const handleSwMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string } | null
+      if (data?.type === "PUSH_RECEIVED") {
+        void syncPmUnread()
+      }
+    }
+
+    navigator.serviceWorker?.addEventListener("message", handleSwMessage)
+
+    return () => {
+      navigator.serviceWorker?.removeEventListener("message", handleSwMessage)
+    }
+  }, [currentUserId, isAuthenticated, syncPmUnread, token])
+
+  useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId) {
       setUnreadSource(PM_UNREAD_SOURCE_KEY, 0)
       return
