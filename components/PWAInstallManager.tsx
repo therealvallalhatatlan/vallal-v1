@@ -44,18 +44,14 @@ function IosInstallGuide({
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
       <div
-        className="absolute inset-0 bg-black/70"
+        className="absolute inset-0 bg-black"
         onClick={onClose}
         aria-hidden
       />
-      <div className="relative z-10 max-w-lg w-full rounded-xl bg-neutral-900 border border-neutral-800 p-5 text-white">
+      <div className="relative z-10 max-w-lg w-full bg-black p-5 text-zinc-100">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold text-lime-300">Telepítés iOS-re</h3>
-            <p className="mt-2 text-sm text-gray-300">
-              A Safari iOS nem dob automatikus promptot — néhány lépés, és a Reader
-              úgy viselkedik, mint egy app.
-            </p>
           </div>
           <button
             onClick={onClose}
@@ -78,10 +74,6 @@ function IosInstallGuide({
             Átnevezheted az ikont (pl. "Reader") — majd Add / Hozzáadás.
           </li>
         </ol>
-
-        <p className="mt-3 text-xs text-gray-500 italic">
-          Tipp: mutasd meg egy barátnak, aki nem tech-savvy — a vizuális útmutató gyorsan segít.
-        </p>
 
         <div className="mt-4 flex justify-end gap-2">
           <button
@@ -283,18 +275,14 @@ export default function PWAInstallManager({
     <>
       {/* Android install banner */}
       {showAndroidBanner && (
-        <div className="fixed left-2 right-2 bottom-2 z-50 mx-auto max-w-md">
-          <div className="rounded-lg border border-white/10 bg-neutral-950/90 px-3 py-2 shadow-2xl backdrop-blur-md text-xs text-white flex items-center gap-2">
-            <div className="flex-shrink-0 w-7 h-7 rounded-md bg-lime-500 flex items-center justify-center font-bold text-black">
-              ↓
-            </div>
+        <div className="fixed left-0 right-0 bottom-0 z-50 mx-auto max-w-md">
+          <div className="bg-black px-3 py-3 text-xs text-zinc-100 flex items-center gap-2">
             <div className="min-w-0 flex-1">
-              <strong className="block text-lime-300 text-[11px] leading-tight">Telepíthető alkalmazás</strong>
-              <span className="block text-[10px] text-gray-400 leading-tight mt-0.5">Tedd ki a kezdőképernyőre.</span>
+              <strong className="block text-lime-100 text-[12px] leading-tight">Telepíthető alkalmazás</strong>
             </div>
             <button
               onClick={handleAndroidInstall}
-              className="shrink-0 rounded-md bg-lime-500 px-2.5 py-1.5 text-[10px] font-bold text-black"
+              className="shrink-0 rounded-md bg-lime-100 px-2.5 py-1.5 text-[11px] font-bold text-black"
             >
               Telepítés
             </button>
