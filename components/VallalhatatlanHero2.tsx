@@ -31,7 +31,6 @@ export default function VallalhatatlanHero2() {
   const [availableCopies, setAvailableCopies] = useState<number[]>([])
   const [randomStory, setRandomStory] = useState<RandomStory | null>(null)
   const [storyLoading, setStoryLoading] = useState(false)
-  const [showAcquire, setShowAcquire] = useState(false)
   const [pickupMethod, setPickupMethod] = useState<"dead-drop" | "automata">("dead-drop")
   const [selectedCopy, setSelectedCopy] = useState<number | null>(null)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
@@ -106,7 +105,6 @@ export default function VallalhatatlanHero2() {
     }
 
     setPurchaseBook(bookNumber)
-    setShowAcquire(true)
   }
 
   const startCheckout = async () => {
