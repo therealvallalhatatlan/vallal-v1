@@ -11,7 +11,6 @@ import { buildPrivateRoomId } from "@/lib/live/privateRooms"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 
 const AUTO_DISMISS_KEY = "network-inbox-dismissed"
-const AUTO_OPEN_DELAY_MS = 4200
 const NETWORK_ITEM_PREVIEW_LIMIT = 4
 const UNREAD_SOURCE_KEY = "personal-notifications"
 // PM unread source key
@@ -152,8 +151,6 @@ export default function NetworkInboxSheet() {
   const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null)
   const [isStandaloneApp, setIsStandaloneApp] = useState(false)
 
-  const autoOpenTriggered = useRef(false)
-  const autoOpenTimer = useRef<number | undefined>(undefined)
   const pmLoadRequestIdRef = useRef(0)
   const pmLoadAbortRef = useRef<AbortController | null>(null)
 
@@ -626,34 +623,6 @@ export default function NetworkInboxSheet() {
       window.clearInterval(intervalId)
     }
   }, [currentUserId, isAuthenticated, syncPmUnread, token])
-
-  useEffect(() => {
-    if (!isAuthenticated || !payload) return
-    if (sheetOpen) return
-    if (autoOpenTriggered.current) return
-    if (typeof window === "undefined") return
-    if (window.sessionStorage.getItem(AUTO_DISMISS_KEY)) return
-
-    const hasMeaningfulContent =
-      payload.unreadNotificationCount > 0 ||
-      Boolean(payload.messageOverview?.unread) ||
-      pmUnread > 0 ||
-      payload.networkActivity.items.length > 0
-
-    if (!hasMeaningfulContent) return
-
-    autoOpenTimer.current = window.setTimeout(() => {
-      setSheetOpen(true)
-      autoOpenTriggered.current = true
-    }, AUTO_OPEN_DELAY_MS)
-
-    return () => {
-      if (autoOpenTimer.current !== undefined) {
-        window.clearTimeout(autoOpenTimer.current)
-        autoOpenTimer.current = undefined
-      }
-    }
-  }, [isAuthenticated, payload, pmUnread, sheetOpen])
 
   useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId) return
