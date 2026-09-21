@@ -149,6 +149,7 @@ export default function NetworkInboxSheet() {
   const [loadingPmConversations, setLoadingPmConversations] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false)
+  const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null)
 
   const autoOpenTriggered = useRef(false)
   const autoOpenTimer = useRef<number | undefined>(undefined)
@@ -404,6 +405,50 @@ export default function NetworkInboxSheet() {
     }
   }, [payload])
 
+  useEffect(() => {
+    if (!isAuthenticated || !token) {
+      setVapidPublicKey(null)
+      return
+    }
+
+    let cancelled = false
+
+    const loadVapidPublicKey = async () => {
+      try {
+        const response = await fetch("/api/push/config", {
+          cache: "no-store",
+        })
+        const data: unknown = await response.json().catch(() => null)
+
+        if (cancelled) return
+
+        if (
+          !response.ok ||
+          !isRecord(data) ||
+          !data.ok ||
+          typeof data.publicKey !== "string" ||
+          !data.publicKey.trim()
+        ) {
+          console.error("[network-inbox] VAPID public key unavailable")
+          setVapidPublicKey(null)
+          return
+        }
+
+        setVapidPublicKey(data.publicKey.trim())
+      } catch (error) {
+        if (cancelled) return
+        console.error("[network-inbox] VAPID public key load failed", error)
+        setVapidPublicKey(null)
+      }
+    }
+
+    void loadVapidPublicKey()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated, token])
+
   const enablePushNotifications = useCallback(async () => {
     if (!isAuthenticated || !token || !currentUserId) return false
     if (typeof window === "undefined" || typeof navigator === "undefined") return false
@@ -421,9 +466,8 @@ export default function NetworkInboxSheet() {
         return false
       }
 
-      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      if (!vapidKey) {
-        console.error("[network-inbox] missing NEXT_PUBLIC_VAPID_PUBLIC_KEY")
+      if (!vapidPublicKey) {
+        console.error("[network-inbox] VAPID public key not loaded")
         return false
       }
 
@@ -433,7 +477,7 @@ export default function NetworkInboxSheet() {
       if (!subscription) {
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
         })
       }
 
@@ -460,7 +504,7 @@ export default function NetworkInboxSheet() {
     } finally {
       setPushLoading(false)
     }
-  }, [currentUserId, isAuthenticated, token])
+  }, [currentUserId, isAuthenticated, token, vapidPublicKey])
 
   useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId || typeof navigator === "undefined") return
@@ -907,7 +951,9 @@ export default function NetworkInboxSheet() {
               >
                 {pushLoading
                   ? "ÉRTESÍTÉSEK AKTIVÁLÁSA..."
-                  : "ÉRTESÍTÉSEK ENGEDÉLYEZÉSE"}
+                  : !vapidPublicKey
+                    ? "PUSH KONFIGURÁCIÓ BETÖLTÉSE..."
+                    : "ÉRTESÍTÉSEK ENGEDÉLYEZÉSE"}
               </button>
             )}
 
