@@ -44,7 +44,7 @@ export default function VallalhatatlanHero2() {
   const [networkLoading, setNetworkLoading] = useState(false)
   const [networkActivity, setNetworkActivity] = useState<Array<{
     id: string
-    kind: "claim" | "spot"
+    kind: "claim" | "spot" | "signal"
     nickname: string
     title: string
     created_at: string
@@ -168,9 +168,10 @@ export default function VallalhatatlanHero2() {
   const loadNetworkActivity = async () => {
     setNetworkActivityLoading(true)
     try {
-      const [activityResponse, spotsResponse] = await Promise.all([
+      const [activityResponse, spotsResponse, feedResponse] = await Promise.all([
         fetch("/api/matrica/activity?limit=8", { cache: "no-store" }),
         fetch("/api/matrica/spots", { cache: "no-store" }),
+        fetch("/api/feed?limit=8", { cache: "no-store" }),
       ])
 
       const activityJson = (await activityResponse.json()) as { ok?: boolean; items?: Array<{
@@ -187,9 +188,16 @@ export default function VallalhatatlanHero2() {
         created_at?: string
       }> }
 
+      const feedJson = (await feedResponse.json()) as { posts?: Array<{
+        id: string
+        nickname?: string | null
+        body?: string
+        created_at: string
+      }> }
+
       const items: Array<{
         id: string
-        kind: "claim" | "spot"
+        kind: "claim" | "spot" | "signal"
         nickname: string
         title: string
         created_at: string
@@ -218,6 +226,19 @@ export default function VallalhatatlanHero2() {
             nickname: "HÁLÓZAT",
             title: spot.title || "ÚJ PONT",
             created_at: spot.created_at,
+          })
+        }
+      }
+
+      if (feedResponse.ok && Array.isArray(feedJson.posts)) {
+        for (const post of feedJson.posts.slice(0, 8)) {
+          if (!post.created_at || !post.body) continue
+          items.push({
+            id: `signal-${post.id}`,
+            kind: "signal",
+            nickname: post.nickname || "ISMERETLEN NYÚL",
+            title: post.body,
+            created_at: post.created_at,
           })
         }
       }
@@ -320,6 +341,26 @@ export default function VallalhatatlanHero2() {
     void loadNetworkActivity()
     void loadOnlineUsers()
     void loadRandomStory()
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel("homepage-feed-live")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "feed_posts",
+        },
+        () => {
+          void loadNetworkActivity()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      void channel.unsubscribe()
+    }
   }, [])
   return (
     <>
@@ -666,9 +707,13 @@ export default function VallalhatatlanHero2() {
                       <span className="text-lime-100/80">
                         {item.kind === "spot" ? "ÚJ PONT" : `@${item.nickname}`}
                       </span>{" "}
-                      {item.kind === "spot" ? "megjelent a hálózatban" : "megtalált egy pontot"}
+                      {item.kind === "spot"
+                        ? "megjelent a hálózatban"
+                        : item.kind === "signal"
+                          ? "jelet küldött"
+                          : "megtalált egy pontot"}
                     </p>
-                    <p className="mt-1 truncate text-[9px] uppercase tracking-[0.12em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    <p className={`mt-1 truncate text-[9px] tracking-[0.12em] ${item.kind === "signal" ? "text-zinc-500 normal-case" : "uppercase text-zinc-600"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>
                       {item.title}{item.comment ? ` · "${item.comment}"` : ""}
                     </p>
                   </div>
@@ -888,6 +933,7 @@ export default function VallalhatatlanHero2() {
 
                     setSignalDraft("")
                     setSignalStatus("JEL ELKÜLDVE")
+                    void loadNetworkActivity()
                   } catch (error) {
                     console.error("Failed to send signal:", error)
                     setSignalStatus("A JEL NEM MENT EL")
