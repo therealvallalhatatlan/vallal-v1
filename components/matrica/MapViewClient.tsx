@@ -37,7 +37,10 @@ export default function MapViewClient() {
   const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [nicknameInput, setNicknameInput] = useState('')
   const [savingNickname, setSavingNickname] = useState(false)
-  const [geolocationEnabled, setGeolocationEnabled] = useState(false)
+  const [geolocationEnabled, setGeolocationEnabled] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem('vallalhatatlan:location-enabled') === 'true'
+  })
 
   const nicknamePattern = useMemo(() => /^[\p{L}\p{N}_-]+$/u, [])
 
@@ -132,6 +135,29 @@ export default function MapViewClient() {
       setSavingNickname(false)
     }
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleLocationPreference = (event: Event) => {
+      const enabled = Boolean(
+        (event as CustomEvent<{ enabled?: unknown }>).detail?.enabled,
+      )
+      setGeolocationEnabled(enabled)
+    }
+
+    window.addEventListener(
+      'vallalhatatlan:location-preference',
+      handleLocationPreference,
+    )
+
+    return () => {
+      window.removeEventListener(
+        'vallalhatatlan:location-preference',
+        handleLocationPreference,
+      )
+    }
+  }, [])
 
   const chatDisplayName = nickname ?? ''
 
@@ -258,7 +284,17 @@ export default function MapViewClient() {
 
       <HalozatPermissionCenter
         accessToken={accessToken}
-        onEnableGeolocation={() => setGeolocationEnabled(true)}
+        onEnableGeolocation={() => {
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem('vallalhatatlan:location-enabled', 'true')
+            window.dispatchEvent(
+              new CustomEvent('vallalhatatlan:location-preference', {
+                detail: { enabled: true },
+              }),
+            )
+          }
+          setGeolocationEnabled(true)
+        }}
       />
 
     </div>
