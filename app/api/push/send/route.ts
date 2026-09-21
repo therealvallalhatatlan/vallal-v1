@@ -66,12 +66,17 @@ export async function POST(req: NextRequest) {
     tag: typeof tag === 'string' && tag.trim() ? tag.trim().slice(0, 120) : undefined,
   });
   let sent = 0;
+  let failed = 0;
 
   for (const sub of subscriptions) {
     try {
       await webpush.sendNotification(
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
         payload,
+        {
+          TTL: 24 * 60 * 60,
+          urgency: "high",
+        },
       );
       sent += 1;
     } catch (err: unknown) {
@@ -84,10 +89,11 @@ export async function POST(req: NextRequest) {
           .eq('id', sub.id);
         console.warn('[PUSH] subscription expired, deactivated:', sub.endpoint.slice(0, 60));
       } else {
+        failed += 1;
         console.error('[PUSH] send error for', sub.endpoint.slice(0, 60), err);
       }
     }
   }
 
-  return NextResponse.json({ ok: true, sent });
+  return NextResponse.json({ ok: failed === 0, sent, failed });
 }
