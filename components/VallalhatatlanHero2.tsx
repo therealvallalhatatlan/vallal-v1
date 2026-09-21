@@ -50,6 +50,14 @@ export default function VallalhatatlanHero2() {
     comment?: string | null
   }>>([])
   const [networkActivityLoading, setNetworkActivityLoading] = useState(false)
+  const [onlineUsers, setOnlineUsers] = useState<Array<{
+    id: string
+    nickname: string
+    avatarUrl: string | null
+    score: number
+    accepted: number
+  }>>([])
+  const [onlineUsersLoading, setOnlineUsersLoading] = useState(false)
   const [storyExpanded, setStoryExpanded] = useState(false)
   const loadAvailableCopies = async () => {
     try {
@@ -232,6 +240,56 @@ export default function VallalhatatlanHero2() {
     return `${Math.floor(diffHours / 24)} n`
   }
 
+  const loadOnlineUsers = async () => {
+    setOnlineUsersLoading(true)
+    try {
+      const supabase = (await import("@/lib/browser")).createClient()
+      const { data } = await supabase.auth.getSession()
+      const token = data?.session?.access_token
+      if (!token) {
+        setOnlineUsers([])
+        return
+      }
+
+      const response = await fetch("/api/matrica/online-users", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      })
+      const json = (await response.json()) as {
+        ok?: boolean
+        users?: Array<{
+          id: string
+          nickname: string
+          avatarUrl: string | null
+          score?: number
+          accepted?: number
+        }>
+      }
+
+      if (!response.ok || !json.ok || !Array.isArray(json.users)) {
+        setOnlineUsers([])
+        return
+      }
+
+      setOnlineUsers(
+        json.users
+          .filter((user) => typeof user?.id === "string" && typeof user?.nickname === "string")
+          .map((user) => ({
+            id: user.id,
+            nickname: user.nickname,
+            avatarUrl: typeof user.avatarUrl === "string" ? user.avatarUrl : null,
+            score: typeof user.score === "number" ? user.score : 0,
+            accepted: typeof user.accepted === "number" ? user.accepted : 0,
+          })),
+      )
+    } catch (error) {
+      console.error("Failed to load online users:", error)
+      setOnlineUsers([])
+    } finally {
+      setOnlineUsersLoading(false)
+    }
+  }
+
   const loadRandomStory = async () => {
     setStoryLoading(true)
 
@@ -256,6 +314,7 @@ export default function VallalhatatlanHero2() {
     void loadAvailableCopies()
     void loadNetworkSpots()
     void loadNetworkActivity()
+    void loadOnlineUsers()
     void loadRandomStory()
   }, [])
   return (
@@ -638,6 +697,47 @@ export default function VallalhatatlanHero2() {
               <span className="text-[11px] text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>{networkSpots.length} aktív pont a hálózatban</span>
               <span className="text-[9px] uppercase tracking-[0.16em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>SIGNAL</span>
             </div>
+          </div>
+        </section>
+
+        <section className="w-full border-b border-zinc-800" aria-label="Online nyuszik">
+          <div className="flex items-center justify-between border-t border-zinc-900 px-0 py-3">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              ONLINE NYUSZIK
+            </span>
+            <span className="text-[9px] uppercase tracking-[0.14em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              {onlineUsersLoading ? "SYNC..." : `${onlineUsers.length} ONLINE`}
+            </span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-4 pt-1 pr-2 scrollbar-hide">
+            {onlineUsers.length === 0 ? (
+              <span className="py-2 text-[10px] uppercase tracking-[0.14em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                {onlineUsersLoading ? "Nyuszik keresése..." : "A hálózat most csendes."}
+              </span>
+            ) : (
+              onlineUsers.map((user) => (
+                <Link
+                  key={user.id}
+                  href="/halozat"
+                  className="group flex min-w-[76px] shrink-0 flex-col items-center gap-2"
+                  title={`@${user.nickname} · ${user.score} SIGNAL`}
+                >
+                  <div className="relative h-12 w-12 overflow-hidden rounded-full border border-zinc-800 bg-zinc-950 transition-all duration-200 group-hover:border-lime-100/60 group-hover:shadow-[0_0_16px_rgba(163,230,53,0.12)]">
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt="" className="h-full w-full object-cover grayscale transition-all duration-200 group-hover:grayscale-0" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-base font-bold text-zinc-400">
+                        {user.nickname.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full border-2 border-black bg-lime-300" />
+                  </div>
+                  <span className="max-w-[76px] truncate text-[9px] uppercase tracking-[0.08em] text-zinc-600 transition-colors group-hover:text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    @{user.nickname}
+                  </span>
+                </Link>
+              ))
+            )}
           </div>
         </section>
 
