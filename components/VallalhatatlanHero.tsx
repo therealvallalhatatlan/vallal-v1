@@ -283,13 +283,8 @@ export default function VallalhatatlanHero() {
                     </div>
 
                     <div className="flow-root">
-                      <Image
-                        src="/vallalhatatlan.png"
-                        alt="Vállalhatatlan első könyv borító"
-                        width={571}
-                        height={614}
-                        className="float-left mr-5 mb-3 h-auto w-32 rounded-sm border border-zinc-700/80 opacity-90 shadow-[8px_8px_0_rgba(0,0,0,0.22)] sm:w-36"
-                      />
+                      
+                      
                       <p className="font-mono text-sm leading-[1.75] text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
                         <span className="text-3xl leading-none text-zinc-100">000<span className="text-zinc-600">/100</span></span>
                         <br />

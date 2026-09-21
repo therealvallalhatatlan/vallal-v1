@@ -8,16 +8,16 @@ const montserrat = Montserrat({
 export default function Reviews() {
   const reviews = [
     {
-      text: "Egy olyan kor lenyomata ami lehet csak nekunk fontos de kortörténet okán szerintem másnak is vicces lehet. Vagy tanulságos...",
-      author: "Sior",
+      text: "Bizsergetően jó cucc - és persze teljesen legális. Megcsavar, mélyre visz, szórakoztat - deviáns, abszurd, és azt hiszem őszinte ez a strukturált zűrzavar ami egy jószándékú ámokfutás zseniális leirata.",
+      author: "Cherrydarling",
     },
     {
       text: "A könyv felénél tartok és azt kell mondjam majdnem komolyabb élmény mint az Irvine Welsh vagy Bukowski könyvek.",
       author: "Szilvi",
     },
     {
-      text: "Bizsergetően jó cucc - és persze teljesen legális. Megcsavar, mélyre visz, szórakoztat - deviáns, abszurd, és azt hiszem őszinte ez a strukturált zűrzavar ami egy jószándékú ámokfutás zseniális leirata.",
-      author: "Cherrydarling",
+      text: "Egy olyan kor lenyomata ami lehet csak nekunk fontos de kortörténet okán szerintem másnak is vicces lehet. Vagy tanulságos...",
+      author: "Sior",
     },
     {
       text: "Megtaláltam a könyvecskét. Nagyon szépen köszönöm ezt a kis kalandot. Ha még tervezel ilyet kérlek tudasd róla a népet, mert szükségünk van ilyen gyöngyszemekre.",
@@ -68,7 +68,7 @@ export default function Reviews() {
               key={i}
               className="min-w-[80%]"
             >
-              <p className="pt-6 font-mono text-xl italic leading-tight text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>“{r.text}”</p>
+              <p className="pt-6 font-mono text-md italic leading-normal text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>“{r.text}”</p>
               <p className="text-lime-100 text-[19px] pt-2 italic text-left">— {r.author}</p>
             </article>
           ))}

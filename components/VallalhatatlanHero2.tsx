@@ -164,7 +164,7 @@ export default function VallalhatatlanHero2() {
       <div className="relative z-20 flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
         <div className="w-full pb-18 pt-10 relative">
           <p
-            className="ml-auto max-w-xl text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
+            className="ml-auto max-w-xl text-right text-[20px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             A könyv, aminek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
@@ -180,7 +180,8 @@ export default function VallalhatatlanHero2() {
                 {[{ number: "01", label: "Első Könyv" }, { number: "02", label: "Második Könyv" }].map((tab) => {
                   const active = activeBookTab === tab.number
                   return <button key={tab.number} type="button" role="tab" aria-selected={active} onClick={() => setActiveBookTab(tab.number as "01" | "02")} className="group relative pb-0 text-left">
-                    <span className={`block text-[4rem] leading-[0.72] tracking-[-0.09em] transition-all duration-500 sm:text-[4rem] ${active ? "text-zinc-100" : "text-zinc-800 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.number}</span>
+                    <span className={`block text-[3rem] leading-[0.72] tracking-[0.1em] transition-all duration-500 ${active ? "text-zinc-100" : "text-zinc-800 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.number}</span>
+                    <span className={`mt-2 block text-[8px] uppercase tracking-[0.16em] transition-colors duration-300 ${active ? "text-lime-100/70" : "text-zinc-700 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.label}</span>
                   </button>
                 })}
               </div>
@@ -200,7 +201,11 @@ export default function VallalhatatlanHero2() {
                   </div>
                 </div>
                 <div className="px-0 pt-0">
-                <button type="button" onClick={() => handleAcquire(activeBook.number as "01" | "02")} disabled={availableCopies.length === 0} className="group mt-0 flex min-h-14 w-full items-center justify-between border border-lime-100/70 bg-zinc-100 px-5 py-4 text-left text-black transition-all duration-300 hover:bg-white disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]" style={{ fontFamily: "var(--font-mono-tech)" }}><span className="text-base font-bold uppercase tracking-[0.12em] sm:text-lg">Levadászom</span><span className="text-2xl transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span></button></div>
+                    <button type="button" onClick={() => handleAcquire(activeBook.number as "01" | "02")} disabled={availableCopies.length === 0} className="group mt-0 flex min-h-14 w-full items-center justify-between border border-lime-100/0 bg-black px-5 py-4 text-left text-zinc-100 transition-all duration-300 hover:bg-zinc-100/10 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    <span className="text-base font-bold uppercase tracking-[0.12em] sm:text-lg">Levadászom</span>
+                    <span className="text-2xl transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span>
+                  </button>
+                </div>
               </article>
             })()}
           </div>
@@ -314,59 +319,63 @@ export default function VallalhatatlanHero2() {
           </div>
         )}
 
-        <section className="mt-6 w-full">
+        <section className="mt-4 w-full">
           <Reviews />
         </section>
 
-        <section className="pt-20">
-          <div className="">
-            <Image
-              src="/img/deaddrop.webp"
-              alt="Vállalhatatlan első könyv borító"
-              width={640}
-              height={467}
-              className="h-auto w-full rounded-md saturate-0"
+        <section className="pt-10">
+          <div className="pt-4">
+            <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t pt-4 pb-1 border-b border-zinc-800">
+              <p
+                  className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  MEG MERED CSINÁLNI?
+                </p>
+            </div>
+            <video
+              className="rounded-3xl relative left-1/2 mt-0 block w-screen -translate-x-1/2"
+              src="/videos/dd3.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls={false}
+              preload="metadata"
             />
-            <p className="mt-6 text-left text-[19px] font-semibold italic leading-relaxed text-zinc-100 sm:text-base"
+            <p className="mt-6 text-right text-[20px] font-semibold italic leading-relaxed text-zinc-300"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              Terjesztés: <span className="text-lime-100">Dead Drop [ˈdɛd drɒp]</span>
+              Terjesztés:<br/><span className="text-lime-100">Dead Drop [ˈdɛd drɒp]</span>
             </p>
-            <p className="text-left text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
-              Kapsz egy koordinátát, pár fotót<br/>és egy pontos leírást.<br/>48 órád van megtalálni a cuccot.
+            <p className="pt-6 text-right text-sm font-normal italic leading-relaxed text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              Egy biztonságos helyre elrejtem neked.<br/>Kapsz egy koordinátát, pár fotót és<br/>egy fasza kis leírást.<br/>48 órád van.
             </p>
 
-            <p className="py-6 text-sm leading-[1.8] text-zinc-400 text-left"
+            <p className="pb-6 pt-2 text-[11px] leading-[1.8] text-zinc-400 text-right"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              Nem szivatás - KALAND, amiről mesélni fogsz!<br/>Ha 48 órán belül mész és nincs ott - újraküldöm. 
+              Nyugi. Ha 48 órán belül érsz oda és nincs ott - újraküldöm. 
             </p>
 
-            <div className="flex justify-start gap-2 mb-4">
+            <div className="flex justify-end gap-2 mb-4">
               <div className="relative group">
-                <Badge className="text-[12px] rounded-none tracking-widest px-4 py-2 uppercase border border-lime-100/60 bg-transparent text-zinc-300">Budapest</Badge>
-                <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
-                  Aktív
-                </span>
+                <Badge className="cursor-progress text-[11px] rounded-xs tracking-widest px-3 py-1 uppercase border border-lime-100/30 bg-transparent text-zinc-300">Budapest</Badge>
               </div>
               <div className="relative group">
-                <Badge className="text-[12px] rounded-none tracking-widest px-4 py-2 uppercase border border-zinc-800 bg-transparent text-zinc-600">Szeged</Badge>
-                <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
-                  Hamarosan
-                </span>
+                <Badge className="cursor-not-allowed text-[11px] rounded-none tracking-widest px-3 py-1 uppercase border border-zinc-800 bg-transparent text-zinc-600">Szeged</Badge>
               </div>
               <div className="relative group">
-                <Badge className="text-[12px] rounded-none tracking-widest px-4 py-2 uppercase border border-zinc-800 bg-transparent text-zinc-600">Pécs</Badge>
-                <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
-                  Hamarosan
-                </span>
+                <Badge className="cursor-not-allowed text-[11px] rounded-none tracking-widest px-3 py-1 uppercase border border-zinc-800 bg-transparent text-zinc-600">Pécs</Badge>
               </div>
               <div className="relative group">
-                <Badge className="text-[12px] rounded-none tracking-widest px-4 py-2 uppercase border border-zinc-800 bg-transparent text-zinc-600">London</Badge>
-                <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
-                  Hamarosan
-                </span>
+                <Badge className="cursor-not-allowed text-[11px] rounded-none tracking-widest px-3 py-1 uppercase border border-zinc-800 bg-transparent text-zinc-600">London</Badge>
               </div>
+            </div>
+
+
+            <div className="bg-black rounded-lg px-4 py-8">
+
             </div>
 
             <p className="pt-2 text-sm leading-[1.8] text-zinc-400 text-right" style={{ fontFamily: "var(--font-mono-tech)" }}>
