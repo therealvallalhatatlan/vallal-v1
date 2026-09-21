@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
+import { useEffect, useState, useRef } from "react"
 import { Montserrat } from "next/font/google"
 import { RefreshCw, Volume2, VolumeX } from "lucide-react"
 import Reviews from "@/components/Reviews"
@@ -159,101 +159,112 @@ export default function VallalhatatlanHero2() {
       <div className="pointer-events-none absolute inset-0 fx-stripes opacity-10 mix-blend-plus-lighter" />
 
       <div className="relative z-20 flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
-        <div className="w-full pb-16 pt-10 relative">
+        <div className="w-full pb-18 pt-10 relative">
           <p
             className="ml-auto max-w-xl text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            Nincs írója, nincs kiadója,<br/>és nem kapható a boltokban.<br/>
+            Egy könyv, aminek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
             <span className="text-lime-100/80 mr-4">→</span>
             <span className="text-lime-100/80">Meg kell találnod.</span>
           </p>
         </div>
 
         <section className="mt-2 w-full" aria-label="Vállalhatatlan könyvek">
-          <div className="flex flex-col gap-5 pb-2 pt-4">
+          <div className="flex flex-col gap-8">
             {[
               {
                 number: "01",
-                edition: "ELSŐ KÖNYV",
-                title: "ELSŐ KÖNYV",
-                image: "/cover.png",
-                alt: "Vállalhatatlan első könyv borítója",
-                meta: "MÁSODIK KIADÁS",
+                edition: "Első Könyv",
+                subtitle: "második kiadás",
+                video: "/videos/bg2.mp4",
                 description:
-                  "Szerelem, drogok és betépett ámokfutás az ezredfordulós budapest undergroundjában.",
+                  "Az első rész a céltalan útkeresésről szól. Szerelem, drogok, csodás feltámadások és kis híján meghalások.",
                 href: "/konyv",
+                cover: "/cover.png",
               },
               {
                 number: "02",
-                edition: "MÁSODIK KÖNYV",
-                title: "Vállalhatatlan II.",
-                image: "/vallalhatatlan2.png",
-                alt: "Vállalhatatlan második könyv borítója",
-                meta: "100 SORSZÁMOZOTT PÉLDÁNY",
+                edition: "Második Könyv",
+                subtitle: "második kiadás",
+                video: "/videos/film2.mp4",
                 description:
-                  "A következő rész. Új történetek, új rétegek, ugyanaz a világ. A könyv megszerzése maga is része a történetnek.",
+                  "A második részben megpróbáljuk meghackelni a rendszert, egy éjjel-nappali internetkávézó pultja mögül.",
                 href: "/konyv-2",
+                cover: "/vallalhatatlan2.png",
               },
             ].map((book) => (
               <article
                 key={book.number}
-                className="relative flex w-full flex-col overflow-hidden"
+                className="mb-12 relative overflow-hidden border border-zinc-800 rounded-md bg-transparent shadow-none"
               >
-                <div className="pointer-events-none absolute inset-0" />
+                <div className="relative aspect-video w-full overflow-hidden border-b border-zinc-800 bg-black">
+                  <video
+                    className="absolute inset-0 h-full w-full object-cover"
+                    src={book.video}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    controls={false}
+                    preload="metadata"
+                  />
 
-                <div className="relative border border-zinc-800 px-4 py-9 rounded-md bg-black shadow-3xl shadow-zinc-950">
-                  <div className="flex items-start justify-between">
-                    <div>
+                  <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-between p-4 sm:p-5">
+                    <div className="text-left">
                       <p
-                        className="text-[14px] uppercase tracking-[0.28em] text-lime-100/45"
-                        style={{ fontFamily: "var(--font-mono-tech)" }}
+                        className="text-[11px] uppercase tracking-[0.16em] text-white sm:text-xs"
+                        style={{
+                          fontFamily: "var(--font-mono-tech)",
+                          textShadow: "0 2px 14px rgba(0,0,0,0.9)",
+                        }}
                       >
                         {book.edition}
                       </p>
                       <p
-                        className="mt-1 text-[9px] uppercase tracking-[0.2em] text-zinc-700"
-                        style={{ fontFamily: "var(--font-mono-tech)" }}
+                        className="mt-1 text-[8px] uppercase tracking-[0.2em] text-zinc-300 sm:text-[9px]"
+                        style={{
+                          fontFamily: "var(--font-mono-tech)",
+                          textShadow: "0 2px 12px rgba(0,0,0,0.9)",
+                        }}
                       >
-                        {book.meta}
+                        {book.subtitle}
                       </p>
+                      <Image
+                        src={book.cover}
+                        alt={`${book.edition} borító`}
+                        width={80}
+                        height={120}
+                        className="mt-2 object-contain shadow-2xl shadow-black"
+                      />
                     </div>
+
                     <span
-                      className="text-[5.5rem] leading-[0.82] tracking-[-0.09em] text-zinc-100/80 sm:text-[6.5rem]"
-                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                      className="text-[4.8rem] leading-[0.68] tracking-[-0.09em] text-white sm:text-[5.8rem]"
+                      style={{
+                        fontFamily: "var(--font-mono-tech)",
+                        textShadow: "0 3px 18px rgba(0,0,0,0.95)",
+                      }}
                       aria-hidden="true"
                     >
                       {book.number}
                     </span>
                   </div>
+                </div>
 
-                  <div className="mt-3 grid grid-cols-[minmax(0,0.618fr)_minmax(0,1fr)] items-center gap-4 sm:gap-6">
-                    <div className="relative flex min-h-[250px] items-end justify-center overflow-hidden sm:min-h-[310px]">
-                      <div className="pointer-events-none absolute inset-0" />
-                      <Image
-                        src={book.image}
-                        alt={book.alt}
-                        width={480}
-                        height={640}
-                        className="relative z-10 h-[230px] w-auto max-w-full object-contain sm:h-[285px]"
-                        sizes="(max-width: 640px) 38vw, 220px"
-                      />
-                    </div>
+                <div className="px-0 pt-4">
+                  <p
+                    className="max-w-2xl px-4 text-md leading-relaxed text-zinc-200 sm:text-sm"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    {book.description}
+                  </p>
 
-                    <div className="pb-1">
-                      <div className="mb-5 h-px w-10 bg-lime-100/50" />
-                      <p
-                        className="mt-4 text-sm leading-normal text-zinc-400 sm:text-xs"
-                        style={{ fontFamily: "var(--font-mono-tech)" }}
-                      >
-                        {book.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Link
-                    href={book.href}
-                    className="group relative mt-5 flex min-h-16 w-full items-center justify-between overflow-hidden rounded-xl border border-lime-100/70 bg-lime-100 px-5 py-4 text-left text-black shadow-[0_10px_30px_rgba(0,0,0,0.32)] transition-all duration-300 hover:bg-white hover:shadow-[0_14px_36px_rgba(0,0,0,0.42)] sm:min-h-[68px]"
+                  <button
+                    type="button"
+                    onClick={handleAcquire}
+                    disabled={availableCopies.length === 0}
+                    className="group mt-5 flex min-h-14 w-full items-center justify-between border border-lime-100/70 bg-lime-100 px-5 py-4 text-left text-black transition-all duration-300 hover:bg-white disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
                     <span className="text-base font-bold uppercase tracking-[0.12em] sm:text-lg">
@@ -265,231 +276,16 @@ export default function VallalhatatlanHero2() {
                     >
                       →
                     </span>
-                  </Link>
-
-                  <div
-                    className="mt-3 flex items-center justify-between border-t border-zinc-900 pt-3 text-[8px] uppercase tracking-[0.18em] text-zinc-700"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    <span>VÁLLALHATATLAN / {book.number}</span>
-                    <span>KÖNYV</span>
-                  </div>
+                  </button>
                 </div>
               </article>
             ))}
           </div>
-
         </section>
 
-        <section className="bg-black" aria-label="Sorszám kiválasztása">
-          <div className="pt-6">
-            <div>
-              <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t pt-4 pb-1 border-b border-zinc-800">
-                <p
-                  className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                 A TE KÖNYVED SORSZÁMA
-                </p>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <span
-                  className="block text-8xl leading-none tracking-wide text-zinc-100"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  {String(selectedCopy ?? 67).padStart(3, "0")}
-                </span>
-                <span className="-ml-4 text-xl text-zinc-600"style={{ fontFamily: "var(--font-mono-tech)" }}>/100</span>
-                <button
-                  type="button"
-                  onClick={randomizeCopy}
-                  disabled={availableCopies.length < 2}
-                  aria-label="Másik szabad sorszám"
-                  title="Másik szabad sorszám"
-                  className="mb-1 flex h-10 w-28 opacity-70 hover:opacity-100 text-xs uppercase border p-2 border-zinc-800 items-center justify-center rounded-full text-zinc-400 transition-all disabled:cursor-not-allowed disabled:opacity-30"
-                >
-                  <RefreshCw size={18} strokeWidth={2} />
-                  <span className="ml-2 text-zinc-700"style={{ fontFamily: "var(--font-mono-tech)" }}>Másikat</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="mt-8 max-w-xl border-l border-lime-100/20 pl-4 text-sm leading-[1.8] text-zinc-400 sm:pl-5"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            <p>100 darab sorszámozott könyv,<br/>amiben öszeáll a történet.</p>
-            <p>Átvétel: <span className="text-lime-100">Dead Drop</span> vagy Posta automata.</p>
-          </div>
-        </section>
-
-        <section className="mt-10" aria-label="Könyv megszerzése">
-          <button
-            type="button"
-            onClick={handleAcquire}
-            disabled={availableCopies.length === 0}
-            className="group relative flex min-h-20 w-full items-center justify-between overflow-hidden rounded-sm border-2 border-lime-100/80 bg-zinc-100 px-5 py-5 text-left text-black transition-all duration-300 hover:border-zinc-100 hover:bg-lime-100 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            <span className="text-lg font-bold uppercase tracking-[0.08em] sm:text-xl">
-              <span className="mr-6 rounded-md bg-white border border-zinc-200 text-zinc-800 p-3">
-              {String(selectedCopy ?? 67).padStart(3, "0")}
-              </span>
-              Levadászom
-            </span>
-            <span
-              className="text-2xl transition-transform duration-300 group-hover:translate-x-1"
-              aria-hidden="true"
-            >
-              →
-            </span>
-          </button>
-
-          <div
-            className="mt-3 flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-zinc-600"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            <span>10 000 HUF / PÉLDÁNY</span>
-            <span>{availableCopies.length} SZABAD</span>
-          </div>
-
-          {showAcquire && (
-            <div className="mt-5 overflow-hidden rounded-sm border border-zinc-800 bg-zinc-950/80">
-              <div className="border-b border-zinc-800 px-4 py-3">
-                <div
-                  className="flex items-center justify-between text-[9px] uppercase tracking-[0.18em] text-zinc-500"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  <span>ÁTVÉTEL KIVÁLASZTÁSA</span>
-                  <span>#{String(selectedCopy ?? 67).padStart(3, "0")}</span>
-                </div>
-              </div>
-
-              <div className="grid gap-px bg-zinc-800 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setPickupMethod("dead-drop")}
-                  aria-pressed={pickupMethod === "dead-drop"}
-                  className={`px-4 py-5 text-left transition-colors ${
-                    pickupMethod === "dead-drop"
-                      ? "bg-zinc-900 text-zinc-100"
-                      : "bg-[#050505] text-zinc-500 hover:text-zinc-300"
-                  }`}
-                >
-                  <span
-                    className="block text-md uppercase tracking-[0.08em]"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    Dead drop
-                  </span>
-                  <span
-                    className="mt-2 block text-xs leading-relaxed"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    Ingyenes átvétel egy aktív átadóponton, Budapesten.
-                  </span>
-                  <span
-                    className="mt-3 block text-md uppercase tracking-[0.14em] text-lime-100/80"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    +0 HUF
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPickupMethod("automata")}
-                  aria-pressed={pickupMethod === "automata"}
-                  className={`px-4 py-5 text-left transition-colors ${
-                    pickupMethod === "automata"
-                      ? "bg-zinc-900 text-zinc-100"
-                      : "bg-[#050505] text-zinc-500 hover:text-zinc-300"
-                  }`}
-                >
-                  <span
-                    className="block text-md uppercase tracking-[0.08em]"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    Automata
-                  </span>
-                  <span
-                    className="mt-2 block text-sm leading-relaxed"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    Csomagautomata, feláras átvétellel.
-                  </span>
-                  <span
-                    className="mt-3 block text-md uppercase tracking-[0.14em] text-lime-100/80"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    +2 500 HUF
-                  </span>
-                </button>
-              </div>
-
-              <div className="border-t border-zinc-800 p-4">
-                <div className="mb-4 flex items-end justify-between gap-4">
-                  <div>
-                    <p
-                      className="text-[9px] uppercase tracking-[0.18em] text-zinc-600"
-                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                    >
-                      VÉGÖSSZEG
-                    </p>
-                    <p
-                      className="mt-1 text-2xl text-zinc-100"
-                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                    >
-                      {pickupMethod === "automata" ? "12 500" : "10 000"} HUF
-                    </p>
-                  </div>
-                  <span
-                    className="text-right text-[9px] uppercase tracking-[0.15em] text-zinc-600"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    STRIPE
-                    <br />
-                    BIZTONSÁGOS FIZETÉS
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => void startCheckout()}
-                  disabled={!selectedCopy || checkoutLoading}
-                  className="flex min-h-14 w-full items-center justify-between rounded-sm border border-zinc-600 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-zinc-100 transition-all hover:border-lime-100/70 hover:bg-zinc-100/5 hover:text-lime-100 disabled:cursor-not-allowed disabled:opacity-40"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  <span>{checkoutLoading ? "STRIPE INDÍTÁSA..." : "Tovább a Stripe fizetéshez"}</span>
-                  <span aria-hidden="true">↗</span>
-                </button>
-                {checkoutError && (
-                  <p
-                    className="mt-3 text-xs leading-relaxed text-rose-300"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    {checkoutError}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-        </section>
 
         <section className="pt-20">
           <div className="">
-            <video
-              className="rounded-lg relative left-1/2 mt-0 block w-screen -translate-x-1/2"
-              src="/videos/dd3.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls={false}
-              preload="metadata"
-            />
             <p className="mt-6 text-right text-[19px] font-semibold italic leading-relaxed text-zinc-100 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
