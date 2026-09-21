@@ -152,7 +152,8 @@ export default function VallalhatatlanHero2() {
   }, [])
   return (
     <>
-      <style jsx>{`@keyframes tabIn { from { opacity: 0; transform: translateY(8px); filter: blur(3px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }`}</style>
+  <style jsx>{`@keyframes tabIn { from { opacity: 0; transform: translateY(8px); filter: blur(3px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+@keyframes modalIn { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       <section
       className="relative flex min-h-screen flex-col overflow-hidden bg-[#010101] text-green-200"
       style={{
@@ -162,9 +163,9 @@ export default function VallalhatatlanHero2() {
       <div className="pointer-events-none absolute inset-0 fx-stripes opacity-10 mix-blend-plus-lighter" />
 
       <div className="relative z-20 flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
-        <div className="w-full pb-18 pt-10 relative">
+        <div className="w-full pb-24 pt-16 relative border-r border-zinc-700">
           <p
-            className="ml-auto max-w-xl text-right text-[20px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
+            className="ml-auto mr-4 max-w-xl text-right text-[20px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             A könyv, aminek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
@@ -176,12 +177,12 @@ export default function VallalhatatlanHero2() {
         <section className="mt-2 w-full" aria-label="Vállalhatatlan könyvek">
           <div className="pt-5">
             <div className="flex items-end justify-between px-4">
-              <div className="flex items-end gap-10" role="tablist" aria-label="Könyvkiadások">
+              <div className="flex items-end gap-6" role="tablist" aria-label="Könyvkiadások">
                 {[{ number: "01", label: "Első Könyv" }, { number: "02", label: "Második Könyv" }].map((tab) => {
                   const active = activeBookTab === tab.number
                   return <button key={tab.number} type="button" role="tab" aria-selected={active} onClick={() => setActiveBookTab(tab.number as "01" | "02")} className="group relative pb-0 text-left">
-                    <span className={`block text-[3rem] leading-[0.72] tracking-[0.1em] transition-all duration-500 ${active ? "text-zinc-100" : "text-zinc-800 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.number}</span>
-                    <span className={`mt-2 block text-[8px] uppercase tracking-[0.16em] transition-colors duration-300 ${active ? "text-lime-100/70" : "text-zinc-700 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.label}</span>
+                    <span className={`block text-[3rem] text-center leading-[0.72] tracking-[0.1em] transition-all duration-500 ${active ? "text-zinc-100" : "text-zinc-800 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.number}</span>
+                    <span className={`mt-2 block text-[10px] uppercase tracking-[0.16em] transition-colors duration-300 ${active ? "text-lime-100/70" : "text-zinc-700 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.label}</span>
                   </button>
                 })}
               </div>
@@ -189,7 +190,7 @@ export default function VallalhatatlanHero2() {
             {(() => {
               const books = [{ number: "01", edition: "Első Könyv", subtitle: "második kiadás", video: "/videos/bg2.mp4", description: "Az első rész a céltalan útkeresésről szól. Szerelem, drogok, csodás feltámadások és kis híján meghalások.", href: "/konyv", cover: "/cover.png" }, { number: "02", edition: "Második Könyv", subtitle: "második kiadás", video: "/videos/film2.mp4", description: "A második részben megpróbáljuk meghackelni a rendszert, egy éjjel-nappali internetkávézó pultja mögül.", href: "/konyv-2", cover: "/vallalhatatlan2.png" }]
               const activeBook = books.find((book) => book.number === activeBookTab) ?? books[0]
-              return <article key={activeBook.number} role="tabpanel" className="relative mt-7 overflow-hidden rounded-md border border-zinc-800 bg-[#050505] shadow-[0_24px_70px_rgba(0,0,0,0.35)] animate-[tabIn_500ms_ease-out]">
+              return <article key={activeBook.number} role="tabpanel" className="relative mt-2 overflow-hidden rounded-md border border-zinc-800 bg-[#050505] shadow-[0_24px_70px_rgba(0,0,0,0.35)] animate-[tabIn_500ms_ease-out]">
                 <div className="relative aspect-video w-full overflow-hidden border-b border-zinc-800 bg-black">
                   <video className="absolute inset-0 h-full w-full object-cover" src={activeBook.video} autoPlay muted loop playsInline controls={false} preload="metadata" />
                 <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-end p-4 sm:p-5">
@@ -201,9 +202,9 @@ export default function VallalhatatlanHero2() {
                   </div>
                 </div>
                 <div className="px-0 pt-0">
-                    <button type="button" onClick={() => handleAcquire(activeBook.number as "01" | "02")} disabled={availableCopies.length === 0} className="group mt-0 flex min-h-14 w-full items-center justify-between border border-lime-100/0 bg-black px-5 py-4 text-left text-zinc-100 transition-all duration-300 hover:bg-zinc-100/10 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                    <span className="text-base font-bold uppercase tracking-[0.12em] sm:text-lg">Levadászom</span>
-                    <span className="text-2xl transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span>
+                  <button type="button" onClick={() => handleAcquire(activeBook.number as "01" | "02")} disabled={availableCopies.length === 0} className="group mt-0 flex min-h-14 w-full items-center justify-between border border-lime-100/0 bg-black px-5 py-4 text-left text-zinc-100 transition-all duration-300 hover:bg-zinc-100/10 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      <span className="text-base font-normal uppercase tracking-[0.12em] sm:text-lg">Levadászom a gecibe</span>
+                      <span className="text-2xl transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span>
                   </button>
                 </div>
               </article>
@@ -215,6 +216,7 @@ export default function VallalhatatlanHero2() {
         {purchaseBook && (
           <div
             className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center"
+            style={{ animation: 'modalIn 0.3s ease-out both' }}
             role="dialog"
             aria-modal="true"
             aria-label="Könyv megszerzése"
@@ -239,24 +241,18 @@ export default function VallalhatatlanHero2() {
               </div>
 
               <div className="p-4 sm:p-5">
-                <p
-                  className="ml-4 text-lg text-zinc-100"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  Hogyan kéred a könyvet?
-                </p>
 
                 <div className="mt-4 grid gap-px bg-zinc-800 sm:grid-cols-2">
                   <button
                     type="button"
                     onClick={() => setPickupMethod("dead-drop")}
                     aria-pressed={pickupMethod === "dead-drop"}
-                    className={`px-4 py-5 text-left transition-colors ${pickupMethod === "dead-drop" ? "bg-zinc-900 text-zinc-100" : "bg-[#050505] text-zinc-500 hover:text-zinc-300"}`}
+                    className={`px-4 py-5 text-left transition-colors ${pickupMethod === "dead-drop" ? "bg-zinc-900 text-zinc-100 border border-lime-100" : "bg-[#050505] text-zinc-500 hover:text-zinc-300"}`}
                   >
-                    <span className="block text-md uppercase tracking-[0.08em]" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    <span className="block text-lg uppercase tracking-[0.08em]" style={{ fontFamily: "var(--font-mono-tech)" }}>
                       Dead drop
                     </span>
-                    <span className="mt-2 block text-xs leading-relaxed text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    <span className="mt-2 block text-xs leading-relaxed text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>
                       Ingyenes átvétel egy aktív átadóponton, Budapesten.
                     </span>
                     <span className="mt-3 block text-md uppercase tracking-[0.14em] text-lime-100/80" style={{ fontFamily: "var(--font-mono-tech)" }}>
@@ -268,13 +264,13 @@ export default function VallalhatatlanHero2() {
                     type="button"
                     onClick={() => setPickupMethod("automata")}
                     aria-pressed={pickupMethod === "automata"}
-                    className={`px-4 py-5 text-left transition-colors ${pickupMethod === "automata" ? " bg-zinc-900 text-zinc-100" : " bg-[#050505] text-zinc-500 hover:text-zinc-300"}`}
+                    className={`px-4 py-5 text-left transition-colors ${pickupMethod === "automata" ? " bg-zinc-900 text-zinc-100 border border-lime-100" : " bg-[#050505] text-zinc-500 hover:text-zinc-300"}`}
                   >
-                    <span className="block text-md uppercase tracking-[0.08em]" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    <span className="block text-lg uppercase tracking-[0.08em]" style={{ fontFamily: "var(--font-mono-tech)" }}>
                       Posta automata
                     </span>
-                    <span className="mt-2 block text-sm leading-relaxed text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                      Csomagautomata, feláras átvétellel.
+                    <span className="mt-2 block text-sm leading-relaxed text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      Csomagautomatába, országosan.
                     </span>
                     <span className="mt-3 block text-md uppercase tracking-[0.14em] text-lime-100/80" style={{ fontFamily: "var(--font-mono-tech)" }}>
                       +2 500 HUF
@@ -319,18 +315,18 @@ export default function VallalhatatlanHero2() {
           </div>
         )}
 
-        <section className="mt-4 w-full">
+        <section className="mt-4 w-full border-r border-zinc-700">
           <Reviews />
         </section>
 
         <section className="pt-10">
-          <div className="pt-4">
+          <div className="pt-4 border-r border-zinc-700">
             <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t pt-4 pb-1 border-b border-zinc-800">
               <p
                   className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
-                  MEG MERED CSINÁLNI?
+                  MILYEN BÁTOR NYUSZI VAGY?
                 </p>
             </div>
             <video
@@ -343,22 +339,24 @@ export default function VallalhatatlanHero2() {
               controls={false}
               preload="metadata"
             />
-            <p className="mt-6 text-right text-[20px] font-semibold italic leading-relaxed text-zinc-300"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              Terjesztés:<br/><span className="text-lime-100">Dead Drop [ˈdɛd drɒp]</span>
-            </p>
-            <p className="pt-6 text-right text-sm font-normal italic leading-relaxed text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
-              Egy biztonságos helyre elrejtem neked.<br/>Kapsz egy koordinátát, pár fotót és<br/>egy fasza kis leírást.<br/>48 órád van.
-            </p>
+            <div className="mr-4">
+              <p className="mt-6 text-right text-[20px] font-semibold italic leading-relaxed text-zinc-300"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                Terjesztés:<br/><span className="text-lime-100">Dead Drop [ˈdɛd drɒp]</span>
+              </p>
+              <p className="pt-4 text-right text-sm font-normal italic leading-relaxed text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                Egy biztonságos helyre elrejtem neked.<br/>Kapsz egy koordinátát, pár fotót és<br/>egy fasza kis leírást. 48 órád van.
+              </p>
 
-            <p className="pb-6 pt-2 text-[11px] leading-[1.8] text-zinc-400 text-right"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              Nyugi. Ha 48 órán belül érsz oda és nincs ott - újraküldöm. 
-            </p>
+              <p className="pb-6 pt-4 text-[10px] leading-[1.8] text-zinc-400 text-right"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                Nyugi. Ha 48 órán belül érsz oda és nincs ott - újraküldöm.<br/>De erre még egyszer sem volt szükség.
+              </p>
+            </div>
 
-            <div className="flex justify-end gap-2 mb-4">
+            <div className="flex justify-end gap-2 mb-4 mr-4">
               <div className="relative group">
                 <Badge className="cursor-progress text-[11px] rounded-xs tracking-widest px-3 py-1 uppercase border border-lime-100/30 bg-transparent text-zinc-300">Budapest</Badge>
               </div>
@@ -374,26 +372,33 @@ export default function VallalhatatlanHero2() {
             </div>
 
 
-            <div className="bg-black rounded-lg px-4 py-8">
-
+            <div className="bg-black border-t border-b border-zinc-800 pt-9 pb-4 mt-12">
+                <video
+                  className="rounded-full h-auto w-36 float-right"
+                  src="/420.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls={false}
+                  preload="metadata"
+                />
+                <p className="text-left pt-12 text-sm font-normal italic leading-relaxed text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  Bízhatsz bennem, nyúl vagyok.<br/> 
+                  Ha kérdésed van 
+                  <Link href="/kapcsolat" className="ml-2 mr-2 text-lime-100 underline" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  itt tudsz  
+                  </Link>
+                   kapcsolatba lépni velem.
+                </p>
             </div>
-
-            <p className="pt-2 text-sm leading-[1.8] text-zinc-400 text-right" style={{ fontFamily: "var(--font-mono-tech)" }}>
-              <Link
-                href="/kapcsolat"
-                className=" text-zinc-400 text-xs hover:text-lime-100"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                Jelentkezz terjesztőnek! <span className="text-lime-100 text-lg" aria-hidden="true">🐇</span>
-              </Link>
-            </p>
             
           </div>
         </section>
         
-        <section className="mt-12 w-full" aria-label="Random Sztorik">
+        <section className="mt-16 w-full" aria-label="Random Sztorik">
           <div
-            className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t border-zinc-800 pt-4"
+            className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-[0.24em] not-italic text-zinc-200 border-t border-zinc-800 pt-4"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             <span>Random Sztori</span>

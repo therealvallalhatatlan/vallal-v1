@@ -44,7 +44,7 @@ export default function Reviews() {
   const featured = reviews[2]; // válaszd ki, melyik legyen kiemelt
 
   return (
-    <section id="velemenyek" className="mt-10">
+    <section id="velemenyek" className="mt-12">
       
       <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between">
         <div>
