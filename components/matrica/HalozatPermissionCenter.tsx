@@ -32,6 +32,7 @@ export default function HalozatPermissionCenter({ accessToken, onEnableGeolocati
   const [loadingGeo, setLoadingGeo] = useState(false)
   const [loadingPush, setLoadingPush] = useState(false)
   const [geoMessage, setGeoMessage] = useState<string | null>(null)
+  const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null)
   const notifiedGeolocationEnabledRef = useRef(false)
 
   const notificationPermission = typeof window !== 'undefined' && 'Notification' in window
@@ -59,6 +60,49 @@ export default function HalozatPermissionCenter({ accessToken, onEnableGeolocati
     window.localStorage.removeItem(REMIND_AT_KEY)
     setVisible(false)
   }
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !accessToken) {
+      setVapidPublicKey(null)
+      return
+    }
+
+    let cancelled = false
+
+    const loadVapidPublicKey = async () => {
+      try {
+        const response = await fetch('/api/push/config', { cache: 'no-store' })
+        const data: unknown = await response.json().catch(() => null)
+
+        if (cancelled) return
+
+        if (
+          !response.ok ||
+          typeof data !== 'object' ||
+          data === null ||
+          !(data as { ok?: unknown }).ok ||
+          typeof (data as { publicKey?: unknown }).publicKey !== 'string' ||
+          !(data as { publicKey: string }).publicKey.trim()
+        ) {
+          console.error('[HALOZAT-PERMISSIONS] VAPID public key unavailable')
+          setVapidPublicKey(null)
+          return
+        }
+
+        setVapidPublicKey((data as { publicKey: string }).publicKey.trim())
+      } catch (error) {
+        if (cancelled) return
+        console.error('[HALOZAT-PERMISSIONS] VAPID public key load failed', error)
+        setVapidPublicKey(null)
+      }
+    }
+
+    void loadVapidPublicKey()
+
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -232,9 +276,8 @@ export default function HalozatPermissionCenter({ accessToken, onEnableGeolocati
         return
       }
 
-      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      if (!vapidKey) {
-        console.error('[HALOZAT-PERMISSIONS] missing NEXT_PUBLIC_VAPID_PUBLIC_KEY')
+      if (!vapidPublicKey) {
+        console.error('[HALOZAT-PERMISSIONS] VAPID public key not loaded')
         scheduleReminder(NOT_ENABLED_REMIND_MS)
         setVisible(false)
         return
@@ -243,7 +286,7 @@ export default function HalozatPermissionCenter({ accessToken, onEnableGeolocati
       const registration = await navigator.serviceWorker.ready
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
       })
 
       const response = await fetch('/api/push/subscribe', {
