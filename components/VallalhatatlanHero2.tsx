@@ -333,7 +333,7 @@ export default function VallalhatatlanHero2() {
                     type="button"
                     onClick={() => setPickupMethod("dead-drop")}
                     aria-pressed={pickupMethod === "dead-drop"}
-                    className={\`px-4 py-5 text-left transition-colors \${pickupMethod === "dead-drop" ? "bg-zinc-900 text-zinc-100" : "bg-[#050505] text-zinc-500 hover:text-zinc-300"}\`}
+                    className={`px-4 py-5 text-left transition-colors ${pickupMethod === "dead-drop" ? "bg-zinc-900 text-zinc-100" : "bg-[#050505] text-zinc-500 hover:text-zinc-300"}`}
                   >
                     <span className="block text-md uppercase tracking-[0.08em]" style={{ fontFamily: "var(--font-mono-tech)" }}>
                       Dead drop
@@ -350,7 +350,7 @@ export default function VallalhatatlanHero2() {
                     type="button"
                     onClick={() => setPickupMethod("automata")}
                     aria-pressed={pickupMethod === "automata"}
-                    className={\`px-4 py-5 text-left transition-colors \${pickupMethod === "automata" ? "bg-zinc-900 text-zinc-100" : "bg-[#050505] text-zinc-500 hover:text-zinc-300"}\`}
+                    className={`px-4 py-5 text-left transition-colors ${pickupMethod === "automata" ? "bg-zinc-900 text-zinc-100" : "bg-[#050505] text-zinc-500 hover:text-zinc-300"}`}
                   >
                     <span className="block text-md uppercase tracking-[0.08em]" style={{ fontFamily: "var(--font-mono-tech)" }}>
                       Posta automata
