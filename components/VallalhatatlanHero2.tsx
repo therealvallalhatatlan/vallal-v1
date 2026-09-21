@@ -482,6 +482,29 @@ export default function VallalhatatlanHero2() {
           </div>
         </section>
 
+        <section className="w-full border-b border-zinc-800" aria-label="Most történik">
+          <div className="flex items-center justify-between border-t border-zinc-800 px-0 py-3" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-200/40" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-lime-100" />
+              </span>
+              <span className="text-[11px] uppercase tracking-[0.24em] text-zinc-200">MOST TÖRTÉNIK</span>
+            </div>
+            <span className="text-[9px] uppercase tracking-[0.18em] text-zinc-600">LIVE</span>
+          </div>
+          <div className="divide-y divide-zinc-900">
+            <div className="flex items-baseline justify-between gap-4 py-3">
+              <span className="text-[11px] text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>ÚJ PONTOK ÉS FELFEDEZÉSEK</span>
+              <Link href="/halozat" className="shrink-0 text-[9px] uppercase tracking-[0.16em] text-lime-100/60 hover:text-lime-100" style={{ fontFamily: "var(--font-mono-tech)" }}>HÁLÓZAT →</Link>
+            </div>
+            <div className="flex items-baseline justify-between gap-4 py-3">
+              <span className="text-[11px] text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>{networkSpots.length} aktív pont a hálózatban</span>
+              <span className="text-[9px] uppercase tracking-[0.16em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>SIGNAL</span>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-16 w-full" aria-label="Random Vállalhatatlan Sztori">
           <div
             className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-[0.24em] not-italic text-zinc-200 border-t border-zinc-800 pt-4"
