@@ -5,7 +5,6 @@ import { applyUnreadToFavicon } from '@/lib/notifications/faviconBadge'
 import { setAppBadgeCount } from '@/lib/notifications/appBadge'
 import { applyUnreadToDocumentTitle } from '@/lib/notifications/titleBadge'
 import {
-  clearAllUnreadSources,
   getUnreadSnapshot,
   setUnreadSource,
   subscribeUnread,
@@ -40,13 +39,6 @@ export default function NotificationOrchestrator() {
         setUnreadSource('push:background', unreadCount)
       }
 
-      if (data.type === 'PUSH_CLICKED') {
-        console.log('[UNREAD STORE CLEAR]', {
-          reason: 'NotificationOrchestrator PUSH_CLICKED',
-          sourcesBeforeClear: getUnreadSnapshot().sources,
-        });
-        clearAllUnreadSources()
-      }
     }
 
     navigator.serviceWorker?.addEventListener('message', handleSwMessage)
