@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, type PointerEvent, type MouseEvent } from "react"
 import Link from "next/link"
 import { Montserrat } from "next/font/google"
 import { RefreshCw, Volume2, VolumeX } from "lucide-react"
@@ -46,7 +46,7 @@ export default function VallalhatatlanHero2() {
     moved: false,
   })
 
-  const handleCarouselPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handleCarouselPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return
 
     const element = event.currentTarget
@@ -84,7 +84,7 @@ export default function VallalhatatlanHero2() {
     }
   }
 
-  const handleCarouselClick = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleCarouselClick = (event: MouseEvent<HTMLDivElement>) => {
     if (!carouselDrag.current.moved) return
 
     event.preventDefault()
