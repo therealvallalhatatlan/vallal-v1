@@ -639,7 +639,13 @@ export default function VallalhatatlanHero2() {
               </span>
               <span className="text-[11px] uppercase tracking-[0.24em] text-zinc-200">MOST TÖRTÉNIK</span>
             </div>
-            <button type="button" onClick={() => void loadNetworkActivity()} className="text-[9px] uppercase tracking-[0.16em] text-zinc-600 transition-colors hover:text-lime-100" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <button
+              type="button"
+              onClick={() => void loadNetworkActivity()}
+              className="text-[9px] uppercase tracking-[0.16em] text-zinc-600 transition-colors hover:text-lime-100"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+              aria-label="Hálózati aktivitás frissítése"
+            >
               {networkActivityLoading ? "SYNC..." : "LIVE"}
             </button>
           </div>
