@@ -284,7 +284,7 @@ export default function VallalhatatlanHero2() {
         </section>
 
 
-        {showAcquire && (
+        {purchaseBook && (
           <div
             className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 p-4 backdrop-blur-sm sm:items-center sm:p-6"
             role="dialog"
