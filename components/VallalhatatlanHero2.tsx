@@ -159,51 +159,29 @@ export default function VallalhatatlanHero2() {
       <div className="pointer-events-none absolute inset-0 fx-stripes opacity-10 mix-blend-plus-lighter" />
 
       <div className="relative z-20 flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
-        <div className="w-full pb-18 pt-10 relative">
+        <div className="w-full pb-16 pt-10 relative">
           <p
             className="ml-auto max-w-xl text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            Ennek a könyvnek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
+            Nincs írója, nincs kiadója,<br/>és nem kapható a boltokban.<br/>
             <span className="text-lime-100/80 mr-4">→</span>
             <span className="text-lime-100/80">Meg kell találnod.</span>
           </p>
         </div>
 
         <section className="mt-2 w-full" aria-label="Vállalhatatlan könyvek">
-          <div className="mb-4 flex items-end justify-between border-t border-zinc-800 pt-4">
-            <div>
-              <p
-                className="text-[10px] uppercase tracking-[0.28em] text-zinc-600"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                VÁLLALHATATLAN / KIADÁSOK
-              </p>
-              <h2
-                className="mt-1 text-2xl leading-none tracking-[-0.02em] text-zinc-100"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                Két könyv. Két kapu.
-              </h2>
-            </div>
-            <span
-              className="mb-0.5 text-[9px] uppercase tracking-[0.2em] text-zinc-700"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              01 / 02
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-5 pb-2 pt-1">
+          <div className="flex flex-col gap-5 pb-2 pt-4">
+            {[
               {
                 number: "01",
                 edition: "ELSŐ KÖNYV",
-                title: "Meg sem történt történetek",
+                title: "ELSŐ KÖNYV",
                 image: "/cover.png",
                 alt: "Vállalhatatlan első könyv borítója",
-                meta: "EREDETI KIADÁS",
+                meta: "MÁSODIK KIADÁS",
                 description:
-                  "A történet eredeti törzse: 28+1 fejezet a kilencvenes évek és az ezredforduló Budapestjéről, saját zenékkel és QR-kódos átjárókkal.",
+                  "Szerelem, drogok és betépett ámokfutás az ezredfordulós budapest undergroundjában.",
                 href: "/konyv",
               },
               {
@@ -220,15 +198,15 @@ export default function VallalhatatlanHero2() {
             ].map((book) => (
               <article
                 key={book.number}
-                className="relative flex w-full flex-col overflow-hidden rounded-[18px] border border-zinc-800/90 bg-[#070707] shadow-[0_18px_55px_rgba(0,0,0,0.45)] transition-transform duration-300 hover:-translate-y-0.5"
+                className="relative flex w-full flex-col overflow-hidden"
               >
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_8%,rgba(163,230,53,0.08),transparent_30%),linear-gradient(145deg,rgba(255,255,255,0.02),transparent_40%)]" />
+                <div className="pointer-events-none absolute inset-0" />
 
-                <div className="relative p-4 sm:p-5">
+                <div className="relative border border-zinc-800 px-4 py-9 rounded-md bg-black shadow-3xl shadow-zinc-950">
                   <div className="flex items-start justify-between">
                     <div>
                       <p
-                        className="text-[9px] uppercase tracking-[0.28em] text-lime-100/45"
+                        className="text-[14px] uppercase tracking-[0.28em] text-lime-100/45"
                         style={{ fontFamily: "var(--font-mono-tech)" }}
                       >
                         {book.edition}
@@ -241,7 +219,7 @@ export default function VallalhatatlanHero2() {
                       </p>
                     </div>
                     <span
-                      className="text-[5.5rem] leading-[0.72] tracking-[-0.09em] text-zinc-800 sm:text-[6.5rem]"
+                      className="text-[5.5rem] leading-[0.82] tracking-[-0.09em] text-zinc-100/80 sm:text-[6.5rem]"
                       style={{ fontFamily: "var(--font-mono-tech)" }}
                       aria-hidden="true"
                     >
@@ -249,29 +227,23 @@ export default function VallalhatatlanHero2() {
                     </span>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-[minmax(0,0.618fr)_minmax(0,1fr)] items-end gap-4 sm:gap-6">
-                    <div className="relative flex min-h-[250px] items-end justify-center overflow-hidden rounded-xl border border-zinc-800/80 bg-black/70 p-3 sm:min-h-[310px]">
-                      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(0,0,0,0.28))]" />
+                  <div className="mt-3 grid grid-cols-[minmax(0,0.618fr)_minmax(0,1fr)] items-center gap-4 sm:gap-6">
+                    <div className="relative flex min-h-[250px] items-end justify-center overflow-hidden sm:min-h-[310px]">
+                      <div className="pointer-events-none absolute inset-0" />
                       <Image
                         src={book.image}
                         alt={book.alt}
                         width={480}
                         height={640}
-                        className="relative z-10 h-[230px] w-auto max-w-full object-contain drop-shadow-[10px_16px_18px_rgba(0,0,0,0.6)] sm:h-[285px]"
+                        className="relative z-10 h-[230px] w-auto max-w-full object-contain sm:h-[285px]"
                         sizes="(max-width: 640px) 38vw, 220px"
                       />
                     </div>
 
                     <div className="pb-1">
                       <div className="mb-5 h-px w-10 bg-lime-100/50" />
-                      <h3
-                        className="max-w-[12ch] text-[1.65rem] leading-[0.98] tracking-[-0.035em] text-zinc-100 sm:text-[2rem]"
-                        style={{ fontFamily: "var(--font-mono-tech)" }}
-                      >
-                        {book.title}
-                      </h3>
                       <p
-                        className="mt-4 text-[11px] leading-[1.75] text-zinc-400 sm:text-xs"
+                        className="mt-4 text-sm leading-normal text-zinc-400 sm:text-xs"
                         style={{ fontFamily: "var(--font-mono-tech)" }}
                       >
                         {book.description}
