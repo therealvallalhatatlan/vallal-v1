@@ -375,12 +375,12 @@ export default function VallalhatatlanHero2() {
       <div className="pointer-events-none absolute inset-0 fx-stripes opacity-10 mix-blend-plus-lighter" />
 
       <div className="relative z-20 flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
-        <div className="w-full pb-24 pt-16 relative border-r border-zinc-700">
+        <div className="w-full pb-24 pt-16 relative">
           <p
-            className="ml-auto mr-4 max-w-xl text-right text-[20px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
+            className="ml-24 max-w-xl text-right text-[20px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            A könyv, aminek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
+            A könyv, aminek nincs írója, nincs kiadója, és nem kapható a könyvesboltokban.<br/>
             <span className="text-lime-100/80 mr-4">→</span>
             <span className="text-lime-100/80">Meg kell találnod.</span>
           </p>
