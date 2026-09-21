@@ -38,6 +38,7 @@ export default function VallalhatatlanHero2() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [muted, setMuted] = useState(true)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const [purchaseBook, setPurchaseBook] = useState<"01" | "02" | null>(null)
   const loadRandomStory = async () => {
     setStoryLoading(true)
 
@@ -96,7 +97,7 @@ export default function VallalhatatlanHero2() {
     if (next) setSelectedCopy(next)
   }
 
-  const handleAcquire = () => {
+  const handleAcquire = (bookNumber: "01" | "02") => {
     if (availableCopies.length === 0) return
 
     if (!selectedCopy || !availableCopies.includes(selectedCopy)) {
@@ -104,6 +105,7 @@ export default function VallalhatatlanHero2() {
       if (next) setSelectedCopy(next)
     }
 
+    setPurchaseBook(bookNumber)
     setShowAcquire(true)
   }
 
@@ -262,7 +264,7 @@ export default function VallalhatatlanHero2() {
 
                   <button
                     type="button"
-                    onClick={handleAcquire}
+                    onClick={() => handleAcquire(book.number as "01" | "02")}
                     disabled={availableCopies.length === 0}
                     className="group mt-5 flex min-h-14 w-full items-center justify-between border border-lime-100/70 bg-lime-100 px-5 py-4 text-left text-black transition-all duration-300 hover:bg-white disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -283,6 +285,123 @@ export default function VallalhatatlanHero2() {
           </div>
         </section>
 
+
+        {showAcquire && (
+          <div
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 p-4 backdrop-blur-sm sm:items-center sm:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Könyv megszerzése"
+          >
+            <button
+              type="button"
+              onClick={() => setShowAcquire(false)}
+              className="absolute inset-0 cursor-default"
+              aria-label="Bezárás"
+            />
+
+            <div className="relative z-10 w-full max-w-xl overflow-hidden border border-zinc-700 bg-zinc-950 shadow-[0_25px_80px_rgba(0,0,0,0.7)]">
+              <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+                <div
+                  className="flex items-center gap-3 text-[9px] uppercase tracking-[0.18em] text-zinc-500"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  <span>LEVADÁSZOM</span>
+                  <span className="text-zinc-700">/</span>
+                  <span>KÖNYV {purchaseBook ?? "01"}</span>
+                  <span className="text-zinc-700">/</span>
+                  <span>#{String(selectedCopy ?? 67).padStart(3, "0")}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAcquire(false)}
+                  className="flex h-8 w-8 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-100"
+                  aria-label="Bezárás"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-5">
+                <p
+                  className="text-xs uppercase tracking-[0.18em] text-zinc-300"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  Hogyan kéred a könyvet?
+                </p>
+
+                <div className="mt-4 grid gap-px bg-zinc-800 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setPickupMethod("dead-drop")}
+                    aria-pressed={pickupMethod === "dead-drop"}
+                    className={\`px-4 py-5 text-left transition-colors \${pickupMethod === "dead-drop" ? "bg-zinc-900 text-zinc-100" : "bg-[#050505] text-zinc-500 hover:text-zinc-300"}\`}
+                  >
+                    <span className="block text-md uppercase tracking-[0.08em]" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      Dead drop
+                    </span>
+                    <span className="mt-2 block text-xs leading-relaxed text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      Ingyenes átvétel egy aktív átadóponton, Budapesten.
+                    </span>
+                    <span className="mt-3 block text-md uppercase tracking-[0.14em] text-lime-100/80" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      +0 HUF
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPickupMethod("automata")}
+                    aria-pressed={pickupMethod === "automata"}
+                    className={\`px-4 py-5 text-left transition-colors \${pickupMethod === "automata" ? "bg-zinc-900 text-zinc-100" : "bg-[#050505] text-zinc-500 hover:text-zinc-300"}\`}
+                  >
+                    <span className="block text-md uppercase tracking-[0.08em]" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      Posta automata
+                    </span>
+                    <span className="mt-2 block text-sm leading-relaxed text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      Csomagautomata, feláras átvétellel.
+                    </span>
+                    <span className="mt-3 block text-md uppercase tracking-[0.14em] text-lime-100/80" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      +2 500 HUF
+                    </span>
+                  </button>
+                </div>
+
+                <div className="mt-5 border-t border-zinc-800 pt-4">
+                  <div className="mb-4 flex items-end justify-between gap-4">
+                    <div>
+                      <p className="text-[9px] uppercase tracking-[0.18em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                        VÉGÖSSZEG
+                      </p>
+                      <p className="mt-1 text-2xl text-zinc-100" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                        {pickupMethod === "automata" ? "12 500" : "10 000"} HUF
+                      </p>
+                    </div>
+                    <span className="text-right text-[9px] uppercase tracking-[0.15em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      STRIPE<br />BIZTONSÁGOS FIZETÉS
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => void startCheckout()}
+                    disabled={!selectedCopy || checkoutLoading}
+                    className="flex min-h-14 w-full items-center justify-between border border-zinc-600 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-zinc-100 transition-all hover:border-lime-100/70 hover:bg-zinc-100/5 hover:text-lime-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    <span>{checkoutLoading ? "STRIPE INDÍTÁSA..." : "Tovább a Stripe fizetéshez"}</span>
+                    <span aria-hidden="true">↗</span>
+                  </button>
+
+                  {checkoutError && (
+                    <p className="mt-3 text-xs leading-relaxed text-rose-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      {checkoutError}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <section className="pt-20">
           <div className="">
