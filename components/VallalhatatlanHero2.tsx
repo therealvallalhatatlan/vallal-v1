@@ -505,9 +505,9 @@ export default function VallalhatatlanHero2() {
           </div>
 
           {randomStory ? (
-            <article className="border-t border-zinc-800 pt-6">
+            <article className="border-t border-zinc-800 pt-10">
               <h3
-                className={`${montserrat.className} py-2 text-3xl leading-tighter text-zinc-100 line-through`}
+                className={`${montserrat.className} py-2 text-3xl leading-tighter text-zinc-100`}
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 {randomStory.title}
@@ -551,7 +551,7 @@ export default function VallalhatatlanHero2() {
                       <button
                         type="button"
                         onClick={() => setStoryExpanded((value) => !value)}
-                        className="mt-5 flex w-full items-center justify-between border border-zinc-800 px-4 py-4 text-left text-[10px] uppercase tracking-[0.2em] text-zinc-400 transition-all duration-300 hover:border-lime-100/50 hover:bg-lime-100/[0.03] hover:text-lime-100"
+                        className="mt-5 flex w-1/2 mx-auto items-center justify-between rounded-md border border-zinc-800 px-3 py-3 text-left text-[11px] uppercase tracking-[0.2em] text-zinc-400 transition-all duration-300 hover:border-lime-100/50 hover:bg-lime-100/[0.03] hover:text-lime-100"
                         style={{ fontFamily: "var(--font-mono-tech)" }}
                         aria-expanded={storyExpanded}
                       >
