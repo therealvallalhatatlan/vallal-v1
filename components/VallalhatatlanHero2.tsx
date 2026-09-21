@@ -38,6 +38,59 @@ export default function VallalhatatlanHero2() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [muted, setMuted] = useState(true)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const carouselRef = useRef<HTMLDivElement | null>(null)
+  const carouselDrag = useRef({
+    active: false,
+    startX: 0,
+    startScrollLeft: 0,
+    moved: false,
+  })
+
+  const handleCarouselPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return
+
+    const element = event.currentTarget
+    carouselDrag.current = {
+      active: true,
+      startX: event.clientX,
+      startScrollLeft: element.scrollLeft,
+      moved: false,
+    }
+
+    element.setPointerCapture?.(event.pointerId)
+    element.style.cursor = "grabbing"
+  }
+
+  const handleCarouselPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const element = event.currentTarget
+    const drag = carouselDrag.current
+    if (!drag.active) return
+
+    const delta = event.clientX - drag.startX
+    if (Math.abs(delta) > 5) drag.moved = true
+
+    if (drag.moved) {
+      element.scrollLeft = drag.startScrollLeft - delta
+    }
+  }
+
+  const finishCarouselPointer = (event: React.PointerEvent<HTMLDivElement>) => {
+    const element = event.currentTarget
+    carouselDrag.current.active = false
+    element.style.cursor = "grab"
+
+    if (element.hasPointerCapture?.(event.pointerId)) {
+      element.releasePointerCapture(event.pointerId)
+    }
+  }
+
+  const handleCarouselClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!carouselDrag.current.moved) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    carouselDrag.current.moved = false
+  }
 
   const loadRandomStory = async () => {
     setStoryLoading(true)
@@ -196,11 +249,19 @@ export default function VallalhatatlanHero2() {
           </div>
 
           <div
-            className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 pt-1"
+            ref={carouselRef}
+            className="-mx-6 flex snap-x snap-mandatory gap-4 overflow-x-auto px-6 pb-2 pt-1 select-none cursor-grab"
+            onPointerDown={handleCarouselPointerDown}
+            onPointerMove={handleCarouselPointerMove}
+            onPointerUp={finishCarouselPointer}
+            onPointerCancel={finishCarouselPointer}
+            onClick={handleCarouselClick}
             style={{
               scrollbarWidth: "none",
               msOverflowStyle: "none",
               WebkitOverflowScrolling: "touch",
+              touchAction: "pan-y",
+              userSelect: "none",
             }}
           >
             {[
