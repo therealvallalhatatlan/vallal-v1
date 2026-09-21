@@ -48,8 +48,15 @@ export function usePresence() {
       const accessToken = await getAccessToken()
       if (!accessToken) return
 
-      // Try to get location from multiple sources
+      // Respect the user's location-sharing preference.
+      // Presence stays active, but no coordinates are collected or sent while disabled.
+      const locationSharingEnabled =
+        typeof window !== 'undefined' &&
+        window.localStorage.getItem('vallalhatatlan:location-enabled') === 'true'
+
       let location: { lat: number; lng: number } | null = null
+
+      if (locationSharingEnabled) {
 
       // First, check if MapView has shared the user location
       const sharedLocation = (window as any).vallalhatatlan_userLocation
@@ -58,6 +65,8 @@ export function usePresence() {
       } else {
         // Fall back to geolocation API
         location = await getCurrentPosition()
+      }
+
       }
 
       const body: Record<string, unknown> = {}
