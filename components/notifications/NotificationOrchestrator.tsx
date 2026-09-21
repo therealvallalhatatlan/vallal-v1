@@ -6,7 +6,6 @@ import { setAppBadgeCount } from '@/lib/notifications/appBadge'
 import { applyUnreadToDocumentTitle } from '@/lib/notifications/titleBadge'
 import {
   getUnreadSnapshot,
-  setUnreadSource,
   subscribeUnread,
 } from '@/lib/notifications/unreadStore'
 
@@ -26,27 +25,6 @@ export default function NotificationOrchestrator() {
     void applyUnreadToFavicon(totalUnread)
     void setAppBadgeCount(totalUnread)
   }, [totalUnread])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const handleSwMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string; unreadCount?: number } | null
-      if (!data || typeof data.type !== 'string') return
-
-      if (data.type === 'PUSH_RECEIVED') {
-        const unreadCount = typeof data.unreadCount === 'number' ? data.unreadCount : 1
-        setUnreadSource('push:background', unreadCount)
-      }
-
-    }
-
-    navigator.serviceWorker?.addEventListener('message', handleSwMessage)
-
-    return () => {
-      navigator.serviceWorker?.removeEventListener('message', handleSwMessage)
-    }
-  }, [])
 
   return null
 }
