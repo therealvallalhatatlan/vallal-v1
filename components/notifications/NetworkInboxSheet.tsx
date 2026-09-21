@@ -1,6 +1,6 @@
 "use client"
 
-import { BellIcon } from "lucide-react"
+import { BellIcon, MapPin } from "lucide-react"
 import { formatDistanceToNowStrict } from "date-fns"
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { usePathname, useRouter } from "next/navigation"
@@ -11,6 +11,7 @@ import { buildPrivateRoomId } from "@/lib/live/privateRooms"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 
 const AUTO_DISMISS_KEY = "network-inbox-dismissed"
+const LOCATION_PREFERENCE_KEY = "vallalhatatlan:location-enabled"
 const NETWORK_ITEM_PREVIEW_LIMIT = 4
 const UNREAD_SOURCE_KEY = "personal-notifications"
 // PM unread source key
@@ -150,6 +151,9 @@ export default function NetworkInboxSheet() {
   const [pushEnabled, setPushEnabled] = useState(false)
   const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null)
   const [isStandaloneApp, setIsStandaloneApp] = useState(false)
+  const [locationEnabled, setLocationEnabled] = useState(false)
+  const [locationPermission, setLocationPermission] = useState<"unknown" | "prompt" | "granted" | "denied" | "unsupported">("unknown")
+  const [locationLoading, setLocationLoading] = useState(false)
 
   const pmLoadRequestIdRef = useRef(0)
   const pmLoadAbortRef = useRef<AbortController | null>(null)
@@ -161,6 +165,56 @@ export default function NetworkInboxSheet() {
   // getServerSnapshot to return a cached/stable reference. Passing
   // getUnreadSnapshot directly can cause React's infinite-loop warning
   // when the store creates a new object on every call.
+  const persistLocationPreference = useCallback((enabled: boolean) => {
+    if (typeof window === "undefined") return
+
+    window.localStorage.setItem(LOCATION_PREFERENCE_KEY, enabled ? "true" : "false")
+    setLocationEnabled(enabled)
+    window.dispatchEvent(
+      new CustomEvent("vallalhatatlan:location-preference", {
+        detail: { enabled },
+      }),
+    )
+  }, [])
+
+  const refreshPrivacyState = useCallback(async () => {
+    if (typeof window === "undefined" || typeof navigator === "undefined") return
+
+    setLocationEnabled(
+      window.localStorage.getItem(LOCATION_PREFERENCE_KEY) === "true",
+    )
+
+    if (!navigator.geolocation) {
+      setLocationPermission("unsupported")
+    } else if (navigator.permissions?.query) {
+      try {
+        const permission = await navigator.permissions.query({ name: "geolocation" })
+        setLocationPermission(permission.state)
+      } catch {
+        setLocationPermission("unknown")
+      }
+    } else {
+      setLocationPermission("unknown")
+    }
+
+    if (
+      "serviceWorker" in navigator &&
+      "PushManager" in window &&
+      "Notification" in window &&
+      Notification.permission === "granted"
+    ) {
+      try {
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.getSubscription()
+        setPushEnabled(Boolean(subscription))
+      } catch {
+        setPushEnabled(false)
+      }
+    } else {
+      setPushEnabled(false)
+    }
+  }, [])
+
   const unreadSnapshot = useSyncExternalStore(
     subscribeCachedUnread,
     getCachedUnreadSnapshot,
@@ -533,6 +587,98 @@ export default function NetworkInboxSheet() {
     }
   }, [currentUserId, isAuthenticated, isStandaloneApp, token, vapidPublicKey])
 
+
+  const disablePushNotifications = useCallback(async () => {
+    if (!isAuthenticated || !token || typeof navigator === "undefined") return false
+
+    setPushLoading(true)
+
+    try {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        setPushEnabled(false)
+        return true
+      }
+
+      const registration = await navigator.serviceWorker.ready
+      const subscription = await registration.pushManager.getSubscription()
+
+      if (!subscription) {
+        setPushEnabled(false)
+        return true
+      }
+
+      const response = await fetch("/api/push/subscribe", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        body: JSON.stringify({ endpoint: subscription.endpoint }),
+        cache: "no-store",
+      })
+
+      if (!response.ok) {
+        console.error("[network-inbox] push unsubscribe failed", response.status)
+        return false
+      }
+
+      await subscription.unsubscribe()
+      setPushEnabled(false)
+      return true
+    } catch (error) {
+      console.error("[network-inbox] push disable failed", error)
+      return false
+    } finally {
+      setPushLoading(false)
+    }
+  }, [isAuthenticated, token])
+
+  const handleLocationToggle = useCallback(async () => {
+    if (locationLoading) return
+
+    if (locationEnabled) {
+      persistLocationPreference(false)
+      return
+    }
+
+    if (locationPermission === "denied") return
+    if (!navigator.geolocation) {
+      setLocationPermission("unsupported")
+      return
+    }
+
+    setLocationLoading(true)
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          () => resolve(),
+          (error) => reject(error),
+          { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
+        )
+      })
+
+      setLocationPermission("granted")
+      persistLocationPreference(true)
+    } catch (error) {
+      const geoError = error as GeolocationPositionError | undefined
+      if (geoError?.code === 1) {
+        setLocationPermission("denied")
+      }
+    } finally {
+      setLocationLoading(false)
+    }
+  }, [locationEnabled, locationLoading, locationPermission, persistLocationPreference])
+
+  const handlePushToggle = useCallback(async () => {
+    if (pushEnabled) {
+      await disablePushNotifications()
+      return
+    }
+
+    await enablePushNotifications()
+  }, [disablePushNotifications, enablePushNotifications, pushEnabled])
+
   useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId || typeof navigator === "undefined") return
 
@@ -604,6 +750,52 @@ export default function NetworkInboxSheet() {
       cancelled = true
     }
   }, [currentUserId, isAuthenticated, isStandaloneApp, token])
+
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const sync = () => {
+      void refreshPrivacyState()
+    }
+
+    sync()
+    window.addEventListener("focus", sync)
+    document.addEventListener("visibilitychange", sync)
+
+    let permissionStatus: PermissionStatus | null = null
+    let permissionChangeHandler: (() => void) | null = null
+    let cancelled = false
+
+    const watchLocationPermission = async () => {
+      if (!navigator.permissions?.query || !navigator.geolocation) return
+
+      try {
+        permissionStatus = await navigator.permissions.query({ name: "geolocation" })
+        if (cancelled || !permissionStatus) return
+
+        setLocationPermission(permissionStatus.state)
+        permissionChangeHandler = () => {
+          setLocationPermission(permissionStatus?.state ?? "unknown")
+          void refreshPrivacyState()
+        }
+        permissionStatus.addEventListener?.("change", permissionChangeHandler)
+      } catch {
+        setLocationPermission("unknown")
+      }
+    }
+
+    void watchLocationPermission()
+
+    return () => {
+      cancelled = true
+      window.removeEventListener("focus", sync)
+      document.removeEventListener("visibilitychange", sync)
+      if (permissionStatus && permissionChangeHandler) {
+        permissionStatus.removeEventListener?.("change", permissionChangeHandler)
+      }
+    }
+  }, [refreshPrivacyState])
 
   useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId) {
@@ -939,28 +1131,91 @@ export default function NetworkInboxSheet() {
 
           <section className="mt-6 space-y-3">
             <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.4em] text-zinc-500">
-              <span>Értesítések</span>
-              {pushEnabled ? (
-                <span className="text-lime-300">AKTÍV</span>
-              ) : null}
-            </div>
-
-            {!pushEnabled && (
+              <span>ADATVÉDELMI KAPCSOLÓK</span>
               <button
                 type="button"
-                onClick={() => void enablePushNotifications()}
-                disabled={pushLoading}
-                className="w-full rounded border border-lime-400/50 bg-lime-400/5 px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-lime-200 transition hover:border-lime-300 hover:bg-lime-400/10 disabled:cursor-wait disabled:opacity-60"
+                onClick={() => void refreshPrivacyState()}
+                className="text-[9px] uppercase tracking-[0.18em] text-zinc-600 transition-colors hover:text-zinc-300"
               >
-                {pushLoading
-                  ? "ÉRTESÍTÉSEK AKTIVÁLÁSA..."
-                  : !isStandaloneApp
-                    ? "NYISD MEG A TELEPÍTETT APPOT"
-                    : !vapidPublicKey
-                      ? "PUSH KONFIGURÁCIÓ BETÖLTÉSE..."
-                      : "ÉRTESÍTÉSEK ENGEDÉLYEZÉSE"}
+                FRISSÍTÉS
               </button>
-            )}
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={locationEnabled}
+                onClick={() => void handleLocationToggle()}
+                disabled={locationLoading || locationPermission === "denied" || locationPermission === "unsupported"}
+                className="flex w-full items-center justify-between rounded border border-zinc-800 bg-zinc-900/50 px-3 py-3 text-left transition hover:border-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="flex items-center gap-3">
+                  <span className={`flex h-8 w-8 items-center justify-center rounded border ${locationEnabled ? "border-lime-400/50 bg-lime-400/10 text-lime-300" : "border-zinc-800 bg-black text-zinc-600"}`}>
+                    <MapPin className="h-4 w-4" />
+                  </span>
+                  <span>
+                    <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-200">
+                      HELYADATOK
+                    </span>
+                    <span className="mt-1 block text-[10px] text-zinc-600">
+                      {locationPermission === "denied"
+                        ? "A böngésző letiltotta"
+                        : locationPermission === "unsupported"
+                          ? "Nem támogatott"
+                          : locationEnabled
+                            ? "Helymegosztás aktív"
+                            : locationPermission === "granted"
+                              ? "Engedélyezve, megosztás kikapcsolva"
+                              : "Megosztás kikapcsolva"}
+                    </span>
+                  </span>
+                </span>
+                <span
+                  className={`relative h-6 w-11 rounded-full border transition-colors ${locationEnabled ? "border-lime-300/70 bg-lime-400/30" : "border-zinc-700 bg-zinc-950"}`}
+                  aria-hidden="true"
+                >
+                  <span className={`absolute top-1 h-4 w-4 rounded-full transition-all ${locationEnabled ? "left-6 bg-lime-200" : "left-1 bg-zinc-600"}`} />
+                </span>
+              </button>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={pushEnabled}
+                onClick={() => void handlePushToggle()}
+                disabled={pushLoading || (!pushEnabled && (!isStandaloneApp || !vapidPublicKey || (typeof window !== "undefined" && "Notification" in window && Notification.permission === "denied")))}
+                className="flex w-full items-center justify-between rounded border border-zinc-800 bg-zinc-900/50 px-3 py-3 text-left transition hover:border-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="flex items-center gap-3">
+                  <span className={`flex h-8 w-8 items-center justify-center rounded border ${pushEnabled ? "border-lime-400/50 bg-lime-400/10 text-lime-300" : "border-zinc-800 bg-black text-zinc-600"}`}>
+                    <BellIcon className="h-4 w-4" />
+                  </span>
+                  <span>
+                    <span className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-200">
+                      ÉRTESÍTÉSEK
+                    </span>
+                    <span className="mt-1 block text-[10px] text-zinc-600">
+                      {typeof window !== "undefined" && "Notification" in window && Notification.permission === "denied"
+                        ? "A böngésző letiltotta"
+                        : pushEnabled
+                          ? "Push értesítések aktívak"
+                          : !isStandaloneApp
+                            ? "A telepített appban kapcsolható be"
+                            : pushLoading
+                              ? "Aktiválás..."
+                              : "Értesítések kikapcsolva"}
+                    </span>
+                  </span>
+                </span>
+                <span
+                  className={`relative h-6 w-11 rounded-full border transition-colors ${pushEnabled ? "border-lime-300/70 bg-lime-400/30" : "border-zinc-700 bg-zinc-950"}`}
+                  aria-hidden="true"
+                >
+                  <span className={`absolute top-1 h-4 w-4 rounded-full transition-all ${pushEnabled ? "left-6 bg-lime-200" : "left-1 bg-zinc-600"}`} />
+                </span>
+              </button>
+            </div>
 
             <div className="space-y-2">
               {fetchError && (
