@@ -41,6 +41,15 @@ export default function VallalhatatlanHero2() {
   const [activeBookTab, setActiveBookTab] = useState<"01" | "02">("01")
   const [networkSpots, setNetworkSpots] = useState<Array<{ id: string; spot_type?: "free" | "paid"; type?: "physical" | "virtual"; remaining_quantity?: number | null }>>([])
   const [networkLoading, setNetworkLoading] = useState(false)
+  const [networkActivity, setNetworkActivity] = useState<Array<{
+    id: string
+    kind: "claim" | "spot"
+    nickname: string
+    title: string
+    created_at: string
+    comment?: string | null
+  }>>([])
+  const [networkActivityLoading, setNetworkActivityLoading] = useState(false)
   const [storyExpanded, setStoryExpanded] = useState(false)
   const loadAvailableCopies = async () => {
     try {
@@ -144,6 +153,85 @@ export default function VallalhatatlanHero2() {
     }
   }
 
+  const loadNetworkActivity = async () => {
+    setNetworkActivityLoading(true)
+    try {
+      const [activityResponse, spotsResponse] = await Promise.all([
+        fetch("/api/matrica/activity?limit=8", { cache: "no-store" }),
+        fetch("/api/matrica/spots", { cache: "no-store" }),
+      ])
+
+      const activityJson = (await activityResponse.json()) as { ok?: boolean; items?: Array<{
+        id: string
+        created_at: string
+        user_alias: string
+        spot_title: string
+        comment?: string | null
+      }> }
+
+      const spotsJson = (await spotsResponse.json()) as { spots?: Array<{
+        id: string
+        title?: string | null
+        created_at?: string
+      }> }
+
+      const items: Array<{
+        id: string
+        kind: "claim" | "spot"
+        nickname: string
+        title: string
+        created_at: string
+        comment?: string | null
+      }> = []
+
+      if (activityResponse.ok && activityJson.ok && Array.isArray(activityJson.items)) {
+        for (const item of activityJson.items.slice(0, 6)) {
+          items.push({
+            id: `claim-${item.id}`,
+            kind: "claim",
+            nickname: item.user_alias,
+            title: item.spot_title,
+            created_at: item.created_at,
+            comment: item.comment,
+          })
+        }
+      }
+
+      if (spotsResponse.ok && Array.isArray(spotsJson.spots)) {
+        for (const spot of spotsJson.spots.slice(0, 6)) {
+          if (!spot.created_at) continue
+          items.push({
+            id: `spot-${spot.id}`,
+            kind: "spot",
+            nickname: "HÁLÓZAT",
+            title: spot.title || "ÚJ PONT",
+            created_at: spot.created_at,
+          })
+        }
+      }
+
+      items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      setNetworkActivity(items.slice(0, 6))
+    } catch (error) {
+      console.error("Failed to load network activity:", error)
+      setNetworkActivity([])
+    } finally {
+      setNetworkActivityLoading(false)
+    }
+  }
+
+  const formatActivityTime = (value: string) => {
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return "?"
+    const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000))
+    if (diffSeconds < 60) return `${diffSeconds} mp`
+    const diffMinutes = Math.floor(diffSeconds / 60)
+    if (diffMinutes < 60) return `${diffMinutes} p`
+    const diffHours = Math.floor(diffMinutes / 60)
+    if (diffHours < 24) return `${diffHours} ó`
+    return `${Math.floor(diffHours / 24)} n`
+  }
+
   const loadRandomStory = async () => {
     setStoryLoading(true)
 
@@ -167,6 +255,7 @@ export default function VallalhatatlanHero2() {
   useEffect(() => {
     void loadAvailableCopies()
     void loadNetworkSpots()
+    void loadNetworkActivity()
     void loadRandomStory()
   }, [])
   return (
@@ -483,6 +572,53 @@ export default function VallalhatatlanHero2() {
         </section>
 
         <section className="w-full border-b border-zinc-800" aria-label="Most történik">
+          <div className="flex items-center justify-between border-t border-zinc-800 px-0 py-3" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-200/40" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-lime-100" />
+              </span>
+              <span className="text-[11px] uppercase tracking-[0.24em] text-zinc-200">MOST TÖRTÉNIK</span>
+            </div>
+            <button type="button" onClick={() => void loadNetworkActivity()} className="text-[9px] uppercase tracking-[0.16em] text-zinc-600 transition-colors hover:text-lime-100" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              {networkActivityLoading ? "SYNC..." : "LIVE"}
+            </button>
+          </div>
+
+          <div className="divide-y divide-zinc-900">
+            {networkActivity.length === 0 ? (
+              <div className="py-4 text-[10px] uppercase tracking-[0.14em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                {networkActivityLoading ? "Hálózati adatok betöltése..." : "A jel jelenleg csendes."}
+              </div>
+            ) : (
+              networkActivity.map((item) => (
+                <div key={item.id} className="grid grid-cols-[1fr_auto] gap-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-[11px] text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      <span className="text-lime-100/80">
+                        {item.kind === "spot" ? "ÚJ PONT" : `@${item.nickname}`}
+                      </span>{" "}
+                      {item.kind === "spot" ? "megjelent a hálózatban" : "megtalált egy pontot"}
+                    </p>
+                    <p className="mt-1 truncate text-[9px] uppercase tracking-[0.12em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      {item.title}{item.comment ? ` · "${item.comment}"` : ""}
+                    </p>
+                  </div>
+                  <span className="whitespace-nowrap pt-0.5 text-[9px] uppercase tracking-[0.12em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    {formatActivityTime(item.created_at)}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <Link href="/halozat" className="group flex items-center justify-between border-t border-zinc-900 py-3">
+            <span className="text-[9px] uppercase tracking-[0.14em] text-zinc-600 transition-colors group-hover:text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              TELJES AKTIVITÁS
+            </span>
+            <span className="text-[12px] text-zinc-700 transition-colors group-hover:text-lime-100">→</span>
+          </Link>
+        </section>
           <div className="flex items-center justify-between border-t border-zinc-800 px-0 py-3" style={{ fontFamily: "var(--font-mono-tech)" }}>
             <div className="flex items-center gap-3">
               <span className="relative flex h-2 w-2">
