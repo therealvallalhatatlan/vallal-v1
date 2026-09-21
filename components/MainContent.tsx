@@ -23,6 +23,8 @@ export default function MainContent({ children }: MainContentProps) {
       <div
         className="pointer-events-none fixed inset-0 z-40 fx-stripes"
         style={{
+          pointerEvents: "none",
+
           backgroundImage: `repeating-linear-gradient(
             to bottom,
             rgba(0,0,0,.28) 0 1px,
@@ -37,6 +39,8 @@ export default function MainContent({ children }: MainContentProps) {
       <div
         className="pointer-events-none fixed inset-0 z-50 fx-vhs"
         style={{
+          pointerEvents: "none",
+
           backgroundImage: `
             linear-gradient(
               to bottom,
@@ -62,7 +66,12 @@ export default function MainContent({ children }: MainContentProps) {
 
       {/* Main content */}
       <div className="w-full h-20"></div>
-      <div className="relative z-20 max-w-4xl">{children}</div>
+      <div
+        className="relative z-20 max-w-4xl"
+        style={{ pointerEvents: "auto" }}
+      >
+        {children}
+      </div>
     </main>
   );
 }
