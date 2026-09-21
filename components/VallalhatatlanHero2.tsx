@@ -41,14 +41,59 @@ export default function VallalhatatlanHero2() {
   const [activeBookTab, setActiveBookTab] = useState<"01" | "02">("01")
   const [networkSpots, setNetworkSpots] = useState<Array<{
     id: string
-    title: string | null
     type: "physical" | "virtual"
     remaining_quantity: number | null
-    total_quantity: number | null
     lat: number
     lng: number
   }>>([])
   const [networkLoading, setNetworkLoading] = useState(true)
+  const loadNetworkSpots = async () => {
+    setNetworkLoading(true)
+
+    try {
+      const response = await fetch("/api/matrica/spots", { cache: "no-store" })
+      if (!response.ok) throw new Error("Network spots unavailable")
+
+      const data = (await response.json()) as {
+        spots?: Array<{
+          id?: unknown
+          type?: unknown
+          remaining_quantity?: unknown
+          lat?: unknown
+          lng?: unknown
+        }>
+      }
+
+      const spots = Array.isArray(data.spots)
+        ? data.spots
+            .filter(
+              (spot) =>
+                typeof spot.id === "string" &&
+                (spot.type === "physical" || spot.type === "virtual") &&
+                typeof spot.lat === "number" &&
+                typeof spot.lng === "number",
+            )
+            .map((spot) => ({
+              id: spot.id as string,
+              type: spot.type as "physical" | "virtual",
+              remaining_quantity:
+                typeof spot.remaining_quantity === "number"
+                  ? spot.remaining_quantity
+                  : null,
+              lat: spot.lat as number,
+              lng: spot.lng as number,
+            }))
+        : []
+
+      setNetworkSpots(spots)
+    } catch (error) {
+      console.error("Failed to load network spots:", error)
+      setNetworkSpots([])
+    } finally {
+      setNetworkLoading(false)
+    }
+  }
+
   const loadRandomStory = async () => {
     setStoryLoading(true)
 
@@ -506,50 +551,41 @@ export default function VallalhatatlanHero2() {
                   NINCS AKTÍV JEL A HÁLÓZATON
                 </div>
               ) : (
-                (() => {
-                  const lats = networkSpots.map((spot) => spot.lat)
-                  const lngs = networkSpots.map((spot) => spot.lng)
-                  const minLat = Math.min(...lats)
-                  const maxLat = Math.max(...lats)
-                  const minLng = Math.min(...lngs)
-                  const maxLng = Math.max(...lngs)
-                  const latSpan = Math.max(maxLat - minLat, 0.001)
-                  const lngSpan = Math.max(maxLng - minLng, 0.001)
+                networkSpots.map((spot, index) => {
+                  const angle = (index / Math.max(networkSpots.length, 1)) * Math.PI * 2
+                  const radius = networkSpots.length > 1 ? 24 + (index % 3) * 10 : 0
+                  const left = 50 + Math.cos(angle) * radius
+                  const top = 50 + Math.sin(angle) * radius * 0.65
+                  const isPhysical = spot.type === "physical"
+                  const isAvailable =
+                    spot.remaining_quantity === null || spot.remaining_quantity > 0
 
-                  return networkSpots.map((spot) => {
-                    const left = 12 + ((spot.lng - minLng) / lngSpan) * 76
-                    const top = 14 + (1 - (spot.lat - minLat) / latSpan) * 72
-                    const isPhysical = spot.type === "physical"
-                    const isAvailable =
-                      spot.remaining_quantity === null || spot.remaining_quantity > 0
-
-                    return (
-                      <div
-                        key={spot.id}
-                        className="absolute"
-                        style={{
-                          left: left + "%",
-                          top: top + "%",
-                        }}
-                      >
-                        <span
-                          className={
-                            isPhysical
-                              ? "block h-2.5 w-2.5 rounded-full bg-lime-100 shadow-[0_0_16px_rgba(236,252,203,0.9)]"
-                              : "block h-2.5 w-2.5 rounded-[2px] bg-fuchsia-200 shadow-[0_0_16px_rgba(244,114,182,0.8)]"
-                          }
-                        />
-                        <span
-                          className={
-                            isAvailable
-                              ? "absolute -inset-2 animate-pulse rounded-full border border-lime-100/20"
-                              : "absolute -inset-2 rounded-full border border-zinc-700/40"
-                          }
-                        />
-                      </div>
-                    )
-                  })
-                })()
+                  return (
+                    <div
+                      key={spot.id}
+                      className="absolute"
+                      style={{
+                        left: left + "%",
+                        top: top + "%",
+                      }}
+                    >
+                      <span
+                        className={
+                          isPhysical
+                            ? "block h-2.5 w-2.5 rounded-full bg-lime-100 shadow-[0_0_16px_rgba(236,252,203,0.9)]"
+                            : "block h-2.5 w-2.5 rounded-[2px] bg-fuchsia-200 shadow-[0_0_16px_rgba(244,114,182,0.8)]"
+                        }
+                      />
+                      <span
+                        className={
+                          isAvailable
+                            ? "absolute -inset-2 animate-pulse rounded-full border border-lime-100/20"
+                            : "absolute -inset-2 rounded-full border border-zinc-700/40"
+                        }
+                      />
+                    </div>
+                  )
+                })
               )}
 
               <div
@@ -564,7 +600,7 @@ export default function VallalhatatlanHero2() {
                 className="absolute right-4 top-3 text-right text-[8px] uppercase tracking-[0.14em] text-zinc-600"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                LIVE / Budapest
+                LIVE / NETWORK
                 <br />
                 DATA / PUBLIC FEED
               </div>
