@@ -39,6 +39,8 @@ export default function VallalhatatlanHero2() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [purchaseBook, setPurchaseBook] = useState<"01" | "02" | null>(null)
   const [activeBookTab, setActiveBookTab] = useState<"01" | "02">("01")
+  const [networkSpots, setNetworkSpots] = useState<Array<{ id: string; spot_type?: "free" | "paid"; type?: "physical" | "virtual"; remaining_quantity?: number | null }>>([])
+  const [networkLoading, setNetworkLoading] = useState(false)
   const loadAvailableCopies = async () => {
     try {
       const response = await fetch("/api/inventory", {
@@ -127,6 +129,20 @@ export default function VallalhatatlanHero2() {
     }
   }
 
+  const loadNetworkSpots = async () => {
+    setNetworkLoading(true)
+    try {
+      const response = await fetch("/api/matrica/spots", { cache: "no-store" })
+      if (!response.ok) throw new Error("Network unavailable")
+      const data = (await response.json()) as { spots?: Array<{ id: string; spot_type?: "free" | "paid"; type?: "physical" | "virtual"; remaining_quantity?: number | null }> }
+      setNetworkSpots(Array.isArray(data.spots) ? data.spots : [])
+    } catch (error) {
+      console.error("Failed to load network spots:", error)
+    } finally {
+      setNetworkLoading(false)
+    }
+  }
+
   const loadRandomStory = async () => {
     setStoryLoading(true)
 
@@ -148,6 +164,7 @@ export default function VallalhatatlanHero2() {
 
   useEffect(() => {
     void loadAvailableCopies()
+    void loadNetworkSpots()
     void loadRandomStory()
   }, [])
   return (
@@ -396,6 +413,65 @@ export default function VallalhatatlanHero2() {
           </div>
         </section>
         
+        <section className="mt-16 w-full" aria-label="Élő Nyúlhálózat">
+          <div className="border-y border-zinc-800 bg-[#030303]">
+            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-200/60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-lime-100" />
+                </span>
+                <span className="text-[11px] uppercase tracking-[0.24em] text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  LIVE NETWORK
+                </span>
+              </div>
+              <span className="text-[9px] uppercase tracking-[0.18em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                {networkLoading ? "SYNC..." : "SIGNAL OK"}
+              </span>
+            </div>
+
+            <div className="px-4 py-5">
+              <div className="relative overflow-hidden border border-zinc-800 bg-black">
+                <div className="pointer-events-none absolute inset-0 opacity-20" style={{ backgroundImage: "linear-gradient(rgba(190,255,170,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(190,255,170,0.08) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+                <div className="pointer-events-none absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 50% 50%, rgba(190,255,170,0.12), transparent 55%)" }} />
+                <div className="relative grid grid-cols-2 gap-px bg-zinc-800 sm:grid-cols-4">
+                  {[
+                    ["ACTIVE", networkSpots.length.toString().padStart(2, "0")],
+                    ["FREE", networkSpots.filter((spot) => spot.spot_type !== "paid").length.toString().padStart(2, "0")],
+                    ["PHYSICAL", networkSpots.filter((spot) => spot.type === "physical").length.toString().padStart(2, "0")],
+                    ["VIRTUAL", networkSpots.filter((spot) => spot.type === "virtual").length.toString().padStart(2, "0")],
+                  ].map(([label, value]) => (
+                    <div key={label} className="bg-black/90 px-3 py-4">
+                      <p className="text-[8px] uppercase tracking-[0.18em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>{label}</p>
+                      <p className="mt-1 text-2xl leading-none text-zinc-100" style={{ fontFamily: "var(--font-mono-tech)" }}>{value}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="relative flex items-center justify-between border-t border-zinc-800 px-3 py-3">
+                  <p className="max-w-[70%] text-[9px] uppercase tracking-[0.12em] leading-relaxed text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    A hálózat él. Új pontok jelennek meg, régiek eltűnnek.
+                  </p>
+                  <button type="button" onClick={() => void loadNetworkSpots()} className="text-[9px] uppercase tracking-[0.16em] text-lime-100/70 transition-colors hover:text-lime-100" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    [ REFRESH ]
+                  </button>
+                </div>
+              </div>
+
+              <Link href="/halozat" className="group mt-3 flex items-center justify-between border border-zinc-800 px-4 py-4 transition-all duration-300 hover:border-lime-100/50 hover:bg-lime-100/[0.03]">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.14em] text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    BELÉPÉS A HÁLÓZATBA
+                  </p>
+                  <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    TÉRKÉP · PONTOK · EMBEREK
+                  </p>
+                </div>
+                <span className="text-xl text-zinc-500 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-lime-100">→</span>
+              </Link>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-16 w-full" aria-label="Random Sztorik">
           <div
             className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-[0.24em] not-italic text-zinc-200 border-t border-zinc-800 pt-4"
