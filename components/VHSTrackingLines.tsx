@@ -2,7 +2,10 @@
 
 export default function VHSTrackingLines() {
   return (
-    <div className="fixed inset-0 pointer-events-none z-51 overflow-hidden">
+    <div
+      className="fixed inset-0 pointer-events-none overflow-hidden"
+      style={{ zIndex: 51, pointerEvents: "none" }}
+    >
       {/* VHS tracking line 1 */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white to-transparent opacity-15 animate-vhs-track-1" />
       
