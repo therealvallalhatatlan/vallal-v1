@@ -106,6 +106,19 @@ function isInboxPayload(value: unknown): value is InboxPayload {
   )
 }
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/")
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+
+  for (let index = 0; index < rawData.length; index += 1) {
+    outputArray[index] = rawData.charCodeAt(index)
+  }
+
+  return outputArray
+}
+
 function renderRelativeTime(dateString?: string | null) {
   if (!dateString) return ""
 
@@ -405,6 +418,59 @@ export default function NetworkInboxSheet() {
       navigator.serviceWorker?.removeEventListener("message", handleSwMessage)
     }
   }, [currentUserId, isAuthenticated, syncPmUnread, token])
+
+  useEffect(() => {
+    if (!isAuthenticated || !token || !currentUserId) return
+    if (typeof window === "undefined" || typeof navigator === "undefined") return
+    if (!("Notification" in window) || Notification.permission !== "granted") return
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return
+
+    const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    if (!vapidKey) return
+
+    let cancelled = false
+
+    const ensurePushSubscription = async () => {
+      try {
+        const registration = await navigator.serviceWorker.ready
+        if (cancelled) return
+
+        let subscription = await registration.pushManager.getSubscription()
+
+        if (!subscription) {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
+          })
+        }
+
+        if (cancelled) return
+
+        const response = await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ subscription }),
+          cache: "no-store",
+        })
+
+        if (!response.ok) {
+          console.error("[network-inbox] push subscription sync failed", response.status)
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return
+        console.error("[network-inbox] push subscription sync exception", error)
+      }
+    }
+
+    void ensurePushSubscription()
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentUserId, isAuthenticated, token])
 
   useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId) {
