@@ -121,7 +121,11 @@ export default function SiteHeader() {
   return (
     <header
       className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-zinc-800 bg-zinc-950 px-6"
-      style={{ paddingTop: "env(safe-area-inset-top)" }}
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+        pointerEvents: "auto",
+        touchAction: "manipulation",
+      }}
     >
       {/* Logo */}
       <Link href="/" className="group">
