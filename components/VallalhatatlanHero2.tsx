@@ -167,7 +167,7 @@ export default function VallalhatatlanHero2() {
             className="ml-auto max-w-xl text-right text-[19px] font-semibold italic leading-relaxed text-zinc-300 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            Egy könyv, aminek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
+            A könyv, aminek nincs írója,<br/>nincs kiadója, és nem kapható<br/>a könyvesboltokban.<br/>
             <span className="text-lime-100/80 mr-4">→</span>
             <span className="text-lime-100/80">Meg kell találnod.</span>
           </p>
@@ -180,7 +180,7 @@ export default function VallalhatatlanHero2() {
                 {[{ number: "01", label: "Első Könyv" }, { number: "02", label: "Második Könyv" }].map((tab) => {
                   const active = activeBookTab === tab.number
                   return <button key={tab.number} type="button" role="tab" aria-selected={active} onClick={() => setActiveBookTab(tab.number as "01" | "02")} className="group relative pb-0 text-left">
-                    <span className={`block text-[4.5rem] leading-[0.72] tracking-[-0.09em] transition-all duration-500 sm:text-[4.5rem] ${active ? "text-zinc-100" : "text-zinc-800 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.number}</span>
+                    <span className={`block text-[4rem] leading-[0.72] tracking-[-0.09em] transition-all duration-500 sm:text-[4rem] ${active ? "text-zinc-100" : "text-zinc-800 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.number}</span>
                   </button>
                 })}
               </div>
@@ -199,7 +199,8 @@ export default function VallalhatatlanHero2() {
                     </div>
                   </div>
                 </div>
-                <div className="px-0 pt-4"><p className="max-w-2xl px-4 text-md leading-relaxed text-zinc-200 sm:text-sm" style={{ fontFamily: "var(--font-mono-tech)" }}>{activeBook.description}</p><button type="button" onClick={() => handleAcquire(activeBook.number as "01" | "02")} disabled={availableCopies.length === 0} className="group mt-5 flex min-h-14 w-full items-center justify-between border border-lime-100/70 bg-lime-100 px-5 py-4 text-left text-black transition-all duration-300 hover:bg-white disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]" style={{ fontFamily: "var(--font-mono-tech)" }}><span className="text-base font-bold uppercase tracking-[0.12em] sm:text-lg">Levadászom</span><span className="text-2xl transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span></button></div>
+                <div className="px-0 pt-0">
+                <button type="button" onClick={() => handleAcquire(activeBook.number as "01" | "02")} disabled={availableCopies.length === 0} className="group mt-0 flex min-h-14 w-full items-center justify-between border border-lime-100/70 bg-zinc-100 px-5 py-4 text-left text-black transition-all duration-300 hover:bg-white disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]" style={{ fontFamily: "var(--font-mono-tech)" }}><span className="text-base font-bold uppercase tracking-[0.12em] sm:text-lg">Levadászom</span><span className="text-2xl transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span></button></div>
               </article>
             })()}
           </div>
@@ -208,7 +209,7 @@ export default function VallalhatatlanHero2() {
 
         {purchaseBook && (
           <div
-            className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 p-4 backdrop-blur-sm sm:items-center sm:p-6"
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center"
             role="dialog"
             aria-modal="true"
             aria-label="Könyv megszerzése"
@@ -220,22 +221,12 @@ export default function VallalhatatlanHero2() {
               aria-label="Bezárás"
             />
 
-            <div className="relative z-10 w-full max-w-xl overflow-hidden border border-zinc-700 bg-zinc-950 shadow-[0_25px_80px_rgba(0,0,0,0.7)]">
-              <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
-                <div
-                  className="flex items-center gap-3 text-[9px] uppercase tracking-[0.18em] text-zinc-500"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  <span>LEVADÁSZOM</span>
-                  <span className="text-zinc-700">/</span>
-                  <span>KÖNYV {purchaseBook ?? "01"}</span>
-                  <span className="text-zinc-700">/</span>
-                  <span>#{String(selectedCopy ?? 67).padStart(3, "0")}</span>
-                </div>
+            <div className="relative z-10 w-full overflow-hidden bg-black">
+              <div className="relative border-t border-zinc-800 px-4 py-3">
                 <button
                   type="button"
                   onClick={() => setPurchaseBook(null)}
-                  className="flex h-8 w-8 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-100"
+                  className="absolute top-2 right-2 h-8 w-8 text-2xl text-zinc-500 transition-colors hover:text-zinc-100"
                   aria-label="Bezárás"
                 >
                   ×
@@ -244,7 +235,7 @@ export default function VallalhatatlanHero2() {
 
               <div className="p-4 sm:p-5">
                 <p
-                  className="text-xs uppercase tracking-[0.18em] text-zinc-300"
+                  className="ml-4 text-lg text-zinc-100"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   Hogyan kéred a könyvet?
@@ -272,7 +263,7 @@ export default function VallalhatatlanHero2() {
                     type="button"
                     onClick={() => setPickupMethod("automata")}
                     aria-pressed={pickupMethod === "automata"}
-                    className={`px-4 py-5 text-left transition-colors ${pickupMethod === "automata" ? "bg-zinc-900 text-zinc-100" : "bg-[#050505] text-zinc-500 hover:text-zinc-300"}`}
+                    className={`px-4 py-5 text-left transition-colors ${pickupMethod === "automata" ? " bg-zinc-900 text-zinc-100" : " bg-[#050505] text-zinc-500 hover:text-zinc-300"}`}
                   >
                     <span className="block text-md uppercase tracking-[0.08em]" style={{ fontFamily: "var(--font-mono-tech)" }}>
                       Posta automata
@@ -286,7 +277,7 @@ export default function VallalhatatlanHero2() {
                   </button>
                 </div>
 
-                <div className="mt-5 border-t border-zinc-800 pt-4">
+                <div className="mt-5 px-2 border-t border-zinc-800 pt-4">
                   <div className="mb-4 flex items-end justify-between gap-4">
                     <div>
                       <p className="text-[9px] uppercase tracking-[0.18em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
@@ -305,11 +296,11 @@ export default function VallalhatatlanHero2() {
                     type="button"
                     onClick={() => void startCheckout()}
                     disabled={!selectedCopy || checkoutLoading}
-                    className="flex min-h-14 w-full items-center justify-between border border-zinc-600 px-4 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-zinc-100 transition-all hover:border-lime-100/70 hover:bg-zinc-100/5 hover:text-lime-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mb-6 flex min-h-14 w-full items-center justify-between rounded-md border-2 border-zinc-600 px-3 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-zinc-100 transition-all hover:border-lime-100/70 hover:bg-zinc-100/5 hover:text-lime-100 disabled:cursor-not-allowed disabled:opacity-40"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    <span>{checkoutLoading ? "STRIPE INDÍTÁSA..." : "Tovább a Stripe fizetéshez"}</span>
-                    <span aria-hidden="true">↗</span>
+                    <span>{checkoutLoading ? "STRIPE INDÍTÁSA..." : "Megveszem"}</span>
+                    <span aria-hidden="true">🤍</span>
                   </button>
 
                   {checkoutError && (
@@ -345,33 +336,33 @@ export default function VallalhatatlanHero2() {
               Kapsz egy koordinátát, pár fotót<br/>és egy pontos leírást.<br/>48 órád van megtalálni a cuccot.
             </p>
 
-            <p className="py-9 text-sm leading-[1.8] text-zinc-400 text-left"
+            <p className="py-6 text-sm leading-[1.8] text-zinc-400 text-left"
             style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               Nem szivatás - KALAND, amiről mesélni fogsz!<br/>Ha 48 órán belül mész és nincs ott - újraküldöm. 
             </p>
 
-            <div className="flex justify-end gap-2 mb-6">
+            <div className="flex justify-start gap-2 mb-4">
               <div className="relative group">
-                <Badge className="text-[12px] tracking-widest px-4 py-1 uppercase border border-lime-100/60 bg-transparent text-zinc-300">Budapest</Badge>
+                <Badge className="text-[12px] rounded-none tracking-widest px-4 py-2 uppercase border border-lime-100/60 bg-transparent text-zinc-300">Budapest</Badge>
                 <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
                   Aktív
                 </span>
               </div>
               <div className="relative group">
-                <Badge className="text-[12px] tracking-widest px-4 py-1 uppercase border border-zinc-800 bg-transparent text-zinc-600">Szeged</Badge>
+                <Badge className="text-[12px] rounded-none tracking-widest px-4 py-2 uppercase border border-zinc-800 bg-transparent text-zinc-600">Szeged</Badge>
                 <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
                   Hamarosan
                 </span>
               </div>
               <div className="relative group">
-                <Badge className="text-[12px] tracking-widest px-4 py-1 uppercase border border-zinc-800 bg-transparent text-zinc-600">Pécs</Badge>
+                <Badge className="text-[12px] rounded-none tracking-widest px-4 py-2 uppercase border border-zinc-800 bg-transparent text-zinc-600">Pécs</Badge>
                 <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
                   Hamarosan
                 </span>
               </div>
               <div className="relative group">
-                <Badge className="text-[12px] tracking-widest px-4 py-1 uppercase border border-zinc-800 bg-transparent text-zinc-600">London</Badge>
+                <Badge className="text-[12px] rounded-none tracking-widest px-4 py-2 uppercase border border-zinc-800 bg-transparent text-zinc-600">London</Badge>
                 <span className="pointer-events-none absolute bottom-full right-1/2 transform translate-x-1/2 mb-1 hidden whitespace-nowrap rounded bg-black shadow-2xl shadow-gray-950 px-2 py-1 text-sm text-zinc-100 group-hover:block">
                   Hamarosan
                 </span>
