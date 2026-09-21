@@ -10,11 +10,11 @@ async function broadcastToClients(payload) {
 async function setWorkerAppBadge(unreadCount) {
   const count = Number.isFinite(unreadCount) ? Math.max(0, Math.floor(unreadCount)) : 0;
   try {
-    if (typeof self.registration?.setAppBadge === 'function') {
+    if (typeof self.navigator?.setAppBadge === 'function') {
       if (count > 0) {
-        await self.registration.setAppBadge(count);
-      } else if (typeof self.registration?.clearAppBadge === 'function') {
-        await self.registration.clearAppBadge();
+        await self.navigator.setAppBadge(count);
+      } else if (typeof self.navigator?.clearAppBadge === 'function') {
+        await self.navigator.clearAppBadge();
       }
     }
   } catch {
@@ -105,7 +105,6 @@ self.addEventListener('notificationclick', (event) => {
     : 0;
   event.waitUntil(
     Promise.all([
-      setWorkerAppBadge(0),
       broadcastToClients({ type: 'PUSH_CLICKED', unreadCount }),
       self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
         // If app already open, focus it and navigate
