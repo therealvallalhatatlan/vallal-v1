@@ -696,6 +696,12 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
 
   useEffect(() => {
     if (!geolocationEnabled) {
+      setUserLocation(null)
+      setGeoError(null)
+      firstFixRef.current = false
+      delete (window as any).vallalhatatlan_userLocation
+      userMarkerRef.current?.remove()
+      userMarkerRef.current = null
       return
     }
 
@@ -771,6 +777,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
       navigator.geolocation.clearWatch(watchId);
       userMarkerRef.current?.remove();
       userMarkerRef.current = null;
+      delete (window as any).vallalhatatlan_userLocation;
     };
     // geoRetry and spots changes when the user clicks Retry or spots update
     // eslint-disable-next-line react-hooks/exhaustive-deps
