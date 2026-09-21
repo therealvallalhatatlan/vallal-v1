@@ -606,7 +606,7 @@ export default function NetworkInboxSheet() {
     return () => {
       cancelled = true
     }
-  }, [currentUserId, isAuthenticated, token])
+  }, [currentUserId, isAuthenticated, isStandaloneApp, token])
 
   useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId) {
