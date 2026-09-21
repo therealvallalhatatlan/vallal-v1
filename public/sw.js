@@ -83,6 +83,8 @@ self.addEventListener('push', (event) => {
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         tag: typeof payload.tag === 'string' ? payload.tag : undefined,
+        renotify: typeof payload.tag === 'string' && payload.tag.length > 0,
+        silent: false,
         data: {
           url: payload.url ?? '/v3',
           unreadCount,
