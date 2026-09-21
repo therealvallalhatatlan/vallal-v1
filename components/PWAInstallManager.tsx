@@ -275,7 +275,10 @@ export default function PWAInstallManager({
     <>
       {/* Android install banner */}
       {showAndroidBanner && (
-        <div className="fixed left-0 right-0 bottom-0 z-50 mx-auto max-w-md">
+        <div
+          className="fixed left-0 right-0 bottom-0 z-50 mx-auto max-w-md"
+          style={{ pointerEvents: "auto", touchAction: "manipulation" }}
+        >
           <div className="bg-black px-3 py-3 text-xs text-zinc-100 flex items-center gap-2">
             <div className="min-w-0 flex-1">
               <strong className="block text-lime-100 text-[12px] leading-tight">Telepíthető alkalmazás</strong>
@@ -299,7 +302,10 @@ export default function PWAInstallManager({
 
       {/* in-app browser banner */}
       {showInAppBanner && (
-        <div className="fixed left-2 right-2 bottom-2 z-50 mx-auto max-w-md">
+        <div
+          className="fixed left-2 right-2 bottom-2 z-50 mx-auto max-w-md"
+          style={{ pointerEvents: "auto", touchAction: "manipulation" }}
+        >
           <div className="rounded-lg border border-white/10 bg-neutral-950/90 px-3 py-2 shadow-2xl backdrop-blur-md text-xs text-white flex items-center gap-2">
             <div className="flex-shrink-0 w-7 h-7 rounded-md bg-lime-500 flex items-center justify-center font-bold text-black">↗</div>
 
