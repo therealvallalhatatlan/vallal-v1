@@ -179,6 +179,45 @@ export default function NetworkInboxSheet() {
     [pathname, router],
   )
 
+  const syncPmUnread = useCallback(async (signal?: AbortSignal) => {
+    if (!token || !currentUserId) {
+      setUnreadSource(PM_UNREAD_SOURCE_KEY, 0)
+      return
+    }
+
+    try {
+      const response = await fetch("/api/matrica/pm-unread", {
+        headers: { Authorization: `Bearer ${token}` },
+        signal,
+        cache: "no-store",
+      })
+
+      const data: unknown = await response.json().catch(() => null)
+
+      if (signal?.aborted) return
+
+      if (!response.ok || !isRecord(data) || !data.ok || !isRecord(data.unreadByUserId)) {
+        return
+      }
+
+      const totalUnread = Object.values(data.unreadByUserId as Record<string, unknown>).reduce(
+        (total, count) => {
+          const value =
+            typeof count === "number" && Number.isFinite(count)
+              ? Math.max(0, Math.floor(count))
+              : 0
+          return total + value
+        },
+        0,
+      )
+
+      setUnreadSource(PM_UNREAD_SOURCE_KEY, totalUnread)
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return
+      console.error("[network-inbox] PM unread sync failed", error)
+    }
+  }, [currentUserId, token])
+
   const loadPmConversations = useCallback(async () => {
     if (!token || !currentUserId) {
       setPmConversations([])
@@ -349,6 +388,25 @@ export default function NetworkInboxSheet() {
       setUnreadSource(UNREAD_SOURCE_KEY, 0)
     }
   }, [payload])
+
+  useEffect(() => {
+    if (!isAuthenticated || !token || !currentUserId) {
+      setUnreadSource(PM_UNREAD_SOURCE_KEY, 0)
+      return
+    }
+
+    const controller = new AbortController()
+    void syncPmUnread(controller.signal)
+
+    const intervalId = window.setInterval(() => {
+      void syncPmUnread()
+    }, 45_000)
+
+    return () => {
+      controller.abort()
+      window.clearInterval(intervalId)
+    }
+  }, [currentUserId, isAuthenticated, syncPmUnread, token])
 
   useEffect(() => {
     if (!isAuthenticated || !payload) return
