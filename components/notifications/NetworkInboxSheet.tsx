@@ -827,6 +827,12 @@ export default function NetworkInboxSheet() {
     }
   }, [currentUserId, isAuthenticated, loadPmConversations, sheetOpen, token])
 
+  useEffect(() => {
+    if (sheetOpen) {
+      void refreshPrivacyState()
+    }
+  }, [refreshPrivacyState, sheetOpen])
+
   const handleOpenChange = useCallback((open: boolean) => {
     setSheetOpen(open)
 
