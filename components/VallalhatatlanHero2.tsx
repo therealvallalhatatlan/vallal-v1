@@ -584,7 +584,7 @@ export default function VallalhatatlanHero2() {
             </div>
 
 
-            <div className="bg-black border-t border-b border-zinc-800 pt-9 pb-4 mt-12">
+            <div className="bg-black border-t border-l border-b border-zinc-800 pt-9 pb-4 mt-12">
                 <video
                   className="rounded-full h-auto w-36 float-right"
                   src="/420.mp4"
@@ -595,7 +595,7 @@ export default function VallalhatatlanHero2() {
                   controls={false}
                   preload="metadata"
                 />
-                <p className="text-left pt-12 text-sm font-normal italic leading-relaxed text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                <p className="ml-4 text-left pt-12 text-sm font-normal italic leading-relaxed text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
                   Bízhatsz bennem, nyúl vagyok.<br/> 
                   Ha kérdésed van 
                   <Link href="/kapcsolat" className="ml-2 mr-2 text-lime-100 underline" style={{ fontFamily: "var(--font-mono-tech)" }}>
@@ -625,7 +625,7 @@ export default function VallalhatatlanHero2() {
               </span>
             </div>
             <div className="border-r border-zinc-700">
-                <p className="pt-14 mr-4 text-right text-[20px] font-semibold italic leading-normal text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                <p className="pt-12 mr-4 text-right text-[20px] font-semibold italic leading-normal text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
                   <span className="text-lime-100">A Hálózat.</span> Hogy ez mire lesz jó,<br/>még mi magunk sem tudjuk.
                 </p>
                 <p className="pt-4 mr-4 ml-20 text-right text-sm font-normal italic leading-relaxed text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
@@ -713,11 +713,11 @@ export default function VallalhatatlanHero2() {
                           ? "jelet küldött"
                           : "megtalált egy pontot"}
                     </p>
-                    <p className={`mt-1 truncate text-[9px] tracking-[0.12em] ${item.kind === "signal" ? "text-zinc-500 normal-case" : "uppercase text-zinc-600"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    <p className={`mt-1 truncate text-[14px] tracking-[0.12em] ${item.kind === "signal" ? "text-zinc-100 normal-case" : "uppercase text-zinc-600"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>
                       {item.title}{item.comment ? ` · "${item.comment}"` : ""}
                     </p>
                   </div>
-                  <span className="whitespace-nowrap pt-0.5 text-[9px] uppercase tracking-[0.12em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  <span className="whitespace-nowrap pt-0.5 text-[11px] uppercase tracking-[0.12em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
                     {formatActivityTime(item.created_at)}
                   </span>
                 </div>
@@ -725,15 +725,15 @@ export default function VallalhatatlanHero2() {
             )}
           </div>
           <Link href="/halozat" className="group flex items-center justify-between border-t border-zinc-900 py-3">
-            <span className="text-[9px] uppercase tracking-[0.14em] text-zinc-600 transition-colors group-hover:text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <span className="text-[11px] uppercase tracking-[0.14em] text-zinc-600 transition-colors group-hover:text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
               TELJES AKTIVITÁS
             </span>
             <span className="text-[12px] text-zinc-700 transition-colors group-hover:text-lime-100">→</span>
           </Link>
         </section>
-        <section className="w-full border-b border-zinc-800" aria-label="Online nyuszik">
+        <section className="w-full " aria-label="Online nyuszik">
           <div className="flex items-center justify-between border-t border-zinc-900 px-0 py-3">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <span className="text-[11px] uppercase tracking-[0.2em] text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
               ONLINE NYUSZIK
             </span>
             <span className="text-[9px] uppercase tracking-[0.14em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
@@ -763,7 +763,7 @@ export default function VallalhatatlanHero2() {
                     )}
                     <span className="absolute bottom-0.5 right-0.5 h-2.5 w-2.5 rounded-full border-2 border-black bg-lime-300" />
                   </div>
-                  <span className="max-w-[76px] truncate text-[9px] uppercase tracking-[0.08em] text-zinc-600 transition-colors group-hover:text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  <span className="max-w-[76px] truncate text-[11px] uppercase tracking-[0.08em] text-zinc-600 transition-colors group-hover:text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
                     @{user.nickname}
                   </span>
                 </Link>
@@ -868,19 +868,16 @@ export default function VallalhatatlanHero2() {
         <section className="mt-16 w-full border-t border-zinc-800 pt-4" aria-label="Küldj egy jelet">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              <p className="text-[14px] uppercase tracking-[0.14em] text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
                 KÜLDJ EGY JELET
               </p>
-              <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              <p className="mt-2 text-[11px] uppercase tracking-[0.12em] text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
                 Hagyj valamit a következő nyúlnak.
               </p>
             </div>
-            <span className="text-[9px] uppercase tracking-[0.16em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
-              FEED // LIVE
-            </span>
           </div>
 
-          <div className="mt-5 border border-zinc-800 bg-black">
+          <div className="mt-5 rounded-md border border-zinc-800 bg-black">
             <textarea
               value={signalDraft}
               onChange={(event) => {
@@ -890,7 +887,7 @@ export default function VallalhatatlanHero2() {
               maxLength={240}
               rows={3}
               placeholder="> írj valamit a következő nyúlnak..."
-              className="w-full resize-none border-0 bg-transparent px-4 py-4 text-sm leading-relaxed text-zinc-200 outline-none placeholder:text-zinc-700 focus:ring-0"
+              className="w-full resize-none border-0 bg-transparent px-4 py-4 text-md leading-relaxed text-zinc-200 outline-none placeholder:text-zinc-100 focus:ring-0"
               style={{ fontFamily: "var(--font-mono-tech)" }}
               disabled={signalSending}
             />
