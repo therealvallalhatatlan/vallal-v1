@@ -150,6 +150,7 @@ export default function NetworkInboxSheet() {
   const [pushLoading, setPushLoading] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false)
   const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null)
+  const [isStandaloneApp, setIsStandaloneApp] = useState(false)
 
   const autoOpenTriggered = useRef(false)
   const autoOpenTimer = useRef<number | undefined>(undefined)
@@ -449,7 +450,36 @@ export default function NetworkInboxSheet() {
     }
   }, [isAuthenticated, token])
 
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof navigator === "undefined") return
+
+    const mediaQuery = window.matchMedia("(display-mode: standalone)")
+    const iosStandalone =
+      "standalone" in navigator &&
+      Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
+
+    const updateDisplayMode = () => {
+      const standalone =
+        mediaQuery.matches ||
+        ("standalone" in navigator &&
+          Boolean((navigator as Navigator & { standalone?: boolean }).standalone))
+      setIsStandaloneApp(standalone)
+    }
+
+    setIsStandaloneApp(mediaQuery.matches || iosStandalone)
+    mediaQuery.addEventListener?.("change", updateDisplayMode)
+
+    return () => {
+      mediaQuery.removeEventListener?.("change", updateDisplayMode)
+    }
+  }, [])
+
   const enablePushNotifications = useCallback(async () => {
+    if (!isStandaloneApp) {
+      console.warn("[network-inbox] push setup must run from the installed PWA")
+      return false
+    }
+
     if (!isAuthenticated || !token || !currentUserId) return false
     if (typeof window === "undefined" || typeof navigator === "undefined") return false
     if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) return false
@@ -504,7 +534,7 @@ export default function NetworkInboxSheet() {
     } finally {
       setPushLoading(false)
     }
-  }, [currentUserId, isAuthenticated, token, vapidPublicKey])
+  }, [currentUserId, isAuthenticated, isStandaloneApp, token, vapidPublicKey])
 
   useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId || typeof navigator === "undefined") return
@@ -525,6 +555,10 @@ export default function NetworkInboxSheet() {
 
   useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId) return
+    if (!isStandaloneApp) {
+      setPushEnabled(false)
+      return
+    }
     if (typeof window === "undefined" || typeof navigator === "undefined") return
     if (!("Notification" in window) || Notification.permission !== "granted") {
       setPushEnabled(false)
@@ -951,9 +985,11 @@ export default function NetworkInboxSheet() {
               >
                 {pushLoading
                   ? "ÉRTESÍTÉSEK AKTIVÁLÁSA..."
-                  : !vapidPublicKey
-                    ? "PUSH KONFIGURÁCIÓ BETÖLTÉSE..."
-                    : "ÉRTESÍTÉSEK ENGEDÉLYEZÉSE"}
+                  : !isStandaloneApp
+                    ? "NYISD MEG A TELEPÍTETT APPOT"
+                    : !vapidPublicKey
+                      ? "PUSH KONFIGURÁCIÓ BETÖLTÉSE..."
+                      : "ÉRTESÍTÉSEK ENGEDÉLYEZÉSE"}
               </button>
             )}
 
