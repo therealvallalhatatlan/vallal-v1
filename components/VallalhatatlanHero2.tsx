@@ -207,10 +207,10 @@ export default function VallalhatatlanHero2() {
             {(() => {
               const books = [{ number: "01", edition: "Első Könyv", subtitle: "második kiadás", video: "/videos/bg2.mp4", description: "Az első rész a céltalan útkeresésről szól. Szerelem, drogok, csodás feltámadások és kis híján meghalások.", href: "/konyv", cover: "/cover.png" }, { number: "02", edition: "Második Könyv", subtitle: "második kiadás", video: "/videos/film2.mp4", description: "A második részben megpróbáljuk meghackelni a rendszert, egy éjjel-nappali internetkávézó pultja mögül.", href: "/konyv-2", cover: "/vallalhatatlan2.png" }]
               const activeBook = books.find((book) => book.number === activeBookTab) ?? books[0]
-              return <article key={activeBook.number} role="tabpanel" className="relative mt-2 overflow-hidden rounded-md border border-zinc-800 bg-[#050505] shadow-[0_24px_70px_rgba(0,0,0,0.35)] animate-[tabIn_500ms_ease-out]">
+              return <article key={activeBook.number} role="tabpanel" className="relative mt-2 overflow-hidden rounded-md rounded-r-none border border-zinc-800 bg-[#050505] shadow-[0_24px_70px_rgba(0,0,0,0.35)] animate-[tabIn_500ms_ease-out]">
                 <div className="relative aspect-video w-full overflow-hidden border-b border-zinc-800 bg-black">
                   <video className="absolute inset-0 h-full w-full object-cover" src={activeBook.video} autoPlay muted loop playsInline controls={false} preload="metadata" />
-                <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-end p-4 sm:p-5">
+                  <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-end p-4 sm:p-5">
                     <div className="text-right">
                       <p className="text-[18px] uppercase tracking-[0.16em] text-white sm:text-xs" style={{ fontFamily: "var(--font-mono-tech)", textShadow: "0 2px 14px rgba(0,0,0,0.9)" }}>{activeBook.edition}</p>
                       <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-zinc-300 sm:text-[9px]" style={{ fontFamily: "var(--font-mono-tech)", textShadow: "0 2px 12px rgba(0,0,0,0.9)" }}>{activeBook.subtitle}</p>
@@ -406,7 +406,7 @@ export default function VallalhatatlanHero2() {
                   <Link href="/kapcsolat" className="ml-2 mr-2 text-lime-100 underline" style={{ fontFamily: "var(--font-mono-tech)" }}>
                   itt tudsz  
                   </Link>
-                   kapcsolatba lépni velem.
+                   írni nekem.
                 </p>
             </div>
             
@@ -414,59 +414,67 @@ export default function VallalhatatlanHero2() {
         </section>
         
         <section className="mt-16 w-full" aria-label="Élő Nyúlhálózat">
-          <div className="border-y border-zinc-800 bg-[#030303]">
-            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+          <div className="bg-[#030303]">
+            <div className="flex items-center justify-between border-t border-b border-zinc-800 px-0 py-3">
               <div className="flex items-center gap-3">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-200/60" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-lime-100" />
                 </span>
                 <span className="text-[11px] uppercase tracking-[0.24em] text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                  LIVE NETWORK
+                  HÁLÓZAT
                 </span>
               </div>
               <span className="text-[9px] uppercase tracking-[0.18em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
                 {networkLoading ? "SYNC..." : "SIGNAL OK"}
               </span>
             </div>
-
-            <div className="px-4 py-5">
-              <div className="relative overflow-hidden border border-zinc-800 bg-black">
+            <div className="border-r border-zinc-700">
+                <p className="pt-14 mr-4 text-right text-[20px] font-semibold italic leading-normal text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  <span className="text-lime-100">A Hálózat.</span> Hogy ez mire lesz jó,<br/>még mi magunk sem tudjuk.
+                </p>
+                <p className="pt-4 mr-4 ml-20 text-right text-sm font-normal italic leading-relaxed text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  Ez egy térkép, amin elhelyezhetünk fizikai, vagy digitális dolgokat. Zenét, képet, szöveget, videót, ami az adott helyhez kötődik. 
+                  Csak akkor tudod megszerezni, ha ott vagy a helyszínen. 
+                </p>
+            </div>
+            <div className="px-0 pt-6">
+              <div className="relative overflow-hidden  border border-zinc-800 bg-black rounded-l-lg">
                 <div className="pointer-events-none absolute inset-0 opacity-20" style={{ backgroundImage: "linear-gradient(rgba(190,255,170,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(190,255,170,0.08) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
                 <div className="pointer-events-none absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 50% 50%, rgba(190,255,170,0.12), transparent 55%)" }} />
                 <div className="relative grid grid-cols-2 gap-px bg-zinc-800 sm:grid-cols-4">
                   {[
-                    ["ACTIVE", networkSpots.length.toString().padStart(2, "0")],
-                    ["FREE", networkSpots.filter((spot) => spot.spot_type !== "paid").length.toString().padStart(2, "0")],
-                    ["PHYSICAL", networkSpots.filter((spot) => spot.type === "physical").length.toString().padStart(2, "0")],
-                    ["VIRTUAL", networkSpots.filter((spot) => spot.type === "virtual").length.toString().padStart(2, "0")],
+                    ["AKTÍV", networkSpots.length.toString().padStart(2, "0")],
+                    ["INGYENES", networkSpots.filter((spot) => spot.spot_type !== "paid").length.toString().padStart(2, "0")],
+                    ["FIZIKAI", networkSpots.filter((spot) => spot.type === "physical").length.toString().padStart(2, "0")],
+                    ["VIRTUÁLIS", networkSpots.filter((spot) => spot.type === "virtual").length.toString().padStart(2, "0")],
                   ].map(([label, value]) => (
                     <div key={label} className="bg-black/90 px-3 py-4">
-                      <p className="text-[8px] uppercase tracking-[0.18em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>{label}</p>
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>{label}</p>
                       <p className="mt-1 text-2xl leading-none text-zinc-100" style={{ fontFamily: "var(--font-mono-tech)" }}>{value}</p>
                     </div>
                   ))}
                 </div>
                 <div className="relative flex items-center justify-between border-t border-zinc-800 px-3 py-3">
-                  <p className="max-w-[70%] text-[9px] uppercase tracking-[0.12em] leading-relaxed text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                    A hálózat él. Új pontok jelennek meg, régiek eltűnnek.
+                  <p className="max-w-[70%] text-[10px] uppercase tracking-[0.12em] leading-relaxed text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    A hálózat él
                   </p>
-                  <button type="button" onClick={() => void loadNetworkSpots()} className="text-[9px] uppercase tracking-[0.16em] text-lime-100/70 transition-colors hover:text-lime-100" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                    [ REFRESH ]
+                  <button type="button" onClick={() => void loadNetworkSpots()} className="text-[10px] uppercase tracking-[0.16em] text-lime-100/70 transition-colors hover:text-lime-100" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    [ FRISSÍTÉS ]
                   </button>
                 </div>
               </div>
 
-              <Link href="/halozat" className="group mt-3 flex items-center justify-between border border-zinc-800 px-4 py-4 transition-all duration-300 hover:border-lime-100/50 hover:bg-lime-100/[0.03]">
+              <Link href="/halozat" className="group mt-3 mb-6 flex items-center rounded-lg justify-between border-3 border-zinc-800 px-4 py-4 transition-all duration-300 hover:border-lime-100/50 hover:bg-lime-100/[0.03]">
                 <div>
                   <p className="text-sm uppercase tracking-[0.14em] text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
                     BELÉPÉS A HÁLÓZATBA
                   </p>
-                  <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
                     TÉRKÉP · PONTOK · EMBEREK
                   </p>
                 </div>
-                <span className="text-xl text-zinc-500 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-lime-100">→</span>
+                <span className="text-3xl text-zinc-500 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-lime-100">→</span>
               </Link>
             </div>
           </div>
@@ -477,7 +485,7 @@ export default function VallalhatatlanHero2() {
             className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-[0.24em] not-italic text-zinc-200 border-t border-zinc-800 pt-4"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            <span>Random Sztori</span>
+            <span>Random Vállalhatatlan Sztori</span>
             <button
               type="button"
               onClick={() => void loadRandomStory()}
