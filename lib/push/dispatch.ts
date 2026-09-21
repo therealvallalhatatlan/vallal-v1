@@ -11,7 +11,7 @@ export async function dispatchPushNotification(input: DispatchPushInput): Promis
   const cronToken = process.env.CRON_SECRET_TOKEN
   if (!cronToken) return
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'https://vallalhatatlan.online'
   const payload = {
     userId: input.userId,
     title: input.title,
