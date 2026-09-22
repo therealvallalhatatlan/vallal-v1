@@ -48,7 +48,7 @@ export default function Reviews() {
       
       <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t pt-4 pb-1 border-b border-zinc-800">
+          <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-300 pt-4 pb-1 border-t border-b border-zinc-700">
             <p
                 className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -68,8 +68,8 @@ export default function Reviews() {
               key={i}
               className="min-w-[80%]"
             >
-              <p className="pt-6 font-mono text-md italic leading-normal text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>“{r.text}”</p>
-              <p className="text-lime-100 text-[19px] pt-2 italic text-left">— {r.author}</p>
+              <p className="pt-6 font-mono text-md italic leading-normal text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>“{r.text}”</p>
+              <p className="text-lime-300 text-[19px] pt-2 italic text-left">— {r.author}</p>
             </article>
           ))}
         </div>
