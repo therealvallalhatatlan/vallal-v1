@@ -400,7 +400,7 @@ export default function VallalhatatlanHero2() {
               </div>
             </div>
             {(() => {
-              const books = [{ number: "01", edition: "Első Könyv", subtitle: "második kiadás", video: "/videos/konyv1.mp4", description: "Az első rész a céltalan útkeresésről szól. Szerelem, drogok, csodás feltámadások és kis híján meghalások.", href: "/konyv", cover: "/cover.png" }, { number: "02", edition: "Második Könyv", subtitle: "második kiadás", video: "/videos/konyv2.mp4", description: "A második részben megpróbáljuk meghackelni a rendszert, egy éjjel-nappali internetkávézó pultja mögül.", href: "/konyv-2", cover: "/cover2.png" }]
+              const books = [{ number: "01", edition: "Első Könyv", subtitle: "második kiadás", video: "/videos/konyv1.mp4", description: "Alámerülünk a kétezres évek füstös, recsegő modemektől hangos, kihajtható telefonos, vadnyugati alvilágába ahol csak a drogok minősége volt viszonylag állandó.", href: "/konyv", cover: "/cover.png" }, { number: "02", edition: "Második Könyv", subtitle: "második kiadás", video: "/videos/konyv2.mp4", description: "A második részben megpróbáljuk meghackelni a rendszert, egy éjjel-nappali internetkávézó pultja mögül.", href: "/konyv-2", cover: "/cover2.png" }]
               const activeBook = books.find((book) => book.number === activeBookTab) ?? books[0]
               return <article key={activeBook.number} role="tabpanel" className="relative mt-2 overflow-hidden rounded-md rounded-r-none border border-zinc-800 bg-[#050505] shadow-[0_24px_70px_rgba(0,0,0,0.35)] animate-[tabIn_500ms_ease-out]">
                 <div className="relative aspect-video w-full overflow-hidden border-b border-zinc-800 bg-black">
