@@ -608,6 +608,29 @@ export default function VallalhatatlanHero2() {
             
           </div>
         </section>
+
+        <section>
+          <div className="mb-3 mt-12 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-200 border-t pt-4 pb-1 border-b border-zinc-800">
+              <p
+                  className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  ÍRÓ ÚR MAI ÜZENETE
+                </p>
+          </div>
+          <div className="w-full pb-16 mt-10 relative">
+            <p
+              className="max-w-xl text-left text-[23px] font-normal italic leading-relaxed tracking-tight text-zinc-300 sm:text-base"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+            "Itt valami szokatlan dolog történik. Amikor olvasod, nincs arcom. Nem tudod, hány éves vagyok, hol lakom, mivel foglalkozom napközben.
+            <br/><br/>Kénytelen vagy a fantáziáddal kitölteni a hiányt. Saját magadat látod.
+            <br/><br/>Én nem létezem - ezért tudsz itt lenni te.
+            Nincs író, akit követni kell, nincs ego amit védeni kell.
+            <br/><br/>Csak egy hang, ami akkor szólal meg, amikor te életre kelted."<br/>
+            </p>
+          </div>
+        </section>
         
         <section className="mt-16 w-full" aria-label="Élő Nyúlhálózat">
           <div className="bg-[#030303]">
