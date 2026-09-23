@@ -65,6 +65,11 @@ export default function VallalhatatlanHero2() {
   const [signalDraft, setSignalDraft] = useState("")
   const [signalSending, setSignalSending] = useState(false)
   const [signalStatus, setSignalStatus] = useState<string | null>(null)
+  const [latestSignal, setLatestSignal] = useState<{
+    nickname: string
+    body: string
+    created_at: string
+  } | null>(null)
   const loadAvailableCopies = async () => {
     try {
       const response = await fetch("/api/inventory", {
@@ -233,6 +238,20 @@ export default function VallalhatatlanHero2() {
       }
 
       if (feedResponse.ok && Array.isArray(feedJson.posts)) {
+        const latest = [...feedJson.posts]
+          .filter((post) => post.created_at && post.body)
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+
+        setLatestSignal(
+          latest
+            ? {
+                nickname: latest.nickname || "ISMERETLEN NYÚL",
+                body: latest.body || "",
+                created_at: latest.created_at,
+              }
+            : null,
+        )
+
         for (const post of feedJson.posts.slice(0, 8)) {
           if (!post.created_at || !post.body) continue
           items.push({
@@ -243,6 +262,8 @@ export default function VallalhatatlanHero2() {
             created_at: post.created_at,
           })
         }
+      } else {
+        setLatestSignal(null)
       }
 
       items.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -533,6 +554,33 @@ export default function VallalhatatlanHero2() {
               </div>
             </div>
           </div>
+        )}
+
+        {latestSignal && (
+          <section className="mt-10 w-full border-t border-zinc-800 pt-4" aria-label="Legutóbbi jel">
+            <div className="mb-4 flex items-center justify-between">
+              <p
+                className="text-[11px] uppercase tracking-[0.24em] text-zinc-400"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                LEGUTÓBBI JEL
+              </p>
+              <span
+                className="text-[9px] uppercase tracking-[0.14em] text-zinc-600"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                @{latestSignal.nickname} · {formatActivityTime(latestSignal.created_at)}
+              </span>
+            </div>
+            <div className="border-l border-lime-100/30 pl-4">
+              <p
+                className="text-[15px] leading-relaxed text-zinc-200"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                “{latestSignal.body}”
+              </p>
+            </div>
+          </section>
         )}
 
         <section className="mt-4 w-full">
