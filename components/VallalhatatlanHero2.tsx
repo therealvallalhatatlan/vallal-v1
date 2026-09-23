@@ -38,6 +38,8 @@ export default function VallalhatatlanHero2() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [muted, setMuted] = useState(true)
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const today = new Date()
+  const formattedDate = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`
   const [purchaseBook, setPurchaseBook] = useState<"01" | "02" | null>(null)
   const [activeBookTab, setActiveBookTab] = useState<"01" | "02">("01")
   const [networkSpots, setNetworkSpots] = useState<Array<{ id: string; spot_type?: "free" | "paid"; type?: "physical" | "virtual"; remaining_quantity?: number | null }>>([])
@@ -372,6 +374,7 @@ export default function VallalhatatlanHero2() {
         paddingBottom: "calc(7.5rem + env(safe-area-inset-bottom))",
       }}
     >
+
       <div className="pointer-events-none absolute inset-0 fx-stripes opacity-10 mix-blend-plus-lighter" />
 
       <div className="relative z-20 flex min-h-0 flex-1 flex-col overflow-y-auto px-6">
@@ -382,6 +385,7 @@ export default function VallalhatatlanHero2() {
           >
            "Archetípus vagyok.<br/>A funkcionális rendszerhiba, az elbaszott túlélő, a káosz-építész archetípusa. Egy csótány fejlett idegrendszerrel."<br/>
           </p>
+          <p className="mt-4 tracking-wide text-lg text-right italic text-zinc-600">— Író Úr</p>
         </div>
 
 
@@ -389,7 +393,10 @@ export default function VallalhatatlanHero2() {
           <div className="pt-5">
             <div className="flex items-end justify-between px-4">
               <div className="flex items-end gap-6" role="tablist" aria-label="Könyvkiadások">
-                {[{ number: "01", label: "Első Könyv" }, { number: "02", label: "Második Könyv" }].map((tab) => {
+                {[
+                  { number: "01", label: "Első Könyv" }, 
+                  { number: "02", label: "Második Könyv" }
+                ].map((tab) => {
                   const active = activeBookTab === tab.number
                   return <button key={tab.number} type="button" role="tab" aria-selected={active} onClick={() => setActiveBookTab(tab.number as "01" | "02")} className="group relative pb-0 text-left">
                     <span className={`block text-[3rem] text-center leading-[0.72] tracking-[0.1em] transition-all duration-500 ${active ? "text-zinc-100" : "text-zinc-800 group-hover:text-zinc-500"}`} style={{ fontFamily: "var(--font-mono-tech)" }}>{tab.number}</span>
@@ -400,7 +407,7 @@ export default function VallalhatatlanHero2() {
               </div>
             </div>
             {(() => {
-              const books = [{ number: "01", edition: "Első Könyv", subtitle: "második kiadás", video: "/videos/konyv1.mp4", description: "Alámerülünk a kétezres évek füstös, recsegő modemektől hangos, kihajtható telefonos, vadnyugati alvilágába ahol csak a drogok minősége volt viszonylag állandó.", href: "/konyv", cover: "/cover.png" }, { number: "02", edition: "Második Könyv", subtitle: "második kiadás", video: "/videos/konyv2.mp4", description: "A Második Könyv egy éjjel-nappali internetkávézóban játszódik, a nyócker szívében. Autótolvajok, stricik, kurvák, hackerek, drogdílerek, speedes futárok, félőrült zsenik és elveszett figurák alkotják a törzsközönséget. A pult mögött pedig ott állunk mi: Pixi, Wes, Isu és én, Vállalhatatlan. Próbálunk túlélni reggelig, miközben a világ fenekestől felfordul körülöttünk.", href: "/konyv-2", cover: "/cover2.png" }]
+              const books = [{ number: "01", edition: "Első Könyv", subtitle: "második kiadás", video: "/videos/konyv1.mp4", description: "Alámerülünk az ezredforduló füstös, recsegő modemektől hangos, kihajtható telefonos, vadnyugati alvilágába ahol csak a drogok minősége volt viszonylag állandó.", href: "/konyv", cover: "/cover.png" }, { number: "02", edition: "Második Könyv", subtitle: "második kiadás", video: "/videos/konyv2.mp4", description: "A Második Könyv egy éjjel-nappali internetkávézóban játszódik, a nyócker szívében. Autótolvajok, stricik, kurvák, hackerek, drogdílerek, speedes futárok, félőrült zsenik és elveszett figurák alkotják a törzsközönséget. A pult mögött pedig ott állunk mi: Pixi, Wes, Isu és én, Vállalhatatlan. Próbálunk túlélni reggelig, miközben a világ fenekestől felfordul körülöttünk.", href: "/konyv-2", cover: "/cover2.png" }]
               const activeBook = books.find((book) => book.number === activeBookTab) ?? books[0]
               return <article key={activeBook.number} role="tabpanel" className="relative mt-2 overflow-hidden rounded-md rounded-r-none border border-zinc-800 bg-[#050505] shadow-[0_24px_70px_rgba(0,0,0,0.35)] animate-[tabIn_500ms_ease-out]">
                 <div className="relative aspect-video w-full overflow-hidden border-b border-zinc-800 bg-black">
@@ -414,7 +421,7 @@ export default function VallalhatatlanHero2() {
                   </div>
                 </div>
                 <div className="px-0 pt-0">
-                  <p className="max-w-2xl px-4 py-4 text-sm leading-tight text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>{activeBook.description}</p>
+                  <p className="max-w-2xl px-4 py-4 text-sm leading-normal text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>{activeBook.description}</p>
                   <button type="button" onClick={() => handleAcquire(activeBook.number as "01" | "02")} disabled={availableCopies.length === 0} className="group mt-0 flex min-h-14 w-full items-center justify-between rounded-md border-4 border-zinc-100/20 bg-black px-5 py-4 text-left text-zinc-100 transition-all duration-300 hover:bg-zinc-100/10 disabled:cursor-not-allowed disabled:border-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-600 sm:min-h-[62px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
                       <span className="text-base font-normal uppercase tracking-[0.12em] sm:text-lg">Levadászom a gecibe</span>
                       <span className="text-2xl transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true">→</span>
@@ -542,16 +549,21 @@ export default function VallalhatatlanHero2() {
                   MILYEN BÁTOR NYUSZI VAGY?
                 </p>
             </div>
-            <video
-              className="rounded-3xl relative left-1/2 mt-0 block w-screen -translate-x-1/2"
-              src="/videos/dd3.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls={false}
-              preload="metadata"
-            />
+            <div className="relative">
+              <video
+                className="rounded-3xl relative left-1/2 mt-0 block w-screen -translate-x-1/2"
+                src="/videos/dd2.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls={false}
+                preload="metadata"
+              />
+              <span className="absolute bottom-4 left-6 text-[15px] font-light uppercase tracking-[0.12em] text-zinc-100">
+                {formattedDate}
+              </span>
+            </div>
             <div className="">
               <p className="mt-6 text-right text-[20px] font-semibold italic leading-relaxed text-zinc-300"
               style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -663,13 +675,13 @@ export default function VallalhatatlanHero2() {
                 <div className="pointer-events-none absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 50% 50%, rgba(190,255,170,0.12), transparent 55%)" }} />
                 <div className="relative grid grid-cols-2 gap-px bg-zinc-800 sm:grid-cols-4">
                   {[
-                    ["AKTÍV", networkSpots.length.toString().padStart(2, "0")],
-                    ["INGYENES", networkSpots.filter((spot) => spot.spot_type !== "paid").length.toString().padStart(2, "0")],
-                    ["FIZIKAI", networkSpots.filter((spot) => spot.type === "physical").length.toString().padStart(2, "0")],
-                    ["VIRTUÁLIS", networkSpots.filter((spot) => spot.type === "virtual").length.toString().padStart(2, "0")],
+                    ["AKTÍV SZPOT", networkSpots.length.toString().padStart(2, "0")],
+                    ["INGYENES SZPOT", networkSpots.filter((spot) => spot.spot_type !== "paid").length.toString().padStart(2, "0")],
+                    ["FIZIKAI SZPOT", networkSpots.filter((spot) => spot.type === "physical").length.toString().padStart(2, "0")],
+                    ["VIRTUÁLIS SZPOT", networkSpots.filter((spot) => spot.type === "virtual").length.toString().padStart(2, "0")],
                   ].map(([label, value]) => (
                     <div key={label} className="bg-black/90 px-3 py-4">
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>{label}</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>{label}</p>
                       <p className="mt-1 text-2xl leading-none text-zinc-100" style={{ fontFamily: "var(--font-mono-tech)" }}>{value}</p>
                     </div>
                   ))}
@@ -901,7 +913,7 @@ export default function VallalhatatlanHero2() {
             </div>
           </div>
 
-          <div className="mt-5 rounded-md border border-zinc-800 bg-black">
+          <div className="mt-5 rounded-md border border-zinc-600 bg-black">
             <textarea
               value={signalDraft}
               onChange={(event) => {
@@ -915,7 +927,7 @@ export default function VallalhatatlanHero2() {
               style={{ fontFamily: "var(--font-mono-tech)" }}
               disabled={signalSending}
             />
-            <div className="flex items-center justify-between border-t border-zinc-900 px-3 py-2">
+            <div className="flex items-center justify-between border-t border-zinc-700 px-3 py-2">
               <span className="text-[9px] uppercase tracking-[0.12em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
                 {signalDraft.length}/240
               </span>
@@ -963,7 +975,7 @@ export default function VallalhatatlanHero2() {
                   }
                 }}
                 disabled={signalSending || !signalDraft.trim()}
-                className="border border-lime-100/30 bg-lime-100/[0.04] px-3 py-2 text-[9px] uppercase tracking-[0.16em] text-lime-100/70 transition-all hover:border-lime-100/60 hover:bg-lime-100/[0.08] hover:text-lime-100 disabled:cursor-not-allowed disabled:opacity-30"
+                className="border border-zinc-100 bg-lime-100/[0.04] px-3 py-2 text-[11px] uppercase tracking-[0.16em] text-lime-100/70 transition-all hover:border-lime-100/60 hover:bg-lime-100/[0.08] hover:text-lime-100 disabled:cursor-not-allowed disabled:opacity-30"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 {signalSending ? "KÜLDÉS..." : "KÜLDÉS →"}
