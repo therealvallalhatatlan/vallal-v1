@@ -25,6 +25,11 @@ const nextConfig = {
         destination: '/v3',
         permanent: false,
       },
+      {
+        source: '/977965',
+        destination: 'https://www.vallalhatatlan.online/kapcsolat',
+        permanent: false,
+      },
     ];
   },
 }
