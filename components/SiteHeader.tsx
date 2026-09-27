@@ -65,7 +65,6 @@ type AuthUser = {
 export default function SiteHeader() {
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [authResolved, setAuthResolved] = useState(false);
   const [guestToastOpen, setGuestToastOpen] = useState(false);
 
   useEffect(() => {
@@ -93,8 +92,7 @@ export default function SiteHeader() {
         setUser(null);
       } finally {
         if (mounted) {
-          setAuthResolved(true);
-        }
+          }
       }
     };
 
@@ -107,7 +105,6 @@ export default function SiteHeader() {
     if (!mounted) return;
 
     setUser(session?.user ? (session.user as AuthUser) : null);
-    setAuthResolved(true);
   }
 );
 
@@ -228,7 +225,7 @@ export default function SiteHeader() {
           </Link>
         )}
 
-        {authResolved && user ? <NetworkInboxSheet /> : null}
+        {user ? <NetworkInboxSheet /> : null}
 
         {authResolved && user === null && (
           <>
