@@ -91,9 +91,9 @@ INSERT INTO public.notifications (
 )
 SELECT
   u.id,
-  'system',
+  'vallalhatatlan',
   'Üdv a Hálózatban',
-  'Mostantól te is benne vagy. Nézz körül. A többit majd megtalálod.',
+  'Mostantól te is benne vagy. Nézz körül.',
   jsonb_build_object('kind', 'welcome_v1')
 FROM auth.users AS u
 WHERE NOT EXISTS (
