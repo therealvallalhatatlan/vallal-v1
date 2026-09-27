@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createHash } from "crypto";
 
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { PinGate } from "../dashboard/PinGate";
 import NotificationComposer from "./NotificationComposer";
 
 function expectedPinHash(): string | null {
@@ -20,25 +21,7 @@ export default async function NotificationsAdminPage() {
   const expected = expectedPinHash();
 
   if (!expected || pinCookie !== expected) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-6 text-neutral-100">
-        <div className="w-full max-w-sm rounded-xl border border-white/10 bg-white/[0.025] p-6">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-lime-300/60">
-            Admin · V3
-          </p>
-          <h1 className="mt-2 text-xl">Nincs hozzáférés.</h1>
-          <p className="mt-2 text-sm leading-6 text-neutral-500">
-            Nyisd meg előbb az admin dashboardot, és hitelesítsd magad a PIN-kóddal.
-          </p>
-          <Link
-            href="/v3/dashboard"
-            className="mt-6 inline-flex rounded-lg border border-white/10 px-4 py-2 text-xs text-neutral-300 transition hover:border-lime-400/30 hover:text-lime-200"
-          >
-            ← Admin dashboard
-          </Link>
-        </div>
-      </main>
-    );
+    return <PinGate />;
   }
 
   const { data: broadcasts, error } = await supabaseAdmin()
