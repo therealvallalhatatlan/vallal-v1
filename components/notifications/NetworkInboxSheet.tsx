@@ -1,6 +1,6 @@
 "use client"
 
-import { BellIcon, MapPin } from "lucide-react"
+import { BellIcon, MapPin, X } from "lucide-react"
 import { formatDistanceToNowStrict } from "date-fns"
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { usePathname, useRouter } from "next/navigation"
@@ -18,6 +18,7 @@ const UNREAD_SOURCE_KEY = "personal-notifications"
 const PM_UNREAD_SOURCE_KEY = "personal-pm"
 const badgeLimit = 99
 const SYSTEM_NOTIFICATION_DELAY_MS = 4_000
+const SYSTEM_NOTIFICATION_DISMISSED_KEY = "vallalhatatlan:system-notifications:dismissed:"
 
 // React's useSyncExternalStore requires getSnapshot() to return a cached
 // value when the external store has not changed. The store may expose a
@@ -156,6 +157,7 @@ export default function NetworkInboxSheet() {
   const [locationPermission, setLocationPermission] = useState<"unknown" | "prompt" | "granted" | "denied" | "unsupported">("unknown")
   const [locationLoading, setLocationLoading] = useState(false)
   const [systemNotificationsVisible, setSystemNotificationsVisible] = useState(false)
+  const [dismissedSystemNotificationIds, setDismissedSystemNotificationIds] = useState<Set<string>>(new Set())
 
   const pmLoadRequestIdRef = useRef(0)
   const pmLoadAbortRef = useRef<AbortController | null>(null)
@@ -177,6 +179,26 @@ export default function NetworkInboxSheet() {
       window.clearTimeout(timeoutId)
     }
   }, [currentUserId, isAuthenticated])
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !currentUserId) {
+      setDismissedSystemNotificationIds(new Set())
+      return
+    }
+
+    try {
+      const raw = window.localStorage.getItem(
+        SYSTEM_NOTIFICATION_DISMISSED_KEY + currentUserId,
+      )
+      const parsed: unknown = raw ? JSON.parse(raw) : []
+      const ids = Array.isArray(parsed)
+        ? parsed.filter((value): value is string => typeof value === "string")
+        : []
+      setDismissedSystemNotificationIds(new Set(ids))
+    } catch {
+      setDismissedSystemNotificationIds(new Set())
+    }
+  }, [currentUserId])
 
   // Combined unread: normal notifications + personal PMs
   // IMPORTANT: useSyncExternalStore requires BOTH getSnapshot and
@@ -929,6 +951,75 @@ export default function NetworkInboxSheet() {
     [headers, payload, router],
   )
 
+  const dismissSystemNotification = useCallback(
+    async (notificationId: string) => {
+      if (!headers) return
+
+      try {
+        const response = await fetch(
+          `/api/notifications/${notificationId}/read`,
+          {
+            method: "POST",
+            headers,
+          },
+        )
+
+        if (!response.ok) {
+          console.error(
+            "[network-inbox] dismiss system notification failed",
+            response.status,
+          )
+          return
+        }
+
+        setPayload((previous) => {
+          if (!previous) return previous
+
+          const updatedNotifications = previous.notifications.map((item) =>
+            item.id === notificationId
+              ? { ...item, read_at: item.read_at ?? new Date().toISOString() }
+              : item,
+          )
+
+          const unreadCount = updatedNotifications.reduce(
+            (count, item) => count + (item.read_at ? 0 : 1),
+            0,
+          )
+
+          return {
+            ...previous,
+            notifications: updatedNotifications,
+            unreadNotificationCount: unreadCount,
+          }
+        })
+
+        setDismissedSystemNotificationIds((previous) => {
+          const nextIds = new Set(previous)
+          nextIds.add(notificationId)
+
+          if (typeof window !== "undefined" && currentUserId) {
+            try {
+              window.localStorage.setItem(
+                SYSTEM_NOTIFICATION_DISMISSED_KEY + currentUserId,
+                JSON.stringify([...nextIds]),
+              )
+            } catch {
+              // Ignore storage failures. The notification is still dismissed for this render.
+            }
+          }
+
+          return nextIds
+        })
+      } catch (error) {
+        console.error(
+          "[network-inbox] dismiss system notification exception",
+          error,
+        )
+      }
+    },
+    [currentUserId, headers],
+  )
+
   const markAllRead = useCallback(async () => {
     if (!headers || !payload) return
     const visibleUnreadCount = payload.notifications.reduce((count, notification) => {
@@ -972,7 +1063,11 @@ export default function NetworkInboxSheet() {
   const messageOverview = payload?.messageOverview ?? null
   const notifications = payload?.notifications ?? []
   const systemNotifications = systemNotificationsVisible
-    ? notifications.filter((notification) => notification.type === "system")
+    ? notifications.filter(
+        (notification) =>
+          notification.type === "system" &&
+          !dismissedSystemNotificationIds.has(notification.id),
+      )
     : []
   const otherNotifications = notifications.filter((notification) => notification.type !== "system")
   const totalNetworkSummary = networkSummary.reduce(
@@ -1041,17 +1136,20 @@ export default function NetworkInboxSheet() {
                   const isRead = Boolean(notification.read_at)
 
                   return (
-                    <button
+                    <div
                       key={notification.id}
-                      type="button"
-                      onClick={() => void handleNotificationRead(notification.id)}
                       className={
-                        "w-full rounded border px-4 py-4 text-left transition " +
+                        "relative w-full rounded border px-4 py-4 transition " +
                         (isRead
                           ? "border-zinc-800 bg-zinc-900/50"
                           : "border-lime-300/70 bg-lime-300/[0.07]")
                       }
                     >
+                      <button
+                        type="button"
+                        onClick={() => void handleNotificationRead(notification.id)}
+                        className="block w-full text-left pr-8"
+                      >
                       <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em]">
                         <span className={isRead ? "text-zinc-600" : "text-lime-200"}>
                           SYSTEM
@@ -1076,7 +1174,17 @@ export default function NetworkInboxSheet() {
                           ÚJ RENDSZERÜZENET
                         </p>
                       )}
-                    </button>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => void dismissSystemNotification(notification.id)}
+                        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full text-zinc-500 transition hover:bg-zinc-800 hover:text-white"
+                        aria-label="Rendszerüzenet bezárása"
+                        title="Bezárás"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                   )
                 })}
               </div>
