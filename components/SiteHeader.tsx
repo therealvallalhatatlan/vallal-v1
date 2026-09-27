@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Menu } from "lucide-react";
+import { ArrowUpRight, Bell, Menu, X } from "lucide-react";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import {
   Sheet,
@@ -65,6 +65,8 @@ type AuthUser = {
 export default function SiteHeader() {
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [authResolved, setAuthResolved] = useState(false);
+  const [guestToastOpen, setGuestToastOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -78,6 +80,7 @@ export default function SiteHeader() {
 
       if (mounted) {
         setUser(user as AuthUser | null);
+        setAuthResolved(true);
       }
     };
 
@@ -90,6 +93,7 @@ export default function SiteHeader() {
     if (!mounted) return;
 
     setUser(session?.user ? (session.user as AuthUser) : null);
+    setAuthResolved(true);
   }
 );
 
@@ -117,6 +121,22 @@ export default function SiteHeader() {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
+
+  useEffect(() => {
+    if (!guestToastOpen) return
+
+    const timeoutId = window.setTimeout(() => {
+      setGuestToastOpen(false)
+    }, 7000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [guestToastOpen])
+
+  useEffect(() => {
+    if (user) {
+      setGuestToastOpen(false)
+    }
+  }, [user])
 
   return (
     <header
@@ -194,7 +214,58 @@ export default function SiteHeader() {
           </Link>
         )}
 
-        <NetworkInboxSheet />
+        {authResolved && user && <NetworkInboxSheet />}
+
+        {authResolved && !user && (
+          <>
+            <button
+              type="button"
+              onClick={() => setGuestToastOpen(true)}
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-800 bg-zinc-950 text-zinc-200 transition-all hover:border-lime-400/70 hover:bg-lime-400/10"
+              aria-label="Új üzenet"
+            >
+              <Bell className="h-5 w-5" />
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-lime-400 px-1 text-[10px] font-bold text-black">
+                1
+              </span>
+            </button>
+
+            {guestToastOpen && (
+              <div className="fixed bottom-5 right-5 z-[200] w-[min(22rem,calc(100vw-2rem))] rounded border border-lime-300/70 bg-[#050505] p-4 text-white shadow-[0_0_35px_rgba(163,230,53,0.12)]">
+                <div className="flex items-start gap-3">
+                  <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-lime-400 text-black">
+                    <Bell className="h-3.5 w-3.5" />
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold leading-snug">
+                      1 új üzenet.
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                      Jelentkezz be hogy megnézd mi az
+                    </p>
+                    <Link
+                      href="/auth?from=%2F&next=%2F"
+                      onClick={() => setGuestToastOpen(false)}
+                      className="mt-3 inline-block text-[10px] font-semibold uppercase tracking-[0.18em] text-lime-200 transition-colors hover:text-lime-100"
+                    >
+                      BEJELENTKEZÉS →
+                    </Link>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setGuestToastOpen(false)}
+                    className="shrink-0 text-zinc-500 transition-colors hover:text-white"
+                    aria-label="Toast bezárása"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         {/* Hamburger */}
         <Sheet>
