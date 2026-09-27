@@ -227,7 +227,7 @@ export default function SiteHeader() {
 
         {user ? <NetworkInboxSheet /> : null}
 
-        {authResolved && user === null && (
+        {!user && (
           <>
             <button
               type="button"
