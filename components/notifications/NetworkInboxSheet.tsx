@@ -71,7 +71,7 @@ type PMConversation = {
 
 type InboxNotification = {
   id: string
-  type: "network" | "message"
+  type: "network" | "message" | "system"
   title: string
   body: string | null
   data: Record<string, unknown>
@@ -947,6 +947,8 @@ export default function NetworkInboxSheet() {
   const networkItems = payload?.networkActivity.items ?? []
   const messageOverview = payload?.messageOverview ?? null
   const notifications = payload?.notifications ?? []
+  const systemNotifications = notifications.filter((notification) => notification.type === "system")
+  const otherNotifications = notifications.filter((notification) => notification.type !== "system")
   const totalNetworkSummary = networkSummary.reduce(
     (acc, entry) => acc + entry.count,
     0,
@@ -1002,6 +1004,64 @@ export default function NetworkInboxSheet() {
 
         <div className="flex flex-1 flex-col overflow-y-auto px-6 py-5">
           <section className="space-y-3">
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.4em] text-zinc-500">
+              <span>Rendszerüzenetek</span>
+              <span>{systemNotifications.length} db</span>
+            </div>
+
+            {systemNotifications.length > 0 ? (
+              <div className="space-y-2">
+                {systemNotifications.slice(0, 10).map((notification) => {
+                  const isRead = Boolean(notification.read_at)
+
+                  return (
+                    <button
+                      key={notification.id}
+                      type="button"
+                      onClick={() => void handleNotificationRead(notification.id)}
+                      className={
+                        "w-full rounded border px-4 py-4 text-left transition " +
+                        (isRead
+                          ? "border-zinc-800 bg-zinc-900/50"
+                          : "border-lime-300/70 bg-lime-300/[0.07]")
+                      }
+                    >
+                      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em]">
+                        <span className={isRead ? "text-zinc-600" : "text-lime-200"}>
+                          SYSTEM
+                        </span>
+                        <span className="text-zinc-600">
+                          {renderRelativeTime(notification.created_at)}
+                        </span>
+                      </div>
+
+                      <p className="mt-2 text-base font-semibold leading-tight text-white">
+                        {notification.title}
+                      </p>
+
+                      {notification.body && (
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
+                          {notification.body}
+                        </p>
+                      )}
+
+                      {!isRead && (
+                        <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-lime-200">
+                          ÚJ RENDSZERÜZENET
+                        </p>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-600">
+                Nincs új rendszerüzenet.
+              </p>
+            )}
+          </section>
+
+          <section className="mt-6 space-y-3">
             <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.4em] text-zinc-500">
               <span>Az elmúlt 24 óra</span>
               <span>{networkItems.length} tétel</span>
@@ -1234,12 +1294,12 @@ export default function NetworkInboxSheet() {
                 <p className="text-sm text-zinc-500">
                   Értesítések betöltése…
                 </p>
-              ) : notifications.length === 0 ? (
+              ) : otherNotifications.length === 0 ? (
                 <p className="text-sm text-zinc-500">
                   Nincsenek új értesítések.
                 </p>
               ) : (
-                notifications.map((notification) => {
+                otherNotifications.map((notification) => {
                   const target = getTargetUrl(notification.data)
                   const isRead = Boolean(notification.read_at)
 
