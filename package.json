@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
+    "build": "next build --webpack",
     "check:registry": "npx --yes tsx scripts/checkKonyv2Registry.ts",
     "dev": "next dev",
     "ingest": "node scripts/ingest.mjs",
