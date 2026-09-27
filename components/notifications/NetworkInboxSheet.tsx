@@ -1139,17 +1139,12 @@ export default function NetworkInboxSheet() {
                     <div
                       key={notification.id}
                       className={
-                        "relative w-full rounded border px-4 py-4 transition " +
+                        "w-full rounded border px-4 py-4 transition " +
                         (isRead
                           ? "border-zinc-800 bg-zinc-900/50"
                           : "border-lime-300/70 bg-lime-300/[0.07]")
                       }
                     >
-                      <button
-                        type="button"
-                        onClick={() => void handleNotificationRead(notification.id)}
-                        className="block w-full text-left pr-8"
-                      >
                       <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.3em]">
                         <span className={isRead ? "text-zinc-600" : "text-lime-200"}>
                           SYSTEM
@@ -1160,10 +1155,7 @@ export default function NetworkInboxSheet() {
                           </span>
                           <button
                             type="button"
-                            onClick={(event) => {
-                              event.stopPropagation()
-                              void dismissSystemNotification(notification.id)
-                            }}
+                            onClick={() => void dismissSystemNotification(notification.id)}
                             className="inline-flex shrink-0 items-center gap-1 rounded border border-zinc-600 bg-black px-2 py-1 text-[9px] font-bold tracking-[0.12em] text-zinc-200 transition hover:border-lime-300 hover:text-lime-100"
                             aria-label="Rendszerüzenet bezárása"
                           >
@@ -1173,23 +1165,27 @@ export default function NetworkInboxSheet() {
                         </div>
                       </div>
 
-                      <p className="mt-2 text-base font-semibold leading-tight text-white">
-                        {notification.title}
-                      </p>
-
-                      {notification.body && (
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
-                          {notification.body}
+                      <button
+                        type="button"
+                        onClick={() => void handleNotificationRead(notification.id)}
+                        className="mt-2 block w-full text-left"
+                      >
+                        <p className="text-base font-semibold leading-tight text-white">
+                          {notification.title}
                         </p>
-                      )}
 
-                      {!isRead && (
-                        <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-lime-200">
-                          ÚJ RENDSZERÜZENET
-                        </p>
-                      )}
+                        {notification.body && (
+                          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-400">
+                            {notification.body}
+                          </p>
+                        )}
+
+                        {!isRead && (
+                          <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.2em] text-lime-200">
+                            ÚJ RENDSZERÜZENET
+                          </p>
+                        )}
                       </button>
-
                     </div>
                   )
                 })}
