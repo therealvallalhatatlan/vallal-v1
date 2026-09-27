@@ -74,13 +74,27 @@ export default function SiteHeader() {
     let mounted = true;
 
     const loadUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
 
-      if (mounted) {
-        setUser(user as AuthUser | null);
-        setAuthResolved(true);
+        if (!mounted) return;
+
+        if (error) {
+          console.error("[SiteHeader] getSession failed:", error.message);
+        }
+
+        setUser(session?.user ? (session.user as AuthUser) : null);
+      } catch (error) {
+        if (!mounted) return;
+        console.error("[SiteHeader] session load failed:", error);
+        setUser(null);
+      } finally {
+        if (mounted) {
+          setAuthResolved(true);
+        }
       }
     };
 
@@ -214,9 +228,9 @@ export default function SiteHeader() {
           </Link>
         )}
 
-        {authResolved && user && <NetworkInboxSheet />}
+        {authResolved && user ? <NetworkInboxSheet /> : null}
 
-        {authResolved && !user && (
+        {authResolved && user === null && (
           <>
             <button
               type="button"
