@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 interface Message {
@@ -365,6 +366,12 @@ export function DashboardView({ conversations, fetchedAt, stats }: DashboardView
             <span className="hidden text-[11px] text-neutral-700 sm:block">
               Frissítve: {formatDate(fetchedAt)} · auto {countdown}s
             </span>
+            <Link
+              href="/v3/notifications"
+              className="rounded-lg border border-lime-400/20 px-4 py-1.5 text-[11px] text-lime-300/70 transition hover:border-lime-400/40 hover:text-lime-200"
+            >
+              Rendszerüzenetek
+            </Link>
             <button
               type="button"
               onClick={() => router.refresh()}
