@@ -28,6 +28,7 @@ DROP POLICY IF EXISTS notification_broadcasts_service_role_all
   ON public.notification_broadcasts;
 
 CREATE POLICY notification_broadcasts_service_role_all
+  ON public.notification_broadcasts
   FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (true);
