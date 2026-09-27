@@ -17,6 +17,7 @@ const UNREAD_SOURCE_KEY = "personal-notifications"
 // PM unread source key
 const PM_UNREAD_SOURCE_KEY = "personal-pm"
 const badgeLimit = 99
+const SYSTEM_NOTIFICATION_DELAY_MS = 4_000
 
 // React's useSyncExternalStore requires getSnapshot() to return a cached
 // value when the external store has not changed. The store may expose a
@@ -154,11 +155,28 @@ export default function NetworkInboxSheet() {
   const [locationEnabled, setLocationEnabled] = useState(false)
   const [locationPermission, setLocationPermission] = useState<"unknown" | "prompt" | "granted" | "denied" | "unsupported">("unknown")
   const [locationLoading, setLocationLoading] = useState(false)
+  const [systemNotificationsVisible, setSystemNotificationsVisible] = useState(false)
 
   const pmLoadRequestIdRef = useRef(0)
   const pmLoadAbortRef = useRef<AbortController | null>(null)
 
   const isAuthenticated = Boolean(session?.user)
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setSystemNotificationsVisible(false)
+      return
+    }
+
+    setSystemNotificationsVisible(false)
+    const timeoutId = window.setTimeout(() => {
+      setSystemNotificationsVisible(true)
+    }, SYSTEM_NOTIFICATION_DELAY_MS)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [currentUserId, isAuthenticated])
 
   // Combined unread: normal notifications + personal PMs
   // IMPORTANT: useSyncExternalStore requires BOTH getSnapshot and
@@ -447,15 +465,17 @@ export default function NetworkInboxSheet() {
   }, [isAuthenticated, headers, fetchInbox])
 
   useEffect(() => {
-    setUnreadSource(
-      UNREAD_SOURCE_KEY,
-      payload?.unreadNotificationCount ?? 0,
-    )
+    const visibleUnreadCount = (payload?.notifications ?? []).reduce((count, notification) => {
+      if (!systemNotificationsVisible && notification.type === "system") return count
+      return count + (notification.read_at ? 0 : 1)
+    }, 0)
+
+    setUnreadSource(UNREAD_SOURCE_KEY, visibleUnreadCount)
 
     return () => {
       setUnreadSource(UNREAD_SOURCE_KEY, 0)
     }
-  }, [payload])
+  }, [payload, systemNotificationsVisible])
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -911,7 +931,11 @@ export default function NetworkInboxSheet() {
 
   const markAllRead = useCallback(async () => {
     if (!headers || !payload) return
-    if (payload.unreadNotificationCount === 0) return
+    const visibleUnreadCount = payload.notifications.reduce((count, notification) => {
+      if (!systemNotificationsVisible && notification.type === "system") return count
+      return count + (notification.read_at ? 0 : 1)
+    }, 0)
+    if (visibleUnreadCount === 0) return
 
     try {
       const response = await fetch("/api/notifications/read-all", {
@@ -947,7 +971,9 @@ export default function NetworkInboxSheet() {
   const networkItems = payload?.networkActivity.items ?? []
   const messageOverview = payload?.messageOverview ?? null
   const notifications = payload?.notifications ?? []
-  const systemNotifications = notifications.filter((notification) => notification.type === "system")
+  const systemNotifications = systemNotificationsVisible
+    ? notifications.filter((notification) => notification.type === "system")
+    : []
   const otherNotifications = notifications.filter((notification) => notification.type !== "system")
   const totalNetworkSummary = networkSummary.reduce(
     (acc, entry) => acc + entry.count,
