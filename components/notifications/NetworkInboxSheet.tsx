@@ -1150,13 +1150,27 @@ export default function NetworkInboxSheet() {
                         onClick={() => void handleNotificationRead(notification.id)}
                         className="block w-full text-left pr-8"
                       >
-                      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em]">
+                      <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.3em]">
                         <span className={isRead ? "text-zinc-600" : "text-lime-200"}>
                           SYSTEM
                         </span>
-                        <span className="text-zinc-600">
-                          {renderRelativeTime(notification.created_at)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-zinc-600">
+                            {renderRelativeTime(notification.created_at)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              void dismissSystemNotification(notification.id)
+                            }}
+                            className="inline-flex shrink-0 items-center gap-1 rounded border border-zinc-600 bg-black px-2 py-1 text-[9px] font-bold tracking-[0.12em] text-zinc-200 transition hover:border-lime-300 hover:text-lime-100"
+                            aria-label="Rendszerüzenet bezárása"
+                          >
+                            <X className="h-3 w-3" />
+                            BEZÁR
+                          </button>
+                        </div>
                       </div>
 
                       <p className="mt-2 text-base font-semibold leading-tight text-white">
@@ -1176,16 +1190,6 @@ export default function NetworkInboxSheet() {
                       )}
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => void dismissSystemNotification(notification.id)}
-                        className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded border border-zinc-700 bg-black/95 px-2 py-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-zinc-300 shadow-lg transition hover:border-lime-300 hover:bg-zinc-900 hover:text-white"
-                        aria-label="Rendszerüzenet bezárása"
-                        title="Bezárás"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                        <span>BEZÁR</span>
-                      </button>
                     </div>
                   )
                 })}
