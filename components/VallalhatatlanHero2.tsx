@@ -8,6 +8,7 @@ import Reviews from "@/components/Reviews"
 import { Badge } from "@/components/Badge"
 import Image from "next/image"
 import { createClient } from "@/lib/browser"
+import { getCheckoutHeaders } from "@/lib/checkoutClient"
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -129,7 +130,7 @@ export default function VallalhatatlanHero2() {
     try {
       const response = await fetch("/api/checkout-copy", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getCheckoutHeaders(),
         body: JSON.stringify({
           copy_number: selectedCopy,
           delivery_method: pickupMethod,
