@@ -53,6 +53,7 @@ export interface DashboardUnifiedOrder {
   deliveryType: string | null
   fulfilled_at: string | null
   dispatched_at: string | null
+  user_received_at: string | null
   priority: boolean
   items: Array<{
     name: string
