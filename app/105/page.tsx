@@ -1,6 +1,7 @@
 "use client";
 import BookAuctionCounter from "../../components/BookAuctionCounter";
 import { useState } from "react";
+import { getCheckoutHeaders } from "@/lib/checkoutClient";
 
 export default function Book105Page() {
   const [loading, setLoading] = useState(false);
@@ -11,7 +12,10 @@ export default function Book105Page() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/stripe/book105", { method: "POST" });
+      const res = await fetch("/api/stripe/book105", {
+        method: "POST",
+        headers: await getCheckoutHeaders(),
+      });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
