@@ -118,11 +118,10 @@ export async function POST(req: NextRequest) {
       ],
       success_url: `${origin}/halozat?unlock=success&spot_id=${encodeURIComponent(spot.id)}`,
       cancel_url: `${origin}/halozat?unlock=cancelled&spot_id=${encodeURIComponent(spot.id)}`,
-      metadata: {
-        type: 'spot_unlock',
-        spot_id: spot.id,
-        user_id: user.id,
-        unlock_hours: String(PAID_SPOT_UNLOCK_HOURS),
+      client_reference_id: metadata.order_id,
+      metadata,
+      payment_intent_data: {
+        metadata,
       },
     })
 
