@@ -2,7 +2,14 @@
 
 import { useMemo, useRef, useState } from "react"
 import { Check, ChevronDown, Pencil, X } from "lucide-react"
+import { Montserrat } from "next/font/google"
 import type { DashboardAccountResponse, DashboardUnifiedOrder } from "@/types/dashboard"
+
+const heroHeadline = Montserrat({
+  subsets: ["latin-ext"],
+  style: ["normal", "italic"],
+  weight: "800",
+})
 
 type Props = {
   account: DashboardAccountResponse
@@ -275,7 +282,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                     className="group mt-1 flex max-w-full items-center gap-3 text-left"
                     aria-label="Becenév szerkesztése"
                   >
-                    <h1 className="truncate text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+                    <h1 className={heroHeadline.className + " truncate text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
                       {displayName}
                     </h1>
                     <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-700 transition-colors group-hover:text-lime-200" />
@@ -340,7 +347,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               {sectionEyebrow("A TE KÖRÖD")}
-              <h2 className="mt-2 text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+              <h2 className={heroHeadline.className + " mt-2 text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
                 {CIRCLE_LABELS[circle.code]}
               </h2>
               <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
@@ -376,7 +383,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
           <div className="flex items-end justify-between gap-5">
             <div>
               {sectionEyebrow("RENDELÉSEIM")}
-              <h2 className="mt-2 text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+              <h2 className={heroHeadline.className + " mt-2 text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
                 Rendelési történet
               </h2>
             </div>
@@ -420,7 +427,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
 
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                              <h3 className="truncate text-xl font-normal text-zinc-100 sm:text-2xl">
+                              <h3 className={heroHeadline.className + " truncate text-xl text-zinc-100 sm:text-2xl"}>
                                 {order.label}
                               </h3>
                               <span
