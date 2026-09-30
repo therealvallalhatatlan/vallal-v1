@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { getPaymentMode, getPaymentLinkUrl } from "@/lib/config";
+import { getCheckoutHeaders } from "@/lib/checkoutClient";
 
 type Props = {
   className?: string;
@@ -21,7 +22,7 @@ export function CheckoutButton({ className = "", children }: Props) {
       // Fallback to API flow if explicitly set:
       const res = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getCheckoutHeaders(),
         body: JSON.stringify({ quantity: 1 }),
       });
       if (!res.ok) throw new Error("Checkout init failed");
