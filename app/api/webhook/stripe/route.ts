@@ -637,6 +637,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
     return;
   }
 
+  if (metadata?.type === 'mecenas') {
+    await upsertPaidOrderFromSession(session);
+    return;
+  }
+
   const orderType = metadata?.orderType ?? metadata?.type;
 
   if (orderType === 'merch') {
