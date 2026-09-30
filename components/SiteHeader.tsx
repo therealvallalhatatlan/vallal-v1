@@ -15,7 +15,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import NetworkInboxSheet from "@/components/notifications/NetworkInboxSheet"
-import DashboardPage from "@/app/dashboard/page"
 
 import { createClient } from "@/lib/browser";
 
@@ -179,7 +178,67 @@ export default function SiteHeader() {
               className="z-[100] flex w-[min(25rem,92vw)] flex-col max-h-screen overflow-y-auto border-l border-zinc-800 bg-zinc-950 p-0 text-zinc-100 shadow-[-20px_0_60px_rgba(0,0,0,0.55)]"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              <DashboardPage />
+              <div className="relative border-b border-zinc-800 px-5 py-6">
+                <div className="flex items-center gap-4">
+                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt=""
+                        className="h-full w-full object-cover grayscale"
+                      />
+                    ) : (
+                      <span className="text-lg font-bold text-lime-200">{avatarLetter}</span>
+                    )}
+                    <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-bold tracking-[0.14em] text-zinc-100">
+                      {displayName}
+                    </div>
+                    {user?.email && (
+                      <div className="mt-1 truncate text-[10px] tracking-[0.05em] text-zinc-500">
+                        {user.email}
+                      </div>
+                    )}
+                    <div className="mt-2 text-[9px] uppercase tracking-[0.18em] text-lime-200/70">
+                      Bejelentkezve
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative px-5 py-5">
+                <SheetClose asChild>
+                  <Link
+                    href="/dashboard"
+                    className="group flex w-full items-center justify-between border border-lime-400/40 bg-lime-400/[0.035] px-5 py-4 text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/10"
+                  >
+                    <div>
+                      <div className="text-xs font-bold tracking-[0.2em]">SAJÁT FIÓK</div>
+                      <div className="mt-1 text-[10px] uppercase tracking-[0.08em] text-zinc-500">
+                        Profil, rendelések, kör, aktivitás
+                      </div>
+                    </div>
+                    <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </Link>
+                </SheetClose>
+
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="mt-2 flex w-full items-center justify-between border border-zinc-800 px-5 py-3 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">
+                      Kijelentkezés
+                    </span>
+                    <span className="text-[9px] uppercase tracking-[0.12em] text-zinc-700">
+                      Logout
+                    </span>
+                  </button>
+                </SheetClose>
+              </div>
             </SheetContent>
           </Sheet>
         )}
