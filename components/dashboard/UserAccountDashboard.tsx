@@ -88,7 +88,7 @@ function sectionEyebrow(label: string) {
 }
 
 export default function UserAccountDashboard({ account, token }: Props) {
-  const { user, circle, orders, purchases, network } = account
+  const { user, circle, badges, orders, purchases, network } = account
   const [nickname, setNickname] = useState(user.nickname ?? "")
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
   const [nicknameError, setNicknameError] = useState<string | null>(null)
@@ -351,6 +351,56 @@ export default function UserAccountDashboard({ account, token }: Props) {
             </div>
           </div>
         </header>
+
+        <section className="border-b border-zinc-800/80 py-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              {sectionEyebrow("JELVÉNYEID")}
+              <p className="mt-2 text-sm text-zinc-500 sm:text-base">
+                Amit eddig megszereztél.
+              </p>
+            </div>
+            {badges.length > 0 && (
+              <span
+                className="text-[10px] uppercase tracking-[0.22em] text-zinc-700"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                {badges.length} JELVÉNY
+              </span>
+            )}
+          </div>
+
+          {badges.length === 0 ? (
+            <p className="mt-6 text-base text-zinc-600">
+              Még nincs megszerzett jelvényed.
+            </p>
+          ) : (
+            <div className="mt-6 flex flex-wrap gap-x-8 gap-y-5">
+              {badges.map((badge) => (
+                <div
+                  key={badge.code}
+                  title={badge.description}
+                  className="group inline-flex items-center gap-3"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-lime-400/40 bg-lime-400/[0.035] text-[10px] text-lime-200 transition-colors group-hover:border-lime-300/70 group-hover:bg-lime-400/[0.08]">
+                    ◆
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-zinc-100 sm:text-base">
+                      {badge.name}
+                    </p>
+                    <p
+                      className="mt-0.5 text-[9px] uppercase tracking-[0.12em] text-zinc-600"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      {badge.earnedAt ? formatDate(badge.earnedAt) : "MEGSZEREZVE"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section className="border-b border-zinc-800/80 py-10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
