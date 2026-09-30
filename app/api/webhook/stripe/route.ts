@@ -269,7 +269,20 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
 
   const telegramChatId = metadata.telegram_chat_id ?? null;
   const legacyUserIdRaw = metadata.user_uuid ?? metadata.telegram_user_id ?? telegramChatId ?? null;
-  const legacyUserId = resolveLegacyOrderUserId(legacyUserIdRaw);
+  let legacyUserId = resolveLegacyOrderUserId(legacyUserIdRaw);
+
+  if (!legacyUserId && session.customer_details?.email) {
+    const { data: matchingProfile, error: profileLookupError } = await db
+      .from('users')
+      .select('id')
+      .ilike('email', session.customer_details.email.trim())
+      .maybeSingle<{ id: string }>();
+
+    if (!profileLookupError && matchingProfile?.id) {
+      legacyUserId = matchingProfile.id;
+    }
+  }
+
   const rawTelegramIdentity = metadata.telegram_user_ephemeral ?? metadata.telegram_user_id ?? telegramChatId ?? null;
   const anonymizedUserHash = rawTelegramIdentity ? hashTelegramId(String(rawTelegramIdentity)) : null;
   const deliveryType = metadata.delivery_type === 'anonymous_locker' ? 'anonymous_locker' : 'dead_drop';
