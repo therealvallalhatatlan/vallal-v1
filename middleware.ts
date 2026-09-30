@@ -8,7 +8,7 @@ import {
   ATTRIBUTION_COOKIE_MAX_AGE,
   ATTRIBUTION_COOKIE_PREFIX,
   UTM_KEYS,
-} from './lib/stripeAttribution';
+} from './lib/attribution';
 
 let cachedMode: { mode: 'SAFE' | 'READ_ONLY'; timestamp: number } | null = null;
 const CACHE_TTL = 30000;
