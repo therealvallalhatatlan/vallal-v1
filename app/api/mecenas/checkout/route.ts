@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { guardWriteOperation } from "@/lib/systemGuard";
+import { getUserFromToken, parseBearerToken } from "@/lib/auth";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY!;
 const stripe = new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" });
@@ -21,6 +22,8 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
+    const token = parseBearerToken(req.headers);
+    const authenticatedUser = token ? await getUserFromToken(token) : null;
     const rawAmount = Number(body?.amount);
 
     if (!Number.isFinite(rawAmount) || !Number.isInteger(rawAmount)) {
@@ -61,6 +64,8 @@ export async function POST(req: Request) {
         project: "vallalhatatlan",
         type: "mecenas",
         amount_huf: String(rawAmount),
+        user_uuid: authenticatedUser?.id ?? "",
+        product_id: "mecenas",
       },
       line_items: [
         {
