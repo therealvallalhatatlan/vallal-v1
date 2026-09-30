@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken, getUserRoleByEmail, parseBearerToken } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getUserCircle, type UserCircle } from "@/lib/userCircle";
+import { getUserBadges } from "@/lib/userBadges";
 
 export const dynamic = "force-dynamic";
 
@@ -129,6 +130,7 @@ export async function GET(req: NextRequest) {
   const authUser = authUserRes.data.user;
   const email = authUser?.email ?? profileRes.data?.email ?? user.email;
   const nickname = profileRes.data?.nickname ?? null;
+  const badges = await getUserBadges(user.id, email);
 
   const bookOrders = (bookOrdersRes.data ?? []).map((order) => {
     const metadata = (order.metadata && typeof order.metadata === "object" ? order.metadata : null) as Record<string, unknown> | null;
@@ -252,6 +254,7 @@ export async function GET(req: NextRequest) {
         last_sign_in_at: authUser?.last_sign_in_at ?? null,
       },
       circle,
+      badges,
       spend: {
         totalHuf: totalSpendHuf,
         orderCount: orders.length,
