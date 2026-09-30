@@ -277,7 +277,7 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="border border-zinc-900 bg-black/30 p-4">
               <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">RENDELÉSEK</p>
-              <p className="mt-2 text-2xl font-black text-zinc-100">{spend.orderCount}</p>
+              <p className="mt-2 text-2xl font-black text-zinc-100">{orders.length}</p>
             </div>
             <div className="border border-zinc-900 bg-black/30 p-4">
               <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">SZÁMOZOTT PÉLDÁNYOK</p>
