@@ -15,8 +15,23 @@ ALTER TABLE orders
 ALTER TABLE shop_orders
   ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 
--- Recover email/product identifiers from metadata when an older order row has them
--- only inside metadata rather than as first-class columns.
+-- Some older installations can contain auth users that are missing from the
+-- public profile table. Recreate the missing profile rows first so downstream
+-- email-based backfill has a stable application-level user record.
+INSERT INTO users (id, email, created_at, updated_at)
+SELECT
+  au.id,
+  au.email,
+  COALESCE(au.created_at, now()),
+  now()
+FROM auth.users AS au
+LEFT JOIN users AS u
+  ON u.id = au.id
+WHERE u.id IS NULL
+  AND au.email IS NOT NULL
+ON CONFLICT (id) DO NOTHING;
+
+-- Recover identifiers from metadata for legacy order rows.
 UPDATE orders
 SET
   customer_email = COALESCE(
@@ -35,20 +50,30 @@ WHERE
   customer_email IS NULL
   OR product_id IS NULL;
 
--- Connect historical orders to known accounts by normalized email.
+-- Connect historical orders only to users that exist in auth.users.
 UPDATE orders AS o
 SET user_id = u.id
 FROM users AS u
 WHERE o.user_id IS NULL
   AND o.customer_email IS NOT NULL
-  AND lower(trim(o.customer_email)) = lower(trim(u.email));
+  AND lower(trim(o.customer_email)) = lower(trim(u.email))
+  AND EXISTS (
+    SELECT 1
+    FROM auth.users AS au
+    WHERE au.id = u.id
+  );
 
 UPDATE shop_orders AS o
 SET user_id = u.id
 FROM users AS u
 WHERE o.user_id IS NULL
   AND o.customer_email IS NOT NULL
-  AND lower(trim(o.customer_email)) = lower(trim(u.email));
+  AND lower(trim(o.customer_email)) = lower(trim(u.email))
+  AND EXISTS (
+    SELECT 1
+    FROM auth.users AS au
+    WHERE au.id = u.id
+  );
 
 CREATE INDEX IF NOT EXISTS idx_orders_user_id
   ON orders(user_id);
