@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
+import { Check, Pencil, X } from "lucide-react"
 import type { DashboardAccountResponse, DashboardUnifiedOrder } from "@/types/dashboard"
 
 type Props = {
@@ -69,6 +70,8 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
   const [nickname, setNickname] = useState(user.nickname ?? "")
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
   const [nicknameError, setNicknameError] = useState<string | null>(null)
+  const [editingNickname, setEditingNickname] = useState(false)
+  const nicknameInputRef = useRef<HTMLInputElement>(null)
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const [receivingOrderKey, setReceivingOrderKey] = useState<string | null>(null)
   const [receiptError, setReceiptError] = useState<string | null>(null)
@@ -113,6 +116,20 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
     }
   }
 
+  const startNicknameEdit = () => {
+    setNicknameError(null)
+    setSaveState("idle")
+    setEditingNickname(true)
+    window.setTimeout(() => nicknameInputRef.current?.focus(), 0)
+  }
+
+  const cancelNicknameEdit = () => {
+    setNickname(user.nickname ?? "")
+    setNicknameError(null)
+    setSaveState("idle")
+    setEditingNickname(false)
+  }
+
   const saveNickname = async () => {
     setSaveState("saving")
     setNicknameError(null)
@@ -134,6 +151,7 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
 
       setNickname(payload?.profile?.nickname ?? nickname.trim())
       setSaveState("saved")
+      setEditingNickname(false)
     } catch (error) {
       setSaveState("error")
       setNicknameError(error instanceof Error ? error.message : "A becenév mentése nem sikerült.")
@@ -171,9 +189,75 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
 
             <div className="min-w-0 flex-1">
               <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500">SAJÁT FIÓK</p>
-              <h1 className="mt-1 truncate text-2xl font-black uppercase tracking-[0.08em] text-zinc-100 sm:text-3xl">
-                {displayName}
-              </h1>
+
+              {editingNickname ? (
+                <div className="mt-1">
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={nicknameInputRef}
+                      value={nickname}
+                      onChange={(event) => {
+                        setNickname(event.target.value)
+                        setSaveState("idle")
+                        setNicknameError(null)
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault()
+                          void saveNickname()
+                        }
+                        if (event.key === "Escape") {
+                          event.preventDefault()
+                          cancelNicknameEdit()
+                        }
+                      }}
+                      maxLength={20}
+                      autoComplete="nickname"
+                      className="min-w-0 w-full max-w-xl border-b border-lime-400/60 bg-transparent py-1 text-2xl font-black uppercase tracking-[0.08em] text-zinc-100 outline-none sm:text-3xl"
+                      placeholder="BECSENÉV"
+                      aria-label="Becenév"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void saveNickname()}
+                      disabled={saveState === "saving"}
+                      aria-label="Becenév mentése"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center border border-lime-400/50 bg-lime-400/10 text-lime-200 transition-colors hover:bg-lime-400/15 disabled:opacity-50"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelNicknameEdit}
+                      disabled={saveState === "saving"}
+                      aria-label="Becenév szerkesztés megszakítása"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center border border-zinc-800 text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-200 disabled:opacity-50"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {nicknameError && (
+                    <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-rose-400">{nicknameError}</p>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startNicknameEdit}
+                  className="group mt-1 flex max-w-full items-center gap-2 text-left"
+                  aria-label="Becenév szerkesztése"
+                >
+                  <h1 className="truncate text-2xl font-black uppercase tracking-[0.08em] text-zinc-100 sm:text-3xl">
+                    {displayName}
+                  </h1>
+                  <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-700 transition-colors group-hover:text-lime-300" />
+                </button>
+              )}
+
+              {!editingNickname && saveState === "saved" && (
+                <p className="mt-1 text-[9px] uppercase tracking-[0.18em] text-lime-300">MENTVE</p>
+              )}
+
               <p className="mt-2 truncate text-xs tracking-[0.08em] text-zinc-500">{user.email ?? "—"}</p>
               <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-zinc-600">
                 CSATLAKOZÁS · {formatDate(user.created_at)}
@@ -458,41 +542,6 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
             <p className="max-w-lg text-sm leading-relaxed text-zinc-500">
               A köröd már él. A megszerzett jelvények külön gyűjthető rendszerben fognak megjelenni.
             </p>
-          </div>
-        </section>
-
-        <section className="border border-zinc-800 bg-zinc-950/60 p-5 sm:p-6">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500">FIÓK BEÁLLÍTÁSOK</p>
-            <h2 className="mt-1 text-xl font-black uppercase tracking-[0.08em]">Becenév</h2>
-          </div>
-
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <div className="flex-1">
-              <input
-                value={nickname}
-                onChange={(event) => {
-                  setNickname(event.target.value)
-                  setSaveState("idle")
-                  setNicknameError(null)
-                }}
-                maxLength={20}
-                className="w-full border border-zinc-800 bg-black/60 px-4 py-3 text-sm text-zinc-100 outline-none transition-colors focus:border-lime-400/60"
-                placeholder="pl. bigidy"
-              />
-              {nicknameError && (
-                <p className="mt-2 text-[10px] uppercase tracking-[0.22em] text-rose-400">{nicknameError}</p>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={saveNickname}
-              disabled={saveState === "saving"}
-              className="border border-lime-400/60 bg-lime-400/10 px-5 py-3 text-[10px] font-bold uppercase tracking-[0.25em] text-lime-200 transition-colors hover:bg-lime-400/15 disabled:opacity-50"
-            >
-              {saveState === "saving" ? "MENTÉS…" : saveState === "saved" ? "MENTVE" : "MENTÉS"}
-            </button>
           </div>
         </section>
 
