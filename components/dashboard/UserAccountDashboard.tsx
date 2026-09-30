@@ -156,7 +156,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
   }
 
   const getReceivedAt = (order: DashboardUnifiedOrder) =>
-    receivedAtByOrderKey[`${order.source}-${order.id}`] ?? getReceivedAt(order)
+    receivedAtByOrderKey[`${order.source}-${order.id}`] ?? order.user_received_at
 
   const markOrderReceived = async (order: DashboardUnifiedOrder) => {
     const orderKey = `${order.source}-${order.id}`
@@ -501,6 +501,14 @@ export default function UserAccountDashboard({ account, token }: Props) {
                                     >
                                       {receivingOrderKey === orderKey ? "FELDOLGOZÁS…" : "ÁT VETTEM"}
                                     </button>
+                                    {receiptError && (
+                                      <p
+                                        className="mt-2 text-[10px] uppercase tracking-[0.16em] text-rose-400"
+                                        style={{ fontFamily: "var(--font-mono-tech)" }}
+                                      >
+                                        {receiptError}
+                                      </p>
+                                    )}
                                   </div>
                                 )}
 
