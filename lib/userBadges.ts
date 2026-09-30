@@ -45,6 +45,10 @@ function toHufCents(raw: unknown): number {
   return Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
 }
 
+function isEarnedBookOrder(status: string) {
+  return ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(status);
+}
+
 function isCancelled(status: string) {
   return status === "cancelled" || status === "canceled";
 }
@@ -117,8 +121,7 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
     earned.add("first_book");
   }
 
-  for (const order of bookOrders) {
-    if (isCancelled(order.status)) continue;
+  for (const order of paidBookOrders) {
 
     const metadata =
       order.metadata && typeof order.metadata === "object"
@@ -144,7 +147,7 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
     }
   }
 
-  for (const item of shopItems) {
+  for (const item of paidShopItems) {
     if (isSecondBook(item.product_id, item.product_name)) {
       earned.add("second_book");
     }
@@ -155,12 +158,8 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
   }
 
   const totalCents =
-    bookOrders
-      .filter((order) => !isCancelled(order.status))
-      .reduce((sum, order) => sum + toHufCents(order.amount), 0) +
-    shopOrders
-      .filter((order) => !isCancelled(order.status))
-      .reduce((sum, order) => sum + toHufCents(order.subtotal_amount), 0);
+    paidBookOrders.reduce((sum, order) => sum + toHufCents(order.amount), 0) +
+    paidShopOrders.reduce((sum, order) => sum + toHufCents(order.subtotal_amount), 0);
 
   if (totalCents >= 4_500_000) {
     earned.add("founder");
