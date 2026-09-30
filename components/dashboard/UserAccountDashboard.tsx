@@ -613,7 +613,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
           <div className="flex items-end justify-between gap-5">
             <div>
               {sectionEyebrow("AMIT MEGSZEREZTÉL")}
-              <h2 className="mt-2 text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+              <h2 className={heroHeadline.className + " mt-2 text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
                 Gyűjtemény
               </h2>
             </div>
@@ -685,7 +685,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
         <section className="border-b border-zinc-800/80 py-10">
           <div>
             {sectionEyebrow("HÁLÓZATI AKTIVITÁS")}
-            <h2 className="mt-2 text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+            <h2 className={heroHeadline.className + " mt-2 text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
               A hálózatban hagyott nyom
             </h2>
           </div>
@@ -727,7 +727,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
 
         <section className="border-b border-zinc-800/80 py-10">
           {sectionEyebrow("JELVÉNYEK")}
-          <h2 className="mt-2 text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+          <h2 className={heroHeadline.className + " mt-2 text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
             Hamarosan
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
@@ -765,7 +765,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
           <div className="flex items-start justify-between gap-5 border-b border-zinc-800 pb-4">
             <div>
               {sectionEyebrow("RENDELÉS")}
-              <h3 className="mt-2 text-2xl font-normal text-zinc-100">{openOrder.label}</h3>
+              <h3 className={heroHeadline.className + " mt-2 text-2xl text-zinc-100"}>{openOrder.label}</h3>
             </div>
             <button
               type="button"
