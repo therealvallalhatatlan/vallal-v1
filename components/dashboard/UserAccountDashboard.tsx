@@ -70,11 +70,48 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
   const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
+  const [receivingOrderKey, setReceivingOrderKey] = useState<string | null>(null)
+  const [receiptError, setReceiptError] = useState<string | null>(null)
 
   const openOrder = useMemo(
     () => orders.find((order) => order.id === openOrderId) ?? null,
     [openOrderId, orders],
   )
+
+  const markOrderReceived = async (order: DashboardUnifiedOrder) => {
+    const orderKey = `${order.source}-${order.id}`
+    setReceivingOrderKey(orderKey)
+    setReceiptError(null)
+
+    try {
+      const response = await fetch("/api/user/orders/received", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${_token ?? ""}`,
+        },
+        body: JSON.stringify({
+          orderId: order.id,
+          source: order.source,
+        }),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.error || "Az átvétel visszaigazolása nem sikerült.")
+      }
+
+      window.location.reload()
+    } catch (error) {
+      setReceiptError(
+        error instanceof Error
+          ? error.message
+          : "Az átvétel visszaigazolása nem sikerült.",
+      )
+    } finally {
+      setReceivingOrderKey(null)
+    }
+  }
 
   const saveNickname = async () => {
     setSaveState("saving")
@@ -204,9 +241,16 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
                           {formatDate(order.created_at)} · #{orderRef(order.id)} · {order.source === "shop" ? "MERCH" : "KÖNYV"}
                         </span>
                       </span>
-                      <span className="hidden text-right sm:block">
-                        <span className="block text-xs font-bold text-zinc-100">{formatHuf(order.amountHuf)}</span>
-                        <span className="mt-1 block text-[9px] uppercase tracking-[0.2em] text-zinc-600">{statusLabel(order.status)}</span>
+                      <span className="hidden min-w-44 text-right sm:block">
+                        <span className="flex items-center justify-end gap-2">
+                          {!order.user_received_at && ["paid", "ready_to_dispatch", "dispatched"].includes(order.status) && (
+                            <span className="h-2.5 w-2.5 animate-spin rounded-full border border-zinc-700 border-t-lime-300" aria-hidden="true" />
+                          )}
+                          <span className={`text-[10px] font-bold uppercase tracking-[0.16em] ${order.user_received_at ? "text-lime-200" : "text-zinc-200"}`}>
+                            {order.user_received_at ? "ÁT VÉVE" : statusLabel(order.status)}
+                          </span>
+                        </span>
+                        <span className="mt-1 block text-[10px] text-zinc-500">{formatHuf(order.amountHuf)}</span>
                       </span>
                       <span className="text-zinc-600">{isOpen ? "−" : "+"}</span>
                     </button>
@@ -215,9 +259,51 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
                       <div className="border-t border-zinc-900 px-4 py-4">
                         <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
                           <div className="space-y-3">
-                            <div>
+                            <div className="border border-zinc-800 bg-black/40 p-4">
                               <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">ÁLLAPOT</p>
-                              <p className="mt-1 text-sm font-bold text-lime-200">{statusLabel(order.status)}</p>
+                              <div className="mt-2 flex items-center gap-3">
+                                {order.user_received_at ? (
+                                  <span className="text-sm font-black uppercase tracking-[0.16em] text-lime-200">ÁT VÉVE</span>
+                                ) : (
+                                  <>
+                                    {["paid", "ready_to_dispatch", "dispatched"].includes(order.status) && (
+                                      <span className="h-3 w-3 animate-spin rounded-full border border-zinc-700 border-t-lime-300" aria-hidden="true" />
+                                    )}
+                                    <span className="text-sm font-bold text-lime-200">{statusLabel(order.status)}</span>
+                                  </>
+                                )}
+                              </div>
+
+                              {order.user_received_at ? (
+                                <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+                                  Átvétel visszaigazolva · {formatDateTime(order.user_received_at)}
+                                </p>
+                              ) : order.status === "paid" ? (
+                                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                                  V. hamarosan felveszi veled a kapcsolatot.
+                                </p>
+                              ) : order.status === "dispatched" ? (
+                                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                                  A csomag elindult. Ha megtaláltad és átvetted, jelezd lent.
+                                </p>
+                              ) : null}
+
+                              {!order.user_received_at && ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(order.status) && (
+                                <button
+                                  type="button"
+                                  disabled={receivingOrderKey === `${order.source}-${order.id}`}
+                                  onClick={() => void markOrderReceived(order)}
+                                  className="mt-4 w-full border border-lime-400/50 bg-lime-400/[0.06] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.24em] text-lime-200 transition-colors hover:bg-lime-400/10 disabled:cursor-wait disabled:opacity-50"
+                                >
+                                  {receivingOrderKey === `${order.source}-${order.id}` ? "FELDOLGOZÁS…" : "ÁT VETTEM"}
+                                </button>
+                              )}
+
+                              {receiptError && openOrderId === order.id && (
+                                <p className="mt-2 text-[10px] uppercase tracking-[0.16em] text-rose-400">
+                                  {receiptError}
+                                </p>
+                              )}
                             </div>
                             <div>
                               <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">RENDELÉS</p>
