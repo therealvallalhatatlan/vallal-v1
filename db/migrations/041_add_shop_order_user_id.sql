@@ -11,10 +11,12 @@ ALTER TABLE orders
   ADD COLUMN IF NOT EXISTS dispatch_sent_at TIMESTAMPTZ,
   ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
   ADD COLUMN IF NOT EXISTS customer_email TEXT,
-  ADD COLUMN IF NOT EXISTS customer_name TEXT;
+  ADD COLUMN IF NOT EXISTS customer_name TEXT,
+  ADD COLUMN IF NOT EXISTS user_received_at TIMESTAMPTZ;
 
 ALTER TABLE shop_orders
-  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS user_received_at TIMESTAMPTZ;
 
 -- Sync missing public profiles from Auth, but never create a duplicate email
 -- because legacy production users.email is UNIQUE.
