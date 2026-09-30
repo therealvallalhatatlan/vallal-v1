@@ -58,6 +58,8 @@ function isSecondBook(productId: string | null, text: string) {
   return (
     haystack.includes("book-2") ||
     haystack.includes("book_2") ||
+    haystack.includes("book_ii") ||
+    haystack.includes("book ii") ||
     haystack.includes("könyv ii") ||
     haystack.includes("könyv 2") ||
     haystack.includes("második könyv")
