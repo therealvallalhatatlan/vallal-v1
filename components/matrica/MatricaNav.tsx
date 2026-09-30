@@ -13,6 +13,7 @@ import { usePresence } from '@/hooks/usePresence'
 import { buildAuthHref, clearStoredAuthReturnTarget } from '@/lib/authRedirect'
 import MatricaPrivateMessagePanel from '@/components/matrica/MatricaPrivateMessagePanel'
 import { setUnreadSource } from '@/lib/notifications/unreadStore'
+import UserBadgeStrip from '@/components/matrica/UserBadgeStrip'
 
 // If StickerSpot is not imported from types, define a fallback type
 // Remove this if you have the correct import
@@ -1711,6 +1712,8 @@ function MatricaNav({
           />
         </div>
       ) : null}
+
+      {isNetworkRoot ? <UserBadgeStrip /> : null}
 
       <nav
         style={{
