@@ -88,7 +88,8 @@ function sectionEyebrow(label: string) {
 }
 
 export default function UserAccountDashboard({ account, token }: Props) {
-  const { user, circle, badges, orders, purchases, network } = account
+  const { user, circle, orders, purchases, network } = account
+  const badges = account.badges ?? []
   const [nickname, setNickname] = useState(user.nickname ?? "")
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
   const [nicknameError, setNicknameError] = useState<string | null>(null)
