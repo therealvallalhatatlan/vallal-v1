@@ -227,10 +227,48 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
 
                 return (
                   <article key={`${order.source}-${order.id}`} className="border border-zinc-900 bg-black/30">
+                    <div className="border-b border-zinc-900 bg-lime-400/[0.025] px-4 py-4">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-3">
+                            {!order.user_received_at && ["paid", "ready_to_dispatch", "dispatched"].includes(order.status) && (
+                              <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-zinc-700 border-t-lime-300" aria-hidden="true" />
+                            )}
+                            <span className={`text-sm font-black uppercase tracking-[0.18em] ${order.user_received_at ? "text-lime-200" : "text-zinc-100"}`}>
+                              {order.user_received_at ? "ÁT VÉVE" : statusLabel(order.status)}
+                            </span>
+                          </div>
+                          {order.user_received_at ? (
+                            <p className="mt-2 text-xs text-zinc-500">Átvétel visszaigazolva · {formatDateTime(order.user_received_at)}</p>
+                          ) : order.status === "paid" ? (
+                            <p className="mt-2 text-sm text-zinc-300">V. hamarosan felveszi veled a kapcsolatot.</p>
+                          ) : order.status === "dispatched" ? (
+                            <p className="mt-2 text-sm text-zinc-300">A csomag elindult. Ha megtaláltad és átvetted, jelezd lent.</p>
+                          ) : (
+                            <p className="mt-2 text-xs text-zinc-500">A rendelés feldolgozás alatt van.</p>
+                          )}
+                        </div>
+
+                        <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                          <span className="text-xs font-bold text-zinc-200">{formatHuf(order.amountHuf)}</span>
+                          {!order.user_received_at && ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(order.status) && (
+                            <button
+                              type="button"
+                              disabled={receivingOrderKey === `${order.source}-${order.id}`}
+                              onClick={() => void markOrderReceived(order)}
+                              className="border border-lime-400/60 bg-lime-400/10 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] text-lime-200 transition-colors hover:bg-lime-400/15 disabled:cursor-wait disabled:opacity-50"
+                            >
+                              {receivingOrderKey === `${order.source}-${order.id}` ? "FELDOLGOZÁS…" : "ÁT VETTEM"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => setOpenOrderId(isOpen ? null : order.id)}
-                      className="flex w-full items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-lime-400/[0.025]"
+                      className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-lime-400/[0.025]"
                     >
                       <span className={`h-2 w-2 shrink-0 rounded-full ${order.status === "fulfilled" ? "bg-zinc-700" : "bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.5)]"}`} />
                       <span className="min-w-0 flex-1">
@@ -240,29 +278,9 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
                         <span className="mt-1 block text-[10px] uppercase tracking-[0.2em] text-zinc-600">
                           {formatDate(order.created_at)} · #{orderRef(order.id)} · {order.source === "shop" ? "MERCH" : "KÖNYV"}
                         </span>
-                        <span className="mt-2 flex items-center gap-2 sm:hidden">
-                          {!order.user_received_at && ["paid", "ready_to_dispatch", "dispatched"].includes(order.status) && (
-                            <span className="h-2 w-2 animate-spin rounded-full border border-zinc-700 border-t-lime-300" aria-hidden="true" />
-                          )}
-                          <span className={`text-[9px] font-bold uppercase tracking-[0.17em] ${order.user_received_at ? "text-lime-200" : "text-zinc-300"}`}>
-                            {order.user_received_at ? "ÁT VÉVE" : statusLabel(order.status)}
-                          </span>
-                        </span>
-                      </span>
-                      <span className="hidden min-w-44 text-right sm:block">
-                        <span className="flex items-center justify-end gap-2">
-                          {!order.user_received_at && ["paid", "ready_to_dispatch", "dispatched"].includes(order.status) && (
-                            <span className="h-2.5 w-2.5 animate-spin rounded-full border border-zinc-700 border-t-lime-300" aria-hidden="true" />
-                          )}
-                          <span className={`text-[10px] font-bold uppercase tracking-[0.16em] ${order.user_received_at ? "text-lime-200" : "text-zinc-200"}`}>
-                            {order.user_received_at ? "ÁT VÉVE" : statusLabel(order.status)}
-                          </span>
-                        </span>
-                        <span className="mt-1 block text-[10px] text-zinc-500">{formatHuf(order.amountHuf)}</span>
                       </span>
                       <span className="text-zinc-600">{isOpen ? "−" : "+"}</span>
                     </button>
-
                     {isOpen && (
                       <div className="border-t border-zinc-900 px-4 py-4">
                         <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
