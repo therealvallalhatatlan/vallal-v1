@@ -5,11 +5,17 @@
 ALTER TABLE users
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
 
+UPDATE users
+SET updated_at = COALESCE(updated_at, created_at, now())
+WHERE updated_at IS NULL;
+
 ALTER TABLE orders
   ADD COLUMN IF NOT EXISTS product_id TEXT;
 
 ALTER TABLE orders
-  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS fulfilled_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS dispatch_sent_at TIMESTAMPTZ;
 
 ALTER TABLE shop_orders
   ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
