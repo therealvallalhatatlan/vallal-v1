@@ -18,6 +18,7 @@ export interface ValidatedCheckoutItem {
 export interface CreateShopOrderDraftInput {
   items: ValidatedCheckoutItem[];
   deliveryMethod: DeliveryMethod;
+  userId?: string | null;
 }
 
 type CampaignRow = {
@@ -72,6 +73,7 @@ export async function createShopOrderDraft({
       status: "pending",
       currency: "huf",
       subtotal_amount: subtotalAmount,
+      user_id: userId ?? null,
       metadata: {
         source: "shop",
         deliveryMethod,

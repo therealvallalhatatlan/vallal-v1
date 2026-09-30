@@ -9,6 +9,7 @@ import {
   validateCheckoutItems,
 } from "@/lib/shop/preorderServer";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { getUserFromToken, parseBearerToken } from "@/lib/auth";
 import { guardWriteOperation } from "@/lib/systemGuard";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -41,6 +42,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    const token = parseBearerToken(req.headers);
+    const authenticatedUser = token ? await getUserFromToken(token) : null;
     const items = Array.isArray(body?.items) ? (body.items as CheckoutItem[]) : [];
     const deliveryMethod = parseDeliveryMethod(body?.deliveryMethod);
 
@@ -52,7 +55,11 @@ export async function POST(req: NextRequest) {
     }
 
     const validatedItems = validateCheckoutItems(items);
-    const draftOrder = await createShopOrderDraft({ items: validatedItems, deliveryMethod });
+    const draftOrder = await createShopOrderDraft({
+      items: validatedItems,
+      deliveryMethod,
+      userId: authenticatedUser?.id ?? null,
+    });
     draftOrderId = draftOrder.orderId;
 
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = validatedItems.map((item) => {
@@ -100,6 +107,7 @@ export async function POST(req: NextRequest) {
         deliveryMethod,
         shippingAmount: String(draftOrder.shippingAmount),
         totalAmount: String(draftOrder.totalAmount),
+        user_uuid: authenticatedUser?.id ?? "",
       },
       shipping_address_collection: { allowed_countries: ["HU"] },
     });

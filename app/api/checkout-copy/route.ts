@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { cookies } from 'next/headers';
 import { createCheckoutForCopy } from '../../../lib/reservations';
 import type { CheckoutCopyRequest, CheckoutCopyResponse } from '../../../types/reservations';
+import { getUserFromToken, parseBearerToken } from '@/lib/auth';
 
 export async function POST(request: Request): Promise<Response> {
   try {
@@ -20,10 +21,13 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const body: CheckoutCopyRequest = await request.json();
+    const token = parseBearerToken(request.headers);
+    const authenticatedUser = token ? await getUserFromToken(token) : null;
     const result = await createCheckoutForCopy(
       body.copy_number,
       sessionId,
       body.delivery_method ?? 'dead-drop',
+      authenticatedUser?.id ?? null,
     );
 
     return Response.json(result);

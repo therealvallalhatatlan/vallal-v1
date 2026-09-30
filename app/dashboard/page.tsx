@@ -1,101 +1,87 @@
-'use client'
+"use client"
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import DashboardContent from "@/components/dashboard/UserDashboard";
-import { useSessionGuard } from "@/hooks/useSessionGuard";
-import { buildAuthHref } from "@/lib/authRedirect";
-import type { DashboardApiResponse } from "@/types/dashboard";
-
-type FetchState = "idle" | "loading" | "success" | "error";
+import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import UserAccountDashboard from "@/components/dashboard/UserAccountDashboard"
+import { useSessionGuard } from "@/hooks/useSessionGuard"
+import { buildAuthHref } from "@/lib/authRedirect"
+import type { DashboardAccountResponse } from "@/types/dashboard"
 
 type SessionGuardResult = {
-  session: { access_token?: string } | null;
-  loading: boolean;
-};
+  session: { access_token?: string } | null
+  loading: boolean
+}
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const { session, loading } = useSessionGuard() as SessionGuardResult;
-  const [data, setData] = useState<DashboardApiResponse | null>(null);
-  const [fetchState, setFetchState] = useState<FetchState>("idle");
-  const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter()
+  const { session, loading } = useSessionGuard() as SessionGuardResult
+  const [data, setData] = useState<DashboardAccountResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const token = useMemo(() => session?.access_token ?? null, [session]);
+  const token = useMemo(() => session?.access_token ?? null, [session])
 
   useEffect(() => {
-    if (loading) return;
+    if (loading) return
 
     if (!session) {
-      router.replace(buildAuthHref("/dashboard"));
-      return;
+      router.replace(buildAuthHref("/dashboard"))
+      return
     }
 
     if (!token) {
-      setMessage("Érvénytelen hitelesítés.");
-      setFetchState("error");
-      return;
+      setError("Érvénytelen hitelesítés.")
+      return
     }
 
-    const controller = new AbortController();
+    const controller = new AbortController()
+    setError(null)
 
-    setFetchState("loading");
-    setMessage(null);
-
-    fetch(`/api/user/dashboard`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    fetch("/api/user/account", {
+      headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
       signal: controller.signal,
     })
       .then(async (response) => {
         if (!response.ok) {
-          const errorText = await response.text().catch(() => "");
-          throw new Error(errorText || `HTTP ${response.status}`);
+          const message = await response.text().catch(() => "")
+          throw new Error(message || `HTTP ${response.status}`)
         }
-        return response.json() as Promise<DashboardApiResponse>;
+        return response.json() as Promise<{ ok: boolean; account?: DashboardAccountResponse; error?: string }>
       })
       .then((payload) => {
-        setData(payload);
-        setFetchState("success");
+        if (!payload?.ok || !payload.account) {
+          throw new Error(payload?.error || "Nem sikerült betölteni a fiókot.")
+        }
+        setData(payload.account)
       })
-      .catch((error) => {
-        if (error?.name === "AbortError") return;
-        console.error("/dashboard fetch error", error);
-        setMessage("Valami elbaszódott. Próbáld újra később.");
-        setFetchState("error");
-      });
+      .catch((err) => {
+        if (err?.name === "AbortError") return
+        console.error("[dashboard] account fetch error", err)
+        setError("Nem sikerült betölteni a fiókodat.")
+      })
 
-    return () => controller.abort();
-  }, [session, loading, router, token]);
+    return () => controller.abort()
+  }, [loading, router, session, token])
 
-  if (loading || fetchState === "loading" || fetchState === "idle") {
+  if (loading || (!data && !error)) {
     return (
-      <div className="min-h-screen bg-black px-6 py-20 text-center text-zinc-200">
-        <p className="text-base uppercase tracking-[0.35em] text-zinc-500">Csinálom bazdmeg...</p>
-        <p className="mt-3 text-sm text-zinc-400">Várj, amíg a rendszer hitelesít.</p>
-      </div>
-    );
+      <main className="min-h-screen bg-black px-6 py-20 text-center text-zinc-200">
+        <p className="text-sm uppercase tracking-[0.35em] text-zinc-500">FIÓK BETÖLTÉSE</p>
+        <p className="mt-3 text-sm text-zinc-400">Kapcsolódás a Vállalhatatlan adatbázishoz…</p>
+      </main>
+    )
   }
 
-  if (!session) {
+  if (!session) return null
+
+  if (error || !data) {
     return (
-      <div className="min-h-screen bg-black px-6 py-20 text-center text-zinc-200">
-        <p className="text-base uppercase tracking-[0.35em] text-zinc-500">Átirányítás a gecibe</p>
-        <p className="mt-3 text-sm text-zinc-400">Hitelesítés nélkül nem férhetsz hozzá a Hálózathoz.</p>
-      </div>
-    );
+      <main className="min-h-screen bg-black px-6 py-20 text-center text-zinc-200">
+        <p className="text-sm uppercase tracking-[0.35em] text-zinc-500">VALAMI ELBASZÓDOTT</p>
+        <p className="mt-3 text-xl text-zinc-100">{error ?? "Nem sikerült betölteni a fiókot."}</p>
+      </main>
+    )
   }
 
-  if (fetchState === "error" || !data) {
-    return (
-      <div className="min-h-screen bg-black px-6 py-20 text-center text-zinc-200">
-        <p className="text-sm uppercase tracking-[0.4em] text-zinc-500">Valami van</p>
-        <p className="mt-3 text-xl leading-tight text-zinc-100">{message ?? "Nem sikerült betölteni a dashboardot."}</p>
-      </div>
-    );
-  }
-
-  return <DashboardContent data={data} token={token} />;
+  return <UserAccountDashboard account={data} token={token} />
 }
