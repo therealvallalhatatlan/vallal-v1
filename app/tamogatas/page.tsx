@@ -7,6 +7,7 @@ import { SupportersTicker } from "@/components/supporters/SupportersTicker";
 import { SUPPORTER_NAMES } from "@/data/supporters";
 import Footer from "@/components/Footer";
 import MainContent from "@/components/MainContent";
+import { getCheckoutHeaders } from "@/lib/checkoutClient";
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -125,9 +126,7 @@ export default function TamogatasPage() {
     try {
       const res = await fetch("/api/tamogatas/checkout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: await getCheckoutHeaders(),
         body: JSON.stringify({ amount }),
       });
 
