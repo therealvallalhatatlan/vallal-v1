@@ -86,7 +86,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
   const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [editingNickname, setEditingNickname] = useState(false)
-  const [nicknameInputRef] = useState(() => ({ current: null as HTMLInputElement | null }))
+  const nicknameInputRef = useRef<HTMLInputElement>(null)
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const [receivingOrderKey, setReceivingOrderKey] = useState<string | null>(null)
   const [receiptError, setReceiptError] = useState<string | null>(null)
@@ -687,7 +687,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
             {[
               ["MEGTALÁLÁS", network.claims.total],
               ["ELFOGADVA", network.claims.accepted],
-              ["FÁJZIKAI", network.claims.physical],
+              ["FIZIKAI", network.claims.physical],
               ["DIGITÁLIS", network.claims.digital],
             ].map(([label, value]) => (
               <div key={String(label)}>
