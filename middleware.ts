@@ -90,6 +90,10 @@ function isTelegramAppRequest(req: NextRequest): boolean {
 }
 
 function withAttributionCookies(req: NextRequest, response: NextResponse): NextResponse {
+  if (req.method !== "GET" || req.nextUrl.pathname.startsWith("/api/")) {
+    return response;
+  }
+
   for (const key of UTM_KEYS) {
     const incoming = req.nextUrl.searchParams.get(key)?.trim();
     const cookieName = ATTRIBUTION_COOKIE_PREFIX + key;
