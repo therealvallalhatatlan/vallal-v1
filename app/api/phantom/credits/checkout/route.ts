@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { normalizeUuid } from '@/lib/phantom'
 import { guardWriteOperation } from '@/lib/systemGuard'
 import { getUserFromToken, parseBearerToken } from '@/lib/auth'
+import { buildCheckoutMetadata } from '@/lib/stripeAttribution'
 
 export const dynamic = 'force-dynamic'
 
@@ -84,6 +85,20 @@ export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
   try {
+    const metadata = await buildCheckoutMetadata(
+      req,
+      {
+        type: 'phantom_credits',
+        shadow_session_id: sessionId,
+        credits: String(credits),
+        user_id: user.id,
+      },
+      {
+        userUuid: user.id,
+        cartSummary: 'phantom-credits:' + String(credits),
+      },
+    )
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
