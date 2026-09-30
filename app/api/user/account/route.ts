@@ -27,10 +27,10 @@ type UnifiedOrder = {
   }>;
 };
 
-function toHuf(raw: unknown): number {
+function toHuf(raw: unknown, unit: "forint" | "fillér" = "forint"): number {
   const value = Number(raw ?? 0);
   if (!Number.isFinite(value) || value <= 0) return 0;
-  return value >= 100000 ? Math.round(value / 100) : Math.round(value);
+  return unit === "fillér" ? Math.round(value / 100) : Math.round(value);
 }
 
 function productLabel(productId: string | null, metadata: Record<string, unknown> | null): string {
@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
   const bookOrders = (bookOrdersRes.data ?? []).map((order) => {
     const metadata = (order.metadata && typeof order.metadata === "object" ? order.metadata : null) as Record<string, unknown> | null;
     const label = productLabel(order.product_id ?? null, metadata);
-    const amountHuf = toHuf(order.amount);
+    const amountHuf = toHuf(order.amount, "fillér");
     return {
       id: order.id,
       source: "book" as const,
@@ -192,7 +192,7 @@ export async function GET(req: NextRequest) {
   const shopOrders = (shopOrdersRes.data ?? []).map((order) => {
     const metadata = (order.metadata && typeof order.metadata === "object" ? order.metadata : null) as Record<string, unknown> | null;
     const items = shopItemsByOrder.get(order.id) ?? [];
-    const amountHuf = toHuf(order.subtotal_amount);
+    const amountHuf = toHuf(order.subtotal_amount, "fillér");
     const first = items[0];
     const label = items.length === 1 && first
       ? first.product_name
@@ -217,7 +217,7 @@ export async function GET(req: NextRequest) {
         name: item.product_name,
         code: null,
         quantity: Number(item.quantity ?? 0),
-        lineTotalHuf: toHuf(item.unit_amount) * Number(item.quantity ?? 0),
+        lineTotalHuf: toHuf(item.unit_amount, "fillér") * Number(item.quantity ?? 0),
         variant: item.variant_id,
       })),
     } satisfies UnifiedOrder;
