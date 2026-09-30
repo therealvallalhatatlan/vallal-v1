@@ -125,6 +125,7 @@ export async function createCheckoutForCopy(
   copyNumber: number,
   sessionId: string,
   deliveryMethod: CheckoutDeliveryMethod = 'dead-drop',
+  checkoutMetadata?: Record<string, string>,
 ): Promise<CheckoutCopyResponse> {
   if (copyNumber < 1 || copyNumber > 100) {
     return { success: false, error: 'Invalid copy number. Must be between 1 and 100.' };
@@ -274,7 +275,9 @@ export async function createCheckoutForCopy(
         delivery_method: deliveryMethod,
         shipping_amount_huf: shippingAmount.toString(),
         total_amount_huf: totalAmount.toString(),
+        ...(checkoutMetadata ?? {}),
       },
+      clientReferenceId: checkoutMetadata?.order_id,
       collectShippingAddress: deliveryMethod === 'automata',
     });
 
