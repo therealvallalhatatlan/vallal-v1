@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getCheckoutHeaders } from "@/lib/checkoutClient";
 
 const MIN = 1000;
 
@@ -27,7 +28,7 @@ export default function MecenasApp() {
     try {
       const res = await fetch("/api/mecenas/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getCheckoutHeaders(),
         body: JSON.stringify({ amount: parsedAmount }),
       });
 
