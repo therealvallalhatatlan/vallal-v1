@@ -81,6 +81,12 @@ export interface DashboardAccountResponse {
     label: string
     spendHuf: number
   }
+  badges: Array<{
+    code: "first_book" | "second_book" | "mecenas" | "founder" | "merch"
+    name: string
+    description: string
+    earnedAt: string | null
+  }>
   spend: {
     totalHuf: number
     orderCount: number
