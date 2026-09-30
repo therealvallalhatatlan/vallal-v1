@@ -1,5 +1,5 @@
 -- Account dashboard schema repair + order ownership.
--- Idempotent and safe against older production schemas.
+-- Idempotent and safe against the legacy production schema.
 
 ALTER TABLE users
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
@@ -15,9 +15,8 @@ ALTER TABLE orders
 ALTER TABLE shop_orders
   ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 
--- Some older installations can contain auth users that are missing from the
--- public profile table. Recreate the missing profile rows first so downstream
--- email-based backfill has a stable application-level user record.
+-- Sync missing public profiles from Auth, but never create a duplicate email
+-- because legacy production users.email is UNIQUE.
 INSERT INTO users (id, email, created_at, updated_at)
 SELECT
   au.id,
@@ -25,10 +24,13 @@ SELECT
   COALESCE(au.created_at, now()),
   now()
 FROM auth.users AS au
-LEFT JOIN users AS u
-  ON u.id = au.id
-WHERE u.id IS NULL
-  AND au.email IS NOT NULL
+WHERE au.email IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1
+    FROM users AS existing
+    WHERE existing.id = au.id
+       OR lower(trim(existing.email)) = lower(trim(au.email))
+  )
 ON CONFLICT (id) DO NOTHING;
 
 -- Recover identifiers from metadata for legacy order rows.
@@ -50,30 +52,22 @@ WHERE
   customer_email IS NULL
   OR product_id IS NULL;
 
--- Connect historical orders only to users that exist in auth.users.
+-- Link historical orders directly against auth.users.
+-- This guarantees that user_id satisfies the FK to auth.users even when
+-- a legacy public.users row has a conflicting email or stale ID.
 UPDATE orders AS o
-SET user_id = u.id
-FROM users AS u
+SET user_id = au.id
+FROM auth.users AS au
 WHERE o.user_id IS NULL
   AND o.customer_email IS NOT NULL
-  AND lower(trim(o.customer_email)) = lower(trim(u.email))
-  AND EXISTS (
-    SELECT 1
-    FROM auth.users AS au
-    WHERE au.id = u.id
-  );
+  AND lower(trim(o.customer_email)) = lower(trim(au.email));
 
 UPDATE shop_orders AS o
-SET user_id = u.id
-FROM users AS u
+SET user_id = au.id
+FROM auth.users AS au
 WHERE o.user_id IS NULL
   AND o.customer_email IS NOT NULL
-  AND lower(trim(o.customer_email)) = lower(trim(u.email))
-  AND EXISTS (
-    SELECT 1
-    FROM auth.users AS au
-    WHERE au.id = u.id
-  );
+  AND lower(trim(o.customer_email)) = lower(trim(au.email));
 
 CREATE INDEX IF NOT EXISTS idx_orders_user_id
   ON orders(user_id);
@@ -81,8 +75,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_user_id
 CREATE INDEX IF NOT EXISTS idx_shop_orders_user_id
   ON shop_orders(user_id);
 
-ALTER TABLE shop_orders
-  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shop_orders ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Users can read own shop orders"
   ON shop_orders;
