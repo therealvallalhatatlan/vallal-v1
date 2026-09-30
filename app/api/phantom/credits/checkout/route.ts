@@ -118,11 +118,10 @@ export async function POST(req: NextRequest) {
       ],
       success_url: `${origin}/phantom/checkout-return?status=success&session_id=${encodeURIComponent(sessionId)}`,
       cancel_url: `${origin}/phantom/checkout-return?status=cancelled&session_id=${encodeURIComponent(sessionId)}`,
-      metadata: {
-        type: 'phantom_credits',
-        shadow_session_id: sessionId,
-        credits: String(credits),
-        user_id: user.id,
+      client_reference_id: metadata.order_id,
+      metadata,
+      payment_intent_data: {
+        metadata,
       },
     })
 
