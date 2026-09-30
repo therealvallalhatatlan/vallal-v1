@@ -65,7 +65,7 @@ function orderNeedsPriority(order: DashboardUnifiedOrder) {
 }
 
 export default function UserAccountDashboard({ account, token: _token }: Props) {
-  const { user, circle, spend, orders, purchases, network } = account
+  const { user, circle, orders, purchases, network } = account
   const [nickname, setNickname] = useState(user.nickname ?? "")
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
   const [nicknameError, setNicknameError] = useState<string | null>(null)
@@ -151,22 +151,12 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
         </header>
 
         <section className={`relative overflow-hidden border p-6 ${circleStyle}`}>
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.35em] opacity-60">A TE KÖRÖD</p>
-              <div className="mt-2 text-2xl font-black tracking-[0.1em]">{circle.label}</div>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed opacity-70">
-                A köröd az ismert vásárlásaid alapján automatikusan számolódik.
-              </p>
-            </div>
-
-            <div className="text-left sm:text-right">
-              <p className="text-[10px] uppercase tracking-[0.3em] opacity-60">ISMERT KÖLTÉS</p>
-              <p className="mt-1 text-3xl font-black tracking-[0.06em]">{formatHuf(spend.totalHuf)}</p>
-              <p className="mt-2 text-[10px] uppercase tracking-[0.22em] opacity-60">
-                {spend.orderCount} rendelés
-              </p>
-            </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.35em] opacity-60">A TE KÖRÖD</p>
+            <div className="mt-2 text-2xl font-black tracking-[0.1em]">{circle.label}</div>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed opacity-70">
+              A köröd az eddigi aktivitásod és a Vállalhatatlanban való részvételed alapján alakul.
+            </p>
           </div>
         </section>
 
