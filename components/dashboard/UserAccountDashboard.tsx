@@ -17,7 +17,7 @@ const CIRCLE_STYLES: Record<DashboardAccountResponse["circle"]["code"], string> 
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "FIZETÉS FOLYAMATBAN",
-  paid: "RENDELÉS FOGADVA",
+  paid: "ELFOGADVA",
   ready_to_dispatch: "ÖSSZEKÉSZÍTVE",
   dispatched: "ÚTON VAN",
   fulfilled: "TELJESÍTVE",
@@ -239,6 +239,14 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
                         </span>
                         <span className="mt-1 block text-[10px] uppercase tracking-[0.2em] text-zinc-600">
                           {formatDate(order.created_at)} · #{orderRef(order.id)} · {order.source === "shop" ? "MERCH" : "KÖNYV"}
+                        </span>
+                        <span className="mt-2 flex items-center gap-2 sm:hidden">
+                          {!order.user_received_at && ["paid", "ready_to_dispatch", "dispatched"].includes(order.status) && (
+                            <span className="h-2 w-2 animate-spin rounded-full border border-zinc-700 border-t-lime-300" aria-hidden="true" />
+                          )}
+                          <span className={`text-[9px] font-bold uppercase tracking-[0.17em] ${order.user_received_at ? "text-lime-200" : "text-zinc-300"}`}>
+                            {order.user_received_at ? "ÁT VÉVE" : statusLabel(order.status)}
+                          </span>
                         </span>
                       </span>
                       <span className="hidden min-w-44 text-right sm:block">
