@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { usePreorderCampaign } from "@/hooks/usePreorderCampaign";
 import { DEFAULT_PREORDER_CAMPAIGN_SLUG } from "@/lib/shop/preorder";
 import { PreorderCampaignPanel } from "@/components/shop/PreorderCampaignPanel";
+import { getCheckoutHeaders } from "@/lib/checkoutClient";
 
 export default function ShopCheckoutPage() {
   const { items, deliveryMethod, setDeliveryMethod, clearCart } = useCartStore();
@@ -33,7 +34,7 @@ export default function ShopCheckoutPage() {
     try {
       const res = await fetch("/api/shop/create-checkout-session", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await getCheckoutHeaders(),
         body: JSON.stringify({ items, deliveryMethod }),
       });
       if (!res.ok) throw new Error("Hiba a fizetés indításakor");
