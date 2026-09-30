@@ -97,6 +97,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const [receivingOrderKey, setReceivingOrderKey] = useState<string | null>(null)
   const [receiptError, setReceiptError] = useState<string | null>(null)
+  const [receivedAtByOrderKey, setReceivedAtByOrderKey] = useState<Record<string, string>>({})
 
   const displayName = nickname.trim() || user.email || "NODE"
   const avatarLetter = displayName.charAt(0).toUpperCase() || "N"
@@ -154,6 +155,9 @@ export default function UserAccountDashboard({ account, token }: Props) {
     }
   }
 
+  const getReceivedAt = (order: DashboardUnifiedOrder) =>
+    receivedAtByOrderKey[`${order.source}-${order.id}`] ?? getReceivedAt(order)
+
   const markOrderReceived = async (order: DashboardUnifiedOrder) => {
     const orderKey = `${order.source}-${order.id}`
     setReceivingOrderKey(orderKey)
@@ -177,7 +181,12 @@ export default function UserAccountDashboard({ account, token }: Props) {
         throw new Error(payload?.error || "Az átvétel visszaigazolása nem sikerült.")
       }
 
-      window.location.reload()
+      const receivedAt = payload?.user_received_at ?? new Date().toISOString()
+      setReceivedAtByOrderKey((current) => ({
+        ...current,
+        [orderKey]: receivedAt,
+      }))
+      setReceivingOrderKey(null)
     } catch (error) {
       setReceiptError(
         error instanceof Error
@@ -403,7 +412,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
             <div className="mt-6">
               {orders.map((order, index) => {
                 const isOpen = openOrderId === order.id
-                const processing = !order.user_received_at && isProcessingStatus(order.status)
+                const processing = !getReceivedAt(order) && isProcessingStatus(order.status)
                 const priority = orderNeedsPriority(order)
                 const orderKey = `${order.source}-${order.id}`
 
@@ -417,7 +426,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                         <div className="flex items-start gap-4">
                           <span
                             className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
-                              order.user_received_at
+                              getReceivedAt(order)
                                 ? "bg-lime-300 shadow-[0_0_7px_rgba(163,230,53,0.4)]"
                                 : order.status === "fulfilled"
                                   ? "bg-zinc-600"
@@ -454,13 +463,13 @@ export default function UserAccountDashboard({ account, token }: Props) {
                                   />
                                 )}
                                 <span className="text-base font-semibold uppercase tracking-[0.08em] text-lime-200 sm:text-lg">
-                                  {order.user_received_at ? "ÁT VÉVE" : statusLabel(order.status)}
+                                  {getReceivedAt(order) ? "ÁT VÉVE" : statusLabel(order.status)}
                                 </span>
                               </div>
 
-                              {order.user_received_at ? (
+                              {getReceivedAt(order) ? (
                                 <p className="mt-2 text-base text-zinc-500">
-                                  Átvétel visszaigazolva · {formatDateTime(order.user_received_at)}
+                                  Átvétel visszaigazolva · {formatDateTime(getReceivedAt(order))}
                                 </p>
                               ) : order.status === "paid" ? (
                                 <p className="mt-2 text-base leading-7 text-zinc-300">
@@ -480,7 +489,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                                 </p>
                               )}
 
-                              {!order.user_received_at &&
+                              {!getReceivedAt(order) &&
                                 ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(order.status) && (
                                   <div className="mt-4">
                                     <button
@@ -779,19 +788,19 @@ export default function UserAccountDashboard({ account, token }: Props) {
 
           <div className="mt-5 border-b border-zinc-900 pb-5">
             <div className="flex items-center gap-3">
-              {!openOrder.user_received_at && isProcessingStatus(openOrder.status) && (
+              {!getReceivedAt(openOrder) && isProcessingStatus(openOrder.status) && (
                 <span
                   className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-700 border-t-lime-300"
                   aria-hidden="true"
                 />
               )}
               <span className="text-lg font-semibold uppercase tracking-[0.08em] text-lime-200">
-                {openOrder.user_received_at ? "ÁT VÉVE" : statusLabel(openOrder.status)}
+                {getReceivedAt(openOrder) ? "ÁT VÉVE" : statusLabel(openOrder.status)}
               </span>
             </div>
-            {openOrder.user_received_at ? (
+            {getReceivedAt(openOrder) ? (
               <p className="mt-2 text-sm text-zinc-500">
-                Átvétel visszaigazolva · {formatDateTime(openOrder.user_received_at)}
+                Átvétel visszaigazolva · {formatDateTime(getReceivedAt(openOrder))}
               </p>
             ) : openOrder.status === "paid" ? (
               <p className="mt-2 text-base leading-7 text-zinc-300">
@@ -817,7 +826,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
             ))}
           </div>
 
-          {!openOrder.user_received_at &&
+          {!getReceivedAt(openOrder) &&
             ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(openOrder.status) && (
               <button
                 type="button"
