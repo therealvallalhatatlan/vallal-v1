@@ -18,6 +18,7 @@ type UnifiedOrder = {
   deliveryType: string | null;
   fulfilled_at: string | null;
   dispatched_at: string | null;
+  user_received_at: string | null;
   priority: boolean;
   items: Array<{
     name: string;
@@ -148,6 +149,7 @@ export async function GET(req: NextRequest) {
       deliveryType: order.delivery_type ?? null,
       fulfilled_at: order.fulfilled_at ?? null,
       dispatched_at: order.dispatch_sent_at ?? null,
+      user_received_at: order.user_received_at ?? null,
       priority: isPriorityOrder(order.status, label, order.product_id ?? null, metadata),
       items: [{
         name: label,
