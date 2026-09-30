@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
       db
         .from("orders")
         .select(
-          "id, created_at, status, amount, currency, product_id, delivery_type, customer_email, fulfilled_at, dispatch_sent_at, metadata"
+          "id, created_at, status, amount, currency, product_id, delivery_type, customer_email, fulfilled_at, dispatch_sent_at, user_received_at, metadata"
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
       db
         .from("shop_orders")
         .select(
-          "id, created_at, status, subtotal_amount, currency, customer_email, paid_at, metadata"
+          "id, created_at, status, subtotal_amount, currency, customer_email, paid_at, user_received_at, metadata"
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -210,8 +210,9 @@ export async function GET(req: NextRequest) {
       label,
       productId: first?.product_id ?? null,
       deliveryType: typeof metadata?.deliveryMethod === "string" ? metadata.deliveryMethod : null,
-      fulfilled_at: order.status === "paid" ? null : null,
+      fulfilled_at: null,
       dispatched_at: null,
+      user_received_at: order.user_received_at ?? null,
       priority: false,
       items: items.map((item) => ({
         name: item.product_name,
