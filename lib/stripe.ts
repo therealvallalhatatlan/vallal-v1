@@ -7,6 +7,7 @@ export interface CheckoutSessionParams {
   cancelUrl: string
   productName?: string
   metadata?: Record<string, string>
+  clientReferenceId?: string
   collectShippingAddress?: boolean
 }
 
@@ -77,7 +78,9 @@ export async function createCheckoutSession(
       mode: "payment",
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
+      ...(params.clientReferenceId ? { client_reference_id: params.clientReferenceId } : {}),
       metadata: params.metadata || {},
+      payment_intent_data: params.metadata ? { metadata: params.metadata } : undefined,
       ...(params.collectShippingAddress
         ? { shipping_address_collection: { allowed_countries: ["HU"] as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection["allowed_countries"] } }
         : {}),
