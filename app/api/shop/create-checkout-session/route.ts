@@ -10,6 +10,7 @@ import {
 } from "@/lib/shop/preorderServer";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { guardWriteOperation } from "@/lib/systemGuard";
+import { buildCartSummary, buildCheckoutMetadata } from "@/lib/stripeAttribution";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeKey
@@ -87,6 +88,27 @@ export async function POST(req: NextRequest) {
     }
 
     const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const metadata = await buildCheckoutMetadata(
+      req,
+      {
+        orderType: "merch",
+        deliveryMethod,
+        shippingAmount: String(draftOrder.shippingAmount),
+        totalAmount: String(draftOrder.totalAmount),
+      },
+      {
+        orderId: draftOrder.orderId,
+        cartSummary: buildCartSummary(
+          validatedItems.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+            variantId: item.variantId,
+          })),
+          "delivery:" + deliveryMethod,
+        ),
+      },
+    );
+
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -94,12 +116,10 @@ export async function POST(req: NextRequest) {
       mode: "payment",
       success_url: `${origin}/shop/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/shop/order/cancel`,
-      metadata: {
-        orderType: "merch",
-        orderId: draftOrder.orderId,
-        deliveryMethod,
-        shippingAmount: String(draftOrder.shippingAmount),
-        totalAmount: String(draftOrder.totalAmount),
+      client_reference_id: draftOrder.orderId,
+      metadata,
+      payment_intent_data: {
+        metadata,
       },
       shipping_address_collection: { allowed_countries: ["HU"] },
     });
