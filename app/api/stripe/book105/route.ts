@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
@@ -20,6 +21,19 @@ function getCurrentPrice() {
 }
 
 export async function POST(req: NextRequest) {
+  const metadata = await buildCheckoutMetadata(
+    req,
+    {
+      project: "vallalhatatlan",
+      type: "book105_auction",
+      copy_number: "105",
+      price_huf: String(price),
+    },
+    {
+      cartSummary: "book-105-auctionx1",
+    },
+  );
+
   const price = getCurrentPrice();
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -36,6 +50,11 @@ export async function POST(req: NextRequest) {
       },
     ],
     mode: "payment",
+    client_reference_id: metadata.order_id,
+    metadata,
+    payment_intent_data: {
+      metadata,
+    },
     success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/105?success=1`,
     cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/105?cancelled=1`,
   });
