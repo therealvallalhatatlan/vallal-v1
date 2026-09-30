@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from './lib/supabaseAdmin';
 import { isAdminEmail } from './lib/auth';
 import { TELEGRAM_MINI_APP_SESSION_COOKIE, verifyTelegramMiniAppSessionToken } from './lib/security/telegramMiniAppSession';
+import {
+  ATTRIBUTION_COOKIE_MAX_AGE,
+  ATTRIBUTION_COOKIE_PREFIX,
+  UTM_KEYS,
+} from './lib/stripeAttribution';
 
 let cachedMode: { mode: 'SAFE' | 'READ_ONLY'; timestamp: number } | null = null;
 const CACHE_TTL = 30000;
@@ -84,6 +89,40 @@ function isTelegramAppRequest(req: NextRequest): boolean {
   return userAgent.includes('telegram') || referer.includes('t.me') || referer.includes('telegram.me') || referer.includes('web.telegram.org');
 }
 
+function withAttributionCookies(req: NextRequest, response: NextResponse): NextResponse {
+  for (const key of UTM_KEYS) {
+    const incoming = req.nextUrl.searchParams.get(key)?.trim();
+    const cookieName = ATTRIBUTION_COOKIE_PREFIX + key;
+
+    if (incoming && !req.cookies.get(cookieName)?.value) {
+      response.cookies.set({
+        name: cookieName,
+        value: incoming.slice(0, 500),
+        maxAge: ATTRIBUTION_COOKIE_MAX_AGE,
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+      });
+    }
+  }
+
+  const landingPathCookie = ATTRIBUTION_COOKIE_PREFIX + "landing_path";
+  if (!req.cookies.get(landingPathCookie)?.value) {
+    response.cookies.set({
+      name: landingPathCookie,
+      value: req.nextUrl.pathname.slice(0, 500),
+      maxAge: ATTRIBUTION_COOKIE_MAX_AGE,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
+  }
+
+  return response;
+}
+
 function isLocalDevRequest(req: NextRequest): boolean {
   if (process.env.NODE_ENV === 'production') return false;
   const host = (req.headers.get('host') || req.nextUrl.host || '').toLowerCase();
@@ -115,7 +154,7 @@ export async function middleware(req: NextRequest) {
   const method = req.method;
 
   if (pathname === '/telegram-app' || pathname.startsWith('/telegram-app/')) {
-    if (isLocalDevRequest(req)) return NextResponse.next();
+    if (isLocalDevRequest(req)) return withAttributionCookies(req, NextResponse.next());
 
     const sessionToken = req.cookies.get(TELEGRAM_MINI_APP_SESSION_COOKIE)?.value;
     const hasSessionCookie = Boolean(sessionToken);
@@ -144,7 +183,7 @@ export async function middleware(req: NextRequest) {
 
   // Stripe/Telegram webhooks are independently authenticated by their own signatures/secrets.
   if (pathname.startsWith("/api/telegram") || pathname.startsWith("/api/stripe")) {
-    return NextResponse.next();
+    return withAttributionCookies(req, NextResponse.next());
   }
 
   if (
@@ -165,7 +204,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/public/") ||
     pathname.startsWith("/service-worker.js")
   ) {
-    return NextResponse.next();
+    return withAttributionCookies(req, NextResponse.next());
   }
 
   if (
@@ -176,7 +215,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/reader") ||
     pathname.startsWith("/public-story")
   ) {
-    return NextResponse.next();
+    return withAttributionCookies(req, NextResponse.next());
   }
 
   if (WRITE_METHODS.has(method)) {
@@ -205,7 +244,7 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return withAttributionCookies(req, NextResponse.next());
 }
 
 export const config = {
