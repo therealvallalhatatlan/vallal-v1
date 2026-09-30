@@ -1,19 +1,12 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
-import { Check, Pencil, X } from "lucide-react"
+import { Check, ChevronDown, Pencil, X } from "lucide-react"
 import type { DashboardAccountResponse, DashboardUnifiedOrder } from "@/types/dashboard"
 
 type Props = {
   account: DashboardAccountResponse
   token: string | null
-}
-
-const CIRCLE_STYLES: Record<DashboardAccountResponse["circle"]["code"], string> = {
-  outside: "border-zinc-700 bg-zinc-950 text-zinc-300",
-  a: "border-sky-500/50 bg-sky-500/5 text-sky-200",
-  inner: "border-violet-500/50 bg-violet-500/5 text-violet-200",
-  core: "border-lime-400/70 bg-lime-400/5 text-lime-200",
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -25,6 +18,13 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "TÖRÖLVE",
   canceled: "TÖRÖLVE",
   payment_failed: "FIZETÉS SIKERTELEN",
+}
+
+const CIRCLE_LABELS: Record<DashboardAccountResponse["circle"]["code"], string> = {
+  outside: "KÖRÖN KÍVÜL",
+  a: "A KÖR",
+  inner: "BELSŐ KÖR",
+  core: "SZŰK BELSŐ KÖR",
 }
 
 const formatHuf = (value: number) =>
@@ -65,56 +65,39 @@ function orderNeedsPriority(order: DashboardUnifiedOrder) {
   return order.priority && !["fulfilled", "cancelled", "canceled"].includes(order.status)
 }
 
-export default function UserAccountDashboard({ account, token: _token }: Props) {
+function isProcessingStatus(status: string) {
+  return ["paid", "ready_to_dispatch", "dispatched"].includes(status)
+}
+
+function sectionEyebrow(label: string) {
+  return (
+    <p
+      className="text-[11px] uppercase tracking-[0.32em] text-zinc-500"
+      style={{ fontFamily: "var(--font-mono-tech)" }}
+    >
+      {label}
+    </p>
+  )
+}
+
+export default function UserAccountDashboard({ account, token }: Props) {
   const { user, circle, orders, purchases, network } = account
   const [nickname, setNickname] = useState(user.nickname ?? "")
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
   const [nicknameError, setNicknameError] = useState<string | null>(null)
   const [editingNickname, setEditingNickname] = useState(false)
-  const nicknameInputRef = useRef<HTMLInputElement>(null)
+  const [nicknameInputRef] = useState(() => ({ current: null as HTMLInputElement | null }))
   const [openOrderId, setOpenOrderId] = useState<string | null>(null)
   const [receivingOrderKey, setReceivingOrderKey] = useState<string | null>(null)
   const [receiptError, setReceiptError] = useState<string | null>(null)
+
+  const displayName = nickname.trim() || user.email || "NODE"
+  const avatarLetter = displayName.charAt(0).toUpperCase() || "N"
 
   const openOrder = useMemo(
     () => orders.find((order) => order.id === openOrderId) ?? null,
     [openOrderId, orders],
   )
-
-  const markOrderReceived = async (order: DashboardUnifiedOrder) => {
-    const orderKey = `${order.source}-${order.id}`
-    setReceivingOrderKey(orderKey)
-    setReceiptError(null)
-
-    try {
-      const response = await fetch("/api/user/orders/received", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${_token ?? ""}`,
-        },
-        body: JSON.stringify({
-          orderId: order.id,
-          source: order.source,
-        }),
-      })
-
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(payload?.error || "Az átvétel visszaigazolása nem sikerült.")
-      }
-
-      window.location.reload()
-    } catch (error) {
-      setReceiptError(
-        error instanceof Error
-          ? error.message
-          : "Az átvétel visszaigazolása nem sikerült.",
-      )
-    } finally {
-      setReceivingOrderKey(null)
-    }
-  }
 
   const startNicknameEdit = () => {
     setNicknameError(null)
@@ -139,7 +122,7 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${_token ?? ""}`,
+          Authorization: `Bearer ${token ?? ""}`,
         },
         body: JSON.stringify({ nickname }),
       })
@@ -154,303 +137,461 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
       setEditingNickname(false)
     } catch (error) {
       setSaveState("error")
-      setNicknameError(error instanceof Error ? error.message : "A becenév mentése nem sikerült.")
+      setNicknameError(
+        error instanceof Error
+          ? error.message
+          : "A becenév mentése nem sikerült.",
+      )
     } finally {
       window.setTimeout(() => setSaveState("idle"), 1800)
     }
   }
 
-  const displayName = nickname.trim() || user.email || "NODE"
-  const avatarLetter = displayName.charAt(0).toUpperCase() || "N"
-  const circleStyle = CIRCLE_STYLES[circle.code]
+  const markOrderReceived = async (order: DashboardUnifiedOrder) => {
+    const orderKey = `${order.source}-${order.id}`
+    setReceivingOrderKey(orderKey)
+    setReceiptError(null)
+
+    try {
+      const response = await fetch("/api/user/orders/received", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token ?? ""}`,
+        },
+        body: JSON.stringify({
+          orderId: order.id,
+          source: order.source,
+        }),
+      })
+
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.error || "Az átvétel visszaigazolása nem sikerült.")
+      }
+
+      window.location.reload()
+    } catch (error) {
+      setReceiptError(
+        error instanceof Error
+          ? error.message
+          : "Az átvétel visszaigazolása nem sikerült.",
+      )
+      setReceivingOrderKey(null)
+    }
+  }
+
+  const totalNetworkActivity =
+    network.claims.accepted + network.spots.active
 
   return (
-    <main className="min-h-screen bg-[#010101] px-4 pb-24 pt-24 text-zinc-100 sm:px-6">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6">
-        <header className="relative overflow-hidden border border-zinc-800 bg-zinc-950/80 p-5 sm:p-7">
-          <div className="pointer-events-none absolute inset-0 opacity-30">
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(163,230,53,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(163,230,53,0.025)_1px,transparent_1px)] bg-[size:28px_28px]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(163,230,53,0.07),transparent_35%)]" />
-          </div>
+    <main className="min-h-screen bg-[#010101] text-zinc-100">
+      <div className="pointer-events-none fixed inset-0 z-0 opacity-[0.1]">
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(163,230,53,0.05)_0,rgba(163,230,53,0.05)_1px,transparent_1px,transparent_24px)]" />
+      </div>
 
-          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900 text-3xl font-black text-lime-200">
-              {user.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt=""
-                  className="h-full w-full object-cover grayscale"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                avatarLetter
-              )}
-            </div>
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-24 sm:px-8">
+        <header className="border-b border-zinc-800/90 pb-8">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex min-w-0 items-center gap-5">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700/80 bg-zinc-950 text-xl font-black text-lime-200">
+                {user.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt=""
+                    className="h-full w-full object-cover grayscale"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  avatarLetter
+                )}
+              </div>
 
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500">SAJÁT FIÓK</p>
+              <div className="min-w-0">
+                {sectionEyebrow("SAJÁT FIÓK")}
 
-              {editingNickname ? (
-                <div className="mt-1">
-                  <div className="flex items-center gap-2">
-                    <input
-                      ref={nicknameInputRef}
-                      value={nickname}
-                      onChange={(event) => {
-                        setNickname(event.target.value)
-                        setSaveState("idle")
-                        setNicknameError(null)
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault()
-                          void saveNickname()
-                        }
-                        if (event.key === "Escape") {
-                          event.preventDefault()
-                          cancelNicknameEdit()
-                        }
-                      }}
-                      maxLength={20}
-                      autoComplete="nickname"
-                      className="min-w-0 w-full max-w-xl border-b border-lime-400/60 bg-transparent py-1 text-2xl font-black uppercase tracking-[0.08em] text-zinc-100 outline-none sm:text-3xl"
-                      placeholder="BECSENÉV"
-                      aria-label="Becenév"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => void saveNickname()}
-                      disabled={saveState === "saving"}
-                      aria-label="Becenév mentése"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center border border-lime-400/50 bg-lime-400/10 text-lime-200 transition-colors hover:bg-lime-400/15 disabled:opacity-50"
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={cancelNicknameEdit}
-                      disabled={saveState === "saving"}
-                      aria-label="Becenév szerkesztés megszakítása"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center border border-zinc-800 text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-200 disabled:opacity-50"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                {editingNickname ? (
+                  <div className="mt-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={(node) => {
+                          nicknameInputRef.current = node
+                        }}
+                        value={nickname}
+                        onChange={(event) => {
+                          setNickname(event.target.value)
+                          setSaveState("idle")
+                          setNicknameError(null)
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault()
+                            void saveNickname()
+                          }
+                          if (event.key === "Escape") {
+                            event.preventDefault()
+                            cancelNicknameEdit()
+                          }
+                        }}
+                        maxLength={20}
+                        autoComplete="nickname"
+                        aria-label="Becenév"
+                        className="w-full max-w-xl border-0 border-b border-lime-400/60 bg-transparent px-0 py-1 text-3xl font-normal tracking-tight text-zinc-50 outline-none placeholder:text-zinc-700 sm:text-4xl"
+                        style={{ fontFamily: "var(--font-heading), serif" }}
+                        placeholder="BECSENÉV"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void saveNickname()}
+                        disabled={saveState === "saving"}
+                        aria-label="Becenév mentése"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center text-lime-200 transition-colors hover:text-white disabled:opacity-40"
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelNicknameEdit}
+                        disabled={saveState === "saving"}
+                        aria-label="Szerkesztés megszakítása"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-zinc-200 disabled:opacity-40"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    {nicknameError && (
+                      <p
+                        className="mt-2 text-[11px] uppercase tracking-[0.16em] text-rose-400"
+                        style={{ fontFamily: "var(--font-mono-tech)" }}
+                      >
+                        {nicknameError}
+                      </p>
+                    )}
                   </div>
-                  {nicknameError && (
-                    <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-rose-400">{nicknameError}</p>
-                  )}
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={startNicknameEdit}
-                  className="group mt-1 flex max-w-full items-center gap-2 text-left"
-                  aria-label="Becenév szerkesztése"
+                ) : (
+                  <button
+                    type="button"
+                    onClick={startNicknameEdit}
+                    className="group mt-1 flex max-w-full items-center gap-3 text-left"
+                    aria-label="Becenév szerkesztése"
+                  >
+                    <h1 className="truncate text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+                      {displayName}
+                    </h1>
+                    <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-700 transition-colors group-hover:text-lime-200" />
+                  </button>
+                )}
+
+                {!editingNickname && saveState === "saved" && (
+                  <p
+                    className="mt-1 text-[10px] uppercase tracking-[0.22em] text-lime-200"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    MENTVE
+                  </p>
+                )}
+
+                <p
+                  className="mt-2 truncate text-[13px] text-zinc-500 sm:text-sm"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
-                  <h1 className="truncate text-2xl font-black uppercase tracking-[0.08em] text-zinc-100 sm:text-3xl">
-                    {displayName}
-                  </h1>
-                  <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-700 transition-colors group-hover:text-lime-300" />
-                </button>
-              )}
-
-              {!editingNickname && saveState === "saved" && (
-                <p className="mt-1 text-[9px] uppercase tracking-[0.18em] text-lime-300">MENTVE</p>
-              )}
-
-              <p className="mt-2 truncate text-xs tracking-[0.08em] text-zinc-500">{user.email ?? "—"}</p>
-              <p className="mt-2 text-[10px] uppercase tracking-[0.25em] text-zinc-600">
-                CSATLAKOZÁS · {formatDate(user.created_at)}
-              </p>
+                  {user.email ?? "—"}
+                </p>
+                <p
+                  className="mt-1.5 text-[10px] uppercase tracking-[0.24em] text-zinc-700"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  CSATLAKOZÁS · {formatDate(user.created_at)}
+                </p>
+              </div>
             </div>
 
-            <div className={`self-start rounded border px-4 py-3 text-center sm:self-center ${circleStyle}`}>
-              <div className="text-[9px] uppercase tracking-[0.3em] opacity-70">A TE KÖRÖD</div>
-              <div className="mt-1 text-xs font-black tracking-[0.18em]">{circle.label}</div>
+            <div className="flex items-end justify-between gap-6 lg:min-w-[18rem]">
+              <div>
+                {sectionEyebrow("AKTIVITÁS")}
+                <p className="mt-2 text-3xl font-normal tracking-tight text-zinc-100">
+                  {totalNetworkActivity}
+                </p>
+                <p
+                  className="mt-1 text-[10px] uppercase tracking-[0.22em] text-zinc-600"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  HÁLÓZATI JEL / PONT
+                </p>
+              </div>
+
+              <div className="text-right">
+                {sectionEyebrow("KÖR")}
+                <p className="mt-2 text-xl font-normal tracking-[0.04em] text-lime-200">
+                  {CIRCLE_LABELS[circle.code]}
+                </p>
+                <p
+                  className="mt-1 text-[10px] uppercase tracking-[0.22em] text-zinc-600"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  AKTÍV STÁTUSZ
+                </p>
+              </div>
             </div>
           </div>
         </header>
 
-        <section className={`relative overflow-hidden border p-6 ${circleStyle}`}>
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.35em] opacity-60">A TE KÖRÖD</p>
-            <div className="mt-2 text-2xl font-black tracking-[0.1em]">{circle.label}</div>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed opacity-70">
-              A köröd az eddigi aktivitásod és a Vállalhatatlanban való részvételed alapján alakul.
-            </p>
+        <section className="border-b border-zinc-800/80 py-10">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              {sectionEyebrow("A TE KÖRÖD")}
+              <h2 className="mt-2 text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+                {CIRCLE_LABELS[circle.code]}
+              </h2>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
+                A köröd az eddigi aktivitásod és a Vállalhatatlanban való részvételed alapján alakul.
+              </p>
+            </div>
+            <div
+              className="border-l border-lime-400/50 pl-4 text-sm leading-6 text-zinc-400 lg:max-w-xs lg:text-right lg:border-l-0 lg:border-r lg:pr-4"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              {circle.code === "outside"
+                ? "A rendszer még nem azonosított olyan aktivitást, amely körhöz kötne."
+                : "A státuszod jelenleg aktív."}
+            </div>
           </div>
         </section>
 
         {orders.some(orderNeedsPriority) && (
-          <section className="border border-lime-400/50 bg-lime-400/[0.035] p-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-lime-200">II. KÖNYV · ELSŐ KISZOLGÁLÁS</p>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-300">
-              A II. könyvre leadott korábbi rendelésedet nyilvántartjuk. Ezek a rendelések az első kiszolgálási körben szerepelnek.
-            </p>
+          <section className="border-b border-zinc-800/80 py-8">
+            <div className="flex items-start gap-4">
+              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-lime-400 shadow-[0_0_10px_rgba(163,230,53,0.65)]" />
+              <div>
+                {sectionEyebrow("II. KÖNYV · ELSŐ KISZOLGÁLÁS")}
+                <p className="mt-2 text-base leading-7 text-zinc-300 sm:text-lg">
+                  A korábbi II. könyves rendelésedet nyilvántartjuk, és az első kiszolgálási körben szerepel.
+                </p>
+              </div>
+            </div>
           </section>
         )}
 
-        <section className="space-y-4 border border-zinc-800 bg-zinc-950/60 p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-3">
+        <section className="border-b border-zinc-800/80 py-10">
+          <div className="flex items-end justify-between gap-5">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500">RENDELÉSEIM</p>
-              <h2 className="mt-1 text-xl font-black uppercase tracking-[0.08em]">Rendelési történet</h2>
+              {sectionEyebrow("RENDELÉSEIM")}
+              <h2 className="mt-2 text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+                Rendelési történet
+              </h2>
             </div>
-            <span className="text-[10px] uppercase tracking-[0.3em] text-zinc-600">{orders.length} DB</span>
+            <span
+              className="text-[11px] uppercase tracking-[0.25em] text-zinc-600"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              {orders.length} DB
+            </span>
           </div>
 
           {orders.length === 0 ? (
-            <div className="border border-zinc-900 bg-black/30 p-5 text-sm text-zinc-500">
+            <div className="py-10 text-base text-zinc-500">
               Még nincs ismert rendelésed.
             </div>
           ) : (
-            <div className="space-y-2">
-              {orders.map((order) => {
-                const priority = orderNeedsPriority(order)
+            <div className="mt-6">
+              {orders.map((order, index) => {
                 const isOpen = openOrderId === order.id
+                const processing = !order.user_received_at && isProcessingStatus(order.status)
+                const priority = orderNeedsPriority(order)
+                const orderKey = `${order.source}-${order.id}`
 
                 return (
-                  <article key={`${order.source}-${order.id}`} className="border border-zinc-900 bg-black/30">
-                    <div className="border-b border-zinc-900 bg-lime-400/[0.025] px-4 py-4">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-3">
-                            {!order.user_received_at && ["paid", "ready_to_dispatch", "dispatched"].includes(order.status) && (
-                              <span className="h-3 w-3 shrink-0 animate-spin rounded-full border-2 border-zinc-700 border-t-lime-300" aria-hidden="true" />
-                            )}
-                            <span className={`text-sm font-black uppercase tracking-[0.18em] ${order.user_received_at ? "text-lime-200" : "text-zinc-100"}`}>
-                              {order.user_received_at ? "ÁT VÉVE" : statusLabel(order.status)}
-                            </span>
-                          </div>
-                          {order.user_received_at ? (
-                            <p className="mt-2 text-xs text-zinc-500">Átvétel visszaigazolva · {formatDateTime(order.user_received_at)}</p>
-                          ) : order.status === "paid" ? (
-                            <p className="mt-2 text-sm text-zinc-300">V. hamarosan felveszi veled a kapcsolatot.</p>
-                          ) : order.status === "dispatched" ? (
-                            <p className="mt-2 text-sm text-zinc-300">A csomag elindult. Ha megtaláltad és átvetted, jelezd lent.</p>
-                          ) : (
-                            <p className="mt-2 text-xs text-zinc-500">A rendelés feldolgozás alatt van.</p>
-                          )}
-                        </div>
+                  <article
+                    key={orderKey}
+                    className="border-t border-zinc-800/70 py-6 last:border-b last:border-zinc-800/70"
+                  >
+                    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-10">
+                      <div className="min-w-0">
+                        <div className="flex items-start gap-4">
+                          <span
+                            className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
+                              order.user_received_at
+                                ? "bg-lime-300 shadow-[0_0_7px_rgba(163,230,53,0.4)]"
+                                : order.status === "fulfilled"
+                                  ? "bg-zinc-600"
+                                  : "bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.45)]"
+                            }`}
+                          />
 
-                        <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-                          <span className="text-xs font-bold text-zinc-200">{formatHuf(order.amountHuf)}</span>
-                          {!order.user_received_at && ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(order.status) && (
-                            <button
-                              type="button"
-                              disabled={receivingOrderKey === `${order.source}-${order.id}`}
-                              onClick={() => void markOrderReceived(order)}
-                              className="border border-lime-400/60 bg-lime-400/10 px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.2em] text-lime-200 transition-colors hover:bg-lime-400/15 disabled:cursor-wait disabled:opacity-50"
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                              <h3 className="truncate text-xl font-normal text-zinc-100 sm:text-2xl">
+                                {order.label}
+                              </h3>
+                              <span
+                                className="text-[10px] uppercase tracking-[0.18em] text-zinc-600"
+                                style={{ fontFamily: "var(--font-mono-tech)" }}
+                              >
+                                {order.source === "shop" ? "MERCH" : "KÖNYV"}
+                              </span>
+                            </div>
+
+                            <p
+                              className="mt-2 text-[11px] uppercase tracking-[0.18em] text-zinc-600"
+                              style={{ fontFamily: "var(--font-mono-tech)" }}
                             >
-                              {receivingOrderKey === `${order.source}-${order.id}` ? "FELDOLGOZÁS…" : "ÁT VETTEM"}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                              {formatDate(order.created_at)} · #{orderRef(order.id)}
+                            </p>
 
-                    <button
-                      type="button"
-                      onClick={() => setOpenOrderId(isOpen ? null : order.id)}
-                      className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-lime-400/[0.025]"
-                    >
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${order.status === "fulfilled" ? "bg-zinc-700" : "bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.5)]"}`} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold uppercase tracking-[0.09em] text-zinc-100">
-                          {order.label}
-                        </span>
-                        <span className="mt-1 block text-[10px] uppercase tracking-[0.2em] text-zinc-600">
-                          {formatDate(order.created_at)} · #{orderRef(order.id)} · {order.source === "shop" ? "MERCH" : "KÖNYV"}
-                        </span>
-                      </span>
-                      <span className="text-zinc-600">{isOpen ? "−" : "+"}</span>
-                    </button>
-                    {isOpen && (
-                      <div className="border-t border-zinc-900 px-4 py-4">
-                        <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
-                          <div className="space-y-3">
-                            <div className="border border-zinc-800 bg-black/40 p-4">
-                              <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">ÁLLAPOT</p>
-                              <div className="mt-2 flex items-center gap-3">
-                                {order.user_received_at ? (
-                                  <span className="text-sm font-black uppercase tracking-[0.16em] text-lime-200">ÁT VÉVE</span>
-                                ) : (
-                                  <>
-                                    {["paid", "ready_to_dispatch", "dispatched"].includes(order.status) && (
-                                      <span className="h-3 w-3 animate-spin rounded-full border border-zinc-700 border-t-lime-300" aria-hidden="true" />
-                                    )}
-                                    <span className="text-sm font-bold text-lime-200">{statusLabel(order.status)}</span>
-                                  </>
+                            <div className="mt-5">
+                              <div className="flex flex-wrap items-center gap-3">
+                                {processing && (
+                                  <span
+                                    className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-700 border-t-lime-300"
+                                    aria-hidden="true"
+                                  />
                                 )}
+                                <span className="text-base font-semibold uppercase tracking-[0.08em] text-lime-200 sm:text-lg">
+                                  {order.user_received_at ? "ÁT VÉVE" : statusLabel(order.status)}
+                                </span>
                               </div>
 
                               {order.user_received_at ? (
-                                <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-zinc-500">
+                                <p className="mt-2 text-base text-zinc-500">
                                   Átvétel visszaigazolva · {formatDateTime(order.user_received_at)}
                                 </p>
                               ) : order.status === "paid" ? (
-                                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                                <p className="mt-2 text-base leading-7 text-zinc-300">
                                   V. hamarosan felveszi veled a kapcsolatot.
                                 </p>
                               ) : order.status === "dispatched" ? (
-                                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-                                  A csomag elindult. Ha megtaláltad és átvetted, jelezd lent.
+                                <p className="mt-2 text-base leading-7 text-zinc-300">
+                                  A csomag elindult. Ha megtaláltad és átvetted, jelezd itt.
                                 </p>
-                              ) : null}
-
-                              {!order.user_received_at && ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(order.status) && (
-                                <button
-                                  type="button"
-                                  disabled={receivingOrderKey === `${order.source}-${order.id}`}
-                                  onClick={() => void markOrderReceived(order)}
-                                  className="mt-4 w-full border border-lime-400/50 bg-lime-400/[0.06] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.24em] text-lime-200 transition-colors hover:bg-lime-400/10 disabled:cursor-wait disabled:opacity-50"
-                                >
-                                  {receivingOrderKey === `${order.source}-${order.id}` ? "FELDOLGOZÁS…" : "ÁT VETTEM"}
-                                </button>
+                              ) : order.status === "fulfilled" ? (
+                                <p className="mt-2 text-base leading-7 text-zinc-400">
+                                  A rendelés teljesítve. Ha már nálad van a csomag, erősítsd meg az átvételt.
+                                </p>
+                              ) : (
+                                <p className="mt-2 text-sm leading-6 text-zinc-500">
+                                  A rendelés feldolgozás alatt van.
+                                </p>
                               )}
 
+                              {!order.user_received_at &&
+                                ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(order.status) && (
+                                  <div className="mt-4">
+                                    <button
+                                      type="button"
+                                      disabled={receivingOrderKey === orderKey}
+                                      onClick={() => void markOrderReceived(order)}
+                                      className="border-b border-lime-400/60 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-lime-200 transition-colors hover:border-lime-200 hover:text-white disabled:cursor-wait disabled:opacity-50"
+                                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                                    >
+                                      {receivingOrderKey === orderKey ? "FELDOLGOZÁS…" : "ÁT VETTEM"}
+                                    </button>
+                                  </div>
+                                )}
+
                               {receiptError && openOrderId === order.id && (
-                                <p className="mt-2 text-[10px] uppercase tracking-[0.16em] text-rose-400">
+                                <p
+                                  className="mt-3 text-[10px] uppercase tracking-[0.16em] text-rose-400"
+                                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                                >
                                   {receiptError}
                                 </p>
                               )}
-                            </div>
-                            <div>
-                              <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">RENDELÉS</p>
-                              <p className="mt-1 text-sm text-zinc-300">#{orderRef(order.id)} · {formatDateTime(order.created_at)}</p>
-                            </div>
-                            {order.deliveryType && (
-                              <div>
-                                <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">KÉZBESÍTÉS</p>
-                                <p className="mt-1 text-sm text-zinc-300">{order.deliveryType.replaceAll("_", " ")}</p>
-                              </div>
-                            )}
-                            {priority && (
-                              <div className="border border-lime-400/30 bg-lime-400/[0.035] p-3 text-xs leading-relaxed text-zinc-300">
-                                Ezt a II. könyves rendelést a korábbi megrendelések között elsőként szolgáljuk ki.
-                              </div>
-                            )}
-                          </div>
 
-                          <div className="min-w-44">
-                            <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">TÉTELEK</p>
-                            <div className="mt-2 space-y-2">
-                              {order.items.map((item, index) => (
-                                <div key={`${order.id}-item-${index}`} className="border-b border-zinc-900 pb-2 last:border-0 last:pb-0">
-                                  <p className="text-xs font-semibold text-zinc-200">{item.name}</p>
-                                  <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-zinc-600">
-                                    {item.quantity} DB · {formatHuf(item.lineTotalHuf)}
-                                    {item.variant ? ` · ${item.variant}` : ""}
-                                  </p>
+                              {priority && (
+                                <p
+                                  className="mt-4 border-l border-lime-400/50 pl-3 text-[11px] uppercase tracking-[0.16em] text-lime-200/80"
+                                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                                >
+                                  ELSŐ KISZOLGÁLÁS
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start justify-between gap-5 border-t border-zinc-900 pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+                        <div>
+                          <p
+                            className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                            style={{ fontFamily: "var(--font-mono-tech)" }}
+                          >
+                            ÖSSZEG
+                          </p>
+                          <p className="mt-1 text-lg text-zinc-200">
+                            {formatHuf(order.amountHuf)}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setOpenOrderId(isOpen ? null : order.id)}
+                          className="group inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-zinc-500 transition-colors hover:text-zinc-100"
+                          style={{ fontFamily: "var(--font-mono-tech)" }}
+                        >
+                          {isOpen ? "BEZÁR" : "RÉSZLETEK"}
+                          <ChevronDown
+                            className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+
+                    {isOpen && (
+                      <div className="mt-6 ml-6 border-l border-zinc-800 pl-5 lg:ml-7">
+                        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
+                          <div>
+                            <p
+                              className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                              style={{ fontFamily: "var(--font-mono-tech)" }}
+                            >
+                              TÉTELEK
+                            </p>
+                            <div className="mt-3 space-y-3">
+                              {order.items.map((item, itemIndex) => (
+                                <div
+                                  key={`${order.id}-item-${itemIndex}`}
+                                  className="flex items-baseline justify-between gap-5 border-b border-zinc-900 pb-3 last:border-0"
+                                >
+                                  <div>
+                                    <p className="text-base text-zinc-200">{item.name}</p>
+                                    <p
+                                      className="mt-1 text-[10px] uppercase tracking-[0.16em] text-zinc-600"
+                                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                                    >
+                                      {item.quantity} DB{item.variant ? ` · ${item.variant}` : ""}
+                                    </p>
+                                  </div>
+                                  <p className="shrink-0 text-sm text-zinc-400">{formatHuf(item.lineTotalHuf)}</p>
                                 </div>
                               ))}
                             </div>
                           </div>
-                        </div>
 
-                        <div className="mt-4 border-t border-zinc-900 pt-3 text-right">
-                          <span className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">ÖSSZESEN </span>
-                          <span className="text-sm font-black text-zinc-100">{formatHuf(order.amountHuf)}</span>
+                          <div>
+                            <p
+                              className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                              style={{ fontFamily: "var(--font-mono-tech)" }}
+                            >
+                              ADATOK
+                            </p>
+                            <div className="mt-3 space-y-3 text-sm text-zinc-400">
+                              <div>
+                                <span className="text-zinc-600">Dátum</span>
+                                <span className="float-right text-zinc-300">{formatDateTime(order.created_at)}</span>
+                              </div>
+                              <div>
+                                <span className="text-zinc-600">Azonosító</span>
+                                <span className="float-right font-mono text-xs text-zinc-300">#{orderRef(order.id)}</span>
+                              </div>
+                              {order.deliveryType && (
+                                <div>
+                                  <span className="text-zinc-600">Kézbesítés</span>
+                                  <span className="float-right text-zinc-300">{order.deliveryType.replaceAll("_", " ")}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -461,140 +602,230 @@ export default function UserAccountDashboard({ account, token: _token }: Props) 
           )}
         </section>
 
-        <section className="border border-zinc-800 bg-zinc-950/60 p-5 sm:p-6">
-          <div className="flex items-end justify-between gap-3">
+        <section className="border-b border-zinc-800/80 py-10">
+          <div className="flex items-end justify-between gap-5">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500">AMIT MEGSZEREZTÉL</p>
-              <h2 className="mt-1 text-xl font-black uppercase tracking-[0.08em]">Gyűjtemény</h2>
+              {sectionEyebrow("AMIT MEGSZEREZTÉL")}
+              <h2 className="mt-2 text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+                Gyűjtemény
+              </h2>
             </div>
-            <span className="text-[10px] uppercase tracking-[0.28em] text-zinc-600">{purchases.itemCount} DB TÉTEL</span>
+            <span
+              className="text-[11px] uppercase tracking-[0.25em] text-zinc-600"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              {purchases.itemCount} DB TÉTEL
+            </span>
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="border border-zinc-900 bg-black/30 p-4">
-              <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">RENDELÉSEK</p>
-              <p className="mt-2 text-2xl font-black text-zinc-100">{orders.length}</p>
+          <div className="mt-7 grid gap-8 md:grid-cols-3">
+            <div>
+              <p
+                className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                RENDELÉSEK
+              </p>
+              <p className="mt-2 text-4xl font-normal text-zinc-100">{orders.length}</p>
             </div>
-            <div className="border border-zinc-900 bg-black/30 p-4">
-              <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">SZÁMOZOTT PÉLDÁNYOK</p>
-              <p className="mt-2 text-2xl font-black text-lime-200">{purchases.numberedCopies.length}</p>
+            <div>
+              <p
+                className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                SZÁMOZOTT PÉLDÁNYOK
+              </p>
+              <p className="mt-2 text-4xl font-normal text-lime-200">{purchases.numberedCopies.length}</p>
             </div>
-            <div className="border border-zinc-900 bg-black/30 p-4">
-              <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">HÁLÓZAT</p>
-              <p className="mt-2 text-2xl font-black text-zinc-100">{network.claims.accepted}</p>
+            <div>
+              <p
+                className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                MEGTALÁLÁSOK
+              </p>
+              <p className="mt-2 text-4xl font-normal text-zinc-100">{network.claims.accepted}</p>
             </div>
           </div>
 
           {purchases.numberedCopies.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {purchases.numberedCopies.map((copy) => (
-                <div key={copy.copyNumber} className="border border-lime-400/30 bg-lime-400/[0.025] px-4 py-3">
-                  <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-600">SZÁMOZOTT</p>
-                  <p className="mt-1 text-lg font-black tracking-[0.12em] text-lime-200">#{String(copy.copyNumber).padStart(3, "0")}</p>
-                </div>
-              ))}
+            <div className="mt-8">
+              <p
+                className="mb-3 text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                SZÁMOZOTT PÉLDÁNYOK
+              </p>
+              <div className="flex flex-wrap gap-x-6 gap-y-3">
+                {purchases.numberedCopies.map((copy) => (
+                  <div key={copy.copyNumber} className="flex items-baseline gap-2">
+                    <span className="text-2xl font-normal text-lime-200">
+                      #{String(copy.copyNumber).padStart(3, "0")}
+                    </span>
+                    <span
+                      className="text-[10px] uppercase tracking-[0.16em] text-zinc-700"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      {copy.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>
 
-        <section className="border border-zinc-800 bg-zinc-950/60 p-5 sm:p-6">
+        <section className="border-b border-zinc-800/80 py-10">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500">HÁLÓZATI AKTIVITÁS</p>
-            <h2 className="mt-1 text-xl font-black uppercase tracking-[0.08em]">Amit a hálózatban csináltál</h2>
+            {sectionEyebrow("HÁLÓZATI AKTIVITÁS")}
+            <h2 className="mt-2 text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+              A hálózatban hagyott nyom
+            </h2>
           </div>
 
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mt-7 grid grid-cols-2 gap-y-8 md:grid-cols-4 md:gap-8">
             {[
               ["MEGTALÁLÁS", network.claims.total],
               ["ELFOGADVA", network.claims.accepted],
-              ["FIZIKAI", network.claims.physical],
+              ["FÁJZIKAI", network.claims.physical],
               ["DIGITÁLIS", network.claims.digital],
             ].map(([label, value]) => (
-              <div key={String(label)} className="border border-zinc-900 bg-black/30 p-4">
-                <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-600">{label}</p>
-                <p className="mt-2 text-2xl font-black text-zinc-100">{value}</p>
+              <div key={String(label)}>
+                <p
+                  className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  {label}
+                </p>
+                <p className="mt-2 text-3xl font-normal text-zinc-100">{value}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="border border-zinc-900 bg-black/30 p-4">
-              <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-600">SAJÁT SPOTOK</p>
-              <p className="mt-2 text-xl font-black text-zinc-100">{network.spots.total}</p>
-            </div>
-            <div className="border border-zinc-900 bg-black/30 p-4">
-              <p className="text-[9px] uppercase tracking-[0.25em] text-zinc-600">AKTÍV</p>
-              <p className="mt-2 text-xl font-black text-zinc-100">{network.spots.active}</p>
-            </div>
-            <div className="border border-zinc-900 bg-black/30 p-4">
-              <p className="mt-2 text-xs text-zinc-400">{network.claims.pending} függőben lévő megtalálás</p>
-              <p className="mt-1 text-xs text-zinc-500">{network.claims.rejected} elutasított megtalálás</p>
-            </div>
+          <div className="mt-8 flex flex-wrap gap-x-10 gap-y-3 border-t border-zinc-900 pt-5">
+            <span className="text-sm text-zinc-400">
+              <strong className="font-normal text-zinc-100">{network.spots.total}</strong> saját spot
+            </span>
+            <span className="text-sm text-zinc-400">
+              <strong className="font-normal text-zinc-100">{network.spots.active}</strong> aktív
+            </span>
+            <span className="text-sm text-zinc-400">
+              <strong className="font-normal text-zinc-100">{network.claims.pending}</strong> függőben
+            </span>
+            <span className="text-sm text-zinc-400">
+              <strong className="font-normal text-zinc-100">{network.claims.rejected}</strong> elutasítva
+            </span>
           </div>
         </section>
 
-        <section className="border border-zinc-800 bg-zinc-950/60 p-5 sm:p-6">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.35em] text-zinc-500">JELVÉNYEK</p>
-            <h2 className="mt-1 text-xl font-black uppercase tracking-[0.08em]">A jelvényrendszer hamarosan érkezik</h2>
-          </div>
-          <div className="mt-4 flex min-h-24 items-center justify-center border border-dashed border-zinc-800 bg-black/20 px-4 text-center">
-            <p className="max-w-lg text-sm leading-relaxed text-zinc-500">
-              A köröd már él. A megszerzett jelvények külön gyűjthető rendszerben fognak megjelenni.
-            </p>
-          </div>
+        <section className="border-b border-zinc-800/80 py-10">
+          {sectionEyebrow("JELVÉNYEK")}
+          <h2 className="mt-2 text-3xl font-normal tracking-tight text-zinc-50 sm:text-4xl">
+            Hamarosan
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
+            A köröd már él. A megszerzett jelvények külön gyűjthető rendszerben fognak megjelenni.
+          </p>
         </section>
 
-        {openOrder && (
-          <button
-            type="button"
-            aria-label="Rendelés bezárása"
-            onClick={() => setOpenOrderId(null)}
-            className="fixed inset-0 z-40 cursor-default bg-black/60"
-          />
-        )}
+        <footer className="flex flex-col gap-3 pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <p
+            className="text-[10px] uppercase tracking-[0.22em] text-zinc-700"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            VÁLLALHATATLAN / USER NODE
+          </p>
+          <p
+            className="text-[10px] uppercase tracking-[0.22em] text-zinc-700"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            STATUS · {CIRCLE_LABELS[circle.code]}
+          </p>
+        </footer>
+      </div>
 
-        {openOrder && (
-          <div className="fixed inset-x-3 bottom-3 z-50 max-h-[75vh] overflow-y-auto border border-zinc-700 bg-zinc-950 p-5 shadow-2xl sm:inset-x-auto sm:right-5 sm:top-24 sm:bottom-auto sm:w-[min(30rem,calc(100vw-2rem))]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">RENDELÉS</p>
-                <h3 className="mt-1 text-lg font-black uppercase tracking-[0.08em] text-zinc-100">{openOrder.label}</h3>
+      {openOrder && (
+        <button
+          type="button"
+          aria-label="Rendelés részleteinek bezárása"
+          onClick={() => setOpenOrderId(null)}
+          className="fixed inset-0 z-30 cursor-default bg-black/60 backdrop-blur-[2px]"
+        />
+      )}
+
+      {openOrder && (
+        <aside className="fixed inset-x-3 bottom-3 z-40 max-h-[78vh] overflow-y-auto border border-zinc-700/80 bg-[#050505] p-5 shadow-2xl sm:left-auto sm:right-5 sm:top-20 sm:bottom-auto sm:w-[min(34rem,calc(100vw-2rem))] sm:p-6">
+          <div className="flex items-start justify-between gap-5 border-b border-zinc-800 pb-4">
+            <div>
+              {sectionEyebrow("RENDELÉS")}
+              <h3 className="mt-2 text-2xl font-normal text-zinc-100">{openOrder.label}</h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpenOrderId(null)}
+              className="text-2xl leading-none text-zinc-600 transition-colors hover:text-zinc-100"
+              aria-label="Bezárás"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="mt-5 border-b border-zinc-900 pb-5">
+            <div className="flex items-center gap-3">
+              {!openOrder.user_received_at && isProcessingStatus(openOrder.status) && (
+                <span
+                  className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-700 border-t-lime-300"
+                  aria-hidden="true"
+                />
+              )}
+              <span className="text-lg font-semibold uppercase tracking-[0.08em] text-lime-200">
+                {openOrder.user_received_at ? "ÁT VÉVE" : statusLabel(openOrder.status)}
+              </span>
+            </div>
+            {openOrder.user_received_at ? (
+              <p className="mt-2 text-sm text-zinc-500">
+                Átvétel visszaigazolva · {formatDateTime(openOrder.user_received_at)}
+              </p>
+            ) : openOrder.status === "paid" ? (
+              <p className="mt-2 text-base leading-7 text-zinc-300">
+                V. hamarosan felveszi veled a kapcsolatot.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="mt-5 space-y-4">
+            {openOrder.items.map((item, itemIndex) => (
+              <div key={`${openOrder.id}-drawer-${itemIndex}`} className="flex items-baseline justify-between gap-4">
+                <div>
+                  <p className="text-base text-zinc-200">{item.name}</p>
+                  <p
+                    className="mt-1 text-[10px] uppercase tracking-[0.16em] text-zinc-600"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    {item.quantity} DB{item.variant ? ` · ${item.variant}` : ""}
+                  </p>
+                </div>
+                <p className="text-sm text-zinc-400">{formatHuf(item.lineTotalHuf)}</p>
               </div>
+            ))}
+          </div>
+
+          {!openOrder.user_received_at &&
+            ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(openOrder.status) && (
               <button
                 type="button"
-                onClick={() => setOpenOrderId(null)}
-                className="border border-zinc-800 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-100"
+                disabled={receivingOrderKey === `${openOrder.source}-${openOrder.id}`}
+                onClick={() => void markOrderReceived(openOrder)}
+                className="mt-7 border-b border-lime-400/60 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-lime-200 transition-colors hover:border-lime-200 hover:text-white disabled:cursor-wait disabled:opacity-50"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                ×
+                {receivingOrderKey === `${openOrder.source}-${openOrder.id}`
+                  ? "FELDOLGOZÁS…"
+                  : "ÁT VETTEM"}
               </button>
-            </div>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">STÁTUSZ</p>
-                <p className="mt-1 text-sm font-bold text-lime-200">{statusLabel(openOrder.status)}</p>
-              </div>
-              <div>
-                <p className="text-[9px] uppercase tracking-[0.28em] text-zinc-600">ÖSSZEG</p>
-                <p className="mt-1 text-sm font-bold text-zinc-100">{formatHuf(openOrder.amountHuf)}</p>
-              </div>
-            </div>
-            <div className="mt-4 border-t border-zinc-900 pt-4">
-              {openOrder.items.map((item, index) => (
-                <div key={`${openOrder.id}-modal-${index}`} className="flex items-center justify-between gap-3 border-b border-zinc-900 py-3 last:border-0">
-                  <div>
-                    <p className="text-sm text-zinc-200">{item.name}</p>
-                    <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-zinc-600">
-                      {item.quantity} DB{item.variant ? ` · ${item.variant}` : ""}
-                    </p>
-                  </div>
-                  <p className="text-sm font-semibold text-zinc-100">{formatHuf(item.lineTotalHuf)}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+            )}
+        </aside>
+      )}
     </main>
   )
 }
