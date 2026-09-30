@@ -115,6 +115,17 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
   const copies = copiesRes.data ?? [];
   const shopItems = shopItemsRes.data ?? [];
 
+  const paidBookOrders = bookOrders.filter(
+    (order) => isEarnedBookOrder(order.status) && !isCancelled(order.status),
+  );
+  const paidShopOrders = shopOrders.filter(
+    (order) => order.status === "paid",
+  );
+  const paidShopOrderIds = new Set(paidShopOrders.map((order) => order.id));
+  const paidShopItems = shopItems.filter((item) =>
+    paidShopOrderIds.has(item.order_id),
+  );
+
   const firstBookFromNumberedCopy = copies.length > 0;
 
   if (firstBookFromNumberedCopy) {
@@ -122,7 +133,6 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
   }
 
   for (const order of paidBookOrders) {
-
     const metadata =
       order.metadata && typeof order.metadata === "object"
         ? (order.metadata as Record<string, unknown>)
@@ -159,7 +169,10 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
 
   const totalCents =
     paidBookOrders.reduce((sum, order) => sum + toHufCents(order.amount), 0) +
-    paidShopOrders.reduce((sum, order) => sum + toHufCents(order.subtotal_amount), 0);
+    paidShopOrders.reduce(
+      (sum, order) => sum + toHufCents(order.subtotal_amount),
+      0,
+    );
 
   if (totalCents >= 4_500_000) {
     earned.add("founder");
