@@ -307,6 +307,7 @@ export async function buildHomepageContext(
       price: product.price,
       href: product.href,
       fulfillment: product.fulfillment,
+      recommendationPriority: product.recommendationPriority,
     }))
 
   const visitCountLast30Days =
