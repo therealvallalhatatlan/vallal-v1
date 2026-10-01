@@ -7,7 +7,7 @@ const MATRICA_START_ROUTE_EVENT = 'matrica:start-route';
 import { createClient } from '@/lib/browser'
 import { BellIcon } from 'lucide-react'
 import Link from 'next/link'
-import { useCallback, useEffect, useState, useRef, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useSessionGuard } from '@/hooks/useSessionGuard.js'
 import { usePresence } from '@/hooks/usePresence'
@@ -1675,12 +1675,17 @@ function MatricaNav({
 
   const profileAvatarSize = isMobile ? 44 : 32
 
-  const unreadSnapshot = useSyncExternalStore(
-    subscribeUnread,
-    getUnreadSnapshot,
-    getUnreadSnapshot,
-  )
-  const notificationUnread = unreadSnapshot.sources['personal-notifications'] ?? 0
+  const [notificationUnread, setNotificationUnread] = useState(0)
+
+  useEffect(() => {
+    const refreshUnread = () => {
+      setNotificationUnread(getUnreadSnapshot().sources['personal-notifications'] ?? 0)
+    }
+
+    refreshUnread()
+    return subscribeUnread(refreshUnread)
+  }, [])
+
   const pmUnreadTotal = Object.values(pmUnreadCounts).reduce((sum, count) => sum + (count ?? 0), 0)
   const totalUnread = notificationUnread + pmUnreadTotal
 
