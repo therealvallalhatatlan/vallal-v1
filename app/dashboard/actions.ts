@@ -5,6 +5,7 @@ import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { isEditor } from "@/lib/auth/isEditor";
 import { getSiteUrl } from "@/lib/stripe";
+import { createCheckoutOrderId } from "@/lib/stripeAttribution";
 
 export type RecentOrder = {
   id: string;
@@ -115,6 +116,20 @@ export async function generateStripePaymentLink(
   const packageLabel = `DATA_PACKAGE_${String(catalogItem.sort_order > 0 ? catalogItem.sort_order : 1).padStart(2, "0")}`;
 
   try {
+    const orderId = createCheckoutOrderId("dashboard");
+    const metadata = {
+      type: "merch",
+      product_alias: packageLabel,
+      package_label: packageLabel,
+      product_id: normalizedProductId,
+      delivery_type: "anonymous_locker",
+      created_by_editor: editor.email,
+      custom_price_huf: String(priceHuf),
+      source: "dashboard_simulator",
+      order_id: orderId,
+      cart_summary: normalizedProductId + "x1",
+    };
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -136,16 +151,9 @@ export async function generateStripePaymentLink(
       shipping_address_collection: {
         allowed_countries: ["HU"],
       },
-      metadata: {
-        type: "merch",
-        product_alias: packageLabel,
-        package_label: packageLabel,
-        product_id: normalizedProductId,
-        delivery_type: "anonymous_locker",
-        created_by_editor: editor.email,
-        custom_price_huf: String(priceHuf),
-        source: "dashboard_simulator",
-      },
+      client_reference_id: orderId,
+      metadata,
+      payment_intent_data: { metadata },
     });
 
     if (!session.url) {
