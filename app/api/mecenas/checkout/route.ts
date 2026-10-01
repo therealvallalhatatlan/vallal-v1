@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { guardWriteOperation } from "@/lib/systemGuard";
 import { getUserFromToken, parseBearerToken } from "@/lib/auth";
+import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY!;
 const stripe = new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" });
@@ -9,7 +10,7 @@ const stripe = new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" });
 const MIN_AMOUNT_HUF = 1000;
 const MAX_AMOUNT_HUF = 1_000_000;
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const guardResponse = await guardWriteOperation(req as any);
   if (guardResponse) return guardResponse;
 
@@ -50,6 +51,17 @@ export async function POST(req: Request) {
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "https://vallalhatatlan.online";
 
+    const metadata = await buildCheckoutMetadata(
+      req,
+      {
+        project: "vallalhatatlan",
+        type: "mecenas",
+        amount_huf: String(rawAmount),
+        product_id: "mecenas",
+      },
+      { cartSummary: "mecenas:" + String(rawAmount), userUuid: authenticatedUser?.id ?? null },
+    );
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       currency: "huf",
@@ -59,14 +71,9 @@ export async function POST(req: Request) {
       billing_address_collection: "auto",
       success_url: `${baseUrl}/mecenas/koszonom?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/mecenas`,
-      client_reference_id: "mecenas-" + Math.random().toString(36).slice(2, 10),
-      metadata: {
-        project: "vallalhatatlan",
-        type: "mecenas",
-        amount_huf: String(rawAmount),
-        user_uuid: authenticatedUser?.id ?? "",
-        product_id: "mecenas",
-      },
+      client_reference_id: metadata.order_id,
+      metadata,
+      payment_intent_data: { metadata },
       line_items: [
         {
           price_data: {
