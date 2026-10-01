@@ -241,6 +241,20 @@ export async function GET(req: NextRequest) {
   const claims = claimsRes.data ?? [];
   const spots = spotsRes.data ?? [];
 
+  const activityDates = [
+    ...(bookOrdersRes.data ?? []).map((item) => item.created_at),
+    ...(shopOrdersRes.data ?? []).map((item) => item.created_at),
+    ...claims.map((item) => item.created_at),
+    ...spots.map((item) => item.created_at),
+  ].filter((value): value is string => Boolean(value));
+
+  const lastActivityAt =
+    activityDates.length > 0
+      ? activityDates.reduce((latest, value) =>
+          new Date(value).getTime() > new Date(latest).getTime() ? value : latest
+        )
+      : null;
+
   return NextResponse.json({
     ok: true,
     account: {
@@ -254,6 +268,7 @@ export async function GET(req: NextRequest) {
         created_at: authUser?.created_at ?? profileRes.data?.created_at ?? null,
         updated_at: profileRes.data?.updated_at ?? null,
         last_sign_in_at: authUser?.last_sign_in_at ?? null,
+        last_activity_at: lastActivityAt,
       },
       circle,
       badges,
