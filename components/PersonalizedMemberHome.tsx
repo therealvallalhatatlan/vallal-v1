@@ -122,22 +122,22 @@ function MemberTerminalTrace({
 
   return (
     <section
-      className="mt-16 border-b border-zinc-900 bg-[#010101]/95"
+      className="mt-0 pb-0 bg-[#010101]/95"
       aria-label="Member channel állapot"
     >
-      <div className="mx-auto w-full max-w-5xl px-5 py-3 sm:px-8 sm:py-4">
+      <div className="mx-auto w-full max-w-5xl px-5 py-3">
         <div
-          className="flex items-center justify-between border-b border-zinc-900 pb-2 text-[8px] uppercase tracking-[0.22em] text-zinc-700 sm:text-[9px]"
+          className="flex items-center justify-between pb-2 text-[11px] uppercase tracking-[0.22em] text-zinc-400"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
-          <span>VÁLLALHATATLAN / MEMBER CHANNEL</span>
-          <span className="flex items-center gap-2 text-zinc-700">
+          <span className="tracking-normal">v 3.2.5</span>
+          <span className="flex items-center gap-2 text-lime-100/50">
             <span
               className={
                 "h-1.5 w-1.5 rounded-full " +
                 (loading
                   ? "animate-pulse bg-lime-300"
-                  : "bg-lime-300/35")
+                  : "bg-lime-100/50")
               }
             />
             {loading ? "BUILDING" : "READY"}
@@ -145,7 +145,7 @@ function MemberTerminalTrace({
         </div>
 
         <div
-          className="mt-2 grid gap-x-8 gap-y-0.5 text-[8px] leading-4 sm:grid-cols-2 sm:text-[9px]"
+          className="grid gap-x-8 gap-y-0.5 text-[11px] leading-4"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           {visibleLines.map((line, index) => (
@@ -155,13 +155,13 @@ function MemberTerminalTrace({
                 loading && index === lastIndex
                   ? "text-lime-200/90"
                   : loading
-                    ? "text-zinc-700"
+                    ? "text-zinc-500"
                     : index === LOADER_LINES.length - 1
                       ? "text-lime-200/35"
-                      : "text-zinc-800"
+                      : "text-zinc-300/80"
               }
             >
-              <span className="mr-2 text-zinc-800">
+              <span className="mr-2 text-lime-100/50">
                 [{String(index + 1).padStart(2, "0")}]
               </span>
               {line}
@@ -182,10 +182,10 @@ function FixedBadgesSection({
   codes: MemberBadgeCode[] | null
 }) {
   return (
-    <section className="border-b border-zinc-900 py-7 sm:py-9" aria-label="Jelvényeid">
-      <div className="border-y border-zinc-800 py-3">
+    <section className="py-7" aria-label="Jelvényeid">
+      <div className="border-y border-zinc-700 py-3">
         <p
-          className="text-[10px] uppercase tracking-[0.3em] text-zinc-500"
+          className="text-[11px] uppercase tracking-[0.3em] text-zinc-400"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           JELVÉNYEID
@@ -204,7 +204,7 @@ function FixedBadgesSection({
           </p>
           <Link
             href="/shop"
-            className="mt-4 inline-flex items-center gap-2 border-2 border-lime-400/45 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-lime-200/90 transition-colors hover:border-lime-300 hover:text-lime-100"
+            className="mt-4 inline-flex items-center gap-2 rounded-sm border-2 border-lime-400/45 px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-lime-200/90 transition-colors hover:border-lime-300 hover:text-lime-100"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             NÉZZ KÖRÜL A SHOPBAN
@@ -255,28 +255,26 @@ function ProductBlockView({
       : "/shop?product=" + encodeURIComponent(productId)
 
   return (
-    <section className="border-b border-zinc-900 py-8 sm:py-12">
-      <div className="overflow-hidden rounded-md border border-zinc-800 bg-[#050505] transition-colors hover:border-zinc-700">
-        <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] sm:grid-cols-[10rem_minmax(0,1fr)]">
-          <div className="relative aspect-[4/5] overflow-hidden bg-black">
+    <section className="py-8 sm:py-12">
+      <div className="overflow-hidden rounded-md border border-zinc-100 bg-white transition-colors hover:border-zinc-700">
+        <div className="flex">
+          <div className="w-[38.2%] relative overflow-hidden bg-white">
             <img
               src={image}
               alt={block.productName ?? ""}
-              className="h-full w-full object-contain grayscale transition-all duration-300 hover:grayscale-0"
+              className="rounded-md ml-2 h-full w-full object-contain grayscale transition-all duration-300 hover:grayscale-0"
             />
-            <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:100%_4px]" />
           </div>
-
-          <div className="min-w-0 p-4 sm:p-5">
+          <div className="w-[61.8%] p-4 sm:p-5">
             <p
-              className="text-[8px] uppercase tracking-[0.24em] text-zinc-600 sm:text-[9px]"
+              className="text-[11px] uppercase tracking-[0.20em] font-semibold text-zinc-600 sm:text-[9px]"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              TALÁLTAM NEKED VALAMIT
+              TALÁLTAM NEKED VALAMIT!
             </p>
 
             <h2
-              className={"mt-2 text-lg uppercase leading-[0.95] tracking-[-0.015em] text-zinc-100 sm:text-2xl " + montserrat.className}
+              className={"mt-2 text-2xl uppercase leading-[0.95] tracking-[-0.015em] text-zinc-800 " + montserrat.className}
             >
               {block.productName ?? block.headline}
             </h2>
@@ -289,24 +287,24 @@ function ProductBlockView({
             </p>
 
             <div
-              className="mt-4 border-t border-zinc-900 pt-3"
+              className="mt-6"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[8px] uppercase tracking-[0.16em] text-zinc-600 sm:text-[9px]">
+                <span className="text-[16px] uppercase tracking-[0.0em] text-zinc-600">
                   DEAD DROP
                 </span>
-                <span className="text-sm font-bold tracking-[0.06em] text-lime-300 sm:text-base">
+                <span className="text-[16px] font-bold tracking-[0.06em] text-lime-700 sm:text-base">
                   {block.productPrice
                     ? new Intl.NumberFormat("hu-HU").format(block.productPrice) + " Ft"
                     : "ÁR INFO"}
                 </span>
               </div>
               <div className="mt-1.5 flex items-baseline justify-between gap-3">
-                <span className="text-[8px] uppercase tracking-[0.16em] text-zinc-700 sm:text-[9px]">
+                <span className="text-[16px] uppercase tracking-[0em] text-zinc-600">
                   POSTAAUTOMATA
                 </span>
-                <span className="text-[11px] tracking-[0.04em] text-zinc-600 sm:text-xs">
+                <span className="text-[16px] tracking-[0.06em] text-zinc-600">
                   {block.productPrice
                     ? new Intl.NumberFormat("hu-HU").format(
                         block.productPrice + 2500,
@@ -318,7 +316,7 @@ function ProductBlockView({
 
             <Link
               href={href}
-              className="group mt-4 flex items-center justify-between border-2 border-zinc-700 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-200 transition-all hover:border-lime-400/70 hover:bg-lime-400/[0.035] hover:text-lime-100"
+              className="group mt-4 flex items-center justify-between border-2 border-zinc-700 bg-zinc-800 px-3 py-3 text-[12px] rounded-sm font-semibold uppercase tracking-[0.18em] text-zinc-200 transition-all hover:border-lime-400/70 hover:bg-lime-400/[0.035] hover:text-lime-100"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               <span>{block.cta || "MEGNÉZEM"}</span>
@@ -478,7 +476,7 @@ function NetworkSnapshotSection() {
   ]
 
   return (
-    <section className="border-b border-zinc-900 py-12 sm:py-16" aria-label="Hálózat">
+    <section className="py-12 sm:py-16" aria-label="Hálózat">
       <div className="border-y border-zinc-800 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -487,7 +485,7 @@ function NetworkSnapshotSection() {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-lime-100" />
             </span>
             <span
-              className="text-[10px] uppercase tracking-[0.28em] text-zinc-300"
+              className="text-[11px] uppercase tracking-[0.28em] text-zinc-300"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               A HÁLÓZAT
@@ -496,7 +494,7 @@ function NetworkSnapshotSection() {
           <button
             type="button"
             onClick={() => void loadSpots()}
-            className="text-[9px] uppercase tracking-[0.18em] text-zinc-600 hover:text-lime-100"
+            className="text-[11px] uppercase tracking-[0.18em] text-zinc-400 hover:text-lime-100"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             {loading ? "SYNC..." : "FRISSÍTÉS"}
@@ -508,14 +506,14 @@ function NetworkSnapshotSection() {
         className="mt-7 max-w-2xl text-base italic leading-7 text-zinc-500 sm:text-lg"
         style={{ fontFamily: "var(--font-mono-tech)" }}
       >
-        A hálózat él. Ezek az adatok most vannak itt.
+        Ezek itt élő, valós időben frissülő adatok.
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden border border-zinc-800 bg-zinc-800 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-zinc-800 bg-zinc-800 sm:grid-cols-4">
         {stats.map(([label, value]) => (
           <div key={label} className="bg-black/90 px-3 py-4 sm:px-4 sm:py-5">
             <p
-              className="text-[8px] uppercase leading-4 tracking-[0.16em] text-zinc-600 sm:text-[9px]"
+              className="text-[11px] uppercase leading-4 tracking-[0.16em] text-zinc-400 sm:text-[9px]"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               {label}
@@ -532,23 +530,23 @@ function NetworkSnapshotSection() {
 
       <Link
         href="/halozat"
-        className="group mt-3 flex items-center justify-between border-2 border-zinc-700 px-4 py-3 transition-colors hover:border-lime-400/70 hover:bg-lime-400/[0.025]"
+        className="group mt-3 flex items-center justify-between rounded-md border-2 border-zinc-700 px-4 py-3 transition-colors hover:border-lime-400/70 hover:bg-lime-400/[0.025]"
       >
         <div>
           <p
-            className="text-[10px] uppercase tracking-[0.16em] text-zinc-300"
+            className="text-[12px] font-semibold uppercase tracking-[0.16em] text-zinc-300"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             BELÉPÉS A HÁLÓZATBA
           </p>
           <p
-            className="mt-1 text-[8px] uppercase tracking-[0.14em] text-zinc-700"
+            className="mt-1 text-[9px] uppercase tracking-[0.14em] text-zinc-500"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             TÉRKÉP · PONTOK · EMBEREK
           </p>
         </div>
-        <span className="text-lg text-zinc-600 transition-transform group-hover:translate-x-1 group-hover:text-lime-100">
+        <span className="text-3xl text-zinc-600 transition-transform group-hover:translate-x-1 group-hover:text-lime-100">
           →
         </span>
       </Link>
@@ -558,17 +556,19 @@ function NetworkSnapshotSection() {
 
 function TrustSection() {
   return (
-    <section className="border-b border-zinc-900 py-12 sm:py-16" aria-label="Bízhatsz bennem">
-      <div className="grid gap-7 sm:grid-cols-[minmax(0,1fr)_9rem] sm:items-center sm:gap-12">
-        <div>
+    <section className="py-12 sm:py-16" aria-label="Bízhatsz bennem">
+      <div className="flex gap-6">
+        
+        <div className="w-[61.8%]">
           <p
-            className={"text-3xl italic leading-[1.05] tracking-tight text-zinc-200 sm:text-5xl " + montserrat.className}
+            className="text-[23px] font-normal italic leading-tight tracking-tight text-zinc-300 sm:text-base"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            Bízhatsz bennem, nyúl vagyok.
+            Bízhatsz bennem,<br/>nyúl vagyok.
           </p>
 
           <p
-            className="mt-5 text-sm leading-7 text-zinc-500"
+            className="mt-4 text-sm leading-normal text-zinc-400"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             Ha kérdésed van{" "}
@@ -578,11 +578,11 @@ function TrustSection() {
             >
               itt tudsz
             </Link>{" "}
-            írni nekem.
+            írni Vállalhatatlanak.
           </p>
         </div>
 
-        <div className="mx-auto w-28 overflow-hidden rounded-full border border-zinc-800 bg-black sm:mx-0 sm:w-36 sm:justify-self-end">
+        <div className="mx-auto w-[38.2%] overflow-hidden rounded-full bg-black sm:mx-0 sm:w-36 sm:justify-self-end">
           <video
             className="block w-full"
             src="/420.mp4"
@@ -639,10 +639,10 @@ function RandomStorySection() {
 
   return (
     <section
-      className="w-full border-t border-zinc-800 py-12 sm:py-16"
+      className="w-full"
       aria-label="Random Vállalhatatlan Sztori"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-t border-b border-zinc-800 pt-2 pb-2">
         <span
           className="text-[10px] uppercase tracking-[0.24em] text-zinc-300"
           style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -666,7 +666,7 @@ function RandomStorySection() {
       </div>
 
       {story ? (
-        <article className="border-t border-zinc-800 pt-7 sm:pt-9">
+        <article className="pt-7 sm:pt-9">
           <h2
             className={"text-3xl leading-tight text-zinc-100 sm:text-4xl " + montserrat.className}
           >
@@ -682,7 +682,7 @@ function RandomStorySection() {
               {visibleParagraphs.map((paragraph, index) => (
                 <p
                   key={index}
-                  className="mt-4 whitespace-pre-line text-sm leading-7 text-zinc-400 sm:text-base sm:leading-8"
+                  className="mt-4 whitespace-pre-line text-lg leading-normal text-zinc-300/80"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   {paragraph}
@@ -702,7 +702,7 @@ function RandomStorySection() {
             <button
               type="button"
               onClick={() => setExpanded((value) => !value)}
-              className="mx-auto mt-5 flex w-1/2 items-center justify-between border-2 border-zinc-700 px-3 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-zinc-300 transition-all hover:border-lime-100/60 hover:bg-lime-100/[0.03] hover:text-lime-100 sm:w-1/3"
+              className="mx-auto mt-5 flex w-1/2 items-center justify-between border-2 border-zinc-700 px-3 py-3 text-left text-[11px] uppercase tracking-[0.2em] text-zinc-300 transition-all hover:border-lime-100/60 hover:bg-lime-100/[0.03] hover:text-lime-100 sm:w-1/3"
               style={{ fontFamily: "var(--font-mono-tech)" }}
               aria-expanded={expanded}
             >
@@ -974,11 +974,12 @@ export default function PersonalizedMemberHome() {
       <SiteHeader />
       <MemberTerminalTrace loading={false} loaderIndex={loaderIndex} />
 
-      <main className="mx-auto w-full max-w-5xl px-5 pb-24 pt-6 sm:px-8 sm:pb-32 sm:pt-8">
-        <section className="border-b border-zinc-900 py-10 sm:py-16">
+      <main className="mx-auto w-full max-w-5xl px-5 pb-24 pt-0 sm:pb-32">
+        <section className="pt-10 pb-10">
           <div className="max-w-4xl">
             <p
-              className={"text-4xl italic leading-[1.02] tracking-tight text-zinc-100 sm:text-6xl lg:text-[5rem] " + montserrat.className}
+              className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               {plan.greeting}
             </p>
