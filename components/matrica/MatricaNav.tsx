@@ -1778,57 +1778,6 @@ function MatricaNav({
             zIndex: 1003,
           }}
         >
-          <button
-            type="button"
-            onClick={() => {
-              playUiClick()
-              window.dispatchEvent(new CustomEvent('network-inbox:open'))
-            }}
-            aria-label="Értesítések megnyitása"
-            title="Értesítések"
-            style={{
-              position: 'relative',
-              width: profileAvatarSize,
-              height: profileAvatarSize,
-              borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.16)',
-              background: 'rgba(5,7,9,0.94)',
-              color: '#d4d4d8',
-              cursor: 'pointer',
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <BellIcon size={16} />
-            {totalUnread > 0 ? (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: -5,
-                  right: -5,
-                  minWidth: 17,
-                  height: 17,
-                  padding: '0 4px',
-                  borderRadius: 999,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: '#a3e635',
-                  color: '#111827',
-                  fontSize: 9,
-                  fontWeight: 800,
-                  lineHeight: 1,
-                  border: '1px solid #0b1020',
-                }}
-              >
-                {totalUnread > 99 ? '99+' : totalUnread}
-              </span>
-            ) : null}
-          </button>
-
           {/* Profile menu trigger + dropdown */}
           {user && (
             <div
