@@ -95,6 +95,28 @@ export async function POST(req: NextRequest) {
 
     const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
+    const metadata = await buildCheckoutMetadata(
+      req,
+      {
+        orderType: "merch",
+        product_id: validatedItems.length === 1 ? validatedItems[0]?.product.id ?? "multi_cart" : "multi_cart",
+        deliveryMethod,
+        shippingAmount: String(draftOrder.shippingAmount),
+        totalAmount: String(draftOrder.totalAmount),
+      },
+      {
+        orderId: draftOrder.orderId,
+        cartSummary: buildCartSummary(
+          validatedItems.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+            variantId: item.variantId,
+          })),
+          "delivery:" + deliveryMethod,
+        ),
+      },
+    );
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items,
