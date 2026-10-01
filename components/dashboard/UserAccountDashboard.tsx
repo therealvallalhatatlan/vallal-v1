@@ -236,9 +236,14 @@ export default function UserAccountDashboard({ account, token }: Props) {
     network.claims.accepted + network.spots.active
 
   return (
-    <main className="min-h-screen bg-[#010101] text-zinc-100">
-      <div className="pointer-events-none fixed inset-0 z-0 opacity-[0.1]">
-        <div className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(163,230,53,0.05)_0,rgba(163,230,53,0.05)_1px,transparent_1px,transparent_24px)]" />
+    <main className="relative min-h-screen bg-[#010101] text-zinc-100">
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-45"
+          style={{ backgroundImage: "url('/bg.jpg')" }}
+        />
+        <div className="absolute inset-0 bg-black/65" />
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(163,230,53,0.045)_0,rgba(163,230,53,0.045)_1px,transparent_1px,transparent_24px)]" />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-24 sm:px-8">
