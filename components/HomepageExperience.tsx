@@ -196,7 +196,7 @@ function GuestHome() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(163,230,53,0.07),transparent_34%)]" />
           </div>
 
-          <div className="relative px-2 py-12 sm:px-6 sm:py-20">
+          <div className="relative px-2 sm:px-6">
             <div className="ml-auto max-w-3xl">
               <p
                 className="text-right text-[21px] font-normal italic leading-[1.7] tracking-tight text-zinc-300 sm:text-[23px]"
@@ -204,19 +204,19 @@ function GuestHome() {
               >
                 "Archetípus vagyok.<br/>A funkcionális rendszerhiba, az elbaszott túlélő, a káosz-építész archetípusa. Egy csótány fejlett idegrendszerrel."<br/>
               </p>
-              <p className="mt-5 text-right text-lg italic tracking-wide text-zinc-600">
+              <p className="mt-5 text-right text-2xl italic tracking-wide text-zinc-500">
                 — Író Úr
               </p>
 
-              <div className="mt-14 sm:mt-16">
-                <p className="text-right text-[11px] leading-5 tracking-[0.08em] text-zinc-400 sm:text-[12px]">
+              <div className="mt-10">
+                <p className="text-right text-[12px] leading-5 tracking-[0.1em] uppercase text-zinc-500">
                   Ez egy privát, zártkörű klub. Jelentkezz be.
                 </p>
 
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <div className="mt-5 min-h-14 pb-4 flex flex-row gap-8 justify-center">
                   <Link
                     href="/auth?from=%2Ffooldal-2&next=%2Ffooldal-2"
-                    className="inline-flex min-h-12 min-w-40 items-center justify-center rounded-md border border-lime-400/45 bg-lime-400/[0.035] px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white"
+                    className="outline-4 outline-offset-2 outline-lime-200/10 basis-1/2 inline-flex min-h-12 min-w-40 items-center justify-center rounded-md border border-lime-400/45 bg-lime-400/[0.035] px-5 py-4 text-[12px] font-semibold uppercase tracking-[0.22em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white"
                   >
                     BELÉPÉS
                   </Link>
@@ -225,12 +225,12 @@ function GuestHome() {
                     type="button"
                     onClick={() => void handleGoogleLogin()}
                     disabled={googleLoading}
-                    className="inline-flex min-h-12 min-w-48 items-center justify-center gap-2.5 rounded-md border border-zinc-700 bg-zinc-950 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300 transition-all hover:border-lime-400/60 hover:bg-zinc-900 hover:text-lime-100 disabled:cursor-wait disabled:opacity-50"
+                    className="outline-4 outline-offset-2 outline-zinc-100/10 basis-1/2 inline-flex min-h-12 min-w-48 items-center justify-center gap-2.5 rounded-md border border-zinc-700 bg-black px-5 py-4 text-[12px] font-semibold uppercase tracking-[0.22em] text-zinc-300 transition-all hover:border-zinc-200/60 hover:bg-zinc-900 hover:text-lime-100 disabled:cursor-wait disabled:opacity-50"
                   >
                     <svg
                       viewBox="0 0 24 24"
                       aria-hidden="true"
-                      className="h-4 w-4 shrink-0 fill-current text-zinc-200"
+                      className="h-5 w-5 shrink-0 fill-current text-zinc-200"
                     >
                       <path d="M21.35 11.1h-9.18v2.98h5.62c-.24 1.56-1.84 4.58-5.62 4.58-3.38 0-6.14-2.8-6.14-6.26s2.76-6.26 6.14-6.26c1.92 0 3.21.82 3.95 1.53l2.14-2.08C16.88 4.3 14.96 3.3 12.17 3.3 7.36 3.3 3.45 7.2 3.45 12s3.91 8.7 8.72 8.7c5.04 0 8.39-3.54 8.39-8.52 0-.57-.06-.99-.13-1.08z" />
                     </svg>
@@ -287,28 +287,24 @@ function MemberHome({
     <>
       <SiteHeader />
 
-      <div className="mx-auto w-full max-w-6xl px-5 pb-24 pt-24 sm:px-8">
+      <div className="mx-auto w-full max-w-6xl px-5 pb-24 sm:px-8">
         <section className="border-b border-zinc-800 pb-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.32em] text-zinc-600">
-                SZEMÉLYES CSATORNA / ONLINE
-              </p>
-              <h1
-                className="mt-2 text-4xl tracking-tight text-zinc-100 sm:text-6xl"
-                style={{ fontFamily: "var(--font-heading), serif" }}
+              <p
+                className="mt-2 text-[23px] font-normal italic leading-relaxed tracking-tight text-zinc-300 sm:text-base"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                SZIA, {firstName}.
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-500 sm:text-base">
-                Innentől nem ugyanazt az oldalt látod, mint aki csak benézett.
-                Ez a te réteged.
+                Szia {firstName}.
+              </p>
+              <p className="mt-3 max-w-2xl text-lg leading-6 text-zinc-500 sm:text-base">
+                Ez a weboldal mindenkinek más tartalmat mutat. 
               </p>
             </div>
 
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-2 border-b border-zinc-700 pb-1 text-[10px] uppercase tracking-[0.2em] text-zinc-500 transition-colors hover:border-lime-300 hover:text-lime-200"
+              className="inline-flex items-center gap-2 border-b border-zinc-700 pb-4 text-[14px] uppercase tracking-[0.1em] text-lime-100 transition-colors hover:border-lime-300 hover:text-lime-200"
             >
               SAJÁT FIÓK <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
