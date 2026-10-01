@@ -162,7 +162,7 @@ function GuestHome() {
 
     try {
       const supabase = createClient()
-      persistAuthReturnTarget("/")
+      persistAuthReturnTarget("/fooldal-2")
       const redirectTo = `${window.location.origin}/auth/callback`
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -215,7 +215,7 @@ function GuestHome() {
 
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
                   <Link
-                    href="/auth?from=%2F&next=%2F"
+                    href="/auth?from=%2Ffooldal-2&next=%2Ffooldal-2"
                     className="inline-flex min-h-12 min-w-40 items-center justify-center rounded-md border border-lime-400/45 bg-lime-400/[0.035] px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white"
                   >
                     BELÉPÉS
