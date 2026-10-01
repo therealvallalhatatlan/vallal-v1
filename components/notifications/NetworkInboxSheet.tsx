@@ -447,6 +447,12 @@ export default function NetworkInboxSheet() {
   }, [isAuthenticated, headers, fetchInbox])
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setPayload(null)
+      setUnreadSource(UNREAD_SOURCE_KEY, 0)
+      return
+    }
+
     setUnreadSource(
       UNREAD_SOURCE_KEY,
       payload?.unreadNotificationCount ?? 0,
@@ -455,7 +461,7 @@ export default function NetworkInboxSheet() {
     return () => {
       setUnreadSource(UNREAD_SOURCE_KEY, 0)
     }
-  }, [payload])
+  }, [isAuthenticated, payload])
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
