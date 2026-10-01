@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS homepage_visits (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  session_id TEXT,
+  session_id TEXT NOT NULL,
   path TEXT NOT NULL DEFAULT '/fooldal-2',
   source TEXT NOT NULL DEFAULT 'unknown',
   campaign TEXT,
@@ -13,8 +13,7 @@ CREATE INDEX IF NOT EXISTS idx_homepage_visits_user_time
   ON homepage_visits(user_id, visited_at DESC);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_homepage_visits_session
-  ON homepage_visits(user_id, session_id)
-  WHERE session_id IS NOT NULL;
+  ON homepage_visits(user_id, session_id);
 
 ALTER TABLE homepage_visits ENABLE ROW LEVEL SECURITY;
 
