@@ -29,7 +29,7 @@ export type HomepageOrderStatus =
 
 export type HomepageProductCandidate = Pick<
   Product,
-  "id" | "type" | "name" | "description" | "images" | "price" | "href" | "fulfillment" | "recommendationPriority"
+  "id" | "type" | "name" | "description" | "images" | "price" | "href" | "fulfillment" | "recommendationPriority" | "recommendationPriority"
 >
 
 export type HomepageStoryCandidate = {
