@@ -5,7 +5,7 @@ import { formatDistanceToNowStrict } from "date-fns"
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { usePathname, useRouter } from "next/navigation"
 
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { setUnreadSource, getUnreadSnapshot, subscribeUnread } from "@/lib/notifications/unreadStore"
 import { buildPrivateRoomId } from "@/lib/live/privateRooms"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
@@ -847,6 +847,16 @@ export default function NetworkInboxSheet() {
     }
   }, [])
 
+  useEffect(() => {
+    const handleOpenFromTopNav = () => {
+      setSheetOpen(true)
+    }
+
+    window.addEventListener("network-inbox:open", handleOpenFromTopNav)
+    return () => window.removeEventListener("network-inbox:open", handleOpenFromTopNav)
+  }, [])
+
+
   const handleNotificationRead = useCallback(
     async (notificationId: string, targetUrl?: string) => {
       if (!headers || !payload) return
@@ -965,25 +975,6 @@ export default function NetworkInboxSheet() {
 
   return (
     <Sheet open={sheetOpen} onOpenChange={handleOpenChange}>
-      <SheetTrigger asChild>
-        <button
-          type="button"
-          className="fixed bottom-[calc(8.25rem+env(safe-area-inset-bottom))] right-5 z-[110] outline-4 outline-lime-100/20 hover:outline-lime-100/80 inline-flex h-16 w-16 items-center justify-center rounded-full border border-zinc-900 bg-gradient-to-t from-black to-zinc-800 text-zinc-300 shadow-[0_12px_30px_rgba(0,0,0,0.45)] backdrop-blur transition-all hover:border-lime-400/70 hover:bg-lime-400/10 hover:text-lime-100"
-          aria-label="Értesítések megnyitása"
-          title="Értesítések"
-        >
-          <BellIcon className="h-5 w-5" />
-
-          {unreadCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex min-w-[20px] items-center justify-center rounded-full bg-lime-400 px-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-black">
-              {unreadCount > badgeLimit
-                ? `${badgeLimit}+`
-                : unreadCount}
-            </span>
-          )}
-        </button>
-      </SheetTrigger>
-
       <SheetContent
         side="right"
         className="z-[120] flex h-full w-[min(26rem,calc(100vw-1.5rem))] flex-col bg-transparent text-white"
