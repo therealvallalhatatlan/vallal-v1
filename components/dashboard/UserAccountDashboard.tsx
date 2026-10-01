@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useMemo, useRef, useState } from "react"
 import { Check, ChevronDown, Pencil, X } from "lucide-react"
 import { Montserrat } from "next/font/google"
@@ -28,7 +29,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const CIRCLE_LABELS: Record<DashboardAccountResponse["circle"]["code"], string> = {
-  outside: "KÖRÖN KÍVÜL",
+  outside: "KERÜLJ BE A KÖRBE",
   a: "A KÖR",
   inner: "BELSŐ KÖR",
   core: "SZŰK BELSŐ KÖR",
@@ -326,9 +327,18 @@ export default function UserAccountDashboard({ account, token }: Props) {
             <div className="flex relative justify-between gap-4  pt-4 pb-4 ">
                 <div className="w-36">
                   <span className="absolute -left-2 -top-1 float-left text-lime-200 text-2xl">✪</span>
-                  <p className="mt-0 text-sm text-center font-normal tracking-[0.04em] text-lime-200 border border-lime-200/40 py-2 px-2 rounded-full outline-lime-200/20 outline-4 outline-offset-2">
-                    {CIRCLE_LABELS[circle.code]}
-                  </p>
+                  {circle.code === "outside" ? (
+                    <Link
+                      href="/konyv"
+                      className="block mt-0 text-sm text-center font-normal tracking-[0.04em] text-lime-200 border border-lime-200/40 py-2 px-2 rounded-full outline-lime-200/20 outline-4 outline-offset-2 transition-colors hover:border-lime-200 hover:bg-lime-200/[0.06] hover:text-white focus-visible:outline-2 focus-visible:outline-lime-200"
+                    >
+                      {CIRCLE_LABELS[circle.code]}
+                    </Link>
+                  ) : (
+                    <p className="mt-0 text-sm text-center font-normal tracking-[0.04em] text-lime-200 border border-lime-200/40 py-2 px-2 rounded-full outline-lime-200/20 outline-4 outline-offset-2">
+                      {CIRCLE_LABELS[circle.code]}
+                    </p>
+                  )}
                   <p
                     className="mt-4 mb-3 text-[10px] uppercase tracking-[0.24em] text-zinc-600 text-center"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -367,9 +377,18 @@ export default function UserAccountDashboard({ account, token }: Props) {
           </div>
 
           {badges.length === 0 ? (
-            <p className="mt-6 text-base text-zinc-600">
-              Még nincs megszerzett jelvényed.
-            </p>
+            <div className="mt-6 max-w-2xl">
+              <p className="text-base leading-7 text-zinc-500">
+                Még nincs megszerzett jelvényed. Az első könyv, a II. könyv, a merch és a közvetlen támogatás külön jelvényeket nyithat meg, a nagyobb összköltés pedig további státuszt ad.
+              </p>
+              <Link
+                href="/shop"
+                className="mt-4 inline-block border-b border-lime-400/60 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-lime-200 transition-colors hover:border-lime-200 hover:text-white"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                NÉZD MEG A SHOPOT →
+              </Link>
+            </div>
           ) : (
             <div className="mt-6 flex flex-wrap gap-x-8 gap-y-5">
               {badges.map((badge) => (
@@ -421,8 +440,17 @@ export default function UserAccountDashboard({ account, token }: Props) {
           </div>
 
           {orders.length === 0 ? (
-            <div className="py-10 text-base text-zinc-500">
-              Még nem rendeltél semmit :(
+            <div className="py-10">
+              <p className="text-base text-zinc-500">
+                Még nem rendeltél semmit :(
+              </p>
+              <Link
+                href="/shop"
+                className="mt-4 inline-block border-b border-lime-400/60 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-lime-200 transition-colors hover:border-lime-200 hover:text-white"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                IRÁNY A SHOP →
+              </Link>
             </div>
           ) : (
             <div className="mt-6 border-3 border-zinc-800 rounded-xl p-4">
