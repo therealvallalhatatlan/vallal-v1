@@ -121,9 +121,9 @@ function MemberTerminalTrace({
       className="mt-0 pb-0 bg-[#010101]/95"
       aria-label="Member channel állapot"
     >
-      <div className="mx-auto w-full max-w-5xl px-5 py-3">
+      <div className="mx-auto w-full max-w-5xl px-5">
         <div
-          className="flex items-center justify-between pb-2 text-[11px] uppercase tracking-[0.22em] text-zinc-400"
+          className="flex items-center justify-between pb-2 text-[8px] uppercase tracking-[0.22em] text-zinc-400"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           <span className="tracking-normal">v 3.2.5</span>
@@ -141,7 +141,7 @@ function MemberTerminalTrace({
         </div>
 
         <div
-          className="grid gap-x-8 gap-y-0.5 text-[11px] leading-4"
+          className="grid gap-x-8 gap-y-0.5 text-[8px] leading-4"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           {visibleLines.map((line, index) => (
@@ -178,13 +178,13 @@ function FixedBadgesSection({
   codes: MemberBadgeCode[] | null
 }) {
   return (
-    <section className="py-7" aria-label="Jelvényeid">
-      <div className="border-y border-zinc-700 py-3">
+    <section className="pt-9 pb-9" aria-label="Megszerzett jelvényeid">
+      <div className="border-y border-zinc-800 py-3">
         <p
-          className="text-[11px] uppercase tracking-[0.3em] text-zinc-400"
+          className="text-[11px] uppercase tracking-[0.3em] text-zinc-500"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
-          JELVÉNYEID
+          Megszerzett jelvényeid
         </p>
       </div>
 
@@ -193,7 +193,7 @@ function FixedBadgesSection({
       ) : codes.length === 0 ? (
         <div className="mt-5 max-w-xl">
           <p
-            className="text-sm leading-6 text-zinc-500"
+            className="text-sm leading-6 text-zinc-400"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             Ó még nincs egy kitűződ sem. Nézz körül, hogy szerezhetnél egyet.
@@ -208,7 +208,7 @@ function FixedBadgesSection({
           </Link>
         </div>
       ) : (
-        <div className="mt-5 grid grid-cols-5 gap-1 sm:flex sm:justify-start sm:gap-7">
+        <div className="mt-8 grid grid-cols-5 gap-1 sm:flex sm:justify-start sm:gap-7">
           {codes.map((code) => {
             const Icon = BADGE_ICONS[code]
 
@@ -219,12 +219,12 @@ function FixedBadgesSection({
               >
                 <span
                   title={BADGE_LABELS[code]}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-lime-400/30 bg-lime-400/[0.025] text-lime-200 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.06]"
+                  className="flex h-10 w-10 items-center justify-center outline-5 outline-offset-3 outline-lime-100/10 rounded-full border border-lime-400/30 bg-lime-400/[0.025] text-lime-200 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.06]"
                 >
                   <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
                 </span>
                 <span
-                  className="w-full text-center text-[7px] uppercase leading-[1.2] tracking-[0.08em] text-zinc-500 sm:text-[9px] sm:tracking-[0.12em]"
+                  className="mt-2 w-full text-center text-[11px] uppercase leading-[1.2] tracking-[0.08em] text-zinc-500 sm:text-[9px] sm:tracking-[0.12em]"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   {BADGE_LABELS[code]}
@@ -253,10 +253,10 @@ function RecommendedProductsSection({
             className="text-[11px] uppercase tracking-[0.3em] text-zinc-400"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            AJÁNLOTT NEKED
+            RÁD VÁRNAK
           </p>
           <span
-            className="text-[9px] uppercase tracking-[0.16em] text-zinc-600"
+            className="text-[11px] uppercase tracking-[0.16em] text-zinc-600"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             {products.length} TALÁLAT
@@ -610,7 +610,7 @@ function NetworkSnapshotSection() {
 
 function TrustSection() {
   return (
-    <section className="py-12 sm:py-16" aria-label="Bízhatsz bennem">
+    <section className="mt-4 py-12 sm:py-16" aria-label="Bízhatsz bennem">
       <div className="flex gap-6">
         
         <div className="w-[61.8%]">
@@ -622,7 +622,7 @@ function TrustSection() {
           </p>
 
           <p
-            className="mt-4 text-sm leading-normal text-zinc-400"
+            className="mt-4 text-sm leading-normal italic text-zinc-400"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             Ha kérdésed van{" "}
@@ -693,12 +693,12 @@ function RandomStorySection() {
 
   return (
     <section
-      className="w-full"
+      className="w-full mt-4"
       aria-label="Random Vállalhatatlan Sztori"
     >
       <div className="flex items-center justify-between border-t border-b border-zinc-800 pt-2 pb-2">
         <span
-          className="text-[10px] uppercase tracking-[0.24em] text-zinc-300"
+          className="text-[11px] uppercase tracking-[0.24em] text-zinc-400"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           RANDOM VÁLLALHATATLAN SZTORI
@@ -709,7 +709,7 @@ function RandomStorySection() {
           onClick={() => void loadStory()}
           disabled={loadingStory}
           aria-label="Új random sztori"
-          className="flex h-8 w-8 items-center justify-center text-zinc-500 transition-colors hover:text-lime-100 disabled:opacity-40"
+          className="flex h-7 w-7 items-center justify-center text-lime-100/80 transition-colors hover:text-lime-100 disabled:opacity-40"
         >
           <RefreshCw
             size={15}
@@ -756,7 +756,7 @@ function RandomStorySection() {
             <button
               type="button"
               onClick={() => setExpanded((value) => !value)}
-              className="mx-auto mt-5 flex w-1/2 items-center justify-between border-2 border-zinc-700 px-3 py-3 text-left text-[11px] uppercase tracking-[0.2em] text-zinc-300 transition-all hover:border-lime-100/60 hover:bg-lime-100/[0.03] hover:text-lime-100 sm:w-1/3"
+              className="mx-auto mt-5 flex w-1/2 items-center justify-between rounded-md border-2 border-zinc-700 px-4 py-4 text-left text-[11px] uppercase tracking-[0.2em] text-zinc-300 transition-all hover:border-lime-100/60 hover:bg-lime-100/[0.03] hover:text-lime-100 sm:w-1/3"
               style={{ fontFamily: "var(--font-mono-tech)" }}
               aria-expanded={expanded}
             >
