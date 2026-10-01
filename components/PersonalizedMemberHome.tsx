@@ -12,6 +12,9 @@ import {
   LoaderCircle,
   RefreshCw,
   ShoppingBag,
+  UserRound,
+  MapPinned,
+  Globe2,
 } from "lucide-react"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import Footer from "@/components/Footer"
@@ -30,6 +33,12 @@ const montserrat = Montserrat({
 
 type SessionShape = {
   access_token?: string
+  user?: {
+    user_metadata?: {
+      avatar_url?: string | null
+      picture?: string | null
+    } | null
+  } | null
 }
 
 type MemberBadgeCode =
@@ -67,16 +76,6 @@ const BADGE_LABELS: Record<MemberBadgeCode, string> = {
   merch: "MERCH",
 }
 
-const LOADER_LINES = [
-  "IDENTITY LINK / kapcsolódás",
-  "PROFILE SCAN / profil beolvasása",
-  "ORDER TRACE / rendelések ellenőrzése",
-  "BADGE INDEX / jelvények beolvasása",
-  "SHOP INDEX / elérhető tárgyak keresése",
-  "NETWORK PULSE / hálózati adatok",
-  "DIRECTOR / a mai oldal összeállítása",
-]
-
 
 function getSessionId() {
   try {
@@ -104,81 +103,15 @@ function isInAppBrowser() {
   )
 }
 
-function MemberTerminalTrace({
-  loading,
-  loaderIndex,
-}: {
-  loading: boolean
-  loaderIndex: number
-}) {
-  const visibleLines = loading
-    ? LOADER_LINES.slice(0, loaderIndex + 1)
-    : LOADER_LINES
-  const lastIndex = visibleLines.length - 1
-
-  return (
-    <section
-      className="mt-0 pb-0 bg-[#010101]/95"
-      aria-label="Member channel állapot"
-    >
-      <div className="mx-auto w-full max-w-5xl px-5">
-        <div
-          className="flex items-center justify-between pb-2 text-[8px] uppercase tracking-[0.22em] text-zinc-400"
-          style={{ fontFamily: "var(--font-mono-tech)" }}
-        >
-          <span className="tracking-normal">v 3.2.5</span>
-          <span className="flex items-center gap-2 text-lime-100/50">
-            <span
-              className={
-                "h-1.5 w-1.5 rounded-full " +
-                (loading
-                  ? "animate-pulse bg-lime-300"
-                  : "bg-lime-100/50")
-              }
-            />
-            {loading ? "BUILDING" : "READY"}
-          </span>
-        </div>
-
-        <div
-          className="grid gap-x-8 gap-y-0.5 text-[8px] leading-4"
-          style={{ fontFamily: "var(--font-mono-tech)" }}
-        >
-          {visibleLines.map((line, index) => (
-            <p
-              key={line}
-              className={
-                loading && index === lastIndex
-                  ? "text-lime-200/90"
-                  : loading
-                    ? "text-zinc-500"
-                    : index === LOADER_LINES.length - 1
-                      ? "text-lime-200/35"
-                      : "text-zinc-300/80"
-              }
-            >
-              <span className="mr-2 text-lime-100/50">
-                [{String(index + 1).padStart(2, "0")}]
-              </span>
-              {line}
-              {loading && index === lastIndex ? (
-                <span className="ml-1 animate-pulse">_</span>
-              ) : null}
-            </p>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function FixedBadgesSection({
   codes,
+  avatarUrl,
 }: {
   codes: MemberBadgeCode[] | null
+  avatarUrl: string | null
 }) {
   return (
-    <section className="pt-9 pb-9" aria-label="Megszerzett jelvényeid">
+    <section className="pt-7 pb-9" aria-label="Megszerzett jelvényeid">
       <div className="border-y border-zinc-800 py-3">
         <p
           className="text-[11px] uppercase tracking-[0.3em] text-zinc-500"
@@ -189,42 +122,74 @@ function FixedBadgesSection({
       </div>
 
       {codes === null ? (
-        <div className="mt-5 h-14 w-full animate-pulse bg-zinc-950" />
+        <div className="mt-6 flex items-center gap-6">
+          <span className="h-12 w-12 shrink-0 animate-pulse rounded-full bg-zinc-950" />
+          <div className="h-10 w-10 animate-pulse rounded-full bg-zinc-950" />
+        </div>
       ) : codes.length === 0 ? (
-        <div className="mt-5 max-w-xl">
-          <p
-            className="text-sm leading-6 text-zinc-400"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            Ó még nincs egy kitűződ sem. Nézz körül, hogy szerezhetnél egyet.
-          </p>
-          <Link
-            href="/shop"
-            className="mt-4 inline-flex items-center gap-2 rounded-sm border-2 border-lime-400/45 px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-lime-200/90 transition-colors hover:border-lime-300 hover:text-lime-100"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            NÉZZ KÖRÜL A SHOPBAN
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
+        <div className="mt-6 flex items-center gap-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-950 text-zinc-500">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <UserRound className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
+            )}
+          </div>
+
+          <div className="max-w-xl">
+            <p
+              className="text-sm leading-6 text-zinc-400"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              Ó még nincs egy kitűződ sem. Nézz körül, hogy szerezhetnél egyet.
+            </p>
+            <Link
+              href="/shop"
+              className="mt-4 inline-flex items-center gap-2 rounded-sm border-2 border-lime-400/45 px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-lime-200/90 transition-colors hover:border-lime-300 hover:text-lime-100"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              NÉZZ KÖRÜL A SHOPBAN
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-5 gap-1 sm:flex sm:justify-start sm:gap-7">
+        <div className="mt-7 flex items-center gap-7 overflow-x-auto pb-1">
+          <div
+            className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-lime-200/40 bg-zinc-950 text-zinc-500 outline-4 outline-offset-2 outline-lime-100/10"
+            title="Profilkép"
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Profilkép"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <UserRound className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
+            )}
+          </div>
+
           {codes.map((code) => {
             const Icon = BADGE_ICONS[code]
 
             return (
               <div
                 key={code}
-                className="flex min-w-0 flex-col items-center gap-2 sm:min-w-[4.75rem]"
+                className="flex min-w-[4.25rem] shrink-0 flex-col items-center gap-2"
               >
                 <span
                   title={BADGE_LABELS[code]}
-                  className="flex h-10 w-10 items-center justify-center outline-5 outline-offset-3 outline-lime-100/10 rounded-full border border-lime-400/30 bg-lime-400/[0.025] text-lime-200 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.06]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full outline-4 outline-offset-2 outline-lime-100/10 border border-lime-400/30 bg-lime-400/[0.025] text-lime-200 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.06]"
                 >
                   <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
                 </span>
                 <span
-                  className="mt-2 w-full text-center text-[11px] uppercase leading-[1.2] tracking-[0.08em] text-zinc-500 sm:text-[9px] sm:tracking-[0.12em]"
+                  className="w-full text-center text-[9px] uppercase leading-[1.2] tracking-[0.12em] text-zinc-500"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   {BADGE_LABELS[code]}
@@ -265,7 +230,7 @@ function RecommendedProductsSection({
       </div>
 
       <div
-        className="-mx-5 mt-5 overflow-x-auto px-5 pb-3 sm:-mx-8 sm:px-8"
+        className="mt-5 overflow-x-auto pr-5 pb-3"
         style={{ scrollSnapType: "x mandatory" }}
       >
         <div className="flex w-max gap-4">
@@ -494,6 +459,7 @@ function OrderStatusBlockView({
 function NetworkSnapshotSection() {
   const [spots, setSpots] = useState<NetworkSpot[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<"virtual" | "physical">("virtual")
 
   const loadSpots = async () => {
     setLoading(true)
@@ -522,17 +488,20 @@ function NetworkSnapshotSection() {
     void loadSpots()
   }, [])
 
-  const stats = [
-    ["AKTÍV SZPOT", spots.length],
-    ["INGYENES SZPOT", spots.filter((spot) => spot.spot_type !== "paid").length],
-    ["FIZIKAI SZPOT", spots.filter((spot) => spot.type === "physical").length],
-    ["VIRTUÁLIS SZPOT", spots.filter((spot) => spot.type === "virtual").length],
-  ]
+  const availableSpots = spots.filter(
+    (spot) =>
+      spot.status !== "inactive" &&
+      (spot.remaining_quantity === undefined || spot.remaining_quantity > 0),
+  )
+
+  const virtualSpots = availableSpots.filter((spot) => spot.type === "virtual")
+  const physicalSpots = availableSpots.filter((spot) => spot.type === "physical")
+  const visibleSpots = activeTab === "virtual" ? virtualSpots : physicalSpots
 
   return (
     <section className="py-12 sm:py-16" aria-label="Hálózat">
       <div className="border-y border-zinc-800 py-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-200/50" />
@@ -545,6 +514,7 @@ function NetworkSnapshotSection() {
               A HÁLÓZAT
             </span>
           </div>
+
           <button
             type="button"
             onClick={() => void loadSpots()}
@@ -560,26 +530,111 @@ function NetworkSnapshotSection() {
         className="mt-7 max-w-2xl text-base italic leading-7 text-zinc-500 sm:text-lg"
         style={{ fontFamily: "var(--font-mono-tech)" }}
       >
-        Ezek itt élő, valós időben frissülő adatok.
+        A hálózatban most elérhető szpotok.
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-md border border-zinc-800 bg-zinc-800 sm:grid-cols-4">
-        {stats.map(([label, value]) => (
-          <div key={label} className="bg-black/90 px-3 py-4 sm:px-4 sm:py-5">
+      <div className="mt-6 grid grid-cols-2 border border-zinc-800 bg-zinc-950/70">
+        {([
+          ["virtual", "VIRTUÁLIS SZPOT", Globe2, virtualSpots.length],
+          ["physical", "FIZIKAI SZPOT", MapPinned, physicalSpots.length],
+        ] as const).map(([tab, label, Icon, count]) => {
+          const active = activeTab === tab
+
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={
+                "flex items-center justify-between gap-3 border-r border-zinc-800 px-4 py-3 text-left transition-colors last:border-r-0 " +
+                (active
+                  ? "bg-lime-400/[0.045] text-lime-100"
+                  : "text-zinc-500 hover:bg-zinc-900/60 hover:text-zinc-300")
+              }
+            >
+              <span
+                className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em]"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                <Icon className="h-4 w-4" strokeWidth={1.5} />
+                {label}
+              </span>
+              <span
+                className="text-[10px] tracking-[0.08em]"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+              >
+                {String(count).padStart(2, "0")}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="mt-2 max-h-[21rem] overflow-y-auto border border-zinc-800 bg-black/80">
+        {loading ? (
+          <div className="px-4 py-6">
             <p
-              className="text-[11px] uppercase leading-4 tracking-[0.16em] text-zinc-400 sm:text-[9px]"
+              className="text-[10px] uppercase tracking-[0.18em] text-zinc-600"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              {label}
-            </p>
-            <p
-              className="mt-1 text-2xl leading-none text-zinc-100 sm:text-3xl"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              {loading ? "--" : String(value).padStart(2, "0")}
+              SZPOTOK BETÖLTÉSE...
             </p>
           </div>
-        ))}
+        ) : visibleSpots.length === 0 ? (
+          <div className="px-4 py-7">
+            <p
+              className="text-sm italic text-zinc-600"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              Most nincs itt elérhető szpot.
+            </p>
+          </div>
+        ) : (
+          <div>
+            {visibleSpots.map((spot, index) => (
+              <Link
+                key={spot.id}
+                href="/halozat"
+                className="group flex items-center gap-4 border-b border-zinc-900 px-4 py-4 transition-colors last:border-b-0 hover:bg-lime-400/[0.025]"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-zinc-800 text-zinc-500 group-hover:border-lime-400/30 group-hover:text-lime-100">
+                  <span
+                    className="text-[9px] tracking-[0.12em]"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p
+                    className="truncate text-[11px] uppercase tracking-[0.14em] text-zinc-300 group-hover:text-lime-100"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    {spot.title}
+                  </p>
+
+                  <div
+                    className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] uppercase tracking-[0.12em] text-zinc-600"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    <span>
+                      {spot.spot_type === "paid" ? "FIZETŐS" : "INGYENES"}
+                    </span>
+                    {typeof spot.remaining_quantity === "number" ? (
+                      <span>{spot.remaining_quantity} DB ELÉRHETŐ</span>
+                    ) : null}
+                    {spot.is_locked ? <span>ZÁROLT</span> : null}
+                  </div>
+                </div>
+
+                <span className="shrink-0 text-xl text-zinc-700 transition-transform group-hover:translate-x-1 group-hover:text-lime-100">
+                  →
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
 
       <Link
@@ -787,10 +842,13 @@ export default function PersonalizedMemberHome() {
     loading: boolean
   }
   const token = session?.access_token ?? null
+  const avatarUrl =
+    session?.user?.user_metadata?.avatar_url ??
+    session?.user?.user_metadata?.picture ??
+    null
   const [plan, setPlan] = useState<HomepagePlan | null>(null)
   const [loadingPlan, setLoadingPlan] = useState(true)
   const [error, setError] = useState(false)
-  const [loaderIndex, setLoaderIndex] = useState(0)
   const [badgeCodes, setBadgeCodes] = useState<MemberBadgeCode[] | null>(null)
   const [recommendedProducts, setRecommendedProducts] = useState<HomepageProductCandidate[]>([])
   const [typedGreeting, setTypedGreeting] = useState("")
@@ -831,18 +889,6 @@ export default function PersonalizedMemberHome() {
       if (timeoutId !== null) window.clearTimeout(timeoutId)
     }
   }, [loading, loadingPlan, plan])
-
-  useEffect(() => {
-    if (!loading && loadingPlan) {
-      const interval = window.setInterval(() => {
-        setLoaderIndex((current) =>
-          Math.min(current + 1, LOADER_LINES.length - 1),
-        )
-      }, 650)
-
-      return () => window.clearInterval(interval)
-    }
-  }, [loading, loadingPlan])
 
   useEffect(() => {
     if (loading || !token) return
@@ -1024,19 +1070,13 @@ export default function PersonalizedMemberHome() {
   }, [loading, token])
 
   if (loading || loadingPlan) {
-    return (
-      <>
-        <SiteHeader />
-        <MemberTerminalTrace loading loaderIndex={loaderIndex} />
-      </>
-    )
+    return <SiteHeader />
   }
 
   if (error || !plan) {
     return (
       <>
         <SiteHeader />
-        <MemberTerminalTrace loading={false} loaderIndex={loaderIndex} />
         <div className="mx-auto flex min-h-[50vh] w-full max-w-5xl items-center px-5 sm:px-8">
           <div>
             <p className="text-3xl text-zinc-300">Szia.</p>
@@ -1088,7 +1128,7 @@ export default function PersonalizedMemberHome() {
           </div>
         </section>
 
-        <FixedBadgesSection codes={badgeCodes} />
+        <FixedBadgesSection codes={badgeCodes} avatarUrl={avatarUrl} />
         <RecommendedProductsSection products={recommendedProducts} />
 
         <div>
