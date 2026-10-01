@@ -53,13 +53,28 @@ function validatePlan(value: unknown, context: HomepageContext): HomepagePlan | 
     const type = block.type
 
     if (type === "badges") {
-      blocks.push({ type: "badges" })
+      const codeMap = [
+        ["book1", "first_book"],
+        ["book2", "second_book"],
+        ["mecenas", "mecenas"],
+        ["founder", "founder"],
+        ["merch", "merch"],
+      ] as const
+
+      blocks.push({
+        type: "badges",
+        codes: codeMap
+          .filter(([key]) => context.ownership[key])
+          .map(([, code]) => code),
+      })
       continue
     }
 
     if (type === "product") {
       const productId = typeof block.productId === "string" ? block.productId : ""
       if (!isAllowedProduct(context, productId)) continue
+
+      const product = context.products.find((candidate) => candidate.id === productId)
 
       blocks.push({
         type: "product",
@@ -76,6 +91,9 @@ function validatePlan(value: unknown, context: HomepageContext): HomepagePlan | 
           typeof block.cta === "string"
             ? block.cta.slice(0, 40)
             : "MEGNÉZEM",
+        productName: product?.name,
+        productImage: product?.images?.[0],
+        productPrice: product?.price,
       })
       continue
     }
