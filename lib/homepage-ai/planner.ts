@@ -6,12 +6,17 @@ import { buildHomepagePrompt, HOMEPAGE_SYSTEM_PROMPT } from "./prompt"
 import type { HomepageBlock, HomepageContext, HomepagePlan } from "./types"
 
 function cleanJson(text: string) {
-  return text
-    .trim()
-    .replace(/^```jsons*/i, "")
-    .replace(/^```s*/i, "")
-    .replace(/s*```$/i, "")
-    .trim()
+  const trimmed = text.trim()
+
+  if (trimmed.startsWith("```json")) {
+    return trimmed.slice(7).replace(/```$/, "").trim()
+  }
+
+  if (trimmed.startsWith("```")) {
+    return trimmed.slice(3).replace(/```$/, "").trim()
+  }
+
+  return trimmed
 }
 
 function isAllowedProduct(context: HomepageContext, productId: string) {
