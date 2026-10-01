@@ -1,11 +1,12 @@
 import { randomUUID } from 'crypto';
+import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { createCheckoutForCopy } from '../../../lib/reservations';
 import type { CheckoutCopyRequest, CheckoutCopyResponse } from '../../../types/reservations';
 import { getUserFromToken, parseBearerToken } from '@/lib/auth';
 import { buildCheckoutMetadata } from '@/lib/stripeAttribution';
 
-export async function POST(request: Request): Promise<Response> {
+export async function POST(request: NextRequest): Promise<Response> {
   try {
     const cookieStore = await cookies();
     let sessionId = cookieStore.get('reservation_session_id')?.value;
@@ -26,7 +27,7 @@ export async function POST(request: Request): Promise<Response> {
     const authenticatedUser = token ? await getUserFromToken(token) : null;
     const deliveryMethod = body.delivery_method ?? 'dead-drop';
     const checkoutMetadata = await buildCheckoutMetadata(
-      request as import('next/server').NextRequest,
+      request,
       {
         copy_number: String(body.copy_number),
         project: 'vallalhatatlan',
