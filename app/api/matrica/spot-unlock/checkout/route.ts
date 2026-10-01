@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { guardWriteOperation } from '@/lib/systemGuard'
 import { getActiveSpotUnlock, PAID_SPOT_UNLOCK_HOURS } from '@/lib/matricaUnlocks'
 import { getUserFromToken, parseBearerToken } from '@/lib/auth'
+import { buildCheckoutMetadata } from '@/lib/stripeAttribution'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,6 +86,21 @@ export async function POST(req: NextRequest) {
   const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
   try {
+    const metadata = await buildCheckoutMetadata(
+      req,
+      {
+        type: 'spot_unlock',
+        product_id: 'spot-unlock',
+        spot_id: spot.id,
+        user_id: user.id,
+        unlock_hours: String(PAID_SPOT_UNLOCK_HOURS),
+      },
+      {
+        cartSummary: 'spot-unlock:' + spot.id,
+        userUuid: user.id,
+      },
+    )
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -103,12 +119,9 @@ export async function POST(req: NextRequest) {
       ],
       success_url: `${origin}/halozat?unlock=success&spot_id=${encodeURIComponent(spot.id)}`,
       cancel_url: `${origin}/halozat?unlock=cancelled&spot_id=${encodeURIComponent(spot.id)}`,
-      metadata: {
-        type: 'spot_unlock',
-        spot_id: spot.id,
-        user_id: user.id,
-        unlock_hours: String(PAID_SPOT_UNLOCK_HOURS),
-      },
+      client_reference_id: metadata.order_id,
+      metadata,
+      payment_intent_data: { metadata },
     })
 
     return NextResponse.json({ url: session.url })

@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createCheckoutSession, getSiteUrl } from "@/lib/stripe";
+import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
 
 type FilmSupportRequest = {
   novellaSlug: string;
@@ -30,7 +31,7 @@ function validateRequest(body: FilmSupportRequest): string | null {
   return null;
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body: FilmSupportRequest = await request.json();
     const validationError = validateRequest(body);
@@ -61,12 +62,21 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json<ApiResponse>({ success: false, error: "Nem sikerült elmenteni a támogatást." }, { status: 500 });
     }
 
-    const metadata = {
-      support_id: data.id,
-      novella_slug: body.novellaSlug,
-      novella_title: body.novellaTitle,
-      supporter_name: body.supporterName || "",
-    };
+    const metadata = await buildCheckoutMetadata(
+      request,
+      {
+        project: "vallalhatatlan",
+        type: "film_support",
+        product_id: "film-support",
+        support_id: data.id,
+        novella_slug: body.novellaSlug,
+        novella_title: body.novellaTitle,
+        supporter_name: body.supporterName || "",
+      },
+      {
+        cartSummary: "film-support:" + body.novellaSlug,
+      },
+    );
 
     const shouldCreateCheckout = body.amount >= MIN_AMOUNT;
     let sessionUrl: string | null = null;

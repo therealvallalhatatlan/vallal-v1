@@ -77,7 +77,11 @@ export async function createCheckoutSession(
       mode: "payment",
       success_url: params.successUrl,
       cancel_url: params.cancelUrl,
+      client_reference_id: params.metadata?.order_id,
       metadata: params.metadata || {},
+      payment_intent_data: {
+        metadata: params.metadata || {},
+      },
       ...(params.collectShippingAddress
         ? { shipping_address_collection: { allowed_countries: ["HU"] as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection["allowed_countries"] } }
         : {}),
