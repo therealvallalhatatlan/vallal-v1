@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     const rate = checkRateLimit(
-      \`homepage-ai:user:\${user.id}\`,
+      "homepage-ai:user:" + user.id,
       8,
       10 * 60_000,
     )
