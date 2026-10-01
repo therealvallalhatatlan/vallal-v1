@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { ArrowUpRight, Radio, Sparkles, Users } from "lucide-react"
 import { createClient } from "@/lib/browser"
 import { persistAuthReturnTarget } from "@/lib/authRedirect"
-
+import Reviews from "@/components/Reviews"
 import SiteHeader from "@/components/SiteHeader"
 import MainContent from "@/components/MainContent"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
@@ -188,8 +188,8 @@ function GuestHome() {
     <>
       <SiteHeader />
 
-      <div className="mx-auto w-full max-w-4xl px-5 pb-24 pt-24 sm:px-8">
-        <section className="relative overflow-hidden border border-zinc-800 bg-[#020202]">
+      <div className="mx-auto w-full max-w-6xl pb-24 pt-24">
+        <section className="relative overflow-hidden">
           <div className="pointer-events-none absolute inset-0 opacity-40">
             <div className="absolute inset-0 bg-[linear-gradient(rgba(163,230,53,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(163,230,53,0.025)_1px,transparent_1px)] bg-[size:32px_32px]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(163,230,53,0.07),transparent_34%)]" />
@@ -225,6 +225,19 @@ function GuestHome() {
             </div>
           </div>
         </section>
+        <section>
+          <video
+                className="rounded-3xl relative left-1/2 mt-0 block w-screen -translate-x-1/2"
+                src="/videos/dd2.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls={false}
+                preload="metadata"
+          />
+        </section>
+
       </div>
     </>
   )
