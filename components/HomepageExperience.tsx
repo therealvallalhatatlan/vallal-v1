@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { ArrowUpRight, Radio, Sparkles, Users } from "lucide-react"
+import { ArrowUpRight, BookMarked, BookOpen, Crown, HeartHandshake, ShoppingBag } from "lucide-react"
 import { createClient } from "@/lib/browser"
 import { persistAuthReturnTarget } from "@/lib/authRedirect"
 import Reviews from "@/components/Reviews"
@@ -12,458 +12,162 @@ import MainContent from "@/components/MainContent"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import type { DashboardAccountResponse } from "@/types/dashboard"
 
-type FeedPost = {
-  id: string
-  nickname: string | null
-  body: string
-  created_at: string
-}
+function getPersonalGreeting(account: DashboardAccountResponse, firstName: string) {
+  const hour = new Date().getHours()
+  const lastActivityAt = account.user.last_activity_at
 
-type SessionShape = {
-  access_token?: string
-  user?: {
-    email?: string | null
+  if (lastActivityAt) {
+    const elapsedDays = Math.floor(
+      Math.max(0, Date.now() - new Date(lastActivityAt).getTime()) / 86400000,
+    )
+
+    if (elapsedDays >= 8) {
+      return `Szia ${firstName}, több mint egy hete nem láttam új nyomot tőled. Minden oké?`
+    }
   }
+
+  if (hour >= 0 && hour < 6) {
+    return `Hát te mit csinálsz ilyen késői órán, ${firstName}?`
+  }
+
+  if (hour >= 6 && hour < 11) {
+    return `Jó reggelt, ${firstName}.`
+  }
+
+  if (hour >= 11 && hour < 18) {
+    return `Szia ${firstName}.`
+  }
+
+  return `Szia ${firstName}, hogy telt a napod?`
 }
 
-function formatRelativeTime(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "ismeretlen idő"
-
-  const diff = Math.max(0, Date.now() - date.getTime())
-  const minutes = Math.floor(diff / 60000)
-
-  if (minutes < 1) return "most"
-  if (minutes < 60) return `${minutes} perce`
-
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} órája`
-
-  const days = Math.floor(hours / 24)
-  return `${days} napja`
-}
-
-function getNextMove(account: DashboardAccountResponse) {
+function getPersonalContent(account: DashboardAccountResponse) {
   const badgeCodes = new Set(account.badges.map((badge) => badge.code))
   const hasFirstBook = badgeCodes.has("first_book")
   const hasSecondBook = badgeCodes.has("second_book")
   const hasMerch = badgeCodes.has("merch")
-  const hasMecenas = badgeCodes.has("mecenas")
   const hasNetworkActivity =
     account.network.claims.accepted > 0 ||
     account.network.spots.active > 0
 
   if (hasFirstBook && !hasSecondBook) {
     return {
-      eyebrow: "KÖVETKEZŐ LÉPÉS",
-      title: "A MÁSODIK KÖTET HIÁNYZIK",
-      body: "Az I. kötet már a gyűjteményed része. A II. kötet egy újabb ajtó ugyanabba a világba.",
+      eyebrow: "EZ MOST NEKED SZÓL",
+      title: "A II. KÖTET MÉG HIÁNYZIK",
+      body: "Az első már nálad van. A második kötet itt vár a következő lépésre.",
       href: "/konyv-2",
-      cta: "MEGNÉZEM A II. KÖTETET",
-      meta: "SZEMÉLYRE SZABVA / 01",
-    }
-  }
-
-  if (hasSecondBook && !hasFirstBook) {
-    return {
-      eyebrow: "KÖVETKEZŐ LÉPÉS",
-      title: "NÉZZ BE AZ ELSŐ RÉTEGBE",
-      body: "Az I. kötet online olvasója megnyitja a projekt egy korábbi, közvetlenebb rétegét.",
-      href: "/reader",
-      cta: "ELSŐ KÖNYV MEGNYITÁSA",
-      meta: "SZEMÉLYRE SZABVA / 02",
-    }
-  }
-
-  if (!hasFirstBook && !hasSecondBook && account.orders.length === 0) {
-    return {
-      eyebrow: "ELSŐ BELÉPÉSI PONT",
-      title: "MÉG NINCS NYOMOD A RENDSZERBEN",
-      body: "A hálózatot már látod. Egy könyv, egy megtalálás vagy egy közösségi jelenlét után a főoldal is elkezd rólad szólni.",
-      href: "/konyv",
-      cta: "BELÉPEK A KÖNYVNÉL",
-      meta: "SZEMÉLYRE SZABVA / 03",
+      cta: "MEGNÉZEM",
     }
   }
 
   if (!hasMerch) {
     return {
-      eyebrow: "KÖVETKEZŐ LÉPÉS",
-      title: "MÉG HIÁNYZIK EGY FIZIKAI NYOM",
-      body: "A könyvek mellett tárgyak is bekerülhetnek a profilodba. Ezekből lesz a saját kis archívumod.",
+      eyebrow: "MÉG EGY DOLOG",
+      title: "VAN MÁR KÖNYVED. TÁRGYAD IS LEHET.",
+      body: "Nézz körül a merch között. A profilodhoz ez is hozzáíródik.",
       href: "/shop",
-      cta: "BOLT MEGNYITÁSA",
-      meta: "SZEMÉLYRE SZABVA / 04",
-    }
-  }
-
-  if (!hasMecenas) {
-    return {
-      eyebrow: "KÖVETKEZŐ LÉPÉS",
-      title: "KÖZVETLENÜL IS TÁMOGATHATOD A PROJEKTET",
-      body: "Ha nem csak nézed, hanem életben is tartanád ezt az egészet, van külön támogatói csatorna.",
-      href: "/tamogatas",
-      cta: "CREW / TÁMOGATÁS",
-      meta: "SZEMÉLYRE SZABVA / 05",
+      cta: "KÖRÜLNÉZEK",
     }
   }
 
   if (!hasNetworkActivity) {
     return {
-      eyebrow: "KÖVETKEZŐ LÉPÉS",
-      title: "LÉPJ BE A HÁLÓZATBA",
-      body: "Most már nem vásárolni kell. Találj meg egy pontot, hagyj nyomot, vagy figyeld meg, mi történik körülötted.",
+      eyebrow: "MOST MÁR TE JÖSSZ",
+      title: "HAGYJ EGY NYOMOT",
+      body: "A hálózat akkor kezd igazán élni, amikor te is bekerülsz a történetbe.",
       href: "/halozat",
-      cta: "HÁLÓZAT MEGNYITÁSA",
-      meta: "SZEMÉLYRE SZABVA / 06",
+      cta: "HÁLÓZAT",
     }
   }
 
   return {
-    eyebrow: "A TE RÉTEGED",
-    title: "MOST MÁR VAN NYOMOD",
-    body: "A profilodban már történik valami. Menj vissza a hálózatba, és nézd meg, mi változott.",
+    eyebrow: "KÖRÜLÖTTED TÖRTÉNIK",
+    title: "NÉZZ KÖRÜL",
+    body: "Van már nyomod a rendszerben. Nézd meg, merre mozdult tovább a hálózat.",
     href: "/halozat",
-    cta: "VISSZA A HÁLÓZATBA",
-    meta: "SZEMÉLYRE SZABVA / 07",
+    cta: "MEGNYITOM",
   }
-}
-
-function BadgeRail({ account }: { account: DashboardAccountResponse }) {
-  const earned = account.badges
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {earned.length > 0 ? (
-        earned.map((badge) => (
-          <span
-            key={badge.code}
-            className="border border-cyan-400/25 bg-cyan-400/[0.025] px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-cyan-200"
-          >
-            {badge.name}
-          </span>
-        ))
-      ) : (
-        <span className="border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-zinc-600">
-          MÉG NINCS JELVÉNY
-        </span>
-      )}
-    </div>
-  )
-}
-
-function GuestHome() {
-  const [googleLoading, setGoogleLoading] = useState(false)
-
-  const handleGoogleLogin = async () => {
-    if (googleLoading) return
-
-    setGoogleLoading(true)
-
-    try {
-      const supabase = createClient()
-      persistAuthReturnTarget("/fooldal-2")
-      const redirectTo = `${window.location.origin}/auth/callback`
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-          queryParams: {
-            prompt: "select_account",
-          },
-        },
-      })
-
-      if (error) {
-        console.error("[homepage] google login failed", error)
-        setGoogleLoading(false)
-      }
-    } catch (error) {
-      console.error("[homepage] google login exception", error)
-      setGoogleLoading(false)
-    }
-  }
-
-  return (
-    <>
-      <SiteHeader />
-
-      <div className="mx-auto w-full pb-28 pt-24 sm:pb-32 sm:pt-28">
-        <section className="relative mx-auto w-full max-w-5xl overflow-hidden px-5 sm:px-8">
-          <div className="pointer-events-none absolute inset-0 opacity-40">
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(163,230,53,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(163,230,53,0.025)_1px,transparent_1px)] bg-[size:32px_32px]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(163,230,53,0.07),transparent_34%)]" />
-          </div>
-
-          <div className="relative px-2 sm:px-6">
-            <div className="ml-auto max-w-3xl">
-              <p
-                className="text-right text-[21px] font-normal italic leading-[1.7] tracking-tight text-zinc-300 sm:text-[23px]"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                "Archetípus vagyok.<br/>A funkcionális rendszerhiba, az elbaszott túlélő, a káosz-építész archetípusa. Egy csótány fejlett idegrendszerrel."<br/>
-              </p>
-              <p className="mt-5 text-right text-2xl italic tracking-wide text-zinc-500">
-                — Író Úr
-              </p>
-
-              <div className="mt-10">
-                <p className="text-right text-[12px] leading-5 tracking-[0.1em] uppercase text-zinc-500">
-                  Ez egy privát, zártkörű klub. Jelentkezz be.
-                </p>
-
-                <div className="mt-5 min-h-14 pb-4 flex flex-row gap-8 justify-center">
-                  <Link
-                    href="/auth?from=%2Ffooldal-2&next=%2Ffooldal-2"
-                    className="outline-4 outline-offset-2 outline-lime-200/10 basis-1/2 inline-flex min-h-12 min-w-40 items-center justify-center rounded-md border border-lime-400/45 bg-lime-400/[0.035] px-5 py-4 text-[12px] font-semibold uppercase tracking-[0.22em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white"
-                  >
-                    BELÉPÉS
-                  </Link>
-
-                  <button
-                    type="button"
-                    onClick={() => void handleGoogleLogin()}
-                    disabled={googleLoading}
-                    className="outline-4 outline-offset-2 outline-zinc-100/10 basis-1/2 inline-flex min-h-12 min-w-48 items-center justify-center gap-2.5 rounded-md border border-zinc-700 bg-black px-5 py-4 text-[12px] font-semibold uppercase tracking-[0.22em] text-zinc-300 transition-all hover:border-zinc-200/60 hover:bg-zinc-900 hover:text-lime-100 disabled:cursor-wait disabled:opacity-50"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                      className="h-5 w-5 shrink-0 fill-current text-zinc-200"
-                    >
-                      <path d="M21.35 11.1h-9.18v2.98h5.62c-.24 1.56-1.84 4.58-5.62 4.58-3.38 0-6.14-2.8-6.14-6.26s2.76-6.26 6.14-6.26c1.92 0 3.21.82 3.95 1.53l2.14-2.08C16.88 4.3 14.96 3.3 12.17 3.3 7.36 3.3 3.45 7.2 3.45 12s3.91 8.7 8.72 8.7c5.04 0 8.39-3.54 8.39-8.52 0-.57-.06-.99-.13-1.08z" />
-                    </svg>
-                    {googleLoading ? "GOOGLE..." : "GOOGLE LOGIN"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-10 w-full sm:mt-14">
-          <video
-            className="relative left-1/2 block aspect-video w-screen -translate-x-1/2 object-cover"
-            src="/videos/dd2.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            controls={false}
-            preload="metadata"
-          />
-        </section>
-
-        <section className="mx-auto mt-20 w-full max-w-5xl px-5 sm:mt-28 sm:px-8">
-          <Reviews />
-        </section>
-      </div>
-
-      <Footer />
-    </>
-  )
 }
 
 function MemberHome({
   account,
-  feed,
 }: {
   account: DashboardAccountResponse
-  feed: FeedPost[]
 }) {
-  const nextMove = useMemo(() => getNextMove(account), [account])
   const name = account.user.nickname?.trim() || account.user.email || "NODE"
   const firstName = name.includes("@") ? name.split("@")[0] : name
-
-  const stats = [
-    ["JELVÉNY", String(account.badges.length)],
-    ["RENDELÉS", String(account.orders.length)],
-    ["MEGTALÁLÁS", String(account.network.claims.accepted)],
-    ["AKTÍV PONT", String(account.network.spots.active)],
-  ]
+  const greeting = useMemo(
+    () => getPersonalGreeting(account, firstName),
+    [account, firstName],
+  )
+  const personalContent = useMemo(
+    () => getPersonalContent(account),
+    [account],
+  )
 
   return (
     <>
       <SiteHeader />
 
-      <div className="mx-auto w-full max-w-6xl px-5 pb-24 sm:px-8">
-        <section className="border-b border-zinc-800 pb-7">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p
-                className="mt-2 text-[23px] font-normal italic leading-relaxed tracking-tight text-zinc-300 sm:text-base"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                Szia {firstName}.
-              </p>
-              <p className="mt-3 max-w-2xl text-lg leading-6 text-zinc-500 sm:text-base">
-                Ez a weboldal mindenkinek más tartalmat mutat. 
-              </p>
-            </div>
-
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 border-b border-zinc-700 pb-4 text-[14px] uppercase tracking-[0.1em] text-lime-100 transition-colors hover:border-lime-300 hover:text-lime-200"
+      <div className="mx-auto w-full max-w-5xl px-5 pb-28 pt-28 sm:px-8 sm:pb-36 sm:pt-32">
+        <section className="min-h-[58vh] border-b border-zinc-900">
+          <div className="flex min-h-[58vh] flex-col justify-center py-20 sm:py-28">
+            <p
+              className="max-w-4xl text-4xl leading-[1.12] tracking-tight text-zinc-100 sm:text-6xl lg:text-[5.25rem]"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              SAJÁT FIÓK <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </section>
+              {greeting}
+            </p>
 
-        <section className="grid gap-4 py-7 lg:grid-cols-[1.35fr_0.65fr]">
-          <article className="relative overflow-hidden border border-lime-400/30 bg-lime-400/[0.025] p-6 sm:p-8">
-            <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 bg-[radial-gradient(circle_at_100%_0%,rgba(163,230,53,0.12),transparent_68%)]" />
-
-            <div className="relative">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/70">
-                  {nextMove.eyebrow}
-                </p>
-                <span className="text-[9px] uppercase tracking-[0.2em] text-zinc-700">
-                  {nextMove.meta}
-                </span>
-              </div>
+            <div className="mt-16 max-w-2xl sm:mt-20">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/60">
+                {personalContent.eyebrow}
+              </p>
 
               <h2
-                className="mt-4 max-w-3xl text-3xl leading-tight text-zinc-100 sm:text-5xl"
+                className="mt-4 text-3xl leading-tight text-zinc-100 sm:text-5xl"
                 style={{ fontFamily: "var(--font-heading), serif" }}
               >
-                {nextMove.title}
+                {personalContent.title}
               </h2>
 
-              <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400">
-                {nextMove.body}
+              <p className="mt-5 max-w-xl text-base leading-7 text-zinc-500 sm:text-lg">
+                {personalContent.body}
               </p>
 
               <Link
-                href={nextMove.href}
-                className="mt-7 inline-flex items-center gap-3 border border-lime-300/45 bg-black/30 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-lime-200 transition-colors hover:border-lime-200 hover:bg-lime-400/[0.06] hover:text-white"
+                href={personalContent.href}
+                className="mt-8 inline-flex items-center gap-3 rounded-md border border-lime-400/40 bg-lime-400/[0.025] px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-lime-200 transition-colors hover:border-lime-300 hover:bg-lime-400/[0.07] hover:text-white"
               >
-                {nextMove.cta}
+                {personalContent.cta}
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
             </div>
-          </article>
+          </div>
+        </section>
 
-          <article className="border border-zinc-900 bg-black/30 p-6">
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-zinc-600">
-              <Sparkles className="h-3.5 w-3.5" />
-              A TE RÉTEGED
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-px border border-zinc-900 bg-zinc-900">
-              {stats.map(([label, value]) => (
-                <div key={label} className="bg-black p-4">
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-zinc-700">{label}</p>
-                  <p className="mt-2 text-3xl text-zinc-100">{value}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-5">
-              <p className="mb-3 text-[9px] uppercase tracking-[0.2em] text-zinc-700">JELVÉNYEK</p>
+        {account.badges.length > 0 ? (
+          <section className="border-b border-zinc-900 py-16 sm:py-20">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-700">
+              AMIT EDDIG ÖSSZESZEDTÉL
+            </p>
+            <div className="mt-6">
               <BadgeRail account={account} />
             </div>
-          </article>
+          </section>
+        ) : null}
+
+        <section className="flex flex-col gap-4 border-b border-zinc-900 py-16 sm:flex-row sm:items-center sm:justify-between sm:py-20">
+          <p className="max-w-xl text-sm leading-6 text-zinc-600">
+            A saját réteged a dashboardban és a hálózatban folytatódik.
+          </p>
+          <Link
+            href="/dashboard"
+            className="inline-flex shrink-0 items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-zinc-500 transition-colors hover:text-lime-200"
+          >
+            SAJÁT FIÓK <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
         </section>
-
-        <section className="grid gap-4 border-t border-zinc-800 pt-7 lg:grid-cols-[0.9fr_1.1fr]">
-          <article className="border border-zinc-900 bg-black/25 p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-600">HÁLÓZAT / MOST</p>
-                <h2
-                  className="mt-2 text-2xl text-zinc-200"
-                  style={{ fontFamily: "var(--font-heading), serif" }}
-                >
-                  AMI ÉPP TÖRTÉNIK
-                </h2>
-              </div>
-              <Users className="h-4 w-4 text-zinc-700" />
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {feed.length > 0 ? (
-                feed.slice(0, 5).map((post) => (
-                  <div
-                    key={post.id}
-                    className="border-b border-zinc-900 pb-3 last:border-b-0"
-                  >
-                    <div className="flex items-center justify-between gap-4 text-[9px] uppercase tracking-[0.18em] text-zinc-700">
-                      <span>{post.nickname || "ISMERETLEN NYÚL"}</span>
-                      <span>{formatRelativeTime(post.created_at)}</span>
-                    </div>
-                    <p className="mt-1 text-sm leading-6 text-zinc-400">{post.body}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm leading-6 text-zinc-600">
-                  A feed most csendben van.
-                </p>
-              )}
-            </div>
-
-            <Link
-              href="/halozat"
-              className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-lime-200/80 transition-colors hover:text-lime-100"
-            >
-              HÁLÓZAT MEGNYITÁSA <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          </article>
-
-          <article className="border border-zinc-900 bg-black/25 p-6">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-zinc-600">AKTÍV RÉTEGEK</p>
-                <h2
-                  className="mt-2 text-2xl text-zinc-200"
-                  style={{ fontFamily: "var(--font-heading), serif" }}
-                >
-                  NEM CSAK A BOLT LÉTEZIK
-                </h2>
-              </div>
-              <Radio className="h-4 w-4 text-zinc-700" />
-            </div>
-
-            <div className="mt-6 space-y-3">
-              <Link
-                href="/halozat"
-                className="group flex items-center justify-between border border-zinc-900 bg-black/30 p-4 transition-colors hover:border-lime-400/30"
-              >
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-700">01 / HÁLÓZAT</p>
-                  <p className="mt-1 text-sm text-zinc-300">Pontok, megtalálások, tagok.</p>
-                </div>
-                <ArrowUpRight className="h-4 w-4 text-zinc-700 transition-colors group-hover:text-lime-200" />
-              </Link>
-
-              <Link
-                href="/inbox"
-                className="group flex items-center justify-between border border-zinc-900 bg-black/30 p-4 transition-colors hover:border-lime-400/30"
-              >
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-700">02 / INBOX</p>
-                  <p className="mt-1 text-sm text-zinc-300">Privát üzenetek és rendszerjelzések.</p>
-                </div>
-                <ArrowUpRight className="h-4 w-4 text-zinc-700 transition-colors group-hover:text-lime-200" />
-              </Link>
-
-              <Link
-                href="/dashboard"
-                className="group flex items-center justify-between border border-zinc-900 bg-black/30 p-4 transition-colors hover:border-lime-400/30"
-              >
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-700">03 / SAJÁT ARCHÍVUM</p>
-                  <p className="mt-1 text-sm text-zinc-300">Rendelések, jelvények, saját nyomok.</p>
-                </div>
-                <ArrowUpRight className="h-4 w-4 text-zinc-700 transition-colors group-hover:text-lime-200" />
-              </Link>
-            </div>
-          </article>
-        </section>
-
-        
       </div>
 
       <Footer />
@@ -478,7 +182,6 @@ export default function HomepageExperience() {
   }
 
   const [account, setAccount] = useState<DashboardAccountResponse | null>(null)
-  const [feed, setFeed] = useState<FeedPost[]>([])
   const [loadingAccount, setLoadingAccount] = useState(false)
 
   useEffect(() => {
@@ -502,27 +205,18 @@ export default function HomepageExperience() {
         if (!response.ok) throw new Error(`account_${response.status}`)
         return response.json() as Promise<{ ok?: boolean; account?: DashboardAccountResponse }>
       }),
-      fetch("/api/feed?limit=8", {
-        cache: "no-store",
-        signal: controller.signal,
-      }).then(async (response) => {
-        if (!response.ok) throw new Error(`feed_${response.status}`)
-        return response.json() as Promise<{ ok?: boolean; posts?: FeedPost[] }>
-      }),
     ])
-      .then(([accountPayload, feedPayload]) => {
+      .then(([accountPayload]) => {
         if (!accountPayload?.ok || !accountPayload.account) {
           throw new Error("account_missing")
         }
 
         setAccount(accountPayload.account)
-        setFeed(Array.isArray(feedPayload.posts) ? feedPayload.posts : [])
       })
       .catch((error) => {
         if (error?.name === "AbortError") return
         console.error("[homepage] personalized load failed", error)
         setAccount(null)
-        setFeed([])
       })
       .finally(() => setLoadingAccount(false))
 
