@@ -65,7 +65,10 @@ function ProductBlockView({
     "toxic-bunny-1": "/ny1.png",
     "red-eye-bunny-1": "/ny3.png",
   }
-  const href = product === "book-2" ? "/konyv-2" : "/shop"
+  const href =
+    product === "book-2"
+      ? "/konyv-2"
+      : "/shop?product=" + encodeURIComponent(product)
 
   return (
     <section className="border-y border-zinc-900 py-16 sm:py-24">
@@ -103,7 +106,7 @@ function ProductBlockView({
           </p>
           <Link
             href={href}
-            className="mt-8 inline-flex items-center gap-3 rounded-md border border-zinc-700 px-5 py-3 text-[10px] uppercase tracking-[0.22em] text-zinc-300 transition-colors hover:border-lime-300/50 hover:text-lime-100"
+            className="mt-8 inline-flex items-center gap-3 rounded-md border border-lime-400/35 bg-lime-400/[0.025] px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-lime-200 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.07] hover:text-white"
           >
             {block.cta}
             <ArrowUpRight className="h-4 w-4" />
