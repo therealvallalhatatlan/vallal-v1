@@ -194,7 +194,7 @@ function ProductBlockView({
             <img
               src={image}
               alt={block.productName ?? ""}
-              className="h-full w-full object-cover grayscale transition-all duration-300 hover:grayscale-0"
+              className="h-full w-full object-contain grayscale transition-all duration-300 hover:grayscale-0"
             />
             <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:100%_4px]" />
           </div>
