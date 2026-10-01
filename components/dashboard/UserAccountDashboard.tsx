@@ -2,9 +2,17 @@
 
 import Link from "next/link"
 import { useMemo, useRef, useState } from "react"
-import { Check, ChevronDown, Pencil, X } from "lucide-react"
+import { BookMarked, BookOpen, Check, ChevronDown, Crown, HeartHandshake, Pencil, ShoppingBag, X } from "lucide-react"
 import { Montserrat } from "next/font/google"
 import type { DashboardAccountResponse, DashboardUnifiedOrder } from "@/types/dashboard"
+
+const DASHBOARD_BADGE_ICONS = {
+  first_book: BookOpen,
+  second_book: BookMarked,
+  mecenas: HeartHandshake,
+  founder: Crown,
+  merch: ShoppingBag,
+} as const
 
 const heroHeadline = Montserrat({
   subsets: ["latin-ext"],
@@ -397,8 +405,11 @@ export default function UserAccountDashboard({ account, token }: Props) {
                   title={badge.description}
                   className="group inline-flex items-center gap-3"
                 >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400/40 outline-offset-2 outline-cyan-500 bg-cyan-400/[0.035] text-[14px] text-cyan-200 transition-colors group-hover:border-cyan-300/70 group-hover:bg-cyan-400/[0.08]">
-                    💎
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-lime-400/35 outline-offset-2 outline-lime-300/10 bg-lime-400/[0.03] text-lime-200 transition-colors group-hover:border-lime-300/70 group-hover:bg-lime-400/[0.08]">
+                    {(() => {
+                      const Icon = DASHBOARD_BADGE_ICONS[badge.code as keyof typeof DASHBOARD_BADGE_ICONS]
+                      return Icon ? <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" /> : null
+                    })()}
                   </span>
                   <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.08em] text-cyan-200 sm:text-base">
