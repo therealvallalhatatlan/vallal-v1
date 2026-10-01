@@ -252,8 +252,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
     <main className="relative min-h-screen bg-zinc-950 text-zinc-100">
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-50"
-          style={{ backgroundImage: "url('/bg.jpg')" }}
+          className="absolute inset-0 opacity-50"
         />
         <div className="absolute inset-0 bg-black/20" />
         <div className="absolute inset-0 bg-[repeating-linear-gradient(to_bottom,rgba(163,230,53,0.045)_0,rgba(163,230,53,0.045)_1px,transparent_1px,transparent_24px)]" />
