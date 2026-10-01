@@ -16,7 +16,11 @@ import {
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import Footer from "@/components/Footer"
 import SiteHeader from "@/components/SiteHeader"
-import type { HomepageBlock, HomepagePlan } from "@/lib/homepage-ai/types"
+import type {
+  HomepageBlock,
+  HomepagePlan,
+  HomepageProductCandidate,
+} from "@/lib/homepage-ai/types"
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -73,14 +77,6 @@ const LOADER_LINES = [
   "DIRECTOR / a mai oldal összeállítása",
 ]
 
-const PRODUCT_IMAGES: Record<string, string> = {
-  "book-2": "/vallalhatatlan2.png",
-  "men-shirt-1": "/m1.jpg",
-  "bag-1": "/ny2.jpg",
-  "wallet-1": "/dohany1.jpg",
-  "toxic-bunny-1": "/ny1.png",
-  "red-eye-bunny-1": "/ny3.png",
-}
 
 function getSessionId() {
   try {
@@ -242,89 +238,145 @@ function FixedBadgesSection({
   )
 }
 
-function ProductBlockView({
-  block,
+function RecommendedProductsSection({
+  products,
 }: {
-  block: Extract<HomepageBlock, { type: "product" }>
+  products: HomepageProductCandidate[]
 }) {
-  const productId = block.productId
-  const image = block.productImage ?? PRODUCT_IMAGES[productId] ?? "/cover2.png"
-  const href =
-    productId === "book-2"
-      ? "/konyv-2"
-      : "/shop?product=" + encodeURIComponent(productId)
+  if (products.length === 0) return null
 
   return (
-    <section className="py-8 sm:py-12">
-      <div className="overflow-hidden rounded-md border border-zinc-100 bg-white transition-colors hover:border-zinc-700">
-        <div className="flex">
-          <div className="w-[38.2%] relative overflow-hidden bg-white">
-            <img
-              src={image}
-              alt={block.productName ?? ""}
-              className="rounded-md ml-2 h-full w-full object-contain grayscale transition-all duration-300 hover:grayscale-0"
-            />
-          </div>
-          <div className="w-[61.8%] p-4 sm:p-5">
-            <p
-              className="text-[11px] uppercase tracking-[0.20em] font-semibold text-zinc-600 sm:text-[9px]"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              TALÁLTAM NEKED VALAMIT!
-            </p>
-
-            <h2
-              className={"mt-2 text-2xl uppercase leading-[0.95] tracking-[-0.015em] text-zinc-800 " + montserrat.className}
-            >
-              {block.productName ?? block.headline}
-            </h2>
-
-            <p
-              className="mt-3 line-clamp-3 text-xs leading-5 text-zinc-500 sm:text-sm sm:leading-6"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              {block.body}
-            </p>
-
-            <div
-              className="mt-6"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-[16px] uppercase tracking-[0.0em] text-zinc-600">
-                  DEAD DROP
-                </span>
-                <span className="text-[16px] font-bold tracking-[0.06em] text-lime-700 sm:text-base">
-                  {block.productPrice
-                    ? new Intl.NumberFormat("hu-HU").format(block.productPrice) + " Ft"
-                    : "ÁR INFO"}
-                </span>
-              </div>
-              <div className="mt-1.5 flex items-baseline justify-between gap-3">
-                <span className="text-[16px] uppercase tracking-[0em] text-zinc-600">
-                  POSTAAUTOMATA
-                </span>
-                <span className="text-[16px] tracking-[0.06em] text-zinc-600">
-                  {block.productPrice
-                    ? new Intl.NumberFormat("hu-HU").format(
-                        block.productPrice + 2500,
-                      ) + " Ft"
-                    : "ÁR INFO"}
-                </span>
-              </div>
-            </div>
-
-            <Link
-              href={href}
-              className="group mt-4 flex items-center justify-between border-2 border-zinc-700 bg-zinc-800 px-3 py-3 text-[12px] rounded-sm font-semibold uppercase tracking-[0.18em] text-zinc-200 transition-all hover:border-lime-400/70 hover:bg-lime-400/[0.035] hover:text-lime-100"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              <span>{block.cta || "MEGNÉZEM"}</span>
-              <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-            </Link>
-          </div>
+    <section className="py-7" aria-label="Ajánlott termékek">
+      <div className="border-y border-zinc-700 py-3">
+        <div className="flex items-center justify-between gap-4">
+          <p
+            className="text-[11px] uppercase tracking-[0.3em] text-zinc-400"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            AJÁNLOTT NEKED
+          </p>
+          <span
+            className="text-[9px] uppercase tracking-[0.16em] text-zinc-600"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            {products.length} TALÁLAT
+          </span>
         </div>
       </div>
+
+      <div
+        className="-mx-5 mt-5 overflow-x-auto px-5 pb-3 sm:-mx-8 sm:px-8"
+        style={{ scrollSnapType: "x mandatory" }}
+      >
+        <div className="flex w-max gap-3">
+          {products.map((product, index) => {
+            const href =
+              product.href ??
+              (product.id === "book-2"
+                ? "/konyv-2"
+                : "/shop?product=" + encodeURIComponent(product.id))
+            const isPhysical =
+              product.fulfillment !== "digital" && product.fulfillment !== "event"
+
+            return (
+              <article
+                key={product.id}
+                className="w-[78vw] max-w-[21rem] shrink-0 snap-start overflow-hidden rounded-md border border-zinc-800 bg-[#050505]"
+              >
+                <div className="relative aspect-[4/5] overflow-hidden bg-white">
+                  <img
+                    src={product.images?.[0] ?? "/cover2.png"}
+                    alt={product.name}
+                    className="h-full w-full object-contain grayscale transition-all duration-300 hover:grayscale-0"
+                  />
+                  <span
+                    className="absolute left-2 top-2 border border-zinc-800 bg-white/90 px-2 py-1 text-[8px] uppercase tracking-[0.18em] text-zinc-700"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    #{String(index + 1).padStart(2, "0")}
+                  </span>
+                </div>
+
+                <div className="p-4 sm:p-5">
+                  <p
+                    className="text-[9px] uppercase tracking-[0.2em] text-zinc-500"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    TALÁLTAM NEKED VALAMIT
+                  </p>
+
+                  <h3
+                    className={
+                      "mt-2 text-xl uppercase leading-[0.95] tracking-[-0.015em] text-zinc-100 " +
+                      montserrat.className
+                    }
+                  >
+                    {product.name}
+                  </h3>
+
+                  <p
+                    className="mt-3 line-clamp-3 text-xs leading-5 text-zinc-500"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    {product.description}
+                  </p>
+
+                  <div
+                    className="mt-5"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    {isPhysical ? (
+                      <>
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-500">
+                            DEAD DROP
+                          </span>
+                          <span className="text-[12px] font-bold tracking-[0.04em] text-lime-200">
+                            {new Intl.NumberFormat("hu-HU").format(product.price)} Ft
+                          </span>
+                        </div>
+                        <div className="mt-1.5 flex items-baseline justify-between gap-3">
+                          <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-600">
+                            POSTAAUTOMATA
+                          </span>
+                          <span className="text-[12px] tracking-[0.04em] text-zinc-500">
+                            {new Intl.NumberFormat("hu-HU").format(product.price + 2500)} Ft
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-500">
+                          {product.fulfillment === "event" ? "BELÉPŐ" : "DIGITÁLIS"}
+                        </span>
+                        <span className="text-[12px] font-bold tracking-[0.04em] text-lime-200">
+                          {new Intl.NumberFormat("hu-HU").format(product.price)} Ft
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <Link
+                    href={href}
+                    className="group mt-4 flex items-center justify-between border-2 border-zinc-700 bg-zinc-800 px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-200 transition-all hover:border-lime-400/70 hover:bg-lime-400/[0.035] hover:text-lime-100"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    <span>MEGNÉZEM</span>
+                    <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </div>
+
+      <p
+        className="mt-1 text-[9px] uppercase tracking-[0.18em] text-zinc-700"
+        style={{ fontFamily: "var(--font-mono-tech)" }}
+      >
+        ← HÚZD / GÖRGESS OLDALRA
+      </p>
     </section>
   )
 }
@@ -724,7 +776,7 @@ function RandomStorySection() {
 }
 
 function isUsefulBlock(block: HomepageBlock) {
-  return block.type === "product" || block.type === "order_status"
+  return block.type === "order_status"
 }
 
 export default function PersonalizedMemberHome() {
@@ -738,6 +790,7 @@ export default function PersonalizedMemberHome() {
   const [error, setError] = useState(false)
   const [loaderIndex, setLoaderIndex] = useState(0)
   const [badgeCodes, setBadgeCodes] = useState<MemberBadgeCode[] | null>(null)
+  const [recommendedProducts, setRecommendedProducts] = useState<HomepageProductCandidate[]>([])
 
   useEffect(() => {
     if (!loading && loadingPlan) {
@@ -852,6 +905,7 @@ export default function PersonalizedMemberHome() {
         const payload = (await response.json()) as {
           ok?: boolean
           plan?: HomepagePlan
+          recommendedProducts?: HomepageProductCandidate[]
         }
 
         if (!payload.ok || !payload.plan) {
@@ -859,6 +913,11 @@ export default function PersonalizedMemberHome() {
         }
 
         setPlan(payload.plan)
+        setRecommendedProducts(
+          Array.isArray(payload.recommendedProducts)
+            ? payload.recommendedProducts
+            : [],
+        )
 
         void fetch("/api/user/account", {
           headers: {
@@ -987,26 +1046,16 @@ export default function PersonalizedMemberHome() {
         </section>
 
         <FixedBadgesSection codes={badgeCodes} />
+        <RecommendedProductsSection products={recommendedProducts} />
 
         <div>
-          {usefulBlocks.map((block, index) => {
-            if (block.type === "product") {
-              return (
-                <ProductBlockView
-                  key={"product-" + block.productId + "-" + index}
-                  block={block}
-                />
-              )
-            }
-
-            return (
+          {usefulBlocks.map((block) => {
               <OrderStatusBlockView
                 key={"order-" + block.orderId}
                 block={block}
                 token={token}
-                onReceived={handleReceived}
-              />
-            )
+              onReceived={handleReceived}
+            />
           })}
         </div>
 
