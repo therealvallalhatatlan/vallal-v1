@@ -19,8 +19,11 @@ type SessionShape = {
   }
 }
 
-function getPersonalGreeting(account: DashboardAccountResponse, firstName: string) {
-  const hour = new Date().getHours()
+function getPersonalGreeting(
+  account: DashboardAccountResponse,
+  firstName: string,
+  hour: number,
+) {
   const lastActivityAt = account.user.last_activity_at
 
   if (lastActivityAt) {
@@ -70,8 +73,8 @@ function getPersonalContent(account: DashboardAccountResponse) {
   if (!hasMerch) {
     return {
       eyebrow: "MÉG EGY DOLOG",
-      title: "VAN MÁR KÖNYVED. TÁRGYAD IS LEHET.",
-      body: "Nézz körül a merch között. A profilodhoz ez is hozzáíródik.",
+      title: "MÉG NINCS MERCHED.",
+      body: "Nézz körül a tárgyak között. Valami kézzel fogható is bekerülhet a saját rétegedbe.",
       href: "/shop",
       cta: "KÖRÜLNÉZEK",
     }
@@ -103,9 +106,18 @@ function MemberHome({
 }) {
   const name = account.user.nickname?.trim() || account.user.email || "NODE"
   const firstName = name.includes("@") ? name.split("@")[0] : name
+  const [localHour, setLocalHour] = useState<number | null>(null)
+
+  useEffect(() => {
+    setLocalHour(new Date().getHours())
+  }, [])
+
   const greeting = useMemo(
-    () => getPersonalGreeting(account, firstName),
-    [account, firstName],
+    () =>
+      localHour === null
+        ? `Szia ${firstName}.`
+        : getPersonalGreeting(account, firstName, localHour),
+    [account, firstName, localHour],
   )
   const personalContent = useMemo(
     () => getPersonalContent(account),
