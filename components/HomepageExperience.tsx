@@ -99,6 +99,7 @@ function getPersonalContent(account: DashboardAccountResponse) {
   }
 }
 
+// Homepage guest + badge components restored.
 function MemberHome({
   account,
 }: {
