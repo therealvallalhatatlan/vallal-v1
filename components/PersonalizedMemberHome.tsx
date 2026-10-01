@@ -12,6 +12,7 @@ import {
   ShoppingBag,
 } from "lucide-react"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
+import Footer from "@/components/Footer"
 import type { HomepageBlock, HomepagePlan } from "@/lib/homepage-ai/types"
 
 type SessionShape = {
@@ -292,7 +293,7 @@ function BadgeBlockView({
   return (
     <section className="border-y border-zinc-900 py-14 sm:py-18">
       <div className="flex flex-wrap gap-3">
-        {codes.map((code) => {
+        {codes?.map((code) => {
           const Icon = BADGE_ICONS[code]
           return (
             <span
