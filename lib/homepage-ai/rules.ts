@@ -29,19 +29,26 @@ function badgeCodes(context: HomepageContext) {
     .map(([, code]) => code)
 }
 
-function preferredProduct(context: HomepageContext) {
+function preferredProducts(context: HomepageContext) {
+  const selected: HomepageContext["products"] = []
+
   if (context.ownership.book1 && !context.ownership.book2) {
-    return (
-      context.products.find((product) => product.id === "book-2") ??
-      context.products.find((product) => product.type !== "book")
-    )
+    const secondBook = context.products.find((product) => product.id === "book-2")
+    if (secondBook) selected.push(secondBook)
   }
 
   if (!context.ownership.merch) {
-    return context.products.find((product) => product.type !== "book")
+    const merch = context.products.find((product) => product.type !== "book")
+    if (merch && !selected.some((product) => product.id === merch.id)) {
+      selected.push(merch)
+    }
   }
 
-  return context.products[0] ?? null
+  if (selected.length === 0 && context.products[0]) {
+    selected.push(context.products[0])
+  }
+
+  return selected.slice(0, 2)
 }
 
 export function getCoreHomepageBlocks(
@@ -73,18 +80,16 @@ export function getCoreHomepageBlocks(
     })
   }
 
-  const product = preferredProduct(context)
+  for (const product of preferredProducts(context)) {
+    if (blocks.length >= 3) break
 
-  if (product && !blocks.some((block) => block.type === "product")) {
     blocks.push({
       type: "product",
       productId: product.id,
       headline:
         product.id === "book-2"
           ? "AZ ELSŐ MÁR NÁLAD VAN."
-          : context.ownership.merch
-            ? "EZT MOST FELTENNÉM ELÉD."
-            : "A KÖNYV MELLÉ EZ IS ÉRDEKELHET.",
+          : "A KÖNYV MELLÉ EZ IS ÉRDEKELHET.",
       body:
         product.id === "book-2"
           ? "A második kötetet még nem láttam nálad."
@@ -94,8 +99,7 @@ export function getCoreHomepageBlocks(
   }
 
   const story = context.stories[0]
-
-  if (story) {
+  if (story && blocks.length < 3) {
     blocks.push({
       type: "story",
       storySlug: story.slug,
@@ -137,30 +141,28 @@ export function getCoreHomepageBlocks(
 export function getDeterministicHomepageFallback(
   context: HomepageContext,
 ): HomepagePlan {
-  return {
-    greeting:
-      context.visit.daysSinceLastVisit !== null &&
-      context.visit.daysSinceLastVisit >= 8
-        ? "Szia " +
+  const mood = getHomepageMood(
+    context.visit.hour,
+    context.visit.daysSinceLastVisit,
+  )
+
+  const greeting =
+    context.visit.daysSinceLastVisit !== null &&
+    context.visit.daysSinceLastVisit >= 8
+      ? "Szia " +
+        context.identity.firstName +
+        ", több mint egy hete nem láttalak. Minden oké?"
+      : mood === "late_night"
+        ? "Hát te mit csinálsz ilyen késői órán, " +
           context.identity.firstName +
-          ", több mint egy hete nem láttalak. Minden oké?"
-        : getHomepageMood(
-              context.visit.hour,
-              context.visit.daysSinceLastVisit,
-            ) === "late_night"
-          ? "Hát te mit csinálsz ilyen késői órán, " +
-            context.identity.firstName +
-            "?"
-          : getHomepageMood(
-                context.visit.hour,
-                context.visit.daysSinceLastVisit,
-              ) === "morning"
-            ? "Jó reggelt, " + context.identity.firstName + "."
-            : "Szia " + context.identity.firstName + ".",
-    mood: getHomepageMood(
-      context.visit.hour,
-      context.visit.daysSinceLastVisit,
-    ),
+          "?"
+        : mood === "morning"
+          ? "Jó reggelt, " + context.identity.firstName + "."
+          : "Szia " + context.identity.firstName + "."
+
+  return {
+    greeting,
+    mood,
     blocks: getCoreHomepageBlocks(context),
   }
 }
