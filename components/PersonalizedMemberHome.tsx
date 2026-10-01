@@ -56,8 +56,12 @@ type RandomStory = {
 
 type NetworkSpot = {
   id: string
+  title: string
+  status?: string
   spot_type?: "free" | "paid"
   type?: "physical" | "virtual"
+  remaining_quantity?: number
+  is_locked?: boolean
 }
 
 const BADGE_ICONS = {
