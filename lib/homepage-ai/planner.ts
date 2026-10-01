@@ -1,6 +1,5 @@
 import { generateText } from "ai"
 import { openai } from "@ai-sdk/openai"
-import { getAllStories, type Story } from "@/lib/content"
 import {
   getCoreHomepageBlocks,
   getDeterministicHomepageFallback,
@@ -54,6 +53,10 @@ function validatePlan(value: unknown, context: HomepageContext): HomepagePlan | 
 
     const block = item as Record<string, unknown>
     const type = block.type
+
+    // Fixed sections own stories, network data and badges on the member homepage.
+    // The AI only chooses personalized commerce/order blocks here.
+    if (type === "story" || type === "network" || type === "badges") continue
 
     if (type === "badges") {
       const codeMap = [
@@ -218,32 +221,11 @@ function normalizeHomepagePlan(
 }
 
 
-function enrichStoryBlocks(plan: HomepagePlan, stories: Story[]): HomepagePlan {
-  const storyBySlug = new Map(stories.map((story) => [story.id, story]))
-
-  return {
-    ...plan,
-    blocks: plan.blocks.map((block) => {
-      if (block.type !== "story") return block
-
-      const story = storyBySlug.get(block.storySlug)
-      if (!story) return block
-
-      return {
-        ...block,
-        storyTitle: story.title,
-        storyText: story.text,
-      }
-    }),
-  }
-}
-
 export async function prepareHomepagePlan(context: HomepageContext) {
   const fallback = getDeterministicHomepageFallback(context)
-  const stories = await getAllStories().catch(() => [] as Story[])
 
   if (!process.env.OPENAI_API_KEY) {
-    return enrichStoryBlocks(fallback, stories)
+    return fallback
   }
 
   try {
@@ -256,12 +238,11 @@ export async function prepareHomepagePlan(context: HomepageContext) {
 
     const parsed = JSON.parse(cleanJson(result.text))
     const validated = validatePlan(parsed, context)
-    if (!validated) return enrichStoryBlocks(fallback, stories)
+    if (!validated) return fallback
 
-    const normalized = normalizeHomepagePlan(validated, context)
-    return enrichStoryBlocks(normalized, stories)
+    return normalizeHomepagePlan(validated, context)
   } catch (error) {
     console.error("[homepage-ai] planner failed", error)
-    return enrichStoryBlocks(fallback, stories)
+    return fallback
   }
 }
