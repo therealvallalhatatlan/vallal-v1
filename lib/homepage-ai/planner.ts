@@ -1,7 +1,10 @@
 import { generateText } from "ai"
 import { openai } from "@ai-sdk/openai"
 import { getAllStories, type Story } from "@/lib/content"
-import { getDeterministicHomepageFallback } from "./rules"
+import {
+  getCoreHomepageBlocks,
+  getDeterministicHomepageFallback,
+} from "./rules"
 import { buildHomepagePrompt, HOMEPAGE_SYSTEM_PROMPT } from "./prompt"
 import type { HomepageBlock, HomepageContext, HomepagePlan } from "./types"
 
@@ -167,6 +170,50 @@ function validatePlan(value: unknown, context: HomepageContext): HomepagePlan | 
   }
 }
 
+function normalizeHomepagePlan(
+  plan: HomepagePlan,
+  context: HomepageContext,
+): HomepagePlan {
+  const guaranteed = getCoreHomepageBlocks(context)
+  const blocks = [...plan.blocks]
+
+  const hasType = (type: HomepageBlock["type"]) =>
+    blocks.some((block) => block.type === type)
+
+  for (const required of guaranteed) {
+    if (blocks.length >= 3) break
+
+    if (required.type === "order_status" && !hasType("order_status")) {
+      blocks.unshift(required)
+      continue
+    }
+
+    if (required.type === "product" && !hasType("product")) {
+      blocks.push(required)
+      continue
+    }
+
+    if (required.type === "story" && !hasType("story")) {
+      blocks.push(required)
+      continue
+    }
+
+    if (required.type === "network" && !hasType("network")) {
+      blocks.push(required)
+      continue
+    }
+
+    if (required.type === "badges" && !hasType("badges")) {
+      blocks.push(required)
+    }
+  }
+
+  return {
+    ...plan,
+    blocks: blocks.slice(0, 3),
+  }
+}
+
 function enrichStoryBlocks(plan: HomepagePlan, stories: Story[]): HomepagePlan {
   const storyBySlug = new Map(stories.map((story) => [story.id, story]))
 
@@ -207,7 +254,8 @@ export async function prepareHomepagePlan(context: HomepageContext) {
     const validated = validatePlan(parsed, context)
     if (!validated) return enrichStoryBlocks(fallback, stories)
 
-    return enrichStoryBlocks(validated, stories)
+    const normalized = normalizeHomepagePlan(validated, context)
+    return enrichStoryBlocks(normalized, stories)
   } catch (error) {
     console.error("[homepage-ai] planner failed", error)
     return enrichStoryBlocks(fallback, stories)
