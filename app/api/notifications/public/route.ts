@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     .from("notification_broadcasts")
     .select("id, title, body, created_at")
     .eq("type", "system")
-    .eq("is_public", true)
+    .filter("data->>public", "eq", "true")
     .gte("created_at", since)
     .order("created_at", { ascending: false })
     .limit(limit);
