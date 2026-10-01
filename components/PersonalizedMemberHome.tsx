@@ -331,6 +331,13 @@ export default function PersonalizedMemberHome() {
         url.searchParams.set("hour", String(new Date().getHours()))
 
         const sessionId = getSessionId()
+        let referrerHost: string | null = null
+
+        try {
+          referrerHost = document.referrer ? new URL(document.referrer).host : null
+        } catch {
+          referrerHost = null
+        }
 
         const response = await fetch(url.toString(), {
           method: "POST",
@@ -342,6 +349,7 @@ export default function PersonalizedMemberHome() {
             sessionId,
             isMobile: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ""),
             isInAppBrowser: isInAppBrowser(),
+            referrerHost,
           }),
           cache: "no-store",
           signal: controller.signal,
