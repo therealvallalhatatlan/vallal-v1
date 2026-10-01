@@ -786,19 +786,34 @@ export default function UserAccountDashboard({ account, token }: Props) {
         </section>
 
 
-        <footer className="flex flex-col gap-3 pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <footer className="flex flex-col gap-5 pt-8 sm:flex-row sm:items-end sm:justify-between">
           <p
             className="text-[10px] uppercase tracking-[0.22em] text-zinc-700"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             VÁLLALHATATLAN / USER NODE
           </p>
-          <p
-            className="text-[10px] uppercase tracking-[0.22em] text-zinc-700"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            STATUS · {CIRCLE_LABELS[circle.code]}
-          </p>
+          <div className="flex flex-col gap-3 sm:items-end">
+            <p
+              className="text-[10px] uppercase tracking-[0.22em] text-zinc-700"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              STATUS · {CIRCLE_LABELS[circle.code]}
+            </p>
+            <button
+              type="button"
+              onClick={async () => {
+                const { createClient } = await import("@/lib/browser")
+                const supabase = createClient()
+                await supabase.auth.signOut()
+                window.location.href = "/"
+              }}
+              className="text-left text-[10px] uppercase tracking-[0.22em] text-zinc-600 transition-colors hover:text-red-300 sm:text-right"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              KIJELENTKEZÉS
+            </button>
+          </div>
         </footer>
       </div>
 

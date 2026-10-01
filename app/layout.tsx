@@ -16,6 +16,8 @@ import TrafficSourceHeuristics from "@/components/TrafficSourceHeuristics";
 import StatusBanner from "@/components/StatusBanner";
 import FacebookSDK from "@/components/FacebookSDK";
 import NotificationOrchestrator from "@/components/notifications/NotificationOrchestrator";
+import NetworkInboxSheet from "@/components/notifications/NetworkInboxSheet";
+import GlobalNotificationToasts from "@/components/notifications/GlobalNotificationToasts";
 import LayoutNavigationGuard from "@/components/LayoutNavigationGuard";
 import CuriosityLayer from "@/components/CuriosityLayer";
 
@@ -176,6 +178,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <Analytics />
             <div id="glitch-root"></div>
             <NotificationOrchestrator />
+            <NetworkInboxSheet />
+            <GlobalNotificationToasts />
             <ServiceWorkerRegister />
           </div>
 

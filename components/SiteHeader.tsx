@@ -1,368 +1,181 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ArrowUpRight, BookMarked, BookOpen, Crown, HeartHandshake, Menu, ShoppingBag } from "lucide-react";
-import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import NetworkInboxSheet from "@/components/notifications/NetworkInboxSheet"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
+import { ArrowUpRight, Menu } from "lucide-react"
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js"
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTrigger } from "@/components/ui/sheet"
+import { createClient } from "@/lib/browser"
 
-import { createClient } from "@/lib/browser";
-
-const HEADER_BADGE_ICONS = {
-  first_book: BookOpen,
-  second_book: BookMarked,
-  mecenas: HeartHandshake,
-  founder: Crown,
-  merch: ShoppingBag,
-} as const
-
-type HeaderBadgeCode = keyof typeof HEADER_BADGE_ICONS
-
-const HEADER_BADGE_LABELS: Record<HeaderBadgeCode, string> = {
-  first_book: "I. KÖNYV",
-  second_book: "II. KÖNYV",
-  mecenas: "MECÉNÁS",
-  founder: "ALAPÍTÓ",
-  merch: "MERCH",
-}
-
-const menuItems = [
+const menuSections = [
   {
-    href: "/konyv",
-    label: "A MÁSODIK KÖNYV",
-    description: "A könyvben áll össze a történet. Szerezz egyet a 100-ból.",
+    label: "KÖNYVEK",
+    items: [
+      {
+        href: "/konyv",
+        label: "A MÁSODIK KÖNYV",
+        description: "A könyvben áll össze a történet. Szerezz egyet a 100-ból.",
+      },
+      {
+        href: "/reader",
+        label: "AZ ELSŐ KÖNYV",
+        description: "Itt olvashatod az első könyvet online.",
+      },
+    ],
   },
   {
-    href: "/halozat",
-    label: "HÁLÓZAT",
-    description: "Mi sem tudjuk mi ez.",
+    label: "FELFEDEZÉS",
+    items: [
+      {
+        href: "/halozat",
+        label: "HÁLÓZAT",
+        description: "Mi sem tudjuk mi ez.",
+      },
+      {
+        href: "/lab",
+        label: "LABOR",
+        description: "Szoftver és neuromarketing.",
+      },
+    ],
   },
   {
-    href: "/lab",
-    label: "LABOR",
-    description: "Szoftver és neuromarketing.",
+    label: "CUCCOK",
+    items: [
+      {
+        href: "/shop",
+        label: "BOLT",
+        description: "Saját márkás cuccok.",
+      },
+      {
+        href: "/tamogatas",
+        label: "CREW",
+        description: "Önts olajat a tűzre!",
+      },
+    ],
   },
-  {
-    href: "/shop",
-    label: "BOLT",
-    description: "Saját márkás cuccok.",
-  },
-  {
-    href: "/tamogatas",
-    label: "CREW",
-    description: "Önts olajat a tűzre!",
-  },
-  {
-    href: "/reader",
-    label: "AZ ELSŐ KÖNYV",
-    description: "Itt olvashatod az első könyvet online.",
-  },
-];
+] as const
 
 type AuthUser = {
-  email?: string | null;
+  email?: string | null
   user_metadata?: {
-    avatar_url?: string | null;
-    picture?: string | null;
-    full_name?: string | null;
-    name?: string | null;
-  };
-};
+    avatar_url?: string | null
+    picture?: string | null
+    full_name?: string | null
+    name?: string | null
+  }
+}
 
 export default function SiteHeader() {
-  const pathname = usePathname();
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [badgeCodes, setBadgeCodes] = useState<HeaderBadgeCode[]>([]);
+  const pathname = usePathname()
+  const [user, setUser] = useState<AuthUser | null>(null)
 
   useEffect(() => {
-    const supabase = createClient();
-
-    let mounted = true;
+    const supabase = createClient()
+    let mounted = true
 
     const loadUser = async () => {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
-
-      const currentUser = session?.user ?? null
+      } = await supabase.auth.getSession()
 
       if (mounted) {
-        setUser(currentUser as AuthUser | null);
+        setUser((session?.user ?? null) as AuthUser | null)
       }
-
-      if (!session?.access_token || !currentUser) {
-        if (mounted) setBadgeCodes([])
-        return
-      }
-
-      try {
-        const response = await fetch("/api/user/account", {
-          headers: { Authorization: "Bearer " + session.access_token },
-          cache: "no-store",
-        })
-        const payload = response.ok
-          ? ((await response.json()) as { account?: { badges?: Array<{ code?: unknown }> } })
-          : null
-
-        const codes = Array.isArray(payload?.account?.badges)
-          ? payload.account.badges
-              .map((badge) => badge.code)
-              .filter((code): code is HeaderBadgeCode =>
-                Object.prototype.hasOwnProperty.call(HEADER_BADGE_ICONS, String(code)),
-              )
-          : []
-
-        if (mounted) setBadgeCodes(codes)
-      } catch (error) {
-        console.error("[header] badge load failed", error)
-        if (mounted) setBadgeCodes([])
-      }
-    };
-
-    void loadUser();
-
-    const {
-  data: { subscription },
-} = supabase.auth.onAuthStateChange(
-  (_event: AuthChangeEvent, session: Session | null) => {
-    if (!mounted) return;
-
-    setUser(session?.user ? (session.user as AuthUser) : null);
-
-    if (!session?.access_token) {
-      setBadgeCodes([])
-      return
     }
 
-    void fetch("/api/user/account", {
-      headers: { Authorization: "Bearer " + session.access_token },
-      cache: "no-store",
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("account_failed")
-        return (await response.json()) as {
-          account?: { badges?: Array<{ code?: unknown }> }
-        }
-      })
-      .then((payload) => {
+    void loadUser()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
         if (!mounted) return
-        const codes = Array.isArray(payload.account?.badges)
-          ? payload.account.badges
-              .map((badge) => badge.code)
-              .filter((code): code is HeaderBadgeCode =>
-                Object.prototype.hasOwnProperty.call(HEADER_BADGE_ICONS, String(code)),
-              )
-          : []
-        setBadgeCodes(codes)
-      })
-      .catch((error) => {
-        console.error("[header] badge auth-change load failed", error)
-        if (mounted) setBadgeCodes([])
-      })
-  }
-);
+        setUser((session?.user ?? null) as AuthUser | null)
+      },
+    )
 
     return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
 
   const avatarUrl =
     user?.user_metadata?.avatar_url ||
     user?.user_metadata?.picture ||
-    null;
+    null
 
   const displayName =
     user?.user_metadata?.full_name ||
     user?.user_metadata?.name ||
     user?.email ||
-    "NODE";
+    "NODE"
 
-  const avatarLetter = displayName.charAt(0).toUpperCase();
-
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
+  const avatarLetter = displayName.charAt(0).toUpperCase()
 
   return (
     <header
-      className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-zinc-800 bg-zinc-950 px-6"
+      className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-zinc-800 bg-zinc-950 px-5 sm:px-6"
       style={{
         paddingTop: "env(safe-area-inset-top)",
         pointerEvents: "auto",
         touchAction: "manipulation",
       }}
     >
-      {/* Logo */}
       <Link href="/" className="group">
         <h1
           className="text-[22px] font-bold italic text-zinc-100 transition-colors group-hover:text-lime-200"
           style={{ fontFamily: "var(--font-logo)" }}
         >
-          {pathname === '/halozat' ? 'Hálózat' : 'Vállalhatatlan'}
+          {pathname === "/halozat" ? "Hálózat" : "Vállalhatatlan"}
         </h1>
       </Link>
 
-      {/* Right side */}
       <div
-        className="flex items-center gap-4 text-[11px] text-lime-100"
+        className="flex items-center gap-3 sm:gap-4"
         style={{ fontFamily: "var(--font-mono-tech)" }}
       >
-        {/* Network status */}
-        <span className="hidden items-center sm:inline-flex">
+        <span className="hidden items-center text-[10px] text-zinc-500 sm:inline-flex">
           <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.7)]" />
-          HALOZAT: ONLINE
+          HÁLÓZAT: ONLINE
         </span>
 
-        {/* Logged-in avatar: opens dashboard sheet */}
-        {user && (
-          <Sheet>
-            <SheetTrigger asChild>
-              <button
-                type="button"
-                aria-label="Open dashboard"
-                className="group relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900 transition-all hover:border-lime-400/70 hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]"
-              >
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt=""
-                    className="h-full w-full object-cover grayscale transition-all group-hover:grayscale-0"
-                  />
-                ) : (
-                  <span className="text-xs font-bold text-lime-200">
-                    {avatarLetter}
-                  </span>
-                )}
-
-                {/* Online indicator */}
-                <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.8)]" />
-              </button>
-            </SheetTrigger>
-
-            <SheetContent
-              side="right"
-              className="z-[100] flex w-[min(25rem,92vw)] flex-col max-h-screen overflow-y-auto border-l border-zinc-800 bg-zinc-950 p-0 text-zinc-100 shadow-[-20px_0_60px_rgba(0,0,0,0.55)]"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              <div className="relative border-b border-zinc-800 px-5 py-6">
-                <div className="flex items-center gap-4">
-                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900">
-                    {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt=""
-                        className="h-full w-full object-cover grayscale"
-                      />
-                    ) : (
-                      <span className="text-lg font-bold text-lime-200">{avatarLetter}</span>
-                    )}
-                    <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-bold tracking-[0.14em] text-zinc-100">
-                      {displayName}
-                    </div>
-                    {user?.email && (
-                      <div className="mt-1 truncate text-[10px] tracking-[0.05em] text-zinc-500">
-                        {user.email}
-                      </div>
-                    )}
-                    <div className="mt-2 text-[9px] uppercase tracking-[0.18em] text-lime-200/70">
-                      Bejelentkezve
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative px-5 py-5">
-                <SheetClose asChild>
-                  <Link
-                    href="/dashboard"
-                    className="group flex w-full items-center justify-between border border-lime-400/40 bg-lime-400/[0.035] px-5 py-4 text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/10"
-                  >
-                    <div>
-                      <div className="text-xs font-bold tracking-[0.2em]">SAJÁT FIÓK</div>
-                      <div className="mt-1 text-[10px] uppercase tracking-[0.08em] text-zinc-500">
-                        Profil, rendelések, kör, aktivitás
-                      </div>
-                    </div>
-                    <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                  </Link>
-                </SheetClose>
-
-                {badgeCodes.length > 0 && (
-                  <div className="mt-5 border-t border-zinc-900 pt-4">
-                    <div className="mb-3 text-[9px] uppercase tracking-[0.24em] text-zinc-600">
-                      JELVÉNYEID
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {badgeCodes.map((code) => {
-                        const Icon = HEADER_BADGE_ICONS[code]
-                        return (
-                          <span
-                            key={code}
-                            title={HEADER_BADGE_LABELS[code]}
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-lime-400/30 bg-lime-400/[0.025] text-lime-200"
-                          >
-                            <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-                          </span>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <SheetClose asChild>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="mt-4 flex w-full items-center justify-between border border-zinc-800 px-5 py-3 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
-                  >
-                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">
-                      Kijelentkezés
-                    </span>
-                    <span className="text-[9px] uppercase tracking-[0.12em] text-zinc-700">
-                      Logout
-                    </span>
-                  </button>
-                </SheetClose>
-              </div>
-            </SheetContent>
-          </Sheet>
-        )}
-
-        {/* Logged-out login */}
-        {!user && (
+        {user ? (
+          <Link
+            href="/dashboard"
+            aria-label="Saját fiók"
+            title="Saját fiók"
+            className="group relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900 transition-all hover:border-lime-400/70 hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]"
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                className="h-full w-full object-cover grayscale transition-all group-hover:grayscale-0"
+              />
+            ) : (
+              <span className="text-xs font-bold text-lime-200">{avatarLetter}</span>
+            )}
+            <span
+              className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.8)]"
+              aria-hidden="true"
+            />
+          </Link>
+        ) : (
           <Link
             href="/auth?from=%2F&next=%2F"
-            className="hidden text-[10px] tracking-[0.16em] text-zinc-400 transition-colors hover:text-lime-200 sm:block"
+            className="text-[10px] tracking-[0.16em] text-zinc-400 transition-colors hover:text-lime-200"
           >
             LOGIN
           </Link>
         )}
 
-        <NetworkInboxSheet />
-
-        {/* Hamburger */}
         <Sheet>
           <SheetTrigger asChild>
             <button
               type="button"
-              aria-label="Open navigation"
+              aria-label="Navigáció megnyitása"
               className="group inline-flex h-10 w-10 items-center justify-center border border-zinc-700 bg-zinc-950 text-zinc-300 transition-all hover:border-lime-400/70 hover:bg-lime-400/5 hover:text-lime-200"
             >
               <Menu className="h-5 w-5 transition-transform group-hover:scale-105" />
@@ -374,154 +187,95 @@ export default function SiteHeader() {
             className="z-[100] flex w-[min(25rem,92vw)] flex-col overflow-hidden border-l border-zinc-800 bg-zinc-950 p-0 text-zinc-100 shadow-[-20px_0_60px_rgba(0,0,0,0.55)]"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            {/* Background atmosphere */}
             <div className="pointer-events-none absolute inset-0 opacity-30">
               <div className="absolute inset-0 bg-[linear-gradient(rgba(163,230,53,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(163,230,53,0.025)_1px,transparent_1px)] bg-[size:32px_32px]" />
-
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(163,230,53,0.06),transparent_35%)]" />
             </div>
 
-            {/* Header */}
             <SheetHeader className="relative border-b border-zinc-800 px-6 pb-5 pt-7 pr-14 text-left">
-
-              <SheetDescription className="text-sm tracking-[0.08em] text-zinc-500">
-                Vállalhatatlan Projekt v3.7.4
+              <SheetDescription className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                Vállalhatatlan Projekt
               </SheetDescription>
             </SheetHeader>
 
-            {/* Auth / Profile */}
-            <div className="relative border-b border-zinc-800 px-5 py-5">
-              {user ? (
-                <div className="space-y-2">
-                  <SheetClose asChild>
-                    <Link
-                      href="/dashboard"
-                      className="group flex w-full items-center gap-4 border border-zinc-800 bg-zinc-900/30 px-5 py-4 transition-all hover:border-lime-400/50 hover:bg-lime-400/[0.035]"
-                    >
-                      {/* Avatar */}
-                      <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900">
-                        {avatarUrl ? (
-                          <img
-                            src={avatarUrl}
-                            alt=""
-                            className="h-full w-full object-cover grayscale transition-all group-hover:grayscale-0"
-                          />
-                        ) : (
-                          <span className="text-sm font-bold text-lime-200">
-                            {avatarLetter}
-                          </span>
-                        )}
-
-                        <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.8)]" />
-                      </div>
-
-                      {/* User information */}
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-xs font-bold tracking-[0.16em] text-lime-200">
-                          {displayName}
-                        </div>
-
-                        {user.email && (
-                          <div className="mt-1 truncate text-[10px] tracking-[0.05em] text-zinc-500">
-                            {user.email}
-                          </div>
-                        )}
-
-                        <div className="mt-2 text-[9px] uppercase tracking-[0.12em] text-zinc-600">
-                          Open dashboard
-                        </div>
-                      </div>
-
-                      <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-600 transition-colors group-hover:text-lime-300" />
-                    </Link>
-                  </SheetClose>
-
-                  <SheetClose asChild>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="group flex w-full items-center justify-between border border-zinc-800 px-5 py-3 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
-                    >
-                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500 transition-colors group-hover:text-zinc-200">
-                        Kijelentkezés
-                      </span>
-                      <span className="text-[9px] uppercase tracking-[0.12em] text-zinc-700 transition-colors group-hover:text-zinc-500">
-                        Logout
-                      </span>
-                    </button>
-                  </SheetClose>
-                </div>
-              ) : (
-                <SheetClose asChild>
-                  <Link
-                    href="/auth?from=%2F&next=%2F"
-                    className="group flex w-full items-center justify-between border border-lime-400/50 bg-lime-400/[0.035] px-5 py-4 text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/10 hover:shadow-[0_0_24px_rgba(163,230,53,0.08)]"
-                  >
-                    <div>
-                      <div className="text-xs font-bold tracking-[0.2em]">
-                        LOGIN
-                      </div>
-
-                      <div className="mt-1 text-[10px] uppercase tracking-[0.08em] text-zinc-500">
-                        Belépés a hálózatba
-                      </div>
-                    </div>
-
-                    <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                  </Link>
-                </SheetClose>
-              )}
-            </div>
-
-            {/* Navigation */}
             <nav
-              aria-label="Main navigation"
+              aria-label="Fő navigáció"
               className="relative flex-1 overflow-y-auto px-4 py-5"
             >
-              <ul className="space-y-1">
-                {menuItems.map((item, index) => (
-                  <li key={item.href}>
-                    <SheetClose asChild>
-                      <Link
-                        href={item.href}
-                        className="group relative block border border-transparent px-4 py-4 transition-all hover:border-zinc-700 hover:bg-lime-400/[0.025]"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold tracking-[0.14em] text-zinc-200 transition-colors group-hover:text-lime-200">
-                            <span className="mr-3 text-zinc-600 group-hover:text-lime-400/70">
-                              [{String(index + 1).padStart(2, "0")}]
-                            </span>
+              <div className="space-y-7">
+                {menuSections.map((section, sectionIndex) => (
+                  <section key={section.label}>
+                    <div className="mb-2 px-4 text-[9px] uppercase tracking-[0.28em] text-zinc-600">
+                      {section.label}
+                    </div>
 
-                            {item.label}
-                          </span>
+                    <ul className="space-y-1">
+                      {section.items.map((item, itemIndex) => {
+                        const active =
+                          pathname === item.href ||
+                          (item.href !== "/" && pathname.startsWith(item.href + "/"))
+                        const number =
+                          String(sectionIndex + 1).padStart(2, "0") +
+                          "." +
+                          String(itemIndex + 1).padStart(2, "0")
 
-                          <ArrowUpRight className="h-3.5 w-3.5 text-zinc-700 transition-colors group-hover:text-lime-300" />
-                        </div>
+                        return (
+                          <li key={item.href}>
+                            <SheetClose asChild>
+                              <Link
+                                href={item.href}
+                                aria-current={active ? "page" : undefined}
+                                className={
+                                  "group relative block border px-4 py-4 transition-all " +
+                                  (active
+                                    ? "border-lime-400/35 bg-lime-400/[0.035]"
+                                    : "border-transparent hover:border-zinc-700 hover:bg-lime-400/[0.025]")
+                                }
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <span
+                                    className={
+                                      "text-sm font-bold tracking-[0.14em] transition-colors " +
+                                      (active
+                                        ? "text-lime-200"
+                                        : "text-zinc-200 group-hover:text-lime-200")
+                                    }
+                                  >
+                                    <span className="mr-3 text-zinc-600 group-hover:text-lime-400/70">
+                                      [{number}]
+                                    </span>
+                                    {item.label}
+                                  </span>
 
-                        <p className="mt-2 pl-[0rem] text-[14px] leading-relaxed tracking-[0.06em] text-zinc-600 transition-colors group-hover:text-zinc-400">
-                          {item.description}
-                        </p>
-                      </Link>
-                    </SheetClose>
-                  </li>
+                                  <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-zinc-700 transition-colors group-hover:text-lime-300" />
+                                </div>
+
+                                <p className="mt-2 text-[12px] leading-relaxed tracking-[0.04em] text-zinc-600 transition-colors group-hover:text-zinc-400">
+                                  {item.description}
+                                </p>
+                              </Link>
+                            </SheetClose>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </section>
                 ))}
-              </ul>
+              </div>
             </nav>
 
-            {/* System status */}
             <div className="relative border-t border-zinc-800 px-6 py-4">
               <div className="flex items-center justify-between text-[9px] uppercase tracking-[0.12em] text-zinc-600">
                 <span className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-lime-400 shadow-[0_0_7px_rgba(163,230,53,0.7)]" />
                   Hálózat online
                 </span>
-
-                <span>Public access</span>
+                <span>Navigation</span>
               </div>
             </div>
           </SheetContent>
         </Sheet>
       </div>
     </header>
-  );
+  )
 }
