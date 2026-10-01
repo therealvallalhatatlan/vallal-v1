@@ -130,6 +130,7 @@ export type HomepageBlock =
     }
   | {
       type: "badges"
+      codes: Array<"first_book" | "second_book" | "mecenas" | "founder" | "merch">
     }
 
 export type HomepagePlan = {
