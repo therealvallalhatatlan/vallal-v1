@@ -268,7 +268,7 @@ function RecommendedProductsSection({
         className="-mx-5 mt-5 overflow-x-auto px-5 pb-3 sm:-mx-8 sm:px-8"
         style={{ scrollSnapType: "x mandatory" }}
       >
-        <div className="flex w-max gap-3">
+        <div className="flex w-max gap-4">
           {products.map((product, index) => {
             const href =
               product.href ??
@@ -281,89 +281,91 @@ function RecommendedProductsSection({
             return (
               <article
                 key={product.id}
-                className="w-[78vw] max-w-[21rem] shrink-0 snap-start overflow-hidden rounded-md border border-zinc-800 bg-[#050505]"
+                className="w-[88vw] max-w-[30rem] shrink-0 snap-start overflow-hidden rounded-lg border border-zinc-300 bg-white"
               >
-                <div className="relative aspect-[4/5] overflow-hidden bg-white">
-                  <img
-                    src={product.images?.[0] ?? "/cover2.png"}
-                    alt={product.name}
-                    className="h-full w-full object-contain grayscale transition-all duration-300 hover:grayscale-0"
-                  />
-                  <span
-                    className="absolute left-2 top-2 border border-zinc-800 bg-white/90 px-2 py-1 text-[8px] uppercase tracking-[0.18em] text-zinc-700"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    #{String(index + 1).padStart(2, "0")}
-                  </span>
-                </div>
+                <div className="flex min-h-[15.5rem] sm:min-h-[16.5rem]">
+                  <div className="relative w-[38.2%] shrink-0 overflow-hidden bg-white">
+                    <img
+                      src={product.images?.[0] ?? "/cover2.png"}
+                      alt={product.name}
+                      className="h-full w-full object-contain grayscale transition-all duration-300 hover:grayscale-0"
+                    />
+                    <span
+                      className="absolute left-2 top-2 border border-zinc-500 bg-white/90 px-2 py-1 text-[8px] uppercase tracking-[0.18em] text-zinc-700"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      #{String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
 
-                <div className="p-4 sm:p-5">
-                  <p
-                    className="text-[9px] uppercase tracking-[0.2em] text-zinc-500"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    TALÁLTAM NEKED VALAMIT
-                  </p>
+                  <div className="flex min-w-0 w-[61.8%] flex-col p-4 sm:p-5">
+                    <p
+                      className="text-[9px] uppercase tracking-[0.20em] font-semibold text-zinc-600"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      TALÁLTAM NEKED VALAMIT!
+                    </p>
 
-                  <h3
-                    className={
-                      "mt-2 text-xl uppercase leading-[0.95] tracking-[-0.015em] text-zinc-100 " +
-                      montserrat.className
-                    }
-                  >
-                    {product.name}
-                  </h3>
+                    <h3
+                      className={
+                        "mt-2 text-2xl uppercase leading-[0.92] tracking-[-0.02em] text-zinc-800 " +
+                        montserrat.className
+                      }
+                    >
+                      {product.name}
+                    </h3>
 
-                  <p
-                    className="mt-3 line-clamp-3 text-xs leading-5 text-zinc-500"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    {product.description}
-                  </p>
+                    <p
+                      className="mt-3 line-clamp-3 text-xs leading-5 text-zinc-500"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      {product.description}
+                    </p>
 
-                  <div
-                    className="mt-5"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    {isPhysical ? (
-                      <>
+                    <div
+                      className="mt-auto pt-5"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      {isPhysical ? (
+                        <>
+                          <div className="flex items-baseline justify-between gap-3">
+                            <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-700">
+                              DEAD DROP
+                            </span>
+                            <span className="text-[12px] font-bold tracking-[0.04em] text-lime-700">
+                              {new Intl.NumberFormat("hu-HU").format(product.price)} Ft
+                            </span>
+                          </div>
+                          <div className="mt-1.5 flex items-baseline justify-between gap-3">
+                            <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-700">
+                              POSTAAUTOMATA
+                            </span>
+                            <span className="text-[12px] tracking-[0.04em] text-zinc-600">
+                              {new Intl.NumberFormat("hu-HU").format(product.price + 2500)} Ft
+                            </span>
+                          </div>
+                        </>
+                      ) : (
                         <div className="flex items-baseline justify-between gap-3">
-                          <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-500">
-                            DEAD DROP
+                          <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-700">
+                            {product.fulfillment === "event" ? "BELÉPŐ" : "DIGITÁLIS"}
                           </span>
-                          <span className="text-[12px] font-bold tracking-[0.04em] text-lime-200">
+                          <span className="text-[12px] font-bold tracking-[0.04em] text-lime-700">
                             {new Intl.NumberFormat("hu-HU").format(product.price)} Ft
                           </span>
                         </div>
-                        <div className="mt-1.5 flex items-baseline justify-between gap-3">
-                          <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-600">
-                            POSTAAUTOMATA
-                          </span>
-                          <span className="text-[12px] tracking-[0.04em] text-zinc-500">
-                            {new Intl.NumberFormat("hu-HU").format(product.price + 2500)} Ft
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="flex items-baseline justify-between gap-3">
-                        <span className="text-[11px] uppercase tracking-[0.04em] text-zinc-500">
-                          {product.fulfillment === "event" ? "BELÉPŐ" : "DIGITÁLIS"}
-                        </span>
-                        <span className="text-[12px] font-bold tracking-[0.04em] text-lime-200">
-                          {new Intl.NumberFormat("hu-HU").format(product.price)} Ft
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
 
-                  <Link
-                    href={href}
-                    className="group mt-4 flex items-center justify-between border-2 border-zinc-700 bg-zinc-800 px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-200 transition-all hover:border-lime-400/70 hover:bg-lime-400/[0.035] hover:text-lime-100"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    <span>MEGNÉZEM</span>
-                    <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                  </Link>
+                    <Link
+                      href={href}
+                      className="group mt-4 flex items-center justify-between rounded-md border-2 border-zinc-700 bg-zinc-800 px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-100 transition-all hover:border-lime-500 hover:bg-zinc-900"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      <span>MEGNÉZEM</span>
+                      <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                    </Link>
+                  </div>
                 </div>
               </article>
             )
