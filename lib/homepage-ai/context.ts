@@ -251,6 +251,7 @@ export async function buildHomepageContext(
 
   const productCandidates: HomepageProductCandidate[] = products
     .filter(availableProduct)
+    .filter((product) => product.id !== "book-2" || book1)
     .map((product) => ({
       id: product.id,
       type: product.type,
