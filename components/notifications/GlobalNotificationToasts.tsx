@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Bell, MessageCircle, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
+import { createClient } from "@/lib/browser"
 import { buildPrivateRoomId } from "@/lib/live/privateRooms"
 
 type ToastItem = {
@@ -229,45 +230,33 @@ export default function GlobalNotificationToasts() {
   useEffect(() => {
     if (loading || !token || !currentUserId) return
 
-    const supabase = (async () => {
-      const mod = await import("@/lib/browser")
-      return mod.createClient()
-    })()
-
-    let channel: ReturnType<Awaited<typeof supabase>["channel"]> | null = null
+    const supabase = createClient()
     let debounceTimer: number | null = null
-    let cancelled = false
 
-    void supabase.then((client) => {
-      if (cancelled || !client.channel) return
-
-      channel = client
-        .channel("global:pm-unread:" + currentUserId)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "pm_unread_counts",
-            filter: "user_id=eq." + currentUserId,
-          },
-          () => {
-            if (debounceTimer) window.clearTimeout(debounceTimer)
-            debounceTimer = window.setTimeout(() => {
-              void poll()
-            }, 450)
-          },
-        )
-        .subscribe()
-    })
+    const channel = supabase
+      .channel("global:pm-unread:" + currentUserId)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "pm_unread_counts",
+          filter: "user_id=eq." + currentUserId,
+        },
+        () => {
+          if (debounceTimer) window.clearTimeout(debounceTimer)
+          debounceTimer = window.setTimeout(() => {
+            void poll()
+          }, 450)
+        },
+      )
+      .subscribe()
 
     return () => {
-      cancelled = true
       if (debounceTimer) window.clearTimeout(debounceTimer)
-      if (channel) void channel.unsubscribe()
+      void channel.unsubscribe()
     }
   }, [currentUserId, loading, poll, token])
-
   useEffect(() => {
     if (loading || !token || !currentUserId) {
       setToasts([])
