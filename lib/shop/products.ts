@@ -1,9 +1,21 @@
 // lib/shop/products.ts
 
 
-export type ProductType = 'pin' | 'men-shirt' | 'women-shirt' | 'bag' | 'book' | 'wallet';
+export type ProductType =
+  | 'pin'
+  | 'men-shirt'
+  | 'women-shirt'
+  | 'bag'
+  | 'book'
+  | 'wallet'
+  | 'software'
+  | 'event'
+  | 'digital'
+  | 'other';
 
 export type ProductSize = 'S' | 'M' | 'L' | 'XL' | '2XL';
+
+export type ProductFulfillment = 'physical' | 'digital' | 'event';
 
 export type PreorderCampaignStatus = 'collecting' | 'printing_started';
 
@@ -32,11 +44,18 @@ export interface Product {
   stock?: number;
   comingSoon?: boolean;
   preorder?: ProductPreorderConfig;
+  /** Egyedi céloldal ehhez a termékhez. Ha nincs megadva, a shop termékmodalja nyílik. */
+  href?: string;
+  /** Hogyan kapja meg a vevő a terméket. Alapértelmezés: physical. */
+  fulfillment?: ProductFulfillment;
+  /** Azonos kategórián belüli alap sorrendi súly. Alapértelmezés: 0. */
+  recommendationPriority?: number;
 }
 
 export const products: Product[] = [
   {
     id: 'men-shirt-1',
+    recommendationPriority: 100,
     type: 'men-shirt',
     name: 'Vállalhatatlan Póló',
     description: 'Vállalhatatlan nyuszis póló, fényvisszaverő sávval. Szitanyomás, kiváló minőség. 100% pamut. Lányoknak crop top változatban is kérhető.',
@@ -54,6 +73,7 @@ export const products: Product[] = [
   },
   {
     id: 'bag-1',
+    recommendationPriority: 90,
     type: 'bag',
     name: 'Vállalhatatlan Táska',
     description: 'Erős, tartós anyag, szitanyomással, fényvisszaverő csíkkal.',
@@ -68,6 +88,7 @@ export const products: Product[] = [
   },
   {
     id: 'book-2',
+    recommendationPriority: 100,
     type: 'book',
     name: 'Vállalhatatlan könyv II. rész',
     description: 'A Vállalhatatlan könyv második része. Dead drop és postaautomata átvétellel is rendelhető.',
@@ -77,6 +98,7 @@ export const products: Product[] = [
   },
   {
     id: 'wallet-1',
+    recommendationPriority: 80,
     type: 'wallet',
     name: 'Vállalhatatlan Dohány Tárca',
     description: 'Vállalhatatlan Dohány Tárca, négy nézetből fotózva.',
@@ -86,6 +108,7 @@ export const products: Product[] = [
   },
   {
     id: 'toxic-bunny-1',
+    recommendationPriority: 70,
     type: 'pin',
     name: 'Toxic Bunny',
     description: 'A szétvarrt nyúl. Medál + lánc',
@@ -95,6 +118,7 @@ export const products: Product[] = [
   },
   {
     id: 'red-eye-bunny-1',
+    recommendationPriority: 60,
     type: 'pin',
     name: 'Red Eye Bunny',
     description: 'A látom a lelked nyúl. Medál + lánc',
