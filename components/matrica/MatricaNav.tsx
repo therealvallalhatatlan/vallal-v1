@@ -5,15 +5,15 @@
 const MATRICA_START_ROUTE_EVENT = 'matrica:start-route';
 
 import { createClient } from '@/lib/browser'
+import { BellIcon } from 'lucide-react'
 import Link from 'next/link'
-import { useCallback, useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef, useSyncExternalStore } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useSessionGuard } from '@/hooks/useSessionGuard.js'
 import { usePresence } from '@/hooks/usePresence'
 import { buildAuthHref, clearStoredAuthReturnTarget } from '@/lib/authRedirect'
 import MatricaPrivateMessagePanel from '@/components/matrica/MatricaPrivateMessagePanel'
-import { setUnreadSource } from '@/lib/notifications/unreadStore'
-import UserBadgeStrip from '@/components/matrica/UserBadgeStrip'
+import { getUnreadSnapshot, setUnreadSource, subscribeUnread } from '@/lib/notifications/unreadStore'
 
 // If StickerSpot is not imported from types, define a fallback type
 // Remove this if you have the correct import
@@ -1675,6 +1675,15 @@ function MatricaNav({
 
   const profileAvatarSize = isMobile ? 44 : 32
 
+  const unreadSnapshot = useSyncExternalStore(
+    subscribeUnread,
+    getUnreadSnapshot,
+    getUnreadSnapshot,
+  )
+  const notificationUnread = unreadSnapshot.sources['personal-notifications'] ?? 0
+  const pmUnreadTotal = Object.values(pmUnreadCounts).reduce((sum, count) => sum + (count ?? 0), 0)
+  const totalUnread = notificationUnread + pmUnreadTotal
+
   const pmDisplayName =
     (nickname && nickname.trim()) ||
     (email && email.split('@')[0]) ||
@@ -1713,9 +1722,7 @@ function MatricaNav({
         </div>
       ) : null}
 
-      {isNetworkRoot ? <UserBadgeStrip /> : null}
-
-      <nav
+            <nav
         style={{
           position: 'fixed',
           top: 0,
@@ -1766,6 +1773,57 @@ function MatricaNav({
             zIndex: 1003,
           }}
         >
+          <button
+            type="button"
+            onClick={() => {
+              playUiClick()
+              window.dispatchEvent(new CustomEvent('network-inbox:open'))
+            }}
+            aria-label="Értesítések megnyitása"
+            title="Értesítések"
+            style={{
+              position: 'relative',
+              width: profileAvatarSize,
+              height: profileAvatarSize,
+              borderRadius: 10,
+              border: '1px solid rgba(255,255,255,0.16)',
+              background: 'rgba(5,7,9,0.94)',
+              color: '#d4d4d8',
+              cursor: 'pointer',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <BellIcon size={16} />
+            {totalUnread > 0 ? (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -5,
+                  right: -5,
+                  minWidth: 17,
+                  height: 17,
+                  padding: '0 4px',
+                  borderRadius: 999,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: '#a3e635',
+                  color: '#111827',
+                  fontSize: 9,
+                  fontWeight: 800,
+                  lineHeight: 1,
+                  border: '1px solid #0b1020',
+                }}
+              >
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </span>
+            ) : null}
+          </button>
+
           {/* Profile menu trigger + dropdown */}
           {user && (
             <div
