@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { products, Product } from "@/lib/shop/products";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ProductModal } from "@/components/shop/ProductModal";
@@ -34,6 +34,19 @@ export default function ShopPage() {
   const [cartOpen, setCartOpen] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const { campaign, loading: campaignLoading } = usePreorderCampaign(DEFAULT_PREORDER_CAMPAIGN_SLUG);
+
+  useEffect(() => {
+    const productId = new URLSearchParams(window.location.search).get("product");
+    if (!productId) return;
+
+    const product = VISIBLE_PRODUCTS.find((candidate) => candidate.id === productId);
+    if (!product) return;
+
+    setSelectedProduct(product);
+    setSelectedSize(undefined);
+    setQuantity(1);
+    setModalOpen(true);
+  }, []);
 
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
