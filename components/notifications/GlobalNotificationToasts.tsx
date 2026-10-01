@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import { createClient } from "@/lib/browser"
 import { buildPrivateRoomId } from "@/lib/live/privateRooms"
+import { setUnreadSource } from "@/lib/notifications/unreadStore"
 
 type ToastItem = {
   id: string
