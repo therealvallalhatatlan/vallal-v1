@@ -121,20 +121,7 @@ export default function HomepageExperience() {
       {!loading && !session ? <GuestHome /> : null}
       {!loading && session ? <PersonalizedMemberHome /> : null}
 
-      {loading ? (
-        <>
-          <SiteHeader />
-          <div className="mx-auto flex min-h-[70vh] w-full max-w-5xl items-center px-5 sm:px-8">
-            <div className="w-full">
-              <div className="h-px w-24 bg-zinc-800" />
-              <p className="mt-5 text-[10px] uppercase tracking-[0.3em] text-zinc-700">
-                CHANNEL INITIALIZING
-              </p>
-              <div className="mt-5 h-10 w-full max-w-3xl animate-pulse bg-zinc-950" />
-            </div>
-          </div>
-        </>
-      ) : null}
+{loading ? <SiteHeader /> : null}
     </MainContent>
   )
 }
