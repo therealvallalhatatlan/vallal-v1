@@ -29,7 +29,7 @@ export type HomepageOrderStatus =
 
 export type HomepageProductCandidate = Pick<
   Product,
-  "id" | "type" | "name" | "description" | "images" | "price"
+  "id" | "type" | "name" | "description" | "images" | "price" | "href" | "fulfillment"
 >
 
 export type HomepageStoryCandidate = {
@@ -74,6 +74,9 @@ export type HomepageContext = {
     merch: boolean
     mecenas: boolean
     founder: boolean
+  }
+  purchases: {
+    productIds: string[]
   }
   network: {
     acceptedClaims: number
