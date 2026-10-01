@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { Montserrat } from "next/font/google"
 import {
   ArrowUpRight,
   BookMarked,
@@ -9,15 +10,19 @@ import {
   Crown,
   HeartHandshake,
   LoaderCircle,
-  ShoppingBag,
   RefreshCw,
+  ShoppingBag,
 } from "lucide-react"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import Footer from "@/components/Footer"
 import SiteHeader from "@/components/SiteHeader"
-// Personalized member homepage: keep navigation available after auth.
-// Keep the member homepage isolated from the legacy homepage.
 import type { HomepageBlock, HomepagePlan } from "@/lib/homepage-ai/types"
+
+const montserrat = Montserrat({
+  subsets: ["latin-ext"],
+  style: ["normal", "italic"],
+  weight: "800",
+})
 
 type SessionShape = {
   access_token?: string
@@ -36,13 +41,11 @@ type RandomStory = {
   text: string
 }
 
-const MEMBER_BADGE_ICONS = {
-  first_book: BookOpen,
-  second_book: BookMarked,
-  mecenas: HeartHandshake,
-  founder: Crown,
-  merch: ShoppingBag,
-} as const
+type NetworkSpot = {
+  id: string
+  spot_type?: "free" | "paid"
+  type?: "physical" | "virtual"
+}
 
 const BADGE_ICONS = {
   first_book: BookOpen,
@@ -51,6 +54,33 @@ const BADGE_ICONS = {
   founder: Crown,
   merch: ShoppingBag,
 } as const
+
+const BADGE_LABELS: Record<MemberBadgeCode, string> = {
+  first_book: "I. KÖNYV",
+  second_book: "II. KÖNYV",
+  mecenas: "MECÉNÁS",
+  founder: "ALAPÍTÓ",
+  merch: "MERCH",
+}
+
+const LOADER_LINES = [
+  "IDENTITY LINK / kapcsolódás",
+  "PROFILE SCAN / profil beolvasása",
+  "ORDER TRACE / rendelések ellenőrzése",
+  "BADGE INDEX / jelvények beolvasása",
+  "SHOP INDEX / elérhető tárgyak keresése",
+  "NETWORK PULSE / hálózati adatok",
+  "DIRECTOR / a mai oldal összeállítása",
+]
+
+const PRODUCT_IMAGES: Record<string, string> = {
+  "book-2": "/vallalhatatlan2.png",
+  "men-shirt-1": "/m1.jpg",
+  "bag-1": "/ny2.jpg",
+  "wallet-1": "/dohany1.jpg",
+  "toxic-bunny-1": "/ny1.png",
+  "red-eye-bunny-1": "/ny3.png",
+}
 
 function getSessionId() {
   try {
@@ -72,8 +102,75 @@ function getSessionId() {
 
 function isInAppBrowser() {
   if (typeof navigator === "undefined") return false
+
   return /FBAN|FBAV|Instagram|Line\b|TikTok|Twitter|WhatsApp|Snapchat|Pinterest|LinkedInApp|wv\b|WebView/i.test(
     navigator.userAgent || "",
+  )
+}
+
+function FixedBadgesSection({
+  codes,
+}: {
+  codes: MemberBadgeCode[] | null
+}) {
+  return (
+    <section className="border-b border-zinc-900 py-7 sm:py-9" aria-label="Jelvényeid">
+      <div className="border-y border-zinc-800 py-3">
+        <p
+          className="text-[10px] uppercase tracking-[0.3em] text-zinc-500"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          JELVÉNYEID
+        </p>
+      </div>
+
+      {codes === null ? (
+        <div className="mt-5 h-14 w-full animate-pulse bg-zinc-950" />
+      ) : codes.length === 0 ? (
+        <div className="mt-5 max-w-xl">
+          <p
+            className="text-sm leading-6 text-zinc-500"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            Ó még nincs egy kitűződ sem. Nézz körül, hogy szerezhetnél egyet.
+          </p>
+          <Link
+            href="/shop"
+            className="mt-4 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-lime-200/80 hover:text-lime-100"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            NÉZZ KÖRÜL A SHOPBAN
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-5 grid grid-cols-5 gap-1 sm:flex sm:justify-start sm:gap-7">
+          {codes.map((code) => {
+            const Icon = BADGE_ICONS[code]
+
+            return (
+              <div
+                key={code}
+                className="flex min-w-0 flex-col items-center gap-2 sm:min-w-[4.75rem]"
+              >
+                <span
+                  title={BADGE_LABELS[code]}
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-lime-400/30 bg-lime-400/[0.025] text-lime-200 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.06]"
+                >
+                  <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+                </span>
+                <span
+                  className="w-full text-center text-[7px] uppercase leading-[1.2] tracking-[0.08em] text-zinc-500 sm:text-[9px] sm:tracking-[0.12em]"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  {BADGE_LABELS[code]}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -82,99 +179,85 @@ function ProductBlockView({
 }: {
   block: Extract<HomepageBlock, { type: "product" }>
 }) {
-  const product = block.productId
-  const images: Record<string, string> = {
-    "book-2": "/vallalhatatlan2.png",
-    "men-shirt-1": "/m1.jpg",
-    "bag-1": "/ny2.jpg",
-    "wallet-1": "/dohany1.jpg",
-    "toxic-bunny-1": "/ny1.png",
-    "red-eye-bunny-1": "/ny3.png",
-  }
+  const productId = block.productId
+  const image = block.productImage ?? PRODUCT_IMAGES[productId] ?? "/cover2.png"
   const href =
-    product === "book-2"
+    productId === "book-2"
       ? "/konyv-2"
-      : "/shop?product=" + encodeURIComponent(product)
+      : "/shop?product=" + encodeURIComponent(productId)
 
   return (
-    <section className="">
-      <div className="grid gap-10 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] sm:items-center sm:gap-16">
-        <div className="relative aspect-square max-w-sm overflow-hidden bg-zinc-950">
-          <img
-            src={block.productImage ?? images[product] ?? "/cover2.png"}
-            alt=""
-            className="h-full w-full object-cover opacity-90"
-          />
-        </div>
+    <section className="border-b border-zinc-900 py-8 sm:py-12">
+      <div className="overflow-hidden rounded-md border border-zinc-800 bg-[#050505] transition-colors hover:border-zinc-700">
+        <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] sm:grid-cols-[10rem_minmax(0,1fr)]">
+          <div className="relative aspect-[4/5] overflow-hidden bg-black">
+            <img
+              src={image}
+              alt={block.productName ?? ""}
+              className="h-full w-full object-cover grayscale transition-all duration-300 hover:grayscale-0"
+            />
+            <div className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:100%_4px]" />
+          </div>
 
-        <div className="max-w-2xl">
-          {block.productName ? (
-            <p className="mt-3 text-[21px] uppercase tracking-[0.2em] text-zinc-600">
-              {block.productName}
+          <div className="min-w-0 p-4 sm:p-5">
+            <p
+              className="text-[8px] uppercase tracking-[0.24em] text-zinc-600 sm:text-[9px]"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              TALÁLTAM NEKED VALAMIT
             </p>
-          ) : null}
-          <h2
-            className="mt-4 text-3xl leading-tight text-zinc-100 sm:text-5xl"
-            style={{ fontFamily: "var(--font-heading), serif" }}
-          >
-            {block.headline}
-          </h2>
-          {block.productPrice ? (
-            <p className="mt-4 text-xs uppercase tracking-[0.2em] text-zinc-600">
-              {new Intl.NumberFormat("hu-HU").format(block.productPrice)} Ft
-            </p>
-          ) : null}
-          <p className="mt-5 text-base leading-7 text-zinc-500 sm:text-lg">
-            {block.body}
-          </p>
-          <Link
-            href={href}
-            className="mt-8 inline-flex items-center gap-3 rounded-md border border-lime-400/35 bg-lime-400/[0.025] px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-lime-200 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.07] hover:text-white"
-          >
-            {block.cta}
-            <ArrowUpRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    </section>
-  )
-}
 
-function StoryBlockView({
-  block,
-}: {
-  block: Extract<HomepageBlock, { type: "story" }>
-}) {
-  return (
-    <section className="border-y border-zinc-900 py-16 sm:py-24">
-      <div className="mx-auto max-w-3xl">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/55">
-          EGY SZTORI NEKED
-        </p>
-        <h2
-          className="mt-4 text-3xl leading-tight text-zinc-100 sm:text-5xl"
-          style={{ fontFamily: "var(--font-heading), serif" }}
-        >
-          {block.headline}
-        </h2>
-        {block.storyTitle ? (
-          <p className="mt-4 text-[10px] uppercase tracking-[0.22em] text-zinc-600">
-            {block.storyTitle}
-          </p>
-        ) : null}
-        <article
-          className="mt-10 whitespace-pre-line text-sm leading-7 text-zinc-400 sm:text-base sm:leading-8"
-          style={{ fontFamily: "var(--font-mono-tech)" }}
-        >
-          {block.storyText}
-        </article>
-        <Link
-          href={"/novellak/" + block.storySlug}
-          className="mt-10 inline-flex items-center gap-3 text-[10px] uppercase tracking-[0.22em] text-lime-200/80 hover:text-lime-100"
-        >
-          {block.cta}
-          <ArrowUpRight className="h-4 w-4" />
-        </Link>
+            <h2
+              className={"mt-2 text-lg uppercase leading-[0.95] tracking-[-0.015em] text-zinc-100 sm:text-2xl " + montserrat.className}
+            >
+              {block.productName ?? block.headline}
+            </h2>
+
+            <p
+              className="mt-3 line-clamp-3 text-xs leading-5 text-zinc-500 sm:text-sm sm:leading-6"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              {block.body}
+            </p>
+
+            <div
+              className="mt-4 border-t border-zinc-900 pt-3"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-[8px] uppercase tracking-[0.16em] text-zinc-600 sm:text-[9px]">
+                  DEAD DROP
+                </span>
+                <span className="text-sm font-bold tracking-[0.06em] text-lime-300 sm:text-base">
+                  {block.productPrice
+                    ? new Intl.NumberFormat("hu-HU").format(block.productPrice) + " Ft"
+                    : "ÁR INFO"}
+                </span>
+              </div>
+              <div className="mt-1.5 flex items-baseline justify-between gap-3">
+                <span className="text-[8px] uppercase tracking-[0.16em] text-zinc-700 sm:text-[9px]">
+                  POSTAAUTOMATA
+                </span>
+                <span className="text-[11px] tracking-[0.04em] text-zinc-600 sm:text-xs">
+                  {block.productPrice
+                    ? new Intl.NumberFormat("hu-HU").format(
+                        block.productPrice + 2500,
+                      ) + " Ft"
+                    : "ÁR INFO"}
+                </span>
+              </div>
+            </div>
+
+            <Link
+              href={href}
+              className="group mt-4 flex items-center justify-between border border-zinc-800 px-3 py-2.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-300 transition-all hover:border-lime-400/50 hover:bg-lime-400/[0.035] hover:text-lime-100"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              <span>{block.cta || "MEGNÉZEM"}</span>
+              <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   )
@@ -198,6 +281,7 @@ function OrderStatusBlockView({
 
   const markReceived = async () => {
     if (!token || receiving) return
+
     setReceiving(true)
     setError(null)
 
@@ -215,8 +299,11 @@ function OrderStatusBlockView({
       })
 
       const payload = await response.json().catch(() => ({}))
+
       if (!response.ok) {
-        throw new Error(payload?.error || "Az átvétel visszaigazolása nem sikerült.")
+        throw new Error(
+          payload?.error || "Az átvétel visszaigazolása nem sikerült.",
+        )
       }
 
       onReceived(block.orderId)
@@ -232,124 +319,202 @@ function OrderStatusBlockView({
   }
 
   return (
-    <section className="border-y border-zinc-900 py-14 sm:py-20">
-      <div className="max-w-2xl">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/55">
+    <section className="border-b border-zinc-900 py-8 sm:py-12">
+      <div className="border border-zinc-800 bg-[#050505] p-5 sm:p-6">
+        <p
+          className="text-[9px] uppercase tracking-[0.26em] text-lime-200/55"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
           RENDELÉS / ÁLLAPOT
         </p>
+
         <h2
-          className="mt-4 text-3xl leading-tight text-zinc-100 sm:text-5xl"
-          style={{ fontFamily: "var(--font-heading), serif" }}
+          className={"mt-3 text-2xl uppercase leading-[0.98] tracking-tight text-zinc-100 sm:text-4xl " + montserrat.className}
         >
           {block.headline}
         </h2>
-        <p className="mt-5 text-base leading-7 text-zinc-500 sm:text-lg">
+
+        <p
+          className="mt-4 max-w-2xl text-sm leading-6 text-zinc-500"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
           {block.body}
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center gap-5">
+        <div className="mt-5 flex flex-wrap items-center gap-4">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-3 text-[10px] uppercase tracking-[0.22em] text-lime-200/80 hover:text-lime-100"
+            className="inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.2em] text-lime-200/80 hover:text-lime-100"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            {block.cta ?? "RENDELÉSEM"}
-            <ArrowUpRight className="h-4 w-4" />
+            {block.cta || "RENDELÉSEM"}
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
 
           <button
             type="button"
             onClick={() => void markReceived()}
             disabled={!token || receiving}
-            className="inline-flex items-center gap-2 rounded-md border border-zinc-800 px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-200 disabled:cursor-wait disabled:opacity-40"
+            className="inline-flex items-center gap-2 border border-zinc-800 px-3 py-2 text-[9px] uppercase tracking-[0.18em] text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-200 disabled:cursor-wait disabled:opacity-40"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            {receiving ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : null}
-            {receiving ? "FELDOLGOZÁS…" : "ÁT VETTEM"}
+            {receiving ? (
+              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+            ) : null}
+            {receiving ? "FELDOLGOZÁS..." : "ÁT VETTEM"}
           </button>
         </div>
 
-        {error ? (
-          <p className="mt-4 text-xs text-red-400">{error}</p>
-        ) : null}
+        {error ? <p className="mt-3 text-xs text-red-400">{error}</p> : null}
       </div>
     </section>
   )
 }
 
-function NetworkBlockView({
-  block,
-}: {
-  block: Extract<HomepageBlock, { type: "network" }>
-}) {
-  return (
-    <section className="border-y border-zinc-900 py-16 sm:py-24">
-      <div className="max-w-2xl">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/55">
-          HÁLÓZAT
-        </p>
-        <h2
-          className="mt-4 text-3xl leading-tight text-zinc-100 sm:text-5xl"
-          style={{ fontFamily: "var(--font-heading), serif" }}
-        >
-          {block.headline}
-        </h2>
-        <p className="mt-5 text-base leading-7 text-zinc-500 sm:text-lg">
-          {block.body}
-        </p>
-        <Link
-          href="/halozat"
-          className="mt-8 inline-flex items-center gap-3 text-[10px] uppercase tracking-[0.22em] text-lime-200/80 hover:text-lime-100"
-        >
-          {block.cta}
-          <ArrowUpRight className="h-4 w-4" />
-        </Link>
-      </div>
-    </section>
-  )
-}
+function NetworkSnapshotSection() {
+  const [spots, setSpots] = useState<NetworkSpot[]>([])
+  const [loading, setLoading] = useState(true)
 
-function BadgeBlockView({
-  codes,
-}: {
-  codes: Array<keyof typeof BADGE_ICONS>
-}) {
+  const loadSpots = async () => {
+    setLoading(true)
+
+    try {
+      const response = await fetch("/api/matrica/spots", {
+        cache: "no-store",
+      })
+
+      if (!response.ok) throw new Error("network_spots_failed")
+
+      const payload = (await response.json()) as {
+        spots?: NetworkSpot[]
+      }
+
+      setSpots(Array.isArray(payload.spots) ? payload.spots : [])
+    } catch (error) {
+      console.error("[homepage] network snapshot failed", error)
+      setSpots([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadSpots()
+  }, [])
+
+  const stats = [
+    ["AKTÍV SZPOT", spots.length],
+    ["INGYENES SZPOT", spots.filter((spot) => spot.spot_type !== "paid").length],
+    ["FIZIKAI SZPOT", spots.filter((spot) => spot.type === "physical").length],
+    ["VIRTUÁLIS SZPOT", spots.filter((spot) => spot.type === "virtual").length],
+  ]
+
   return (
-    <section className="border-y border-zinc-900 py-14 sm:py-18">
-      <div className="flex flex-wrap gap-3">
-        {codes?.map((code) => {
-          const Icon = BADGE_ICONS[code]
-          return (
-            <span
-              key={code}
-              title={code.replace("_", " ")}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-800 bg-zinc-950 text-zinc-500"
-            >
-              <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+    <section className="border-b border-zinc-900 py-12 sm:py-16" aria-label="Hálózat">
+      <div className="border-y border-zinc-800 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-200/50" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-lime-100" />
             </span>
-          )
-        })}
+            <span
+              className="text-[10px] uppercase tracking-[0.28em] text-zinc-300"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              A HÁLÓZAT
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void loadSpots()}
+            className="text-[9px] uppercase tracking-[0.18em] text-zinc-600 hover:text-lime-100"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            {loading ? "SYNC..." : "FRISSÍTÉS"}
+          </button>
+        </div>
       </div>
+
+      <p
+        className="mt-7 max-w-2xl text-base italic leading-7 text-zinc-500 sm:text-lg"
+        style={{ fontFamily: "var(--font-mono-tech)" }}
+      >
+        A hálózat él. Ezek az adatok most vannak itt.
+      </p>
+
+      <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden border border-zinc-800 bg-zinc-800 sm:grid-cols-4">
+        {stats.map(([label, value]) => (
+          <div key={label} className="bg-black/90 px-3 py-4 sm:px-4 sm:py-5">
+            <p
+              className="text-[8px] uppercase leading-4 tracking-[0.16em] text-zinc-600 sm:text-[9px]"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              {label}
+            </p>
+            <p
+              className="mt-1 text-2xl leading-none text-zinc-100 sm:text-3xl"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              {loading ? "--" : String(value).padStart(2, "0")}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <Link
+        href="/halozat"
+        className="group mt-3 flex items-center justify-between border border-zinc-800 px-4 py-3 transition-colors hover:border-lime-400/50 hover:bg-lime-400/[0.025]"
+      >
+        <div>
+          <p
+            className="text-[10px] uppercase tracking-[0.16em] text-zinc-300"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            BELÉPÉS A HÁLÓZATBA
+          </p>
+          <p
+            className="mt-1 text-[8px] uppercase tracking-[0.14em] text-zinc-700"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            TÉRKÉP · PONTOK · EMBEREK
+          </p>
+        </div>
+        <span className="text-lg text-zinc-600 transition-transform group-hover:translate-x-1 group-hover:text-lime-100">
+          →
+        </span>
+      </Link>
     </section>
   )
 }
 
 function TrustSection() {
   return (
-    <section className="border-y border-zinc-900 py-16 sm:py-24" aria-label="Bízhatsz bennem">
-      <div className="grid gap-8 sm:grid-cols-[minmax(0,1fr)_9rem] sm:items-center sm:gap-12">
+    <section className="border-b border-zinc-900 py-12 sm:py-16" aria-label="Bízhatsz bennem">
+      <div className="grid gap-7 sm:grid-cols-[minmax(0,1fr)_9rem] sm:items-center sm:gap-12">
         <div>
-          <p className="text-3xl italic leading-tight text-zinc-200 sm:text-5xl" style={{ fontFamily: "var(--font-heading), serif" }}>
+          <p
+            className={"text-3xl italic leading-[1.05] tracking-tight text-zinc-200 sm:text-5xl " + montserrat.className}
+          >
             Bízhatsz bennem, nyúl vagyok.
           </p>
-          <p className="mt-5 text-sm leading-7 text-zinc-500 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
+
+          <p
+            className="mt-5 text-sm leading-7 text-zinc-500"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
             Ha kérdésed van{" "}
-            <Link href="/kapcsolat" className="text-lime-100 underline underline-offset-4">
+            <Link
+              href="/kapcsolat"
+              className="text-lime-100 underline underline-offset-4"
+            >
               itt tudsz
             </Link>{" "}
             írni nekem.
           </p>
         </div>
 
-        <div className="mx-auto w-36 overflow-hidden rounded-full border border-zinc-800 bg-black sm:mx-0 sm:justify-self-end">
+        <div className="mx-auto w-28 overflow-hidden rounded-full border border-zinc-800 bg-black sm:mx-0 sm:w-36 sm:justify-self-end">
           <video
             className="block w-full"
             src="/420.mp4"
@@ -366,53 +531,6 @@ function TrustSection() {
   )
 }
 
-function MemberBadgesSection({ codes }: { codes: MemberBadgeCode[] }) {
-  const labels: Record<MemberBadgeCode, string> = {
-    first_book: "ELSŐ KÖNYV",
-    second_book: "MÁSODIK KÖNYV",
-    mecenas: "MECÉNÁS",
-    founder: "ALAPÍTÓ",
-    merch: "MERCH",
-  }
-
-  return (
-    <section className="border-y border-zinc-900 py-14 sm:py-20" aria-label="Jelvényeid">
-      <div className="border-t border-b border-zinc-800 py-4">
-        <p className="text-[11px] uppercase tracking-[0.32em] text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>
-          JELVÉNYEID
-        </p>
-        <p className="mt-2 text-sm italic text-zinc-600">
-          Amiket eddig megszereztél
-        </p>
-      </div>
-
-      {codes.length === 0 ? (
-        <div className="mt-7">
-          <p className="max-w-2xl text-sm leading-7 text-zinc-600">
-            Még nincs megszerzett jelvényed.
-          </p>
-        </div>
-      ) : (
-        <div className="mt-7 flex flex-wrap gap-x-8 gap-y-6">
-          {codes.map((code) => {
-            const Icon = MEMBER_BADGE_ICONS[code]
-            return (
-              <div key={code} className="group inline-flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-lime-400/35 bg-lime-400/[0.03] text-lime-200 transition-colors group-hover:border-lime-300/70 group-hover:bg-lime-400/[0.07]">
-                  <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
-                </span>
-                <span className="text-[11px] uppercase tracking-[0.12em] text-zinc-300 sm:text-xs" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                  {labels[code]}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </section>
-  )
-}
-
 function RandomStorySection() {
   const [story, setStory] = useState<RandomStory | null>(null)
   const [loadingStory, setLoadingStory] = useState(true)
@@ -425,6 +543,7 @@ function RandomStorySection() {
       const response = await fetch("/api/public/random-story", {
         cache: "no-store",
       })
+
       if (!response.ok) throw new Error("random_story_failed")
 
       const payload = (await response.json()) as RandomStory
@@ -451,33 +570,47 @@ function RandomStorySection() {
   const visibleParagraphs = expanded ? paragraphs : paragraphs.slice(0, 2)
 
   return (
-    <section className="mt-16 w-full border-t border-zinc-800 pt-4 sm:mt-20" aria-label="Random Vállalhatatlan Sztori">
-      <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.24em] text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
-        <span>Random Vállalhatatlan Sztori</span>
+    <section
+      className="w-full border-t border-zinc-800 py-12 sm:py-16"
+      aria-label="Random Vállalhatatlan Sztori"
+    >
+      <div className="flex items-center justify-between">
+        <span
+          className="text-[10px] uppercase tracking-[0.24em] text-zinc-300"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          RANDOM VÁLLALHATATLAN SZTORI
+        </span>
+
         <button
           type="button"
           onClick={() => void loadStory()}
           disabled={loadingStory}
           aria-label="Új random sztori"
-          title="Új random sztori"
-          className="group flex h-8 w-8 items-center justify-center text-zinc-500 transition-colors hover:text-lime-100 disabled:opacity-40"
+          className="flex h-8 w-8 items-center justify-center text-zinc-500 transition-colors hover:text-lime-100 disabled:opacity-40"
         >
           <RefreshCw
             size={15}
             strokeWidth={2}
-            className={loadingStory ? "animate-spin" : "transition-transform duration-500 group-hover:rotate-180"}
+            className={loadingStory ? "animate-spin" : ""}
           />
         </button>
       </div>
 
       {story ? (
-        <article className="border-t border-zinc-800 pt-8 sm:pt-10">
-          <h3 className="text-3xl leading-tight text-zinc-100 sm:text-4xl" style={{ fontFamily: "var(--font-mono-tech)" }}>
+        <article className="border-t border-zinc-800 pt-7 sm:pt-9">
+          <h2
+            className={"text-3xl leading-tight text-zinc-100 sm:text-4xl " + montserrat.className}
+          >
             {story.title}
-          </h3>
+          </h2>
 
           <div className="relative mt-4">
-            <div className={expanded ? "" : "relative max-h-[390px] overflow-hidden"}>
+            <div
+              className={
+                expanded ? "" : "relative max-h-[360px] overflow-hidden"
+              }
+            >
               {visibleParagraphs.map((paragraph, index) => (
                 <p
                   key={index}
@@ -491,7 +624,7 @@ function RandomStorySection() {
 
             {!expanded && paragraphs.length > 2 ? (
               <div
-                className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-[#010101] via-[#010101]/85 to-transparent"
+                className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#010101] via-[#010101]/85 to-transparent"
                 aria-hidden="true"
               />
             ) : null}
@@ -501,7 +634,7 @@ function RandomStorySection() {
             <button
               type="button"
               onClick={() => setExpanded((value) => !value)}
-              className="mx-auto mt-6 flex w-1/2 items-center justify-between rounded-md border border-zinc-800 px-3 py-3 text-left text-[11px] uppercase tracking-[0.2em] text-zinc-400 transition-all hover:border-lime-100/50 hover:bg-lime-100/[0.03] hover:text-lime-100 sm:w-1/3"
+              className="mx-auto mt-5 flex w-1/2 items-center justify-between border border-zinc-800 px-3 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-zinc-400 transition-all hover:border-lime-100/50 hover:bg-lime-100/[0.03] hover:text-lime-100 sm:w-1/3"
               style={{ fontFamily: "var(--font-mono-tech)" }}
               aria-expanded={expanded}
             >
@@ -511,12 +644,19 @@ function RandomStorySection() {
           ) : null}
         </article>
       ) : (
-        <p className="border-t border-zinc-800 pt-8 text-sm italic text-zinc-600">
+        <p
+          className="border-t border-zinc-800 pt-7 text-sm italic text-zinc-600"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
           {loadingStory ? "Sztori betöltése..." : "Nincs elérhető sztori."}
         </p>
       )}
     </section>
   )
+}
+
+function isUsefulBlock(block: HomepageBlock) {
+  return block.type === "product" || block.type === "order_status"
 }
 
 export default function PersonalizedMemberHome() {
@@ -529,20 +669,12 @@ export default function PersonalizedMemberHome() {
   const [loadingPlan, setLoadingPlan] = useState(true)
   const [error, setError] = useState(false)
   const [loaderIndex, setLoaderIndex] = useState(0)
-  const [badgeCodes, setBadgeCodes] = useState<MemberBadgeCode[]>([])
-  const loaderLines = [
-    "IDENTITY LINK / kapcsolódás",
-    "PROFILE SCAN / profil beolvasása",
-    "ORDER TRACE / rendelések ellenőrzése",
-    "STORY POOL / történetek keresése",
-    "SHOP INDEX / elérhető tárgyak keresése",
-    "DIRECTOR / a mai oldal összeállítása",
-  ]
+  const [badgeCodes, setBadgeCodes] = useState<MemberBadgeCode[] | null>(null)
 
   useEffect(() => {
     if (!loading && loadingPlan) {
       const interval = window.setInterval(() => {
-        setLoaderIndex((current) => (current + 1) % loaderLines.length)
+        setLoaderIndex((current) => (current + 1) % LOADER_LINES.length)
       }, 650)
 
       return () => window.clearInterval(interval)
@@ -574,13 +706,16 @@ export default function PersonalizedMemberHome() {
         let storedCampaign: string | null = null
 
         try {
-          referrerHost = document.referrer ? new URL(document.referrer).host : null
+          referrerHost = document.referrer
+            ? new URL(document.referrer).host
+            : null
         } catch {
           referrerHost = null
         }
 
         try {
           const stored = sessionStorage.getItem("vh_homepage_entry_v1")
+
           if (stored) {
             const entry = JSON.parse(stored) as {
               source?: unknown
@@ -590,14 +725,21 @@ export default function PersonalizedMemberHome() {
             }
 
             const capturedAt = Number(entry.capturedAt ?? 0)
-            if (capturedAt > 0 && Date.now() - capturedAt < 24 * 60 * 60 * 1000) {
-              storedSource = typeof entry.source === "string" ? entry.source : null
+
+            if (
+              capturedAt > 0 &&
+              Date.now() - capturedAt < 24 * 60 * 60 * 1000
+            ) {
+              storedSource =
+                typeof entry.source === "string" ? entry.source : null
               storedCampaign =
                 typeof entry.campaign === "string" ? entry.campaign : null
 
               if (!referrerHost && typeof entry.referrer === "string") {
                 try {
-                  referrerHost = entry.referrer ? new URL(entry.referrer).host : null
+                  referrerHost = entry.referrer
+                    ? new URL(entry.referrer).host
+                    : null
                 } catch {
                   referrerHost = null
                 }
@@ -623,7 +765,9 @@ export default function PersonalizedMemberHome() {
           },
           body: JSON.stringify({
             sessionId,
-            isMobile: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ""),
+            isMobile: /Mobi|Android|iPhone|iPad/i.test(
+              navigator.userAgent || "",
+            ),
             isInAppBrowser: isInAppBrowser(),
             referrerHost,
           }),
@@ -631,34 +775,53 @@ export default function PersonalizedMemberHome() {
           signal: controller.signal,
         })
 
-        if (!response.ok) throw new Error("homepage_failed")
+        if (!response.ok) {
+          throw new Error("homepage_failed")
+        }
 
         const payload = (await response.json()) as {
           ok?: boolean
           plan?: HomepagePlan
         }
 
-        if (!payload.ok || !payload.plan) throw new Error("homepage_missing")
+        if (!payload.ok || !payload.plan) {
+          throw new Error("homepage_missing")
+        }
 
         setPlan(payload.plan)
 
         void fetch("/api/user/account", {
-          headers: { Authorization: "Bearer " + token },
+          headers: {
+            Authorization: "Bearer " + token,
+          },
           cache: "no-store",
         })
-          .then((accountResponse) =>
-            accountResponse.ok
-              ? accountResponse.json()
-              : Promise.reject(new Error("account_failed")),
-          )
+          .then(async (accountResponse) => {
+            if (!accountResponse.ok) {
+              throw new Error("account_failed")
+            }
+            return (await accountResponse.json()) as {
+              account?: {
+                badges?: Array<{ code?: unknown }>
+              }
+            }
+          })
           .then((accountPayload) => {
-            const codes = Array.isArray(accountPayload?.account?.badges)
+            const codes = Array.isArray(accountPayload.account?.badges)
               ? accountPayload.account.badges
-                  .map((badge: { code?: unknown }) => badge.code)
-                  .filter((code: unknown): code is MemberBadgeCode =>
-                    ["first_book", "second_book", "mecenas", "founder", "merch"].includes(String(code)),
+                  .map((badge) => badge.code)
+                  .filter(
+                    (code): code is MemberBadgeCode =>
+                      [
+                        "first_book",
+                        "second_book",
+                        "mecenas",
+                        "founder",
+                        "merch",
+                      ].includes(String(code)),
                   )
               : []
+
             setBadgeCodes(codes)
           })
           .catch((accountError) => {
@@ -672,7 +835,10 @@ export default function PersonalizedMemberHome() {
           // Ignore storage cleanup errors.
         }
       } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") {
+        if (
+          requestError instanceof DOMException &&
+          requestError.name === "AbortError"
+        ) {
           return
         }
 
@@ -684,30 +850,57 @@ export default function PersonalizedMemberHome() {
     }
 
     void load()
+
     return () => controller.abort()
   }, [loading, token])
 
   if (loading || loadingPlan) {
+    const visibleLoaderLines = LOADER_LINES.slice(0, loaderIndex + 1)
+    const percent = Math.round(
+      ((loaderIndex + 1) / LOADER_LINES.length) * 100,
+    )
+
     return (
-      <div className="relative flex min-h-[82vh] w-full items-center justify-center overflow-hidden bg-[#010101] px-5 py-20 sm:px-8">
-        <div className="pointer-events-none absolute inset-0 opacity-20 bg-[repeating-linear-gradient(to_bottom,rgba(163,230,53,0.035)_0,rgba(163,230,53,0.035)_1px,transparent_1px,transparent_22px)]" />
-        <div className="relative w-full max-w-3xl overflow-hidden border border-zinc-800 bg-black/90 p-5 shadow-[0_0_70px_rgba(163,230,53,0.04)] sm:p-7">
+      <div className="relative flex min-h-[78vh] w-full items-center justify-center overflow-hidden bg-[#010101] px-5 py-20 sm:px-8">
+        <div className="pointer-events-none absolute inset-0 opacity-20 [background:repeating-linear-gradient(to_bottom,rgba(163,230,53,0.035)_0,rgba(163,230,53,0.035)_1px,transparent_1px,transparent_22px)]" />
+
+        <div className="relative w-full max-w-3xl overflow-hidden border border-zinc-800 bg-black/95 p-5 shadow-[0_0_70px_rgba(163,230,53,0.04)] sm:p-7">
           <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
-            <span className="text-[10px] uppercase tracking-[0.28em] text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <span
+              className="text-[10px] uppercase tracking-[0.28em] text-zinc-500"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
               VÁLLALHATATLAN / MEMBER CHANNEL
             </span>
-            <span className="flex items-center gap-2 text-[9px] uppercase tracking-[0.18em] text-lime-200/60" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <span
+              className="flex items-center gap-2 text-[9px] uppercase tracking-[0.18em] text-lime-200/60"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime-300" />
               LIVE
             </span>
           </div>
 
-          <div className="mt-8 space-y-3 text-[12px] leading-6 text-zinc-500 sm:text-sm" style={{ fontFamily: "var(--font-mono-tech)" }}>
-            {loaderLines.slice(0, loaderIndex + 1).map((line, index) => (
-              <p key={line} className={index === loaderIndex ? "text-lime-200" : "text-zinc-700"}>
-                <span className="mr-3 text-zinc-800">[{String(index + 1).padStart(2, "0")}]</span>
+          <div
+            className="mt-8 space-y-3 text-[12px] leading-6 text-zinc-500 sm:text-sm"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            {visibleLoaderLines.map((line, index) => (
+              <p
+                key={line}
+                className={
+                  index === visibleLoaderLines.length - 1
+                    ? "text-lime-200"
+                    : "text-zinc-700"
+                }
+              >
+                <span className="mr-3 text-zinc-800">
+                  [{String(index + 1).padStart(2, "0")}]
+                </span>
                 {line}
-                {index === loaderIndex ? <span className="ml-1 animate-pulse">_</span> : null}
+                {index === visibleLoaderLines.length - 1 ? (
+                  <span className="ml-1 animate-pulse">_</span>
+                ) : null}
               </p>
             ))}
           </div>
@@ -715,12 +908,15 @@ export default function PersonalizedMemberHome() {
           <div className="mt-8 h-px w-full bg-zinc-900">
             <div
               className="h-px bg-lime-300/40 transition-all duration-500"
-              style={{ width: ((loaderIndex + 1) / loaderLines.length) * 100 + "%" }}
+              style={{ width: percent + "%" }}
             />
           </div>
 
-          <p className="mt-3 text-[9px] uppercase tracking-[0.22em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
-            PERSONALIZED HOMEPAGE BUILD / {Math.round(((loaderIndex + 1) / loaderLines.length) * 100)}%
+          <p
+            className="mt-3 text-[9px] uppercase tracking-[0.22em] text-zinc-700"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            PERSONALIZED HOMEPAGE BUILD / {percent}%
           </p>
         </div>
       </div>
@@ -729,10 +925,13 @@ export default function PersonalizedMemberHome() {
 
   if (error || !plan) {
     return (
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-5xl items-center px-5 sm:px-8">
+      <div className="mx-auto flex min-h-[60vh] w-full max-w-5xl items-center px-5 sm:px-8">
         <div>
           <p className="text-3xl text-zinc-300">Szia.</p>
-          <p className="mt-4 text-sm text-zinc-600">
+          <p
+            className="mt-4 text-sm text-zinc-600"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
             Most valami nem állt össze. Próbáld újra egy pillanat múlva.
           </p>
         </div>
@@ -743,28 +942,38 @@ export default function PersonalizedMemberHome() {
   const handleReceived = (orderId: string) => {
     setPlan((current) =>
       current
-        ? { ...current, blocks: current.blocks.filter((block) => block.type !== "order_status" || block.orderId !== orderId) }
+        ? {
+            ...current,
+            blocks: current.blocks.filter(
+              (block) =>
+                block.type !== "order_status" || block.orderId !== orderId,
+            ),
+          }
         : current,
     )
   }
 
+  const usefulBlocks = plan.blocks.filter(isUsefulBlock)
+
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl px-5 pb-28 pt-28 sm:px-8 sm:pb-36 sm:pt-32">
-        <section className="flex min-h-[48vh] items-center border-b border-zinc-900 py-24 sm:min-h-[58vh] sm:py-32">
+
+      <main className="mx-auto w-full max-w-5xl px-5 pb-24 pt-16 sm:px-8 sm:pb-32 sm:pt-20">
+        <section className="border-b border-zinc-900 py-10 sm:py-16">
           <div className="max-w-4xl">
             <p
-              className="text-4xl leading-[1.08] tracking-tight text-zinc-100 sm:text-6xl lg:text-[5.1rem]"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
+              className={"text-4xl italic leading-[1.02] tracking-tight text-zinc-100 sm:text-6xl lg:text-[5rem] " + montserrat.className}
             >
               {plan.greeting}
             </p>
           </div>
         </section>
 
-        <div className="space-y-0">
-          {plan.blocks.map((block, index) => {
+        <FixedBadgesSection codes={badgeCodes} />
+
+        <div>
+          {usefulBlocks.map((block, index) => {
             if (block.type === "product") {
               return (
                 <ProductBlockView
@@ -774,48 +983,22 @@ export default function PersonalizedMemberHome() {
               )
             }
 
-            if (block.type === "story") {
-              return (
-                <StoryBlockView
-                  key={"story-" + block.storySlug + "-" + index}
-                  block={block}
-                />
-              )
-            }
-
-            if (block.type === "order_status") {
-              return (
-                <OrderStatusBlockView
-                  key={"order-" + block.orderId}
-                  block={block}
-                  token={token}
-                  onReceived={handleReceived}
-                />
-              )
-            }
-
-            if (block.type === "network") {
-              return (
-                <NetworkBlockView
-                  key={"network-" + index}
-                  block={block}
-                />
-              )
-            }
-
             return (
-              <BadgeBlockView
-                key={"badge-" + index}
-                codes={block.codes}
+              <OrderStatusBlockView
+                key={"order-" + block.orderId}
+                block={block}
+                token={token}
+                onReceived={handleReceived}
               />
             )
           })}
         </div>
 
+        <NetworkSnapshotSection />
         <TrustSection />
-        <MemberBadgesSection codes={badgeCodes} />
         <RandomStorySection />
       </main>
+
       <Footer />
     </>
   )
