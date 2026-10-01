@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
+import { Mail } from "lucide-react"
 import Link from "next/link"
 import Reviews from "@/components/Reviews"
 import Footer from "@/components/Footer"
@@ -59,8 +60,12 @@ function GuestHome() {
               <div className="mt-5 flex flex-row gap-7 sm:justify-end">
                 <Link
                   href="/auth?from=%2Ffooldal-2&next=%2Ffooldal-2"
-                  className="outline-4 outline-offset-2 outline-lime-100/10 inline-flex min-h-14 flex-1 items-center justify-center rounded-md border-2 border-lime-400/45 bg-lime-400/[0.035] px-4 py-3 text-[17px] font-semibold tracking-[0.04em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white sm:min-w-40 sm:flex-none sm:text-[12px]"
+                  className="outline-4 outline-offset-2 outline-lime-100/10 inline-flex min-h-14 flex-1 items-center justify-center gap-3 rounded-md border-2 border-lime-400/45 bg-lime-400/[0.035] px-4 py-3 text-[17px] font-semibold tracking-[0.04em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white sm:min-w-40 sm:flex-none sm:text-[12px]"
                 >
+                  <Mail
+                    aria-hidden="true"
+                    className="h-6 w-6 shrink-0 text-lime-200 sm:h-5 sm:w-5"
+                  />
                   Email
                 </Link>
 
