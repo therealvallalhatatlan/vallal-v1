@@ -82,6 +82,11 @@ export type HomepageContext = {
   orders: HomepageOrderContext[]
   products: HomepageProductCandidate[]
   stories: HomepageStoryCandidate[]
+  offers: Array<{
+    id: string
+    productId: string
+    discountPercent: number
+  }>
   previousHomepage: {
     hook: string | null
     productId: string | null
@@ -104,6 +109,8 @@ export type HomepageBlock =
       storySlug: string
       headline: string
       cta: string
+      storyTitle?: string
+      storyText?: string
     }
   | {
       type: "order_status"
