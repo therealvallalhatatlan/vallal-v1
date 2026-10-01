@@ -247,142 +247,121 @@ export default function UserAccountDashboard({ account, token }: Props) {
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-24 sm:px-8">
-        <header className="pb-0">
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex min-w-0 items-center gap-5">
-              <div className="flex h-26 w-26 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700/80 bg-zinc-950 text-xl font-black text-lime-200">
-                {user.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt=""
-                    className="h-full w-full object-cover grayscale"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  avatarLetter
-                )}
-              </div>
-
-              <div className="min-w-0">
-                {sectionEyebrow("SAJÁT FIÓK")}
-                {editingNickname ? (
-                  <div className="mt-2">
-                    <div className="flex items-center gap-2">
-                      <input
-                        ref={(node) => {
-                          nicknameInputRef.current = node
-                        }}
-                        value={nickname}
-                        onChange={(event) => {
-                          setNickname(event.target.value)
-                          setSaveState("idle")
-                          setNicknameError(null)
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault()
-                            void saveNickname()
-                          }
-                          if (event.key === "Escape") {
-                            event.preventDefault()
-                            cancelNicknameEdit()
-                          }
-                        }}
-                        maxLength={20}
-                        autoComplete="nickname"
-                        aria-label="Becenév"
-                        className="w-full max-w-xl border-0 border-b border-lime-400/60 bg-transparent px-0 py-1 text-3xl font-normal tracking-tight text-zinc-50 outline-none placeholder:text-zinc-700 sm:text-4xl"
-                        style={{ fontFamily: "var(--font-heading), serif" }}
-                        placeholder="BECENÉV"
+        <header>
+          <div className="border-y border-zinc-800/80 py-6 sm:py-7">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-center lg:gap-10">
+              <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+                <div className="relative h-[92px] w-[92px] shrink-0 rounded-full border border-zinc-700/90 bg-zinc-950 p-1 sm:h-[104px] sm:w-[104px]">
+                  <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-zinc-900 text-2xl font-black text-lime-200">
+                    {user.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt=""
+                        className="h-full w-full object-cover grayscale transition-all duration-300 hover:grayscale-0"
+                        referrerPolicy="no-referrer"
                       />
-                      <button
-                        type="button"
-                        onClick={() => void saveNickname()}
-                        disabled={saveState === "saving"}
-                        aria-label="Becenév mentése"
-                        className="flex h-8 w-8 shrink-0 items-center justify-center text-lime-200 transition-colors hover:text-white disabled:opacity-40"
-                      >
-                        <Check className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelNicknameEdit}
-                        disabled={saveState === "saving"}
-                        aria-label="Szerkesztés megszakítása"
-                        className="flex h-8 w-8 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-zinc-200 disabled:opacity-40"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    {nicknameError && (
-                      <p
-                        className="mt-2 text-[11px] uppercase tracking-[0.16em] text-rose-400"
-                        style={{ fontFamily: "var(--font-mono-tech)" }}
-                      >
-                        {nicknameError}
-                      </p>
+                    ) : (
+                      avatarLetter
                     )}
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={startNicknameEdit}
-                    className="group mt-1 flex max-w-full items-center gap-3 text-left"
-                    aria-label="Becenév szerkesztése"
-                  >
-                    <h1 className={heroHeadline.className + " truncate text-2xl tracking-tight text-zinc-50 sm:text-4xl"}>
-                      {displayName}
-                    </h1>
-                    <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-700 transition-colors group-hover:text-lime-200" />
-                  </button>
-                )}
+                  <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-[#010101] bg-lime-400 shadow-[0_0_10px_rgba(163,230,53,0.65)]" aria-label="Aktív" />
+                </div>
 
-                {!editingNickname && saveState === "saved" && (
-                  <p
-                    className="mt-1 text-[10px] uppercase tracking-[0.22em] text-lime-200"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    MENTVE
-                  </p>
-                )}
-
-                <p
-                  className="mt-2 truncate text-[13px] text-zinc-500 sm:text-sm"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  {user.email ?? "—"}
-                </p>
-                <p
-                  className="mt-1.5 text-[9px] uppercase tracking-[0.04em] text-zinc-600"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  CSATLAKOZÁS · {formatDate(user.created_at)}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex relative justify-between gap-4  pt-4 pb-4 ">
-                <div className="w-full max-w-[xl]">
-                  <span className="absolute -left-2 top-0 float-left text-lime-200 text-2xl">✪</span>
-                  {circle.code === "outside" ? (
-                    <Link
-                      href="/konyv"
-                      className="block mt-0 text-sm text-center font-normal tracking-[0.14em] text-lime-200 border border-lime-200/40 py-2 px-2 rounded-full outline-lime-200/20 outline-4 outline-offset-2 transition-colors hover:border-lime-200 hover:bg-lime-200/[0.06] hover:text-white focus-visible:outline-2 focus-visible:outline-lime-200"
-                    >
-                       {CIRCLE_LABELS[circle.code]} 
-                    </Link>
+                <div className="min-w-0 flex-1">
+                  {sectionEyebrow("SAJÁT FIÓK")}
+                  {editingNickname ? (
+                    <div className="mt-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          ref={(node) => {
+                            nicknameInputRef.current = node
+                          }}
+                          value={nickname}
+                          onChange={(event) => {
+                            setNickname(event.target.value)
+                            setSaveState("idle")
+                            setNicknameError(null)
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault()
+                              void saveNickname()
+                            }
+                            if (event.key === "Escape") {
+                              event.preventDefault()
+                              cancelNicknameEdit()
+                            }
+                          }}
+                          maxLength={20}
+                          autoComplete="nickname"
+                          aria-label="Becenév"
+                          className="w-full max-w-[420px] border-0 border-b border-lime-400/60 bg-transparent px-0 py-1 text-2xl font-normal tracking-tight text-zinc-50 outline-none placeholder:text-zinc-700 sm:text-4xl"
+                          style={{ fontFamily: "var(--font-heading), serif" }}
+                          placeholder="BECENÉV"
+                        />
+                        <button type="button" onClick={() => void saveNickname()} disabled={saveState === "saving"} aria-label="Becenév mentése" className="flex h-8 w-8 shrink-0 items-center justify-center text-lime-200 transition-colors hover:text-white disabled:opacity-40">
+                          <Check className="h-4 w-4" />
+                        </button>
+                        <button type="button" onClick={cancelNicknameEdit} disabled={saveState === "saving"} aria-label="Szerkesztés megszakítása" className="flex h-8 w-8 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-zinc-200 disabled:opacity-40">
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      {nicknameError && (
+                        <p className="mt-2 text-[11px] uppercase tracking-[0.16em] text-rose-400" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                          {nicknameError}
+                        </p>
+                      )}
+                    </div>
                   ) : (
-                    <p className="mt-0 text-sm text-center font-normal tracking-[0.14em] text-lime-200 border border-lime-200/40 py-2 px-2 rounded-full outline-lime-200/20 outline-4 outline-offset-2">
-                      {CIRCLE_LABELS[circle.code]} 
+                    <button type="button" onClick={startNicknameEdit} className="group mt-1 flex max-w-full items-center gap-2.5 text-left" aria-label="Becenév szerkesztése">
+                      <h1 className={heroHeadline.className + " truncate text-2xl tracking-tight text-zinc-50 sm:text-4xl"}>{displayName}</h1>
+                      <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-700 transition-colors group-hover:text-lime-200" />
+                    </button>
+                  )}
+
+                  {!editingNickname && saveState === "saved" && (
+                    <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-lime-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      MENTVE
                     </p>
                   )}
-                  <p
-                    className="mt-4 mb-3 text-[10px] uppercase tracking-[0.24em] text-zinc-600 text-center"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
+
+                  <p className="mt-2 truncate text-[12px] text-zinc-500 sm:text-sm" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                    {user.email ?? "—"}
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <p className="text-[9px] uppercase tracking-[0.08em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      NODE · {user.id.slice(0, 8).toUpperCase()}
+                    </p>
+                    <span className="h-1 w-1 rounded-full bg-zinc-800" aria-hidden="true" />
+                    <p className="text-[9px] uppercase tracking-[0.08em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                      CSATLAKOZÁS · {formatDate(user.created_at)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 lg:items-end">
+                <div className="w-full lg:max-w-[320px]">
+                  <p className="mb-2 text-[9px] uppercase tracking-[0.28em] text-zinc-600 lg:text-right" style={{ fontFamily: "var(--font-mono-tech)" }}>
                     AKTÍV STÁTUSZ
                   </p>
+                  {circle.code === "outside" ? (
+                    <Link href="/konyv" className="group flex items-center justify-between gap-3 border border-lime-400/25 bg-lime-400/[0.025] px-3.5 py-3 transition-colors hover:border-lime-300/60 hover:bg-lime-400/[0.05]">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="text-lime-200" aria-hidden="true">✪</span>
+                        <span className="truncate text-[11px] font-medium uppercase tracking-[0.12em] text-lime-200">{CIRCLE_LABELS[circle.code]}</span>
+                      </span>
+                      <span className="text-[11px] text-zinc-600 transition-colors group-hover:text-lime-200" aria-hidden="true">→</span>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-2 border border-lime-400/25 bg-lime-400/[0.025] px-3.5 py-3">
+                      <span className="text-lime-200" aria-hidden="true">✪</span>
+                      <span className="truncate text-[11px] font-medium uppercase tracking-[0.12em] text-lime-200">{CIRCLE_LABELS[circle.code]}</span>
+                    </div>
+                  )}
                 </div>
+              </div>
             </div>
           </div>
         </header>
