@@ -93,7 +93,7 @@ export default function GlobalNotificationToasts() {
     const seen = readPublicSeenIds()
     seen.add(id.replace(/^public-/, ""))
     writePublicSeenIds(seen)
-  }, [markPublicNotificationSeen])
+  }, [])
 
   const dismissToast = useCallback((id: string) => {
     if (id.startsWith("public-")) {
@@ -107,7 +107,7 @@ export default function GlobalNotificationToasts() {
       window.clearTimeout(timer)
       delete toastTimersRef.current[id]
     }
-  }, [])
+  }, [markPublicNotificationSeen])
 
   const pushToast = useCallback((toast: ToastItem) => {
     setToasts((current) => {
