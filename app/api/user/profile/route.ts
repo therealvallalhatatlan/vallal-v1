@@ -87,6 +87,39 @@ export async function PATCH(req: Request) {
       .eq("id", user.id)
       .maybeSingle(); // Use maybeSingle instead of single to avoid error on no results
 
+    let legacyProfileId: string | null = null;
+    let legacyProfileEmail: string | null = null;
+
+    if (!existingUser) {
+      // Never delete a legacy profile directly. If the same email belongs to
+      // another public.users row, reconcile that legacy identity first so
+      // orders/shop orders/book copies are moved before the old row is removed.
+      const { data: emailCheck, error: emailCheckError } = await supabase
+        .from("users")
+        .select("id, email")
+        .ilike("email", user.email)
+        .limit(2);
+
+      if (emailCheckError) {
+        console.error("Email identity lookup error:", emailCheckError);
+        return NextResponse.json({ ok: false, error: "db_error" }, { status: 500 });
+      }
+
+      if (emailCheck && emailCheck.length > 1) {
+        console.error("Multiple public profiles match email:", user.email);
+        return NextResponse.json(
+          { ok: false, error: "multiple_profiles_same_email" },
+          { status: 409 }
+        );
+      }
+
+      const matchedProfile = emailCheck?.[0] ?? null;
+      if (matchedProfile && matchedProfile.id !== user.id) {
+        legacyProfileId = matchedProfile.id;
+        legacyProfileEmail = matchedProfile.email;
+      }
+    }
+
     const { data: nicknameOwner, error: nicknameCheckError } = await supabase
       .from("users")
       .select("id")
@@ -98,14 +131,20 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ ok: false, error: "db_error" }, { status: 500 });
     }
 
-    if (nicknameOwner && nicknameOwner.id !== user.id) {
+    // The nickname may already belong to the legacy profile that is about to
+    // be reconciled. In that case it is safe to transfer/overwrite it.
+    if (
+      nicknameOwner &&
+      nicknameOwner.id !== user.id &&
+      nicknameOwner.id !== legacyProfileId
+    ) {
       return NextResponse.json({ ok: false, error: "nickname_taken" }, { status: 409 });
     }
 
     let data, error;
 
     if (existingUser) {
-      // User exists - UPDATE only nickname (don't touch email to avoid unique constraint conflict)
+      // User exists - UPDATE only nickname.
       console.log("Updating existing user:", user.id);
       const result = await supabase
         .from("users")
@@ -115,29 +154,58 @@ export async function PATCH(req: Request) {
         .single();
       data = result.data;
       error = result.error;
-    } else {
-      // User doesn't exist - INSERT with email
-      console.log("Inserting new user:", user.id);
-      
-      // Check if email already exists with different user_id (edge case: duplicate accounts)
-      const { data: emailCheck } = await supabase
-        .from("users")
-        .select("id, email")
-        .eq("email", user.email)
-        .maybeSingle();
-      
-      if (emailCheck && emailCheck.id !== user.id) {
-        console.error("Email already exists with different user_id:", emailCheck);
-        // Delete the old record and insert new one (migration fix)
-        await supabase.from("users").delete().eq("email", user.email);
+    } else if (legacyProfileId) {
+      console.log(
+        "Reconciling legacy user profile before saving nickname:",
+        legacyProfileId,
+        legacyProfileEmail
+      );
+
+      const { data: reconciliation, error: reconcileError } = await adminClient.rpc(
+        "reconcile_legacy_user",
+        {
+          p_legacy_user_id: legacyProfileId,
+          p_canonical_user_id: user.id,
+          p_note: "Automatic reconciliation before authenticated profile save",
+        }
+      );
+
+      if (reconcileError) {
+        console.error("Legacy user reconciliation error:", reconcileError);
+        return NextResponse.json(
+          { ok: false, error: "identity_reconciliation_failed" },
+          { status: 500 }
+        );
       }
-      
+
+      if (!reconciliation?.ok) {
+        console.error("Legacy user reconciliation returned non-ok:", reconciliation);
+        return NextResponse.json(
+          { ok: false, error: "identity_reconciliation_failed" },
+          { status: 500 }
+        );
+      }
+
+      // The reconciliation function creates the canonical public profile when
+      // it does not exist. Apply the nickname requested by the current user.
       const result = await supabase
         .from("users")
-        .insert({ 
-          id: user.id, 
+        .update({ nickname })
+        .eq("id", user.id)
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    } else {
+      // No existing profile and no legacy profile with this email.
+      console.log("Inserting new user:", user.id);
+
+      const result = await supabase
+        .from("users")
+        .insert({
+          id: user.id,
           email: user.email,
-          nickname 
+          nickname,
         })
         .select()
         .single();
