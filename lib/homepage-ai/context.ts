@@ -22,6 +22,7 @@ type BuildHomepageContextInput = {
   isInAppBrowser: boolean
   utmSource: string | null
   utmCampaign: string | null
+  referrerHost?: string | null
 }
 
 function sourceFrom(
@@ -103,12 +104,14 @@ export async function buildHomepageContext(
   const db = supabaseAdmin()
   const now = Date.now()
   const referrer = input.request.headers.get("referer") ?? ""
-  let referrerHost: string | null = null
+  let referrerHost: string | null = input.referrerHost ?? null
 
-  try {
-    referrerHost = referrer ? new URL(referrer).host : null
-  } catch {
-    referrerHost = null
+  if (!referrerHost) {
+    try {
+      referrerHost = referrer ? new URL(referrer).host : null
+    } catch {
+      referrerHost = null
+    }
   }
 
   const source = sourceFrom(
@@ -133,7 +136,7 @@ export async function buildHomepageContext(
   ] = await Promise.all([
     db
       .from("users")
-      .select("created_at")
+      .select("created_at, nickname")
       .eq("id", input.userId)
       .maybeSingle(),
     db
@@ -274,7 +277,11 @@ export async function buildHomepageContext(
 
   return {
     identity: {
-      firstName: input.firstName,
+      firstName:
+        typeof profileRes.data?.nickname === "string" &&
+        profileRes.data.nickname.trim()
+          ? profileRes.data.nickname.trim()
+          : input.firstName,
       memberSince: profileRes.data?.created_at ?? null,
     },
     visit: {
