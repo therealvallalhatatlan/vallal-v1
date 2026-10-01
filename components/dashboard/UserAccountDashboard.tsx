@@ -208,7 +208,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-24 sm:px-8">
-        <header className="border-b border-zinc-800/90 pb-8">
+        <header className="pb-0">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex min-w-0 items-center gap-5">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700/80 bg-zinc-950 text-xl font-black text-lime-200">
@@ -255,7 +255,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                         aria-label="Becenév"
                         className="w-full max-w-xl border-0 border-b border-lime-400/60 bg-transparent px-0 py-1 text-3xl font-normal tracking-tight text-zinc-50 outline-none placeholder:text-zinc-700 sm:text-4xl"
                         style={{ fontFamily: "var(--font-heading), serif" }}
-                        placeholder="BECSENÉV"
+                        placeholder="BECENÉV"
                       />
                       <button
                         type="button"
@@ -292,7 +292,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                     className="group mt-1 flex max-w-full items-center gap-3 text-left"
                     aria-label="Becenév szerkesztése"
                   >
-                    <h1 className={heroHeadline.className + " truncate text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
+                    <h1 className={heroHeadline.className + " truncate text-2xl tracking-tight text-zinc-50 sm:text-4xl"}>
                       {displayName}
                     </h1>
                     <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-700 transition-colors group-hover:text-lime-200" />
@@ -315,7 +315,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                   {user.email ?? "—"}
                 </p>
                 <p
-                  className="mt-1.5 text-[10px] uppercase tracking-[0.24em] text-zinc-700"
+                  className="mt-1.5 text-[12px] uppercase tracking-[0.24em] text-zinc-600"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   CSATLAKOZÁS · {formatDate(user.created_at)}
@@ -323,52 +323,47 @@ export default function UserAccountDashboard({ account, token }: Props) {
               </div>
             </div>
 
-            <div className="flex items-end justify-between gap-6 lg:min-w-[18rem]">
-              <div>
-                {sectionEyebrow("AKTIVITÁS")}
-                <p className="mt-2 text-3xl font-normal tracking-tight text-zinc-100">
-                  {totalNetworkActivity}
-                </p>
-                <p
-                  className="mt-1 text-[10px] uppercase tracking-[0.22em] text-zinc-600"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  HÁLÓZATI JEL / PONT
-                </p>
-              </div>
+            <div className="flex relative justify-between gap-4  pt-4 pb-4 ">
+                <div className="w-36">
+                  <span className="absolute -left-2 -top-1 float-left text-lime-200 text-2xl">✪</span>
+                  <p className="mt-0 text-sm text-center font-normal tracking-[0.04em] text-lime-200 border border-lime-200/40 py-2 px-2 rounded-full outline-lime-200/20 outline-4 outline-offset-2">
+                    {CIRCLE_LABELS[circle.code]}
+                  </p>
+                  <p
+                    className="mt-4 mb-3 text-[10px] uppercase tracking-[0.24em] text-zinc-600 text-center"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    AKTÍV STÁTUSZ
+                  </p>
+                </div>
 
-              <div className="text-right">
-                {sectionEyebrow("KÖR")}
-                <p className="mt-2 text-xl font-normal tracking-[0.04em] text-lime-200">
-                  {CIRCLE_LABELS[circle.code]}
-                </p>
-                <p
-                  className="mt-1 text-[10px] uppercase tracking-[0.22em] text-zinc-600"
+                <div className="w-64 flex-row items-end justify-between gap-6 border-l border-b border-zinc-700">
+                  <div className="flex items-center justify-between mb-3 pl-4 text-[11px] uppercase tracking-[0.24em] text-zinc-400 border-t pt-4 pb-3 border-b border-zinc-800"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  AKTÍV STÁTUSZ
-                </p>
-              </div>
+                  >
+                    {sectionEyebrow("AKTIVITÁS")}
+                  </div>
+                  <div>
+                    <p className="mt-2 pl-4 text-3xl font-normal tracking-tight text-zinc-100">
+                      {totalNetworkActivity}
+                      <span className="mt-1 ml-4 text-[12px] uppercase  tracking-[0.24em] text-zinc-600"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                      >
+                      HÁLÓZATI JEL / PONT
+                      </span>
+                    </p>
+                  </div>
+                </div>
             </div>
           </div>
         </header>
 
-        <section className="border-b border-zinc-800/80 py-7">
+        <section className="py-7">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              {sectionEyebrow("JELVÉNYEID")}
-              <p className="mt-2 text-sm text-zinc-500 sm:text-base">
-                Amit eddig megszereztél.
-              </p>
-            </div>
-            {badges.length > 0 && (
-              <span
-                className="text-[10px] uppercase tracking-[0.22em] text-zinc-700"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                {badges.length} JELVÉNY
-              </span>
-            )}
+            <div className="flex flex-row items-center gap-6 border-b border-t border-zinc-700 pt-4 pb-3">
+              {sectionEyebrow("JELVÉNYEID")} 
+              <span className="text-[14px] italic text-zinc-600">Amiket eddig megszereztél</span>
+            </div>     
           </div>
 
           {badges.length === 0 ? (
@@ -383,15 +378,15 @@ export default function UserAccountDashboard({ account, token }: Props) {
                   title={badge.description}
                   className="group inline-flex items-center gap-3"
                 >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-lime-400/40 bg-lime-400/[0.035] text-[10px] text-lime-200 transition-colors group-hover:border-lime-300/70 group-hover:bg-lime-400/[0.08]">
-                    ◆
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-cyan-400/40 outline-offset-2 outline-cyan-500 bg-cyan-400/[0.035] text-[14px] text-cyan-200 transition-colors group-hover:border-cyan-300/70 group-hover:bg-cyan-400/[0.08]">
+                    💎
                   </span>
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-zinc-100 sm:text-base">
+                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-cyan-200 sm:text-base">
                       {badge.name}
                     </p>
                     <p
-                      className="mt-0.5 text-[9px] uppercase tracking-[0.12em] text-zinc-600"
+                      className="mt-0.5 text-[13px] uppercase tracking-[0.12em] text-zinc-600"
                       style={{ fontFamily: "var(--font-mono-tech)" }}
                     >
                       {badge.earnedAt ? formatDate(badge.earnedAt) : "MEGSZEREZVE"}
@@ -403,27 +398,6 @@ export default function UserAccountDashboard({ account, token }: Props) {
           )}
         </section>
 
-        <section className="border-b border-zinc-800/80 py-10">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              {sectionEyebrow("A TE KÖRÖD")}
-              <h2 className={heroHeadline.className + " mt-2 text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
-                {CIRCLE_LABELS[circle.code]}
-              </h2>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
-                A köröd az eddigi aktivitásod és a Vállalhatatlanban való részvételed alapján alakul.
-              </p>
-            </div>
-            <div
-              className="border-l border-lime-400/50 pl-4 text-sm leading-6 text-zinc-400 lg:max-w-xs lg:text-right lg:border-l-0 lg:border-r lg:pr-4"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              {circle.code === "outside"
-                ? "A rendszer még nem azonosított olyan aktivitást, amely körhöz kötne."
-                : "A státuszod jelenleg aktív."}
-            </div>
-          </div>
-        </section>
 
         {orders.some(orderNeedsPriority) && (
           <section className="border-b border-zinc-800/80 py-8">
@@ -440,27 +414,18 @@ export default function UserAccountDashboard({ account, token }: Props) {
         )}
 
         <section className="border-b border-zinc-800/80 py-10">
-          <div className="flex items-end justify-between gap-5">
-            <div>
-              {sectionEyebrow("RENDELÉSEIM")}
-              <h2 className={heroHeadline.className + " mt-2 text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
-                Rendelési történet
-              </h2>
+          <div className="flex flex-row items-end justify-between gap-5">
+            <div className="w-full border-b border-t border-zinc-700 pt-4 pb-4">
+              {sectionEyebrow("RENDELÉSEID")}
             </div>
-            <span
-              className="text-[11px] uppercase tracking-[0.25em] text-zinc-600"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              {orders.length} DB
-            </span>
           </div>
 
           {orders.length === 0 ? (
             <div className="py-10 text-base text-zinc-500">
-              Még nincs ismert rendelésed.
+              Még nem rendeltél semmit :(
             </div>
           ) : (
-            <div className="mt-6">
+            <div className="mt-6 border-3 border-zinc-800 rounded-xl p-4">
               {orders.map((order, index) => {
                 const isOpen = openOrderId === order.id
                 const processing = !getReceivedAt(order) && isProcessingStatus(order.status)
@@ -514,7 +479,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                                   />
                                 )}
                                 <span className="text-base font-semibold uppercase tracking-[0.08em] text-lime-200 sm:text-lg">
-                                  {getReceivedAt(order) ? "ÁT VÉVE" : statusLabel(order.status)}
+                                  {getReceivedAt(order) ? "ÁTVÉVE" : statusLabel(order.status)}
                                 </span>
                               </div>
 
@@ -550,7 +515,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                                       className="border-b border-lime-400/60 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-lime-200 transition-colors hover:border-lime-200 hover:text-white disabled:cursor-wait disabled:opacity-50"
                                       style={{ fontFamily: "var(--font-mono-tech)" }}
                                     >
-                                      {receivingOrderKey === orderKey ? "FELDOLGOZÁS…" : "ÁT VETTEM"}
+                                      {receivingOrderKey === orderKey ? "FELDOLGOZÁS…" : "ÁTVETTEM"}
                                     </button>
                                     {receiptError && (
                                       <p
@@ -577,7 +542,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                                   className="mt-4 border-l border-lime-400/50 pl-3 text-[11px] uppercase tracking-[0.16em] text-lime-200/80"
                                   style={{ fontFamily: "var(--font-mono-tech)" }}
                                 >
-                                  ELSŐ KISZOLGÁLÁS
+                                  EXPRESSZ KISZOLGÁLÁS
                                 </p>
                               )}
                             </div>
@@ -588,12 +553,12 @@ export default function UserAccountDashboard({ account, token }: Props) {
                       <div className="flex items-start justify-between gap-5 border-t border-zinc-900 pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
                         <div>
                           <p
-                            className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                            className="text-[12px] uppercase tracking-[0.2em] text-zinc-600"
                             style={{ fontFamily: "var(--font-mono-tech)" }}
                           >
                             ÖSSZEG
                           </p>
-                          <p className="mt-1 text-lg text-zinc-200">
+                          <p className="mt-1 text-[19px] text-zinc-200">
                             {formatHuf(order.amountHuf)}
                           </p>
                         </div>
@@ -677,44 +642,35 @@ export default function UserAccountDashboard({ account, token }: Props) {
           )}
         </section>
 
-        <section className="border-b border-zinc-800/80 py-10">
-          <div className="flex items-end justify-between gap-5">
-            <div>
-              {sectionEyebrow("AMIT MEGSZEREZTÉL")}
-              <h2 className={heroHeadline.className + " mt-2 text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
-                Gyűjtemény
-              </h2>
+        <section className="pt-2">
+          <div className="w-full">
+            <div className="border-b border-zinc-800/80 pt-4 pb-4">
+              {sectionEyebrow("AMIKET MEGSZEREZTÉL")}
             </div>
-            <span
-              className="text-[11px] uppercase tracking-[0.25em] text-zinc-600"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              {purchases.itemCount} DB TÉTEL
-            </span>
           </div>
 
-          <div className="mt-7 grid gap-8 md:grid-cols-3">
-            <div>
+          <div className="flex mt-7 gap-8">
+            <div className="flex-1 border-r border-zinc-800">
               <p
-                className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                className="text-[12px] uppercase tracking-[0.2em] text-zinc-600"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 RENDELÉSEK
               </p>
               <p className="mt-2 text-4xl font-normal text-zinc-100">{orders.length}</p>
             </div>
-            <div>
+            <div className="flex-1 border-r border-zinc-800">
               <p
-                className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                className="text-[12px] uppercase tracking-[0.2em] text-zinc-600"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 SZÁMOZOTT PÉLDÁNYOK
               </p>
               <p className="mt-2 text-4xl font-normal text-lime-200">{purchases.numberedCopies.length}</p>
             </div>
-            <div>
+            <div className="flex-1">
               <p
-                className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                className="text-[12px] uppercase tracking-[0.2em] text-zinc-600"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 MEGTALÁLÁSOK
@@ -751,21 +707,18 @@ export default function UserAccountDashboard({ account, token }: Props) {
         </section>
 
         <section className="border-b border-zinc-800/80 py-10">
-          <div>
+          <div className="border-t border-b border-zinc-700 pt-4 pb-4">
             {sectionEyebrow("HÁLÓZATI AKTIVITÁS")}
-            <h2 className={heroHeadline.className + " mt-2 text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
-              A hálózatban hagyott nyom
-            </h2>
           </div>
 
-          <div className="mt-7 grid grid-cols-2 gap-y-8 md:grid-cols-4 md:gap-8">
+          <div className="mt-7 flex gap-4">
             {[
               ["MEGTALÁLÁS", network.claims.total],
               ["ELFOGADVA", network.claims.accepted],
               ["FIZIKAI", network.claims.physical],
               ["DIGITÁLIS", network.claims.digital],
             ].map(([label, value]) => (
-              <div key={String(label)}>
+              <div className="flex-1" key={String(label)}>
                 <p
                   className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -793,15 +746,6 @@ export default function UserAccountDashboard({ account, token }: Props) {
           </div>
         </section>
 
-        <section className="border-b border-zinc-800/80 py-10">
-          {sectionEyebrow("JELVÉNYEK")}
-          <h2 className={heroHeadline.className + " mt-2 text-3xl tracking-tight text-zinc-50 sm:text-4xl"}>
-            Hamarosan
-          </h2>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
-            A köröd már él. A megszerzett jelvények külön gyűjthető rendszerben fognak megjelenni.
-          </p>
-        </section>
 
         <footer className="flex flex-col gap-3 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p
@@ -854,7 +798,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                 />
               )}
               <span className="text-lg font-semibold uppercase tracking-[0.08em] text-lime-200">
-                {getReceivedAt(openOrder) ? "ÁT VÉVE" : statusLabel(openOrder.status)}
+                {getReceivedAt(openOrder) ? "ÁTVÉVE" : statusLabel(openOrder.status)}
               </span>
             </div>
             {getReceivedAt(openOrder) ? (
