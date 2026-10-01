@@ -15,28 +15,38 @@ function activeOrderStatus(status: HomepageContext["orders"][number]["status"]) 
   return ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(status)
 }
 
-export function getDeterministicHomepageFallback(
+function badgeCodes(context: HomepageContext) {
+  const map = [
+    ["book1", "first_book"],
+    ["book2", "second_book"],
+    ["mecenas", "mecenas"],
+    ["founder", "founder"],
+    ["merch", "merch"],
+  ] as const
+
+  return map
+    .filter(([key]) => context.ownership[key])
+    .map(([, code]) => code)
+}
+
+function preferredProduct(context: HomepageContext) {
+  if (context.ownership.book1 && !context.ownership.book2) {
+    return (
+      context.products.find((product) => product.id === "book-2") ??
+      context.products.find((product) => product.type !== "book")
+    )
+  }
+
+  if (!context.ownership.merch) {
+    return context.products.find((product) => product.type !== "book")
+  }
+
+  return context.products[0] ?? null
+}
+
+export function getCoreHomepageBlocks(
   context: HomepageContext,
-): HomepagePlan {
-  const mood = getHomepageMood(
-    context.visit.hour,
-    context.visit.daysSinceLastVisit,
-  )
-
-  const greeting =
-    context.visit.daysSinceLastVisit !== null &&
-    context.visit.daysSinceLastVisit >= 8
-      ? "Szia " +
-        context.identity.firstName +
-        ", több mint egy hete nem láttalak. Minden oké?"
-      : mood === "late_night"
-        ? "Hát te mit csinálsz ilyen késői órán, " +
-          context.identity.firstName +
-          "?"
-        : mood === "morning"
-          ? "Jó reggelt, " + context.identity.firstName + "."
-          : "Szia " + context.identity.firstName + "."
-
+): HomepagePlan["blocks"] {
   const blocks: HomepagePlan["blocks"] = []
 
   const pendingOrder = context.orders.find(
@@ -50,81 +60,107 @@ export function getDeterministicHomepageFallback(
       headline:
         pendingOrder.status === "dispatched"
           ? "MÁR ÚTON VAN"
-          : "MÉG FOLYAMATBAN",
+          : pendingOrder.status === "fulfilled"
+            ? "MÁR NÁLAD KELL LENNIE"
+            : "MÉG FOLYAMATBAN",
       body:
         pendingOrder.status === "dispatched"
           ? "Úgy látom, a csomagod már úton van. Ha megérkezett, ne felejtsd el megnyomni az „Átvettem” gombot."
-          : "A rendelésed még folyamatban van. Egy kis türelmet kérünk.",
+          : pendingOrder.status === "fulfilled"
+            ? "A rendelésed teljesített állapotban van. Ha már átvetted, jelezd itt."
+            : "A rendelésed még folyamatban van. Egy kis türelmet kérünk.",
       cta: "RENDELÉSEM",
     })
   }
 
-  const preferredProduct =
-    context.ownership.book1 && !context.ownership.book2
-      ? context.products.find((product) => product.id === "book-2")
-      : !context.ownership.merch
-        ? context.products.find((product) => product.type !== "book")
-        : null
+  const product = preferredProduct(context)
 
-  if (preferredProduct && blocks.length < 2) {
+  if (product && !blocks.some((block) => block.type === "product")) {
     blocks.push({
       type: "product",
-      productId: preferredProduct.id,
+      productId: product.id,
       headline:
-        preferredProduct.id === "book-2"
+        product.id === "book-2"
           ? "AZ ELSŐ MÁR NÁLAD VAN."
-          : "EZ MÉG HIÁNYZIK.",
+          : context.ownership.merch
+            ? "EZT MOST FELTENNÉM ELÉD."
+            : "A KÖNYV MELLÉ EZ IS ÉRDEKELHET.",
       body:
-        preferredProduct.id === "book-2"
-          ? "Azt hiszem, a könyv mellé ez is érdekelhet."
-          : "Azt hiszem, a könyv mellé ez is érdekelhet.",
+        product.id === "book-2"
+          ? "A második kötetet még nem láttam nálad."
+          : "Egy konkrét tárgyat választottam neked az elérhető dolgok közül.",
       cta: "MEGNÉZEM",
     })
   }
 
-  if (blocks.length === 0 && context.stories.length > 0) {
-    const story = context.stories[0]
+  const story = context.stories[0]
+
+  if (story) {
     blocks.push({
       type: "story",
       storySlug: story.slug,
-      headline: "Ezt most neked tenném ide.",
+      headline: "EGY SZTORI, AMIT MOST IDE TENNÉK.",
       cta: "ELOLVASOM",
     })
   }
 
   if (
     blocks.length < 3 &&
-    context.network.acceptedClaims === 0 &&
-    context.network.activeSpots === 0
+    (context.network.acceptedClaims > 0 ||
+      context.network.activeSpots > 0 ||
+      blocks.length === 0)
   ) {
     blocks.push({
       type: "network",
-      headline: "MÉG NINCS NYOMOD A HÁLÓZATBAN.",
-      body: "Talán ideje lenne hagyni egyet.",
+      headline:
+        context.network.acceptedClaims > 0 || context.network.activeSpots > 0
+          ? "KÖZBEN A HÁLÓZAT SEM ÁLLT MEG."
+          : "MÉG NINCS NYOMOD A HÁLÓZATBAN.",
+      body:
+        context.network.acceptedClaims > 0 || context.network.activeSpots > 0
+          ? "Nézd meg, mi történt, amíg nem figyeltél."
+          : "Van még egy hely, ahol bekerülhetsz ebbe az egészbe.",
       cta: "HÁLÓZAT",
     })
   }
 
-  if (blocks.length === 0 && Object.values(context.ownership).some(Boolean)) {
-    const codeMap = [
-      ["book1", "first_book"],
-      ["book2", "second_book"],
-      ["mecenas", "mecenas"],
-      ["founder", "founder"],
-      ["merch", "merch"],
-    ] as const
-
+  if (blocks.length === 0 && badgeCodes(context).length > 0) {
     blocks.push({
       type: "badges",
-      codes: codeMap
-        .filter(([key]) => context.ownership[key])
-        .map(([, code]) => code),
+      codes: badgeCodes(context),
     })
   }
 
+  return blocks.slice(0, 3)
+}
+
+export function getDeterministicHomepageFallback(
+  context: HomepageContext,
+): HomepagePlan {
   return {
-    greeting,
-    mood,
-    blocks: blocks.slice(0, 3),
+    greeting:
+      context.visit.daysSinceLastVisit !== null &&
+      context.visit.daysSinceLastVisit >= 8
+        ? "Szia " +
+          context.identity.firstName +
+          ", több mint egy hete nem láttalak. Minden oké?"
+        : getHomepageMood(
+              context.visit.hour,
+              context.visit.daysSinceLastVisit,
+            ) === "late_night"
+          ? "Hát te mit csinálsz ilyen késői órán, " +
+            context.identity.firstName +
+            "?"
+          : getHomepageMood(
+                context.visit.hour,
+                context.visit.daysSinceLastVisit,
+              ) === "morning"
+            ? "Jó reggelt, " + context.identity.firstName + "."
+            : "Szia " + context.identity.firstName + ".",
+    mood: getHomepageMood(
+      context.visit.hour,
+      context.visit.daysSinceLastVisit,
+    ),
+    blocks: getCoreHomepageBlocks(context),
   }
 }
