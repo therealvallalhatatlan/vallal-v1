@@ -37,10 +37,10 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const CIRCLE_LABELS: Record<DashboardAccountResponse["circle"]["code"], string> = {
-  outside: "KERÜLJ BE A KÖRBE",
-  a: "A KÖR",
-  inner: "BELSŐ KÖR",
-  core: "SZŰK BELSŐ KÖR",
+  outside: "KERÜLJ BE A KÖRBE!",
+  a: "A KÖRHÖZ TARTOZOL",
+  inner: "A BELSŐ KÖRHÖZ TARTOZOL",
+  core: "A LEGSZŰKEBB BELSŐ KÖRHÖZ TARTOZOL",
 }
 
 const formatHuf = (value: number) =>
@@ -220,7 +220,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
         <header className="pb-0">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex min-w-0 items-center gap-5">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700/80 bg-zinc-950 text-xl font-black text-lime-200">
+              <div className="flex h-26 w-26 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700/80 bg-zinc-950 text-xl font-black text-lime-200">
                 {user.avatar_url ? (
                   <img
                     src={user.avatar_url}
@@ -235,7 +235,6 @@ export default function UserAccountDashboard({ account, token }: Props) {
 
               <div className="min-w-0">
                 {sectionEyebrow("SAJÁT FIÓK")}
-
                 {editingNickname ? (
                   <div className="mt-2">
                     <div className="flex items-center gap-2">
@@ -324,7 +323,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                   {user.email ?? "—"}
                 </p>
                 <p
-                  className="mt-1.5 text-[12px] uppercase tracking-[0.24em] text-zinc-600"
+                  className="mt-1.5 text-[9px] uppercase tracking-[0.04em] text-zinc-600"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   CSATLAKOZÁS · {formatDate(user.created_at)}
@@ -333,18 +332,18 @@ export default function UserAccountDashboard({ account, token }: Props) {
             </div>
 
             <div className="flex relative justify-between gap-4  pt-4 pb-4 ">
-                <div className="w-36">
-                  <span className="absolute -left-2 -top-1 float-left text-lime-200 text-2xl">✪</span>
+                <div className="w-full max-w-[xl]">
+                  <span className="absolute -left-2 top-0 float-left text-lime-200 text-2xl">✪</span>
                   {circle.code === "outside" ? (
                     <Link
                       href="/konyv"
-                      className="block mt-0 text-sm text-center font-normal tracking-[0.04em] text-lime-200 border border-lime-200/40 py-2 px-2 rounded-full outline-lime-200/20 outline-4 outline-offset-2 transition-colors hover:border-lime-200 hover:bg-lime-200/[0.06] hover:text-white focus-visible:outline-2 focus-visible:outline-lime-200"
+                      className="block mt-0 text-sm text-center font-normal tracking-[0.14em] text-lime-200 border border-lime-200/40 py-2 px-2 rounded-full outline-lime-200/20 outline-4 outline-offset-2 transition-colors hover:border-lime-200 hover:bg-lime-200/[0.06] hover:text-white focus-visible:outline-2 focus-visible:outline-lime-200"
                     >
-                      {CIRCLE_LABELS[circle.code]}
+                       {CIRCLE_LABELS[circle.code]} 
                     </Link>
                   ) : (
-                    <p className="mt-0 text-sm text-center font-normal tracking-[0.04em] text-lime-200 border border-lime-200/40 py-2 px-2 rounded-full outline-lime-200/20 outline-4 outline-offset-2">
-                      {CIRCLE_LABELS[circle.code]}
+                    <p className="mt-0 text-sm text-center font-normal tracking-[0.14em] text-lime-200 border border-lime-200/40 py-2 px-2 rounded-full outline-lime-200/20 outline-4 outline-offset-2">
+                      {CIRCLE_LABELS[circle.code]} 
                     </p>
                   )}
                   <p
@@ -354,24 +353,6 @@ export default function UserAccountDashboard({ account, token }: Props) {
                     AKTÍV STÁTUSZ
                   </p>
                 </div>
-
-                <div className="w-64 flex-row items-end justify-between gap-6 border-l border-b border-zinc-700">
-                  <div className="flex items-center justify-between mb-3 pl-4 text-[11px] uppercase tracking-[0.24em] text-zinc-400 border-t pt-4 pb-3 border-b border-zinc-800"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    {sectionEyebrow("AKTIVITÁS")}
-                  </div>
-                  <div>
-                    <p className="mt-2 pl-4 text-3xl font-normal tracking-tight text-zinc-100">
-                      {totalNetworkActivity}
-                      <span className="mt-1 ml-4 text-[12px] uppercase  tracking-[0.24em] text-zinc-600"
-                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                      >
-                      HÁLÓZATI JEL / PONT
-                      </span>
-                    </p>
-                  </div>
-                </div>
             </div>
           </div>
         </header>
@@ -380,7 +361,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-row items-center gap-6 border-b border-t border-zinc-700 pt-4 pb-3">
               {sectionEyebrow("JELVÉNYEID")} 
-              <span className="text-[14px] italic text-zinc-600">Amiket eddig megszereztél</span>
+              <span className="text-[14px] italic text-zinc-600">Amiket eddig szereztél</span>
             </div>     
           </div>
 
@@ -412,7 +393,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                     })()}
                   </span>
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-cyan-200 sm:text-base">
+                    <p className="text-sm font-semibold uppercase tracking-[0.08em] text-lime-100/70 sm:text-base">
                       {badge.name}
                     </p>
                     <p
@@ -786,34 +767,19 @@ export default function UserAccountDashboard({ account, token }: Props) {
         </section>
 
 
-        <footer className="flex flex-col gap-5 pt-8 sm:flex-row sm:items-end sm:justify-between">
+        <footer className="flex flex-col gap-3 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p
             className="text-[10px] uppercase tracking-[0.22em] text-zinc-700"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             VÁLLALHATATLAN / USER NODE
           </p>
-          <div className="flex flex-col gap-3 sm:items-end">
-            <p
-              className="text-[10px] uppercase tracking-[0.22em] text-zinc-700"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              STATUS · {CIRCLE_LABELS[circle.code]}
-            </p>
-            <button
-              type="button"
-              onClick={async () => {
-                const { createClient } = await import("@/lib/browser")
-                const supabase = createClient()
-                await supabase.auth.signOut()
-                window.location.href = "/"
-              }}
-              className="text-left text-[10px] uppercase tracking-[0.22em] text-zinc-600 transition-colors hover:text-red-300 sm:text-right"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              KIJELENTKEZÉS
-            </button>
-          </div>
+          <p
+            className="text-[10px] uppercase tracking-[0.22em] text-zinc-700"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            STATUS · {CIRCLE_LABELS[circle.code]}
+          </p>
         </footer>
       </div>
 

@@ -162,10 +162,8 @@ function FixedBadgesSection({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-6 overflow-x-auto">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-lime-200/40 bg-zinc-950 text-zinc-500 outline-4 outline-offset-2 outline-lime-100/10"
-            title="Profilkép"
-          >
+        <div className="grid grid-cols-12 overflow-x-auto px-2 py-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-lime-200/40 bg-zinc-950 text-zinc-500 outline-4 outline-offset-2 outline-lime-100/10" title="Profilkép">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
@@ -180,18 +178,12 @@ function FixedBadgesSection({
             const Icon = BADGE_ICONS[code]
 
             return (
-              <div key={code} className="pt-2 flex flex-col items-center gap-2">
+              <div key={code} className="ml-12 pt-3 flex flex-col items-center gap-2">
                 <span
                   title={BADGE_LABELS[code]}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-lime-400/30 bg-lime-400/[0.025] text-lime-200 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.06]"
+                  className="flex h-7 w-7 items-center justify-center rounded-full border border-lime-100/30 bg-black text-zinc-100 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.06]"
                 >
-                  <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-                </span>
-                <span
-                  className="w-full text-center text-[9px] uppercase leading-[1.2] tracking-[0.12em] text-zinc-500"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  {BADGE_LABELS[code]}
+                  <Icon className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
                 </span>
               </div>
             )
@@ -1112,7 +1104,7 @@ export default function PersonalizedMemberHome() {
       <SiteHeader />
 
       <main className="mx-auto w-full max-w-5xl px-5 pb-24 pt-0 sm:pb-32">
-        <section className="pt-5 pb-10 sm:pt-7">
+        <section className="pt-16 pb-8 sm:pt-7">
           <div className="max-w-4xl">
             <p
               className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base"
