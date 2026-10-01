@@ -332,11 +332,49 @@ export default function PersonalizedMemberHome() {
 
         const sessionId = getSessionId()
         let referrerHost: string | null = null
+        let storedSource: string | null = null
+        let storedCampaign: string | null = null
 
         try {
           referrerHost = document.referrer ? new URL(document.referrer).host : null
         } catch {
           referrerHost = null
+        }
+
+        try {
+          const stored = sessionStorage.getItem("vh_homepage_entry_v1")
+          if (stored) {
+            const entry = JSON.parse(stored) as {
+              source?: unknown
+              campaign?: unknown
+              referrer?: unknown
+              capturedAt?: unknown
+            }
+
+            const capturedAt = Number(entry.capturedAt ?? 0)
+            if (capturedAt > 0 && Date.now() - capturedAt < 24 * 60 * 60 * 1000) {
+              storedSource = typeof entry.source === "string" ? entry.source : null
+              storedCampaign =
+                typeof entry.campaign === "string" ? entry.campaign : null
+
+              if (!referrerHost && typeof entry.referrer === "string") {
+                try {
+                  referrerHost = entry.referrer ? new URL(entry.referrer).host : null
+                } catch {
+                  referrerHost = null
+                }
+              }
+            }
+          }
+        } catch {
+          // Entry source is optional.
+        }
+
+        if (storedSource && !url.searchParams.get("utm_source")) {
+          url.searchParams.set("utm_source", storedSource)
+        }
+        if (storedCampaign && !url.searchParams.get("utm_campaign")) {
+          url.searchParams.set("utm_campaign", storedCampaign)
         }
 
         const response = await fetch(url.toString(), {
@@ -365,6 +403,12 @@ export default function PersonalizedMemberHome() {
         if (!payload.ok || !payload.plan) throw new Error("homepage_missing")
 
         setPlan(payload.plan)
+
+        try {
+          sessionStorage.removeItem("vh_homepage_entry_v1")
+        } catch {
+          // Ignore storage cleanup errors.
+        }
       } catch (requestError) {
         if (requestError instanceof DOMException && requestError.name === "AbortError") {
           return
