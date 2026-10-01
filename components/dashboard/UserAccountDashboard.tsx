@@ -73,6 +73,31 @@ function statusLabel(status: string) {
   return STATUS_LABELS[status] ?? status.replaceAll("_", " ").toUpperCase()
 }
 
+const ORDER_LIST_STATUS_LABELS: Record<string, string> = {
+  pending: "FOLYAMATBAN",
+  paid: "FIZETVE",
+  ready_to_dispatch: "ÖSSZEKÉSZÍTVE",
+  dispatched: "ÚTON VAN",
+  fulfilled: "TELJESÍTVE",
+  cancelled: "TÖRÖLVE",
+  canceled: "TÖRÖLVE",
+  payment_failed: "FIZETÉSI HIBA",
+}
+
+function orderListStatusLabel(status: string, received: boolean) {
+  if (received) return "ÁTVÉVE"
+  return ORDER_LIST_STATUS_LABELS[status] ?? statusLabel(status)
+}
+
+function orderListStatusClass(status: string, received: boolean) {
+  if (received) return "border-lime-300/30 bg-lime-300/[0.06] text-lime-200"
+  if (status === "payment_failed" || status === "cancelled" || status === "canceled") {
+    return "border-rose-400/25 bg-rose-400/[0.04] text-rose-300"
+  }
+  if (status === "pending") return "border-amber-300/25 bg-amber-300/[0.04] text-amber-200"
+  return "border-lime-400/20 bg-lime-400/[0.04] text-lime-200"
+}
+
 function orderRef(id: string) {
   return id.replaceAll("-", "").slice(0, 8).toUpperCase()
 }
@@ -424,11 +449,15 @@ export default function UserAccountDashboard({ account, token }: Props) {
           </section>
         )}
 
-        <section className="border-b border-zinc-800/80 py-10">
-          <div className="flex flex-row items-end justify-between gap-5">
-            <div className="w-full border-b border-t border-zinc-700 pt-4 pb-4">
-              {sectionEyebrow("RENDELÉSEID")}
-            </div>
+        <section className="border-b border-zinc-800/80 py-8">
+          <div className="flex items-center justify-between border-y border-zinc-800/80 py-3.5">
+            {sectionEyebrow("RENDELÉSEID")}
+            <span
+              className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              {String(orders.length).padStart(2, "0")} RENDELÉS
+            </span>
           </div>
 
           {orders.length === 0 ? (
@@ -445,140 +474,105 @@ export default function UserAccountDashboard({ account, token }: Props) {
               </Link>
             </div>
           ) : (
-            <div className="mt-6 border-3 border-zinc-800 rounded-xl p-4">
-              {orders.map((order, index) => {
-                const isOpen = openOrderId === order.id
-                const processing = !getReceivedAt(order) && isProcessingStatus(order.status)
-                const priority = orderNeedsPriority(order)
-                const orderKey = `${order.source}-${order.id}`
+            <div className="mt-5 overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950/45">
+              <div className="hidden border-b border-zinc-900 px-5 py-2.5 sm:grid sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:gap-6">
+                <p className="text-[9px] uppercase tracking-[0.22em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  RENDELÉS
+                </p>
+                <p className="text-[9px] uppercase tracking-[0.22em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  STÁTUSZ
+                </p>
+                <p className="text-right text-[9px] uppercase tracking-[0.22em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  ÖSSZEG
+                </p>
+              </div>
 
-                return (
-                  <article
-                    key={orderKey}
-                    className="border-t border-zinc-800/70 py-6 last:border-b last:border-zinc-800/70"
-                  >
-                    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-10">
-                      <div className="min-w-0">
-                        <div className="flex items-start gap-4">
-                          <span
-                            className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
-                              getReceivedAt(order)
-                                ? "bg-lime-300 shadow-[0_0_7px_rgba(163,230,53,0.4)]"
-                                : order.status === "fulfilled"
-                                  ? "bg-zinc-600"
-                                  : "bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.45)]"
-                            }`}
-                          />
+              <div className="divide-y divide-zinc-900/90">
+                {orders.map((order) => {
+                  const isOpen = openOrderId === order.id
+                  const receivedAt = getReceivedAt(order)
+                  const received = Boolean(receivedAt)
+                  const processing = !received && isProcessingStatus(order.status)
+                  const priority = orderNeedsPriority(order)
+                  const orderKey = order.source + "-" + order.id
+                  const itemCount = order.items.reduce((total, item) => total + item.quantity, 0)
 
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                              <h3 className={heroHeadline.className + " truncate text-xl text-zinc-100 sm:text-2xl"}>
-                                {order.label}
-                              </h3>
-                              <span
-                                className="text-[10px] uppercase tracking-[0.18em] text-zinc-600"
-                                style={{ fontFamily: "var(--font-mono-tech)" }}
-                              >
-                                {order.source === "shop" ? "MERCH" : "KÖNYV"}
-                              </span>
-                            </div>
+                  return (
+                    <article
+                      key={orderKey}
+                      className="px-4 py-4 transition-colors hover:bg-white/[0.015] sm:px-5"
+                    >
+                      <div className="flex items-center gap-4">
+                        <span
+                          className={
+                            "mt-0.5 h-2 w-2 shrink-0 rounded-full " +
+                            (received
+                              ? "bg-lime-300 shadow-[0_0_7px_rgba(163,230,53,0.35)]"
+                              : order.status === "fulfilled"
+                                ? "bg-zinc-600"
+                                : "bg-lime-400 shadow-[0_0_7px_rgba(163,230,53,0.35)]")
+                          }
+                          aria-hidden="true"
+                        />
 
-                            <p
-                              className="mt-2 text-[11px] uppercase tracking-[0.18em] text-zinc-600"
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                            <h3 className={heroHeadline.className + " truncate text-sm text-zinc-100 sm:text-[15px]"}>
+                              {order.label}
+                            </h3>
+                            <span
+                              className="shrink-0 rounded-full border border-zinc-800 px-2 py-0.5 text-[9px] uppercase tracking-[0.16em] text-zinc-500"
                               style={{ fontFamily: "var(--font-mono-tech)" }}
                             >
-                              {formatDate(order.created_at)} · #{orderRef(order.id)}
-                            </p>
-
-                            <div className="mt-5">
-                              <div className="flex flex-wrap items-center gap-3">
-                                {processing && (
-                                  <span
-                                    className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-700 border-t-lime-300"
-                                    aria-hidden="true"
-                                  />
-                                )}
-                                <span className="text-base font-semibold uppercase tracking-[0.08em] text-lime-200 sm:text-lg">
-                                  {getReceivedAt(order) ? "ÁTVÉVE" : statusLabel(order.status)}
-                                </span>
-                              </div>
-
-                              {getReceivedAt(order) ? (
-                                <p className="mt-2 text-base text-zinc-500">
-                                  Átvétel visszaigazolva · {formatDateTime(getReceivedAt(order))}
-                                </p>
-                              ) : order.status === "paid" ? (
-                                <p className="mt-2 text-base leading-7 text-zinc-300">
-                                  V. hamarosan felveszi veled a kapcsolatot.
-                                </p>
-                              ) : order.status === "dispatched" ? (
-                                <p className="mt-2 text-base leading-7 text-zinc-300">
-                                  A csomag elindult. Ha megtaláltad és átvetted, jelezd itt.
-                                </p>
-                              ) : order.status === "fulfilled" ? (
-                                <p className="mt-2 text-base leading-7 text-zinc-400">
-                                  A rendelés teljesítve. Ha már nálad van a csomag, erősítsd meg az átvételt.
-                                </p>
-                              ) : (
-                                <p className="mt-2 text-sm leading-6 text-zinc-500">
-                                  A rendelés feldolgozás alatt van.
-                                </p>
-                              )}
-
-                              {!getReceivedAt(order) &&
-                                ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(order.status) && (
-                                  <div className="mt-4">
-                                    <button
-                                      type="button"
-                                      disabled={receivingOrderKey === orderKey}
-                                      onClick={() => void markOrderReceived(order)}
-                                      className="border-b border-lime-400/60 pb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-lime-200 transition-colors hover:border-lime-200 hover:text-white disabled:cursor-wait disabled:opacity-50"
-                                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                                    >
-                                      {receivingOrderKey === orderKey ? "FELDOLGOZÁS…" : "ÁTVETTEM"}
-                                    </button>
-                                    {receiptError && (
-                                      <p
-                                        className="mt-2 text-[10px] uppercase tracking-[0.16em] text-rose-400"
-                                        style={{ fontFamily: "var(--font-mono-tech)" }}
-                                      >
-                                        {receiptError}
-                                      </p>
-                                    )}
-                                  </div>
-                                )}
-
-                              {receiptError && openOrderId === order.id && (
-                                <p
-                                  className="mt-3 text-[10px] uppercase tracking-[0.16em] text-rose-400"
-                                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                                >
-                                  {receiptError}
-                                </p>
-                              )}
-
-                              {priority && (
-                                <p
-                                  className="mt-4 border-l border-lime-400/50 pl-3 text-[11px] uppercase tracking-[0.16em] text-lime-200/80"
-                                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                                >
-                                  EXPRESSZ KISZOLGÁLÁS
-                                </p>
-                              )}
-                            </div>
+                              {order.source === "shop" ? "MERCH" : "KÖNYV"}
+                            </span>
+                            {priority && (
+                              <span
+                                className="shrink-0 rounded-full border border-lime-400/20 bg-lime-400/[0.035] px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-lime-200/70"
+                                style={{ fontFamily: "var(--font-mono-tech)" }}
+                              >
+                                EXPRESSZ
+                              </span>
+                            )}
                           </div>
-                        </div>
-                      </div>
 
-                      <div className="flex items-start justify-between gap-5 border-t border-zinc-900 pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-                        <div>
                           <p
-                            className="text-[12px] uppercase tracking-[0.2em] text-zinc-600"
+                            className="mt-1.5 truncate text-[10px] uppercase tracking-[0.16em] text-zinc-600"
                             style={{ fontFamily: "var(--font-mono-tech)" }}
                           >
-                            ÖSSZEG
+                            {formatDate(order.created_at)} · #{orderRef(order.id)} · {itemCount} DB
                           </p>
-                          <p className="mt-1 text-[19px] text-zinc-200">
+
+                          {received && (
+                            <p
+                              className="mt-1 text-[10px] uppercase tracking-[0.14em] text-lime-200/55"
+                              style={{ fontFamily: "var(--font-mono-tech)" }}
+                            >
+                              ÁTVÉTEL · {formatDate(receivedAt)}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="hidden shrink-0 items-center gap-3 sm:flex">
+                          {processing && (
+                            <span
+                              className="h-3 w-3 animate-spin rounded-full border border-zinc-700 border-t-lime-300"
+                              aria-hidden="true"
+                            />
+                          )}
+                          <span
+                            className={
+                              "rounded-full border px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] " +
+                              orderListStatusClass(order.status, received)
+                            }
+                            style={{ fontFamily: "var(--font-mono-tech)" }}
+                          >
+                            {orderListStatusLabel(order.status, received)}
+                          </span>
+                        </div>
+
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-medium text-zinc-200">
                             {formatHuf(order.amountHuf)}
                           </p>
                         </div>
@@ -586,78 +580,102 @@ export default function UserAccountDashboard({ account, token }: Props) {
                         <button
                           type="button"
                           onClick={() => setOpenOrderId(isOpen ? null : order.id)}
-                          className="group inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-zinc-500 transition-colors hover:text-zinc-100"
-                          style={{ fontFamily: "var(--font-mono-tech)" }}
+                          className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-800 text-zinc-600 transition-colors hover:border-zinc-600 hover:text-zinc-100"
+                          aria-label={isOpen ? "Részletek bezárása" : "Rendelés részleteinek megnyitása"}
+                          title={isOpen ? "Bezárás" : "Részletek"}
                         >
-                          {isOpen ? "BEZÁR" : "RÉSZLETEK"}
                           <ChevronDown
-                            className={`h-3.5 w-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                            className={isOpen ? "h-3.5 w-3.5 rotate-180" : "h-3.5 w-3.5"}
                           />
                         </button>
                       </div>
-                    </div>
 
-                    {isOpen && (
-                      <div className="mt-6 ml-6 border-l border-zinc-800 pl-5 lg:ml-7">
-                        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
-                          <div>
-                            <p
-                              className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                      <div className="mt-2.5 flex items-center justify-end gap-2 pl-7 sm:hidden">
+                        {processing && (
+                          <span
+                            className="h-3 w-3 animate-spin rounded-full border border-zinc-700 border-t-lime-300"
+                            aria-hidden="true"
+                          />
+                        )}
+                        <span
+                          className={
+                            "rounded-full border px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] " +
+                            orderListStatusClass(order.status, received)
+                          }
+                          style={{ fontFamily: "var(--font-mono-tech)" }}
+                        >
+                          {orderListStatusLabel(order.status, received)}
+                        </span>
+                      </div>
+
+                      {!received &&
+                        ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(order.status) && (
+                          <div className="mt-3 pl-7">
+                            <button
+                              type="button"
+                              disabled={receivingOrderKey === orderKey}
+                              onClick={() => void markOrderReceived(order)}
+                              className="rounded-full border border-lime-400/25 bg-lime-400/[0.035] px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-lime-200 transition-colors hover:border-lime-300/60 hover:bg-lime-400/[0.08] hover:text-white disabled:cursor-wait disabled:opacity-50"
                               style={{ fontFamily: "var(--font-mono-tech)" }}
                             >
-                              TÉTELEK
-                            </p>
-                            <div className="mt-3 space-y-3">
-                              {order.items.map((item, itemIndex) => (
-                                <div
-                                  key={`${order.id}-item-${itemIndex}`}
-                                  className="flex items-baseline justify-between gap-5 border-b border-zinc-900 pb-3 last:border-0"
-                                >
-                                  <div>
-                                    <p className="text-base text-zinc-200">{item.name}</p>
-                                    <p
-                                      className="mt-1 text-[10px] uppercase tracking-[0.16em] text-zinc-600"
-                                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                                    >
-                                      {item.quantity} DB{item.variant ? ` · ${item.variant}` : ""}
-                                    </p>
-                                  </div>
-                                  <p className="shrink-0 text-sm text-zinc-400">{formatHuf(item.lineTotalHuf)}</p>
-                                </div>
-                              ))}
+                              {receivingOrderKey === orderKey ? "FELDOLGOZÁS…" : "ÁTVETTEM"}
+                            </button>
+                            {receiptError && (
+                              <p
+                                className="mt-2 text-[10px] uppercase tracking-[0.16em] text-rose-400"
+                                style={{ fontFamily: "var(--font-mono-tech)" }}
+                              >
+                                {receiptError}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                      {isOpen && (
+                        <div className="mt-4 ml-7 border-l border-zinc-800/80 pl-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="min-w-0">
+                              <p
+                                className="text-[9px] uppercase tracking-[0.2em] text-zinc-700"
+                                style={{ fontFamily: "var(--font-mono-tech)" }}
+                              >
+                                RÉSZLETEK
+                              </p>
+                              <p className="mt-1 text-sm text-zinc-300">
+                                {itemCount} DB · {formatHuf(order.amountHuf)}
+                              </p>
                             </div>
+                            <span
+                              className="hidden text-[10px] uppercase tracking-[0.16em] text-zinc-600 sm:block"
+                              style={{ fontFamily: "var(--font-mono-tech)" }}
+                            >
+                              #{orderRef(order.id)}
+                            </span>
                           </div>
 
-                          <div>
-                            <p
-                              className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
-                              style={{ fontFamily: "var(--font-mono-tech)" }}
-                            >
-                              ADATOK
-                            </p>
-                            <div className="mt-3 space-y-3 text-sm text-zinc-400">
-                              <div>
-                                <span className="text-zinc-600">Dátum</span>
-                                <span className="float-right text-zinc-300">{formatDateTime(order.created_at)}</span>
+                          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                            {[
+                              ["Dátum", formatDateTime(order.created_at)],
+                              ["Azonosító", "#" + orderRef(order.id)],
+                              ["Kézbesítés", order.deliveryType ? order.deliveryType.replaceAll("_", " ") : "—"],
+                            ].map(([label, value]) => (
+                              <div key={label} className="rounded-md border border-zinc-900 bg-black/20 px-3 py-2">
+                                <p
+                                  className="text-[9px] uppercase tracking-[0.16em] text-zinc-700"
+                                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                                >
+                                  {label}
+                                </p>
+                                <p className="mt-1 truncate text-xs text-zinc-400">{value}</p>
                               </div>
-                              <div>
-                                <span className="text-zinc-600">Azonosító</span>
-                                <span className="float-right font-mono text-xs text-zinc-300">#{orderRef(order.id)}</span>
-                              </div>
-                              {order.deliveryType && (
-                                <div>
-                                  <span className="text-zinc-600">Kézbesítés</span>
-                                  <span className="float-right text-zinc-300">{order.deliveryType.replaceAll("_", " ")}</span>
-                                </div>
-                              )}
-                            </div>
+                            ))}
                           </div>
                         </div>
-                      </div>
-                    )}
-                  </article>
-                )
-              })}
+                      )}
+                    </article>
+                  )
+                })}
+              </div>
             </div>
           )}
         </section>
@@ -860,7 +878,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
               >
                 {receivingOrderKey === `${openOrder.source}-${openOrder.id}`
                   ? "FELDOLGOZÁS…"
-                  : "ÁT VETTEM"}
+                  : "ÁTVETTEM"}
               </button>
             )}
         </aside>
