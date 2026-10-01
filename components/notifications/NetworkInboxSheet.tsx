@@ -962,8 +962,9 @@ export default function NetworkInboxSheet() {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-zinc-800 bg-zinc-950 text-zinc-200 transition-all hover:border-lime-400/70 hover:bg-lime-400/10"
-          aria-label="Open network inbox"
+          className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-[110] inline-flex h-12 w-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950/95 text-zinc-200 shadow-[0_12px_30px_rgba(0,0,0,0.45)] backdrop-blur transition-all hover:border-lime-400/70 hover:bg-lime-400/10 hover:text-lime-100"
+          aria-label="Értesítések megnyitása"
+          title="Értesítések"
         >
           <BellIcon className="h-5 w-5" />
 
