@@ -128,11 +128,11 @@ function FixedBadgesSection({
       {codes === null ? (
         <div className="mt-6 flex items-center gap-6">
           <span className="h-12 w-12 shrink-0 animate-pulse rounded-full bg-zinc-950" />
-          <div className="h-10 w-10 animate-pulse rounded-full bg-zinc-950" />
+          <div className="h-10 w-10 animate-pulse rounded-full bg-lime-950" />
         </div>
       ) : codes.length === 0 ? (
         <div className="mt-6 flex items-center gap-5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-950 text-zinc-500">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-950 text-zinc-500">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
@@ -162,9 +162,8 @@ function FixedBadgesSection({
           </div>
         </div>
       ) : (
-        <div className="mt-7 flex items-center gap-7 overflow-x-auto pb-1">
-          <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-lime-200/40 bg-zinc-950 text-zinc-500 outline-4 outline-offset-2 outline-lime-100/10"
+        <div className="grid grid-cols-6 overflow-x-auto">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-lime-200/40 bg-zinc-950 text-zinc-500 outline-4 outline-offset-2 outline-lime-100/10"
             title="Profilkép"
           >
             {avatarUrl ? (
@@ -177,20 +176,16 @@ function FixedBadgesSection({
               <UserRound className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
             )}
           </div>
-
           {codes.map((code) => {
             const Icon = BADGE_ICONS[code]
 
             return (
-              <div
-                key={code}
-                className="flex min-w-[4.25rem] shrink-0 flex-col items-center gap-2"
-              >
+              <div key={code} className="pt-2 flex flex-col items-center gap-2">
                 <span
                   title={BADGE_LABELS[code]}
-                  className="flex h-10 w-10 items-center justify-center rounded-full outline-4 outline-offset-2 outline-lime-100/10 border border-lime-400/30 bg-lime-400/[0.025] text-lime-200 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.06]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-lime-400/30 bg-lime-400/[0.025] text-lime-200 transition-colors hover:border-lime-300/70 hover:bg-lime-400/[0.06]"
                 >
-                  <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+                  <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
                 </span>
                 <span
                   className="w-full text-center text-[9px] uppercase leading-[1.2] tracking-[0.12em] text-zinc-500"
