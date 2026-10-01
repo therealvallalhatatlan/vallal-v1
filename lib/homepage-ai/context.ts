@@ -11,6 +11,12 @@ import type {
   HomepageSource,
 } from "./types"
 
+type ShopOrderItemContext = {
+  order_id: string
+  product_id: string | null
+  quantity: number | null
+}
+
 type BuildHomepageContextInput = {
   userId: string
   email: string | null
@@ -189,6 +195,23 @@ export async function buildHomepageContext(
     getAllStories().catch(() => [] as Story[]),
   ])
 
+  const shopOrderIds = (shopOrdersRes.data ?? []).map((order) => order.id)
+  let shopItems: ShopOrderItemContext[] = []
+
+  if (shopOrderIds.length > 0) {
+    const shopItemsRes = await db
+      .from("shop_order_items")
+      .select("order_id, product_id, quantity")
+      .in("order_id", shopOrderIds)
+      .limit(1000)
+
+    if (shopItemsRes.error) {
+      console.error("[homepage-ai] shop item history failed", shopItemsRes.error)
+    } else {
+      shopItems = (shopItemsRes.data ?? []) as ShopOrderItemContext[]
+    }
+  }
+
   const badgeCodes = new Set(badges.map((badge) => badge.code))
   const book1 = badgeCodes.has("first_book") || (copiesRes.data?.length ?? 0) > 0
   const book2 = badgeCodes.has("second_book")
@@ -249,6 +272,29 @@ export async function buildHomepageContext(
     .sort(() => Math.random() - 0.5)
     .slice(0, 18)
 
+  const purchasedProductIds = new Set<string>()
+
+  for (const order of bookOrdersRes.data ?? []) {
+    if (
+      ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(order.status) &&
+      order.product_id
+    ) {
+      purchasedProductIds.add(order.product_id)
+    }
+  }
+
+  const paidShopOrderIds = new Set(
+    (shopOrdersRes.data ?? [])
+      .filter((order) => order.status === "paid")
+      .map((order) => order.id),
+  )
+
+  for (const item of shopItems) {
+    if (paidShopOrderIds.has(item.order_id) && item.product_id) {
+      purchasedProductIds.add(item.product_id)
+    }
+  }
+
   const productCandidates: HomepageProductCandidate[] = products
     .filter(availableProduct)
     .filter((product) => product.id !== "book-2" || book1)
@@ -259,6 +305,8 @@ export async function buildHomepageContext(
       description: product.description,
       images: product.images,
       price: product.price,
+      href: product.href,
+      fulfillment: product.fulfillment,
     }))
 
   const visitCountLast30Days =
@@ -307,6 +355,9 @@ export async function buildHomepageContext(
       merch,
       mecenas,
       founder,
+    },
+    purchases: {
+      productIds: Array.from(purchasedProductIds),
     },
     network: {
       acceptedClaims: (claimsRes.data ?? []).filter((claim) => claim.status === "accepted").length,
