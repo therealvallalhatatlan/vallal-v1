@@ -42,7 +42,12 @@ function productLabel(productId: string | null, metadata: Record<string, unknown
     (metadata?.product_alias as string | undefined);
   if (explicit) return explicit;
 
-  if (!productId) return "Rendelés";
+  if (!productId) {
+    return metadata?.historical_product_type === "book"
+      ? "Vállalhatatlan könyv"
+      : "Rendelés";
+  }
+  if (metadata?.historical_product_type === "book") return "Vállalhatatlan könyv";
   if (productId.includes("numbered") || productId === "numbered_copy") {
     const copyNumber = metadata?.copy_number;
     return copyNumber ? `Számozott példány #${copyNumber}` : "Számozott példány";
