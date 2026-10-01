@@ -6,9 +6,10 @@ import VHSTrackingLines from "./VHSTrackingLines";
 
 interface MainContentProps {
   children: ReactNode;
+  fullWidth?: boolean;
 }
 
-export default function MainContent({ children }: MainContentProps) {
+export default function MainContent({ children, fullWidth = false }: MainContentProps) {
   const { glitchIntensity } = useScrollGlitch();
 
   return (
@@ -67,7 +68,7 @@ export default function MainContent({ children }: MainContentProps) {
       {/* Main content */}
       <div className="w-full h-20"></div>
       <div
-        className="relative z-20 max-w-4xl"
+        className={`relative z-20 ${fullWidth ? "w-full max-w-none" : "max-w-4xl"}`}
         style={{ pointerEvents: "auto" }}
       >
         {children}
