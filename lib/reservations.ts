@@ -126,6 +126,7 @@ export async function createCheckoutForCopy(
   sessionId: string,
   deliveryMethod: CheckoutDeliveryMethod = 'dead-drop',
   userId: string | null = null,
+  checkoutMetadata: Record<string, string> | null = null,
 ): Promise<CheckoutCopyResponse> {
   if (copyNumber < 1 || copyNumber > 100) {
     return { success: false, error: 'Invalid copy number. Must be between 1 and 100.' };
@@ -268,14 +269,16 @@ export async function createCheckoutForCopy(
       cancelUrl: (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000') + '/cancelled',
       productName: 'Vállalhatatlan – Numbered Copy #' + copyNumber,
       metadata: {
+        ...(checkoutMetadata ?? {}),
         copy_number: copyNumber.toString(),
         guest_session_id: sessionId,
         project: 'vallalhatatlan',
         type: 'numbered_copy',
+        product_id: checkoutMetadata?.product_id ?? 'numbered_copy',
         delivery_method: deliveryMethod,
         shipping_amount_huf: shippingAmount.toString(),
         total_amount_huf: totalAmount.toString(),
-        user_uuid: userId ?? '',
+        ...(userId ? { user_uuid: userId } : {}),
       },
       collectShippingAddress: deliveryMethod === 'automata',
     });
