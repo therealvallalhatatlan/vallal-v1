@@ -236,10 +236,10 @@ export default function UserAccountDashboard({ account, token }: Props) {
     network.claims.accepted + network.spots.active
 
   return (
-    <main className="relative min-h-screen bg-transparent text-zinc-100">
+    <main className="relative min-h-screen bg-zinc-950 text-zinc-100">
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-100"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-50"
           style={{ backgroundImage: "url('/bg.jpg')" }}
         />
         <div className="absolute inset-0 bg-black/20" />

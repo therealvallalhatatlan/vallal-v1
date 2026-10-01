@@ -968,7 +968,7 @@ export default function NetworkInboxSheet() {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-[110] inline-flex h-12 w-12 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950/95 text-zinc-200 shadow-[0_12px_30px_rgba(0,0,0,0.45)] backdrop-blur transition-all hover:border-lime-400/70 hover:bg-lime-400/10 hover:text-lime-100"
+          className="fixed bottom-[calc(8.25rem+env(safe-area-inset-bottom))] right-5 z-[110] outline-4 outline-lime-100/20 hover:outline-lime-100/80 inline-flex h-16 w-16 items-center justify-center rounded-full border border-zinc-900 bg-gradient-to-t from-black to-zinc-800 text-zinc-300 shadow-[0_12px_30px_rgba(0,0,0,0.45)] backdrop-blur transition-all hover:border-lime-400/70 hover:bg-lime-400/10 hover:text-lime-100"
           aria-label="Értesítések megnyitása"
           title="Értesítések"
         >
@@ -986,7 +986,7 @@ export default function NetworkInboxSheet() {
 
       <SheetContent
         side="right"
-        className="z-[120] flex h-full w-[min(26rem,calc(100vw-1.5rem))] flex-col bg-[#030303] text-white"
+        className="z-[120] flex h-full w-[min(26rem,calc(100vw-1.5rem))] flex-col bg-transparent text-white"
         style={{
           paddingTop: "env(safe-area-inset-top,1rem)",
           paddingBottom: "env(safe-area-inset-bottom,1rem)",
@@ -1076,12 +1076,11 @@ export default function NetworkInboxSheet() {
           <section className="mt-6 space-y-3">
             <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.4em] text-zinc-500">
               <span>Üzenetek</span>
-
-  {(messageOverview?.unread || pmUnread > 0) && (
-    <span className="rounded-full border border-lime-200/60 bg-lime-400/80 px-2 py-1 text-[10px] font-semibold uppercase text-black">
-      új
-    </span>
-  )}
+                {(messageOverview?.unread || pmUnread > 0) && (
+                  <span className="rounded-full border border-lime-200/60 bg-lime-400/80 px-2 py-1 text-[10px] font-semibold uppercase text-black">
+                    új
+                  </span>
+                )}
             </div>
 
             {pmConversations.length > 0 ? (
