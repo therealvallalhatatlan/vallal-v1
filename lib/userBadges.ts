@@ -204,10 +204,32 @@ export async function getUserBadges(
     "merch",
   ];
 
-  const earned = orderedCodes.filter((code) => earnedCodes.has(code));
-  if (earned.length === 0) return [];
+  const computedEarned = new Set(orderedCodes.filter((code) => earnedCodes.has(code)));
 
   const db = supabaseAdmin();
+
+  // Historical exceptions can be granted explicitly, with an audit trail.
+  const { data: overrideRows, error: overrideError } = await db
+    .from("user_badge_overrides")
+    .select("badge_id")
+    .eq("user_id", userId);
+
+  if (!overrideError && overrideRows?.length) {
+    const overrideBadgeIds = overrideRows.map((row) => row.badge_id).filter(Boolean);
+    if (overrideBadgeIds.length > 0) {
+      const { data: overrideBadges } = await db
+        .from("badges")
+        .select("code")
+        .in("id", overrideBadgeIds);
+
+      for (const row of overrideBadges ?? []) {
+        if (row.code) computedEarned.add(row.code as BadgeCode);
+      }
+    }
+  }
+
+  const earned = orderedCodes.filter((code) => computedEarned.has(code));
+  if (earned.length === 0) return [];
 
   const { data: badgeRows, error: badgeError } = await db
     .from("badges")
