@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Menu } from "lucide-react";
+import { ArrowUpRight, BookMarked, BookOpen, Crown, HeartHandshake, Menu, ShoppingBag } from "lucide-react";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import {
   Sheet,
@@ -17,6 +17,24 @@ import {
 import NetworkInboxSheet from "@/components/notifications/NetworkInboxSheet"
 
 import { createClient } from "@/lib/browser";
+
+const HEADER_BADGE_ICONS = {
+  first_book: BookOpen,
+  second_book: BookMarked,
+  mecenas: HeartHandshake,
+  founder: Crown,
+  merch: ShoppingBag,
+} as const
+
+type HeaderBadgeCode = keyof typeof HEADER_BADGE_ICONS
+
+const HEADER_BADGE_LABELS: Record<HeaderBadgeCode, string> = {
+  first_book: "I. KÖNYV",
+  second_book: "II. KÖNYV",
+  mecenas: "MECÉNÁS",
+  founder: "ALAPÍTÓ",
+  merch: "MERCH",
+}
 
 const menuItems = [
   {
@@ -64,6 +82,7 @@ type AuthUser = {
 export default function SiteHeader() {
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [badgeCodes, setBadgeCodes] = useState<HeaderBadgeCode[]>([]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -72,11 +91,41 @@ export default function SiteHeader() {
 
     const loadUser = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const currentUser = session?.user ?? null
 
       if (mounted) {
-        setUser(user as AuthUser | null);
+        setUser(currentUser as AuthUser | null);
+      }
+
+      if (!session?.access_token || !currentUser) {
+        if (mounted) setBadgeCodes([])
+        return
+      }
+
+      try {
+        const response = await fetch("/api/user/account", {
+          headers: { Authorization: "Bearer " + session.access_token },
+          cache: "no-store",
+        })
+        const payload = response.ok
+          ? ((await response.json()) as { account?: { badges?: Array<{ code?: unknown }> } })
+          : null
+
+        const codes = Array.isArray(payload?.account?.badges)
+          ? payload.account.badges
+              .map((badge) => badge.code)
+              .filter((code): code is HeaderBadgeCode =>
+                Object.prototype.hasOwnProperty.call(HEADER_BADGE_ICONS, String(code)),
+              )
+          : []
+
+        if (mounted) setBadgeCodes(codes)
+      } catch (error) {
+        console.error("[header] badge load failed", error)
+        if (mounted) setBadgeCodes([])
       }
     };
 
@@ -89,6 +138,37 @@ export default function SiteHeader() {
     if (!mounted) return;
 
     setUser(session?.user ? (session.user as AuthUser) : null);
+
+    if (!session?.access_token) {
+      setBadgeCodes([])
+      return
+    }
+
+    void fetch("/api/user/account", {
+      headers: { Authorization: "Bearer " + session.access_token },
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("account_failed")
+        return (await response.json()) as {
+          account?: { badges?: Array<{ code?: unknown }> }
+        }
+      })
+      .then((payload) => {
+        if (!mounted) return
+        const codes = Array.isArray(payload.account?.badges)
+          ? payload.account.badges
+              .map((badge) => badge.code)
+              .filter((code): code is HeaderBadgeCode =>
+                Object.prototype.hasOwnProperty.call(HEADER_BADGE_ICONS, String(code)),
+              )
+          : []
+        setBadgeCodes(codes)
+      })
+      .catch((error) => {
+        console.error("[header] badge auth-change load failed", error)
+        if (mounted) setBadgeCodes([])
+      })
   }
 );
 
@@ -224,11 +304,33 @@ export default function SiteHeader() {
                   </Link>
                 </SheetClose>
 
+                {badgeCodes.length > 0 && (
+                  <div className="mt-5 border-t border-zinc-900 pt-4">
+                    <div className="mb-3 text-[9px] uppercase tracking-[0.24em] text-zinc-600">
+                      JELVÉNYEID
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {badgeCodes.map((code) => {
+                        const Icon = HEADER_BADGE_ICONS[code]
+                        return (
+                          <span
+                            key={code}
+                            title={HEADER_BADGE_LABELS[code]}
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-lime-400/30 bg-lime-400/[0.025] text-lime-200"
+                          >
+                            <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                          </span>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <SheetClose asChild>
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="mt-2 flex w-full items-center justify-between border border-zinc-800 px-5 py-3 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
+                    className="mt-4 flex w-full items-center justify-between border border-zinc-800 px-5 py-3 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900/60"
                   >
                     <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">
                       Kijelentkezés
