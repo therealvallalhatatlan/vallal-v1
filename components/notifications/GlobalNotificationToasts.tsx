@@ -25,6 +25,17 @@ type NotificationItem = {
   created_at: string
 }
 
+type PublicNotificationItem = {
+  id: string
+  title: string
+  body: string | null
+  created_at: string
+}
+
+const PUBLIC_UNREAD_SOURCE_KEY = "public-system"
+const PUBLIC_SEEN_STORAGE_KEY = "vallalhatatlan:public-notifications-seen-v1"
+const PUBLIC_POLL_INTERVAL_MS = 15_000
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
@@ -39,6 +50,33 @@ function clip(value: string, max = 180) {
   return normalized.slice(0, max - 1) + "…"
 }
 
+function readPublicSeenIds(): Set<string> {
+  if (typeof window === "undefined") return new Set()
+
+  try {
+    const raw = window.localStorage.getItem(PUBLIC_SEEN_STORAGE_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return new Set(
+      Array.isArray(parsed)
+        ? parsed.filter((value): value is string => typeof value === "string").slice(-200)
+        : [],
+    )
+  } catch {
+    return new Set()
+  }
+}
+
+function writePublicSeenIds(ids: Set<string>) {
+  if (typeof window === "undefined") return
+
+  try {
+    const values = Array.from(ids).slice(-200)
+    window.localStorage.setItem(PUBLIC_SEEN_STORAGE_KEY, JSON.stringify(values))
+  } catch {
+    // Ignore localStorage failures.
+  }
+}
+
 export default function GlobalNotificationToasts() {
   const { session, loading } = useSessionGuard()
   const token = session?.access_token ?? null
@@ -48,9 +86,20 @@ export default function GlobalNotificationToasts() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const notificationBaselineRef = useRef<Set<string> | null>(null)
   const pmBaselineRef = useRef<Record<string, number> | null>(null)
+  const publicToastIdsRef = useRef<Set<string>>(new Set())
   const toastTimersRef = useRef<Record<string, number>>({})
 
+  const markPublicNotificationSeen = useCallback((id: string) => {
+    const seen = readPublicSeenIds()
+    seen.add(id.replace(/^public-/, ""))
+    writePublicSeenIds(seen)
+  }, [])
+
   const dismissToast = useCallback((id: string) => {
+    if (id.startsWith("public-")) {
+      markPublicNotificationSeen(id)
+    }
+
     setToasts((current) => current.filter((toast) => toast.id !== id))
 
     const timer = toastTimersRef.current[id]
@@ -58,7 +107,7 @@ export default function GlobalNotificationToasts() {
       window.clearTimeout(timer)
       delete toastTimersRef.current[id]
     }
-  }, [])
+  }, [markPublicNotificationSeen])
 
   const pushToast = useCallback((toast: ToastItem) => {
     setToasts((current) => {
@@ -133,6 +182,55 @@ export default function GlobalNotificationToasts() {
       })
     }
   }, [currentUserId, pushToast, token])
+
+  const pollPublicNotifications = useCallback(async () => {
+    if (loading || token || currentUserId) {
+      setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, 0)
+      return
+    }
+
+    try {
+      const response = await fetch("/api/notifications/public?limit=20", {
+        cache: "no-store",
+      })
+      const data: unknown = await response.json().catch(() => null)
+
+      if (
+        !response.ok ||
+        !isRecord(data) ||
+        data.ok !== true ||
+        !Array.isArray(data.notifications)
+      ) {
+        setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, 0)
+        return
+      }
+
+      const notifications = data.notifications.filter(
+        (item): item is PublicNotificationItem =>
+          isRecord(item) &&
+          typeof item.id === "string" &&
+          typeof item.title === "string" &&
+          typeof item.created_at === "string",
+      )
+
+      const seen = readPublicSeenIds()
+      const unseen = notifications.filter((item) => !seen.has(item.id))
+      setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, unseen.length)
+
+      const newest = unseen[0]
+      if (newest && !publicToastIdsRef.current.has(newest.id)) {
+        publicToastIdsRef.current.add(newest.id)
+        pushToast({
+          id: "public-" + newest.id,
+          kind: "system",
+          title: newest.title,
+          body: clip(newest.body || "Új rendszerüzenet érkezett."),
+        })
+      }
+    } catch (error) {
+      console.error("[global-notifications] public poll failed", error)
+    }
+  }, [currentUserId, loading, pushToast, token])
 
   const poll = useCallback(async () => {
     if (!token || !currentUserId || loading) return
@@ -257,6 +355,34 @@ export default function GlobalNotificationToasts() {
       void channel.unsubscribe()
     }
   }, [currentUserId, loading, poll, token])
+  useEffect(() => {
+    if (loading) return
+
+    if (token && currentUserId) {
+      publicToastIdsRef.current.clear()
+      setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, 0)
+      return
+    }
+
+    void pollPublicNotifications()
+
+    const intervalId = window.setInterval(() => {
+      void pollPublicNotifications()
+    }, PUBLIC_POLL_INTERVAL_MS)
+
+    const handleFocus = () => {
+      void pollPublicNotifications()
+    }
+
+    window.addEventListener("focus", handleFocus)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener("focus", handleFocus)
+      setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, 0)
+    }
+  }, [currentUserId, loading, pollPublicNotifications, token])
+
   useEffect(() => {
     if (loading || !token || !currentUserId) {
       setToasts([])
