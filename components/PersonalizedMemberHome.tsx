@@ -35,7 +35,7 @@ function getSessionId() {
     const created =
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
-        : \`\${Date.now()}-\${Math.random().toString(36).slice(2)}\`
+        : String(Date.now()) + "-" + Math.random().toString(36).slice(2)
 
     sessionStorage.setItem(key, created)
     return created
@@ -72,7 +72,7 @@ function ProductBlockView({
       <div className="grid gap-10 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] sm:items-center sm:gap-16">
         <div className="relative aspect-square max-w-sm overflow-hidden bg-zinc-950">
           <img
-            src={images[product] ?? "/cover2.png"}
+            src={block.productImage ?? images[product] ?? "/cover2.png"}
             alt=""
             className="h-full w-full object-cover opacity-90"
           />
@@ -88,6 +88,11 @@ function ProductBlockView({
           >
             {block.headline}
           </h2>
+          {block.productPrice ? (
+            <p className="mt-4 text-xs uppercase tracking-[0.2em] text-zinc-600">
+              {new Intl.NumberFormat("hu-HU").format(block.productPrice)} Ft
+            </p>
+          ) : null}
           <p className="mt-5 text-base leading-7 text-zinc-500 sm:text-lg">
             {block.body}
           </p>
@@ -133,7 +138,7 @@ function StoryBlockView({
           {block.storyText}
         </article>
         <Link
-          href={\`/novellak/\${block.storySlug}\`}
+          href={"/novellak/" + block.storySlug}
           className="mt-10 inline-flex items-center gap-3 text-[10px] uppercase tracking-[0.22em] text-lime-200/80 hover:text-lime-100"
         >
           {block.cta}
@@ -170,7 +175,7 @@ function OrderStatusBlockView({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: \`Bearer \${token}\`,
+          Authorization: "Bearer " + token,
         },
         body: JSON.stringify({
           orderId,
@@ -271,8 +276,29 @@ function NetworkBlockView({
   )
 }
 
-function BadgeBlockView() {
-  return null
+function BadgeBlockView({
+  codes,
+}: {
+  codes: Array<keyof typeof BADGE_ICONS>
+}) {
+  return (
+    <section className="border-y border-zinc-900 py-14 sm:py-18">
+      <div className="flex flex-wrap gap-3">
+        {codes.map((code) => {
+          const Icon = BADGE_ICONS[code]
+          return (
+            <span
+              key={code}
+              title={code.replace("_", " ")}
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-800 bg-zinc-950 text-zinc-500"
+            >
+              <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+            </span>
+          )
+        })}
+      </div>
+    </section>
+  )
 }
 
 export default function PersonalizedMemberHome() {
@@ -399,13 +425,10 @@ export default function PersonalizedMemberHome() {
 
         <div className="space-y-0">
           {plan.blocks.map((block, index) => {
-            if (block.type === "product") return <ProductBlockView key={\`product-\${block.productId}-\${index}\`} block={block} />
-            if (block.type === "story") return <StoryBlockView key={\`story-\${block.storySlug}-\${index}\`} block={block} />
-            if (block.type === "order_status") {
-              return <OrderStatusBlockView key={\`order-\${block.orderId}\`} block={block} token={token} onReceived={handleReceived} />
+            undefined
             }
-            if (block.type === "network") return <NetworkBlockView key={\`network-\${index}\`} block={block} />
-            return <BadgeBlockView key={\`badge-\${index}\`} />
+            if (block.type === "network") return <NetworkBlockView key={"network-" + index} block={block} />
+            return <BadgeBlockView key={"badge-" + index} codes={block.codes} />
           })}
         </div>
       </main>
