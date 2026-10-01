@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { ArrowUpRight, LockKeyhole, Radio, Sparkles, Users } from "lucide-react"
+import { createClient } from "@/lib/browser"
+import { persistAuthReturnTarget } from "@/lib/authRedirect"
 
 import SiteHeader from "@/components/SiteHeader"
 import MainContent from "@/components/MainContent"
@@ -170,6 +172,38 @@ function BadgeRail({ account }: { account: DashboardAccountResponse }) {
 }
 
 function GuestHome() {
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  const handleGoogleLogin = async () => {
+    if (googleLoading) return
+
+    setGoogleLoading(true)
+
+    try {
+      const supabase = createClient()
+      persistAuthReturnTarget("/")
+      const redirectTo = `${window.location.origin}/auth/callback`
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          queryParams: {
+            prompt: "select_account",
+          },
+        },
+      })
+
+      if (error) {
+        console.error("[homepage] google login failed", error)
+        setGoogleLoading(false)
+      }
+    } catch (error) {
+      console.error("[homepage] google login exception", error)
+      setGoogleLoading(false)
+    }
+  }
+
   return (
     <>
       <SiteHeader />
@@ -184,31 +218,39 @@ function GuestHome() {
           <div className="relative grid min-h-[72vh] lg:grid-cols-[1.1fr_0.9fr]">
             <div className="flex flex-col justify-between border-b border-zinc-800 p-7 sm:p-10 lg:border-b-0 lg:border-r">
               <div>
-                <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.35em] text-zinc-600">
-                  <LockKeyhole className="h-3.5 w-3.5 text-zinc-700" />
-                  PUBLIC SURFACE / RESTRICTED
-                </div>
-
-                <h1
-                  className="mt-10 max-w-3xl text-5xl leading-[0.92] tracking-tight text-zinc-100 sm:text-7xl"
-                  style={{ fontFamily: "var(--font-heading), serif" }}
+                <p
+                  className="max-w-xl text-right text-[23px] font-normal italic leading-relaxed tracking-tight text-zinc-300 sm:text-base"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
-                  A FELSZÍNT
-                  <br />
-                  LÁTOD.
-                </h1>
-
-                <p className="mt-7 max-w-xl text-base leading-7 text-zinc-500 sm:text-lg">
-                  Ez a nyilvános réteg. A többi nem itt van.
-                  A hálózatnak vannak tagjai, nyomai, üzenetei és saját
-                  szabályai. Ezekhez azonosítanod kell magad.
+                  "Archetípus vagyok.<br/>A funkcionális rendszerhiba, az elbaszott túlélő, a káosz-építész archetípusa. Egy csótány fejlett idegrendszerrel."<br/>
                 </p>
+                <p className="mt-4 text-right text-lg italic tracking-wide text-zinc-600">
+                  — Író Úr
+                </p>
+
+                <div className="mt-8 flex gap-3 sm:max-w-xl">
+                  <Link
+                    href="/auth?from=%2F&next=%2F"
+                    className="inline-flex min-h-12 flex-1 items-center justify-center border border-lime-400/45 bg-lime-400/[0.035] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white"
+                  >
+                    BELÉPÉS
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => void handleGoogleLogin()}
+                    disabled={googleLoading}
+                    className="inline-flex min-h-12 flex-1 items-center justify-center border border-zinc-700 bg-zinc-950 px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300 transition-all hover:border-lime-400/60 hover:bg-zinc-900 hover:text-lime-100 disabled:cursor-wait disabled:opacity-50"
+                  >
+                    {googleLoading ? "GOOGLE..." : "GOOGLE LOGIN"}
+                  </button>
+                </div>
               </div>
 
               <div className="mt-12 border-t border-zinc-900 pt-6">
                 <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-zinc-700">
-                  <Radio className="h-3.5 w-3.5" />
-                  CHANNEL STATUS
+                  <LockKeyhole className="h-3.5 w-3.5 text-zinc-800" />
+                  PUBLIC SURFACE / RESTRICTED
                 </div>
                 <p className="mt-3 text-2xl text-zinc-300">ONLINE / IDENTITÁS NÉLKÜL</p>
               </div>
