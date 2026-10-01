@@ -4,6 +4,36 @@
 -- email mismatches and book ownership that still depends on email.
 
 -- 1) CANONICAL ACCOUNT MAP
+WITH order_totals AS (
+  SELECT
+    user_id,
+    COUNT(*) AS order_count,
+    COALESCE(SUM(
+      CASE
+        WHEN status IN ('paid', 'fulfilled', 'ready_to_dispatch', 'dispatched')
+        THEN amount / 100.0
+        ELSE 0
+      END
+    ), 0) AS orders_spent_huf
+  FROM public.orders
+  WHERE user_id IS NOT NULL
+  GROUP BY user_id
+),
+shop_totals AS (
+  SELECT
+    user_id,
+    COUNT(*) AS shop_order_count,
+    COALESCE(SUM(
+      CASE
+        WHEN status = 'paid'
+        THEN subtotal_amount / 100.0
+        ELSE 0
+      END
+    ), 0) AS shop_spent_huf
+  FROM public.shop_orders
+  WHERE user_id IS NOT NULL
+  GROUP BY user_id
+)
 SELECT
   au.id AS user_id,
   au.email AS auth_email,
@@ -11,29 +41,17 @@ SELECT
   pu.nickname,
   au.created_at AS auth_created_at,
   au.last_sign_in_at,
-  COUNT(DISTINCT o.id) AS order_count,
-  COALESCE(SUM(
-    CASE
-      WHEN o.status IN ('paid', 'fulfilled', 'ready_to_dispatch', 'dispatched')
-      THEN o.amount / 100.0
-      ELSE 0
-    END
-  ), 0) AS orders_spent_huf,
-  COUNT(DISTINCT so.id) AS shop_order_count,
-  COALESCE(SUM(
-    CASE WHEN so.status = 'paid'
-    THEN so.subtotal_amount / 100.0
-    ELSE 0
-    END
-  ), 0) AS shop_spent_huf
+  COALESCE(order_totals.order_count, 0) AS order_count,
+  ROUND(COALESCE(order_totals.orders_spent_huf, 0), 2) AS orders_spent_huf,
+  COALESCE(shop_totals.shop_order_count, 0) AS shop_order_count,
+  ROUND(COALESCE(shop_totals.shop_spent_huf, 0), 2) AS shop_spent_huf
 FROM auth.users au
 LEFT JOIN public.users pu ON pu.id = au.id
-LEFT JOIN public.orders o ON o.user_id = au.id
-LEFT JOIN public.shop_orders so ON so.user_id = au.id
-GROUP BY
-  au.id, au.email, pu.email, pu.nickname,
-  au.created_at, au.last_sign_in_at
-ORDER BY (orders_spent_huf + shop_spent_huf) DESC, au.created_at;
+LEFT JOIN order_totals ON order_totals.user_id = au.id
+LEFT JOIN shop_totals ON shop_totals.user_id = au.id
+ORDER BY
+  (COALESCE(order_totals.orders_spent_huf, 0) + COALESCE(shop_totals.shop_spent_huf, 0)) DESC,
+  au.created_at;
 
 
 -- 2) PROFILE ROWS WITHOUT A LIVE AUTH ACCOUNT
