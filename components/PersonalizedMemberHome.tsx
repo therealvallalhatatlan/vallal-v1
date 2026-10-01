@@ -10,6 +10,7 @@ import {
   HeartHandshake,
   LoaderCircle,
   ShoppingBag,
+  RefreshCw,
 } from "lucide-react"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import Footer from "@/components/Footer"
@@ -21,6 +22,27 @@ import type { HomepageBlock, HomepagePlan } from "@/lib/homepage-ai/types"
 type SessionShape = {
   access_token?: string
 }
+
+type MemberBadgeCode =
+  | "first_book"
+  | "second_book"
+  | "mecenas"
+  | "founder"
+  | "merch"
+
+type RandomStory = {
+  slug: string
+  title: string
+  text: string
+}
+
+const MEMBER_BADGE_ICONS = {
+  first_book: BookOpen,
+  second_book: BookMarked,
+  mecenas: HeartHandshake,
+  founder: Crown,
+  merch: ShoppingBag,
+} as const
 
 const BADGE_ICONS = {
   first_book: BookOpen,
@@ -313,6 +335,193 @@ function BadgeBlockView({
   )
 }
 
+function TrustSection() {
+  return (
+    <section className="border-y border-zinc-900 py-16 sm:py-24" aria-label="Bízhatsz bennem">
+      <div className="grid gap-8 sm:grid-cols-[minmax(0,1fr)_9rem] sm:items-center sm:gap-12">
+        <div>
+          <p className="text-3xl italic leading-tight text-zinc-200 sm:text-5xl" style={{ fontFamily: "var(--font-heading), serif" }}>
+            Bízhatsz bennem, nyúl vagyok.
+          </p>
+          <p className="mt-5 text-sm leading-7 text-zinc-500 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            Ha kérdésed van{" "}
+            <Link href="/kapcsolat" className="text-lime-100 underline underline-offset-4">
+              itt tudsz
+            </Link>{" "}
+            írni nekem.
+          </p>
+        </div>
+
+        <div className="mx-auto w-36 overflow-hidden rounded-full border border-zinc-800 bg-black sm:mx-0 sm:justify-self-end">
+          <video
+            className="block w-full"
+            src="/420.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls={false}
+            preload="metadata"
+          />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function MemberBadgesSection({ codes }: { codes: MemberBadgeCode[] }) {
+  const labels: Record<MemberBadgeCode, string> = {
+    first_book: "ELSŐ KÖNYV",
+    second_book: "MÁSODIK KÖNYV",
+    mecenas: "MECÉNÁS",
+    founder: "ALAPÍTÓ",
+    merch: "MERCH",
+  }
+
+  return (
+    <section className="border-y border-zinc-900 py-14 sm:py-20" aria-label="Jelvényeid">
+      <div className="border-t border-b border-zinc-800 py-4">
+        <p className="text-[11px] uppercase tracking-[0.32em] text-zinc-400" style={{ fontFamily: "var(--font-mono-tech)" }}>
+          JELVÉNYEID
+        </p>
+        <p className="mt-2 text-sm italic text-zinc-600">
+          Amiket eddig megszereztél
+        </p>
+      </div>
+
+      {codes.length === 0 ? (
+        <div className="mt-7">
+          <p className="max-w-2xl text-sm leading-7 text-zinc-600">
+            Még nincs megszerzett jelvényed.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-7 flex flex-wrap gap-x-8 gap-y-6">
+          {codes.map((code) => {
+            const Icon = MEMBER_BADGE_ICONS[code]
+            return (
+              <div key={code} className="group inline-flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-lime-400/35 bg-lime-400/[0.03] text-lime-200 transition-colors group-hover:border-lime-300/70 group-hover:bg-lime-400/[0.07]">
+                  <Icon className="h-5 w-5" strokeWidth={1.5} aria-hidden="true" />
+                </span>
+                <span className="text-[11px] uppercase tracking-[0.12em] text-zinc-300 sm:text-xs" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  {labels[code]}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function RandomStorySection() {
+  const [story, setStory] = useState<RandomStory | null>(null)
+  const [loadingStory, setLoadingStory] = useState(true)
+  const [expanded, setExpanded] = useState(false)
+
+  const loadStory = async () => {
+    setLoadingStory(true)
+
+    try {
+      const response = await fetch("/api/public/random-story", {
+        cache: "no-store",
+      })
+      if (!response.ok) throw new Error("random_story_failed")
+
+      const payload = (await response.json()) as RandomStory
+      setStory(payload)
+      setExpanded(false)
+    } catch (error) {
+      console.error("[homepage] random story failed", error)
+      setStory(null)
+    } finally {
+      setLoadingStory(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadStory()
+  }, [])
+
+  const paragraphs =
+    story?.text
+      .split(/\n\s*\n/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean) ?? []
+
+  const visibleParagraphs = expanded ? paragraphs : paragraphs.slice(0, 2)
+
+  return (
+    <section className="mt-16 w-full border-t border-zinc-800 pt-4 sm:mt-20" aria-label="Random Vállalhatatlan Sztori">
+      <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.24em] text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+        <span>Random Vállalhatatlan Sztori</span>
+        <button
+          type="button"
+          onClick={() => void loadStory()}
+          disabled={loadingStory}
+          aria-label="Új random sztori"
+          title="Új random sztori"
+          className="group flex h-8 w-8 items-center justify-center text-zinc-500 transition-colors hover:text-lime-100 disabled:opacity-40"
+        >
+          <RefreshCw
+            size={15}
+            strokeWidth={2}
+            className={loadingStory ? "animate-spin" : "transition-transform duration-500 group-hover:rotate-180"}
+          />
+        </button>
+      </div>
+
+      {story ? (
+        <article className="border-t border-zinc-800 pt-8 sm:pt-10">
+          <h3 className="text-3xl leading-tight text-zinc-100 sm:text-4xl" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            {story.title}
+          </h3>
+
+          <div className="relative mt-4">
+            <div className={expanded ? "" : "relative max-h-[390px] overflow-hidden"}>
+              {visibleParagraphs.map((paragraph, index) => (
+                <p
+                  key={index}
+                  className="mt-4 whitespace-pre-line text-sm leading-7 text-zinc-400 sm:text-base sm:leading-8"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+
+            {!expanded && paragraphs.length > 2 ? (
+              <div
+                className="pointer-events-none absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-[#010101] via-[#010101]/85 to-transparent"
+                aria-hidden="true"
+              />
+            ) : null}
+          </div>
+
+          {paragraphs.length > 2 ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((value) => !value)}
+              className="mx-auto mt-6 flex w-1/2 items-center justify-between rounded-md border border-zinc-800 px-3 py-3 text-left text-[11px] uppercase tracking-[0.2em] text-zinc-400 transition-all hover:border-lime-100/50 hover:bg-lime-100/[0.03] hover:text-lime-100 sm:w-1/3"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+              aria-expanded={expanded}
+            >
+              <span>{expanded ? "BEZÁROM" : "OLVASOM TOVÁBB"}</span>
+              <span>{expanded ? "↑" : "→"}</span>
+            </button>
+          ) : null}
+        </article>
+      ) : (
+        <p className="border-t border-zinc-800 pt-8 text-sm italic text-zinc-600">
+          {loadingStory ? "Sztori betöltése..." : "Nincs elérhető sztori."}
+        </p>
+      )}
+    </section>
+  )
+}
+
 export default function PersonalizedMemberHome() {
   const { session, loading } = useSessionGuard() as {
     session: SessionShape | null
@@ -322,6 +531,26 @@ export default function PersonalizedMemberHome() {
   const [plan, setPlan] = useState<HomepagePlan | null>(null)
   const [loadingPlan, setLoadingPlan] = useState(true)
   const [error, setError] = useState(false)
+  const [loaderIndex, setLoaderIndex] = useState(0)
+  const [badgeCodes, setBadgeCodes] = useState<MemberBadgeCode[]>([])
+  const loaderLines = [
+    "IDENTITY LINK / kapcsolódás",
+    "PROFILE SCAN / profil beolvasása",
+    "ORDER TRACE / rendelések ellenőrzése",
+    "STORY POOL / történetek keresése",
+    "SHOP INDEX / elérhető tárgyak keresése",
+    "DIRECTOR / a mai oldal összeállítása",
+  ]
+
+  useEffect(() => {
+    if (!loading && loadingPlan) {
+      const interval = window.setInterval(() => {
+        setLoaderIndex((current) => (current + 1) % loaderLines.length)
+      }, 650)
+
+      return () => window.clearInterval(interval)
+    }
+  }, [loading, loadingPlan])
 
   useEffect(() => {
     if (loading || !token) return
@@ -416,6 +645,30 @@ export default function PersonalizedMemberHome() {
 
         setPlan(payload.plan)
 
+        void fetch("/api/user/account", {
+          headers: { Authorization: "Bearer " + token },
+          cache: "no-store",
+        })
+          .then((accountResponse) =>
+            accountResponse.ok
+              ? accountResponse.json()
+              : Promise.reject(new Error("account_failed")),
+          )
+          .then((accountPayload) => {
+            const codes = Array.isArray(accountPayload?.account?.badges)
+              ? accountPayload.account.badges
+                  .map((badge: { code?: unknown }) => badge.code)
+                  .filter((code: unknown): code is MemberBadgeCode =>
+                    ["first_book", "second_book", "mecenas", "founder", "merch"].includes(String(code)),
+                  )
+              : []
+            setBadgeCodes(codes)
+          })
+          .catch((accountError) => {
+            console.error("[homepage] badge load failed", accountError)
+            setBadgeCodes([])
+          })
+
         try {
           sessionStorage.removeItem("vh_homepage_entry_v1")
         } catch {
@@ -439,13 +692,39 @@ export default function PersonalizedMemberHome() {
 
   if (loading || loadingPlan) {
     return (
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-5xl items-center px-5 sm:px-8">
-        <div className="w-full">
-          <div className="h-px w-24 bg-zinc-800" />
-          <p className="mt-5 text-[10px] uppercase tracking-[0.3em] text-zinc-700">
-            CHANNEL INITIALIZING
+      <div className="relative flex min-h-[82vh] w-full items-center justify-center overflow-hidden bg-[#010101] px-5 py-20 sm:px-8">
+        <div className="pointer-events-none absolute inset-0 opacity-20 bg-[repeating-linear-gradient(to_bottom,rgba(163,230,53,0.035)_0,rgba(163,230,53,0.035)_1px,transparent_1px,transparent_22px)]" />
+        <div className="relative w-full max-w-3xl overflow-hidden border border-zinc-800 bg-black/90 p-5 shadow-[0_0_70px_rgba(163,230,53,0.04)] sm:p-7">
+          <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
+            <span className="text-[10px] uppercase tracking-[0.28em] text-zinc-500" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              VÁLLALHATATLAN / MEMBER CHANNEL
+            </span>
+            <span className="flex items-center gap-2 text-[9px] uppercase tracking-[0.18em] text-lime-200/60" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime-300" />
+              LIVE
+            </span>
+          </div>
+
+          <div className="mt-8 space-y-3 text-[12px] leading-6 text-zinc-500 sm:text-sm" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            {loaderLines.slice(0, loaderIndex + 1).map((line, index) => (
+              <p key={line} className={index === loaderIndex ? "text-lime-200" : "text-zinc-700"}>
+                <span className="mr-3 text-zinc-800">[{String(index + 1).padStart(2, "0")}]</span>
+                {line}
+                {index === loaderIndex ? <span className="ml-1 animate-pulse">_</span> : null}
+              </p>
+            ))}
+          </div>
+
+          <div className="mt-8 h-px w-full bg-zinc-900">
+            <div
+              className="h-px bg-lime-300/40 transition-all duration-500"
+              style={{ width: ((loaderIndex + 1) / loaderLines.length) * 100 + "%" }}
+            />
+          </div>
+
+          <p className="mt-3 text-[9px] uppercase tracking-[0.22em] text-zinc-700" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            PERSONALIZED HOMEPAGE BUILD / {Math.round(((loaderIndex + 1) / loaderLines.length) * 100)}%
           </p>
-          <div className="mt-5 h-10 w-full max-w-3xl animate-pulse bg-zinc-950" />
         </div>
       </div>
     )
@@ -535,6 +814,10 @@ export default function PersonalizedMemberHome() {
             )
           })}
         </div>
+
+        <TrustSection />
+        <MemberBadgesSection codes={badgeCodes} />
+        <RandomStorySection />
       </main>
       <Footer />
     </>
