@@ -1,12 +1,13 @@
 // /checkout/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { guardWriteOperation } from "@/lib/systemGuard";
+import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY!;
 const stripe = new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   // Check system mode
   const guardResponse = await guardWriteOperation(req as any);
   if (guardResponse) return guardResponse;
@@ -22,6 +23,16 @@ export async function POST(req: Request) {
     // Legyszerűbb, stabil megoldás: fix típusok, helyes struktúra.
     // (Ha később testre akarod szabni, átemelheted a body-ból,
     // de ügyelj rá, hogy az értékek integer/boolean típusok legyenek.)
+    const metadata = await buildCheckoutMetadata(
+      req,
+      {
+        project: "vallalhatatlan",
+        type: "preorder",
+        product_id: "book-1",
+      },
+      { cartSummary: "book-1x1" },
+    );
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       currency: "huf",
@@ -32,10 +43,10 @@ export async function POST(req: Request) {
       success_url:
         "https://vallalhatatlan.online/success?session_id={CHECKOUT_SESSION_ID}",
       cancel_url: "https://vallalhatatlan.online/cancelled",
-      client_reference_id: "hpp-" + Math.random().toString(36).slice(2, 10),
-      metadata: {
-        project: "vallalhatatlan",
-        type: "preorder",
+      client_reference_id: metadata.order_id,
+      metadata,
+      payment_intent_data: {
+        metadata,
       },
       line_items: [
         {
