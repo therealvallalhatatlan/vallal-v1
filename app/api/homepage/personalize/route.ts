@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
       sessionId?: unknown
       isMobile?: unknown
       isInAppBrowser?: unknown
+      referrerHost?: unknown
     }
 
     const url = new URL(request.url)
@@ -105,6 +106,10 @@ export async function POST(request: NextRequest) {
       hour: Number(url.searchParams.get("hour") ?? new Date().getHours()),
       isMobile: parseBoolean(body.isMobile),
       isInAppBrowser: parseBoolean(body.isInAppBrowser),
+      referrerHost:
+        typeof body.referrerHost === "string"
+          ? body.referrerHost.slice(0, 180)
+          : null,
       utmSource: url.searchParams.get("utm_source"),
       utmCampaign: url.searchParams.get("utm_campaign"),
     })
