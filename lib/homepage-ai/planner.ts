@@ -181,38 +181,42 @@ function normalizeHomepagePlan(
     blocks.some((block) => block.type === type)
 
   for (const required of guaranteed) {
-    if (blocks.length >= 3) break
-
     if (required.type === "order_status" && !hasType("order_status")) {
-      blocks.unshift(required)
-      continue
-    }
-
-    if (required.type === "product" && !hasType("product")) {
       blocks.push(required)
-      continue
-    }
-
-    if (required.type === "story" && !hasType("story")) {
+    } else if (
+      required.type === "product" &&
+      !hasType("product")
+    ) {
       blocks.push(required)
-      continue
-    }
-
-    if (required.type === "network" && !hasType("network")) {
+    } else if (
+      required.type === "story" &&
+      !hasType("story")
+    ) {
       blocks.push(required)
-      continue
-    }
-
-    if (required.type === "badges" && !hasType("badges")) {
+    } else if (
+      required.type === "network" &&
+      !hasType("network")
+    ) {
       blocks.push(required)
     }
   }
+
+  const order = {
+    order_status: 0,
+    product: 1,
+    story: 2,
+    network: 3,
+    badges: 4,
+  } as const
+
+  blocks.sort((a, b) => order[a.type] - order[b.type])
 
   return {
     ...plan,
     blocks: blocks.slice(0, 3),
   }
 }
+
 
 function enrichStoryBlocks(plan: HomepagePlan, stories: Story[]): HomepagePlan {
   const storyBySlug = new Map(stories.map((story) => [story.id, story]))
