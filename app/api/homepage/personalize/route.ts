@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import { checkRateLimit, getClientIp } from "@/lib/security/rateLimit"
 import { buildHomepageContext, recordHomepageVisit } from "@/lib/homepage-ai/context"
 import { prepareHomepagePlan } from "@/lib/homepage-ai/planner"
+import { getRecommendedProducts } from "@/lib/homepage-ai/recommendations"
 import type { HomepagePlan } from "@/lib/homepage-ai/types"
 
 export const dynamic = "force-dynamic"
@@ -122,9 +123,15 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
 
       if (isPlan(cached.data?.last_plan)) {
+        const recommendedProducts = getRecommendedProducts(context)
         await recordHomepageVisit(context, user.id, sessionId)
         return NextResponse.json(
-          { ok: true, plan: cached.data.last_plan, cached: true },
+          {
+            ok: true,
+            plan: cached.data.last_plan,
+            recommendedProducts,
+            cached: true,
+          },
           { headers: { "Cache-Control": "no-store" } },
         )
       }
@@ -134,7 +141,9 @@ export async function POST(request: NextRequest) {
 
     await recordHomepageVisit(context, user.id, sessionId)
 
-    const firstProduct = plan.blocks.find((block) => block.type === "product")
+    const recommendedProducts = getRecommendedProducts(context)
+
+    const firstProduct = recommendedProducts[0]
     const firstStory = plan.blocks.find((block) => block.type === "story")
 
     const memoryUpdate = await admin.from("homepage_memory").upsert(
@@ -143,8 +152,7 @@ export async function POST(request: NextRequest) {
         last_plan: plan,
         last_session_id: sessionId,
         last_hook: plan.greeting,
-        last_product_id:
-          firstProduct?.type === "product" ? firstProduct.productId : null,
+        last_product_id: firstProduct?.id ?? null,
         last_story_slug:
           firstStory?.type === "story" ? firstStory.storySlug : null,
         last_generated_at: new Date().toISOString(),
@@ -158,7 +166,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { ok: true, plan, cached: false },
+      { ok: true, plan, recommendedProducts, cached: false },
       { headers: { "Cache-Control": "no-store" } },
     )
   } catch (error) {
