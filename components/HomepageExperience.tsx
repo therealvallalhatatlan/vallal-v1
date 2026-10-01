@@ -12,6 +12,13 @@ import MainContent from "@/components/MainContent"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import type { DashboardAccountResponse } from "@/types/dashboard"
 
+type SessionShape = {
+  access_token?: string
+  user?: {
+    email?: string | null
+  }
+}
+
 function getPersonalGreeting(account: DashboardAccountResponse, firstName: string) {
   const hour = new Date().getHours()
   const lastActivityAt = account.user.last_activity_at
@@ -228,7 +235,7 @@ export default function HomepageExperience() {
       {!loading && !session ? <GuestHome /> : null}
 
       {!loading && session && account ? (
-        <MemberHome account={account} feed={feed} />
+        <MemberHome account={account} />
       ) : null}
 
       {loading || (session && loadingAccount) ? (
