@@ -336,7 +336,7 @@ export default function PersonalizedMemberHome() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: \`Bearer \${token}\`,
+            Authorization: "Bearer " + token,
           },
           body: JSON.stringify({
             sessionId,
@@ -425,10 +425,50 @@ export default function PersonalizedMemberHome() {
 
         <div className="space-y-0">
           {plan.blocks.map((block, index) => {
-            undefined
+            if (block.type === "product") {
+              return (
+                <ProductBlockView
+                  key={"product-" + block.productId + "-" + index}
+                  block={block}
+                />
+              )
             }
-            if (block.type === "network") return <NetworkBlockView key={"network-" + index} block={block} />
-            return <BadgeBlockView key={"badge-" + index} codes={block.codes} />
+
+            if (block.type === "story") {
+              return (
+                <StoryBlockView
+                  key={"story-" + block.storySlug + "-" + index}
+                  block={block}
+                />
+              )
+            }
+
+            if (block.type === "order_status") {
+              return (
+                <OrderStatusBlockView
+                  key={"order-" + block.orderId}
+                  block={block}
+                  token={token}
+                  onReceived={handleReceived}
+                />
+              )
+            }
+
+            if (block.type === "network") {
+              return (
+                <NetworkBlockView
+                  key={"network-" + index}
+                  block={block}
+                />
+              )
+            }
+
+            return (
+              <BadgeBlockView
+                key={"badge-" + index}
+                codes={block.codes}
+              />
+            )
           })}
         </div>
       </main>
