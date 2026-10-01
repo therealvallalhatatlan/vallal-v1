@@ -109,13 +109,7 @@ export async function POST(request: NextRequest) {
       utmCampaign: url.searchParams.get("utm_campaign"),
     })
 
-    if (
-      sessionId &&
-      context.previousHomepage.sessionId === sessionId &&
-      context.previousHomepage.generatedAt &&
-      context.previousHomepage.generatedAt ===
-        context.previousHomepage.generatedAt
-    ) {
+    if (sessionId && context.previousHomepage.sessionId === sessionId) {
       const cached = await admin
         .from("homepage_memory")
         .select("last_plan")
