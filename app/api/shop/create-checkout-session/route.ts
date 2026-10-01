@@ -11,6 +11,7 @@ import {
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getUserFromToken, parseBearerToken } from "@/lib/auth";
 import { guardWriteOperation } from "@/lib/systemGuard";
+import { buildCartSummary, buildCheckoutMetadata } from "@/lib/stripeAttribution";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeKey
@@ -123,14 +124,9 @@ export async function POST(req: NextRequest) {
       mode: "payment",
       success_url: `${origin}/shop/order/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/shop/order/cancel`,
-      metadata: {
-        orderType: "merch",
-        orderId: draftOrder.orderId,
-        deliveryMethod,
-        shippingAmount: String(draftOrder.shippingAmount),
-        totalAmount: String(draftOrder.totalAmount),
-        user_uuid: authenticatedUser?.id ?? "",
-      },
+      client_reference_id: metadata.order_id,
+      metadata,
+      payment_intent_data: { metadata },
       shipping_address_collection: { allowed_countries: ["HU"] },
     });
 
