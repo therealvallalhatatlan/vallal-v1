@@ -100,6 +100,36 @@ function getPersonalContent(account: DashboardAccountResponse) {
 }
 
 // Homepage guest + badge components restored.
+const BADGE_ICONS = {
+  first_book: BookOpen,
+  second_book: BookMarked,
+  mecenas: HeartHandshake,
+  founder: Crown,
+  merch: ShoppingBag,
+} as const
+
+function BadgeRail({ account }: { account: DashboardAccountResponse }) {
+  if (account.badges.length === 0) return null
+
+  return (
+    <div className="flex flex-wrap gap-3">
+      {account.badges.map((badge) => {
+        const Icon = BADGE_ICONS[badge.code]
+        return (
+          <span
+            key={badge.code}
+            title={badge.description}
+            aria-label={badge.name}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-800 bg-zinc-950 text-zinc-500 hover:border-lime-300/40 hover:text-lime-200"
+          >
+            <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 function MemberHome({
   account,
 }: {
