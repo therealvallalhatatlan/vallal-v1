@@ -24,8 +24,10 @@ DECLARE
   v_book_copies_moved INTEGER := 0;
   v_alias_email TEXT;
 BEGIN
-  IF auth.role() <> 'service_role' THEN
-    RAISE EXCEPTION 'service_role_required';
+  -- Runtime calls use service_role. Supabase SQL Editor maintenance runs as
+  -- postgres, which is also explicitly allowed for controlled manual repair.
+  IF auth.role() <> 'service_role' AND current_user <> 'postgres' THEN
+    RAISE EXCEPTION 'service_role_or_postgres_required';
   END IF;
 
   IF p_legacy_user_id IS NULL OR p_canonical_user_id IS NULL THEN
