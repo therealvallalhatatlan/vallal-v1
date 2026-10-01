@@ -75,6 +75,7 @@ export interface DashboardAccountResponse {
     created_at: string | null
     updated_at: string | null
     last_sign_in_at: string | null
+    last_activity_at: string | null
   }
   circle: {
     code: "outside" | "a" | "inner" | "core"
