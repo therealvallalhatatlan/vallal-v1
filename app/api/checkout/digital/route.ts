@@ -1,13 +1,24 @@
 // app/api/checkout/digital/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-07-30.basil",
 });
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const metadata = await buildCheckoutMetadata(
+      req,
+      {
+        project: "vallalhatatlan",
+        type: "digital_reader",
+        product_id: "digital-reader",
+      },
+      { cartSummary: "digital-readerx1" },
+    );
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
@@ -18,6 +29,9 @@ export async function POST() {
       ],
       success_url: "https://vallalhatatlan.online/reader",
       cancel_url: "https://vallalhatatlan.online/",
+      client_reference_id: metadata.order_id,
+      metadata,
+      payment_intent_data: { metadata },
       allow_promotion_codes: true,
       billing_address_collection: "auto",
     });
