@@ -129,8 +129,18 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
   );
 
   const firstBookFromNumberedCopy = copies.length > 0;
+  const firstBookFromHistoricalOrder = paidBookOrders.some((order) => {
+    const metadata =
+      order.metadata && typeof order.metadata === "object"
+        ? (order.metadata as Record<string, unknown>)
+        : {};
+    return (
+      String(metadata.historical_product_type ?? "").toLowerCase() === "book" &&
+      String(metadata.historical_edition ?? "").toLowerCase() === "book_1"
+    );
+  });
 
-  if (firstBookFromNumberedCopy) {
+  if (firstBookFromNumberedCopy || firstBookFromHistoricalOrder) {
     earned.add("first_book");
   }
 
