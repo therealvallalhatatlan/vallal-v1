@@ -14,6 +14,7 @@ import {
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import Footer from "@/components/Footer"
 import SiteHeader from "@/components/SiteHeader"
+// Personalized member homepage: keep navigation available after auth.
 // Keep the member homepage isolated from the legacy homepage.
 import type { HomepageBlock, HomepagePlan } from "@/lib/homepage-ai/types"
 
