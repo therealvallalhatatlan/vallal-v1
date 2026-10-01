@@ -146,19 +146,27 @@ export function getDeterministicHomepageFallback(
     context.visit.daysSinceLastVisit,
   )
 
+  const firstName = context.identity.firstName
+
   const greeting =
     context.visit.daysSinceLastVisit !== null &&
     context.visit.daysSinceLastVisit >= 8
-      ? "Szia " +
-        context.identity.firstName +
-        ", több mint egy hete nem láttalak. Minden oké?"
-      : mood === "late_night"
-        ? "Hát te mit csinálsz ilyen késői órán, " +
-          context.identity.firstName +
-          "?"
-        : mood === "morning"
-          ? "Jó reggelt, " + context.identity.firstName + "."
-          : "Szia " + context.identity.firstName + "."
+      ? "Szia " + firstName + ", több mint egy hete nem láttalak. Minden oké?"
+      : context.visit.source === "facebook"
+        ? "Na, mi volt a Facebookon, " + firstName + "?"
+        : context.visit.source === "instagram"
+          ? "Csak nem az Instáról estél be, " + firstName + "?"
+          : context.visit.source === "reddit"
+            ? "Megint a Redditről jössz, " + firstName + "?"
+            : context.visit.source === "substack"
+              ? "Te még mindig olvasod a leveleimet, " + firstName + "?"
+              : context.visit.source === "qr"
+                ? "Megint egy QR-nyom vezetett ide, " + firstName + "?"
+                : mood === "late_night"
+                  ? "Hát te mit csinálsz ilyen késői órán, " + firstName + "?"
+                  : mood === "morning"
+                    ? "Jó reggelt, " + firstName + "."
+                    : "Szia " + firstName + "."
 
   return {
     greeting,
