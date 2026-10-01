@@ -106,7 +106,20 @@ export function getDeterministicHomepageFallback(
   }
 
   if (blocks.length === 0 && Object.values(context.ownership).some(Boolean)) {
-    blocks.push({ type: "badges" })
+    const codeMap = [
+      ["book1", "first_book"],
+      ["book2", "second_book"],
+      ["mecenas", "mecenas"],
+      ["founder", "founder"],
+      ["merch", "merch"],
+    ] as const
+
+    blocks.push({
+      type: "badges",
+      codes: codeMap
+        .filter(([key]) => context.ownership[key])
+        .map(([, code]) => code),
+    })
   }
 
   return {
