@@ -379,7 +379,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
           {badges.length === 0 ? (
             <div className="mt-6 max-w-2xl">
               <p className="text-base leading-7 text-zinc-500">
-                Még nincs megszerzett jelvényed. Az első könyv, a II. könyv, a merch és a közvetlen támogatás külön jelvényeket nyithat meg, a nagyobb összköltés pedig további státuszt ad.
+                Még nincs megszerzett jelvényed. Cserébe közösségi aktivitásodért, vásárlásodért vagy támogatásodért - jelvényeket kapsz. Van aki már mindet összegyűjtötte.
               </p>
               <Link
                 href="/shop"
