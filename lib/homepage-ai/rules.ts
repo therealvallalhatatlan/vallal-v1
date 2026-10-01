@@ -98,43 +98,6 @@ export function getCoreHomepageBlocks(
     })
   }
 
-  const story = context.stories[0]
-  if (story && blocks.length < 3) {
-    blocks.push({
-      type: "story",
-      storySlug: story.slug,
-      headline: "Ezt a sztorit hátha nem olvastad",
-      cta: "ELOLVASOM",
-    })
-  }
-
-  if (
-    blocks.length < 3 &&
-    (context.network.acceptedClaims > 0 ||
-      context.network.activeSpots > 0 ||
-      blocks.length === 0)
-  ) {
-    blocks.push({
-      type: "network",
-      headline:
-        context.network.acceptedClaims > 0 || context.network.activeSpots > 0
-          ? "Közben a hálózat sem állt ám meg."
-          : "Ne bassz, még semmi nyomot nem hagytál itt",
-      body:
-        context.network.acceptedClaims > 0 || context.network.activeSpots > 0
-          ? "Nézd meg, mi történt, amíg nem figyeltél."
-          : "Van még egy hely, ahol bekerülhetsz ebbe az egészbe.",
-      cta: "HÁLÓZAT",
-    })
-  }
-
-  if (blocks.length === 0 && badgeCodes(context).length > 0) {
-    blocks.push({
-      type: "badges",
-      codes: badgeCodes(context),
-    })
-  }
-
   return blocks.slice(0, 3)
 }
 
