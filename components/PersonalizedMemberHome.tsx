@@ -793,6 +793,44 @@ export default function PersonalizedMemberHome() {
   const [loaderIndex, setLoaderIndex] = useState(0)
   const [badgeCodes, setBadgeCodes] = useState<MemberBadgeCode[] | null>(null)
   const [recommendedProducts, setRecommendedProducts] = useState<HomepageProductCandidate[]>([])
+  const [typedGreeting, setTypedGreeting] = useState("")
+
+  useEffect(() => {
+    if (loading || loadingPlan || !plan) return
+
+    const greeting = plan.greeting
+    let index = 0
+    let timeoutId: number | null = null
+
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+
+    if (reducedMotion) {
+      setTypedGreeting(greeting)
+      return
+    }
+
+    setTypedGreeting("")
+
+    const tick = () => {
+      index += 1
+      setTypedGreeting(greeting.slice(0, index))
+
+      if (index < greeting.length) {
+        const char = greeting[index - 1] ?? ""
+        const delay =
+          char === " " ? 10 : /[.!?,:]/.test(char) ? 90 : 24
+        timeoutId = window.setTimeout(tick, delay)
+      }
+    }
+
+    timeoutId = window.setTimeout(tick, 140)
+
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
+    }
+  }, [loading, loadingPlan, plan])
 
   useEffect(() => {
     if (!loading && loadingPlan) {
@@ -1033,16 +1071,19 @@ export default function PersonalizedMemberHome() {
   return (
     <>
       <SiteHeader />
-      <MemberTerminalTrace loading={false} loaderIndex={loaderIndex} />
 
       <main className="mx-auto w-full max-w-5xl px-5 pb-24 pt-0 sm:pb-32">
-        <section className="pt-10 pb-10">
+        <section className="pt-5 pb-10 sm:pt-7">
           <div className="max-w-4xl">
             <p
               className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              {plan.greeting}
+              {typedGreeting}
+              <span
+                aria-hidden="true"
+                className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse"
+              />
             </p>
           </div>
         </section>
