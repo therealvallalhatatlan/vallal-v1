@@ -225,6 +225,49 @@ export default function GlobalNotificationToasts() {
     }
   }, [currentUserId, loading, pushToast, showPrivateMessageToast, token])
 
+
+  useEffect(() => {
+    if (loading || !token || !currentUserId) return
+
+    const supabase = (async () => {
+      const mod = await import("@/lib/browser")
+      return mod.createClient()
+    })()
+
+    let channel: ReturnType<Awaited<typeof supabase>["channel"]> | null = null
+    let debounceTimer: number | null = null
+    let cancelled = false
+
+    void supabase.then((client) => {
+      if (cancelled || !client.channel) return
+
+      channel = client
+        .channel("global:pm-unread:" + currentUserId)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "pm_unread_counts",
+            filter: "user_id=eq." + currentUserId,
+          },
+          () => {
+            if (debounceTimer) window.clearTimeout(debounceTimer)
+            debounceTimer = window.setTimeout(() => {
+              void poll()
+            }, 450)
+          },
+        )
+        .subscribe()
+    })
+
+    return () => {
+      cancelled = true
+      if (debounceTimer) window.clearTimeout(debounceTimer)
+      if (channel) void channel.unsubscribe()
+    }
+  }, [currentUserId, loading, poll, token])
+
   useEffect(() => {
     if (loading || !token || !currentUserId) {
       setToasts([])
@@ -275,7 +318,7 @@ export default function GlobalNotificationToasts() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="pointer-events-auto w-full overflow-hidden border border-zinc-700 bg-zinc-950/95 shadow-[0_16px_50px_rgba(0,0,0,0.55)] backdrop-blur-md"
+          className="pointer-events-auto relative w-full overflow-hidden border border-zinc-700 bg-zinc-950/95 shadow-[0_16px_50px_rgba(0,0,0,0.55)] backdrop-blur-md"
         >
           <button
             type="button"
@@ -283,7 +326,7 @@ export default function GlobalNotificationToasts() {
               dismissToast(toast.id)
               if (toast.targetUrl) router.push(toast.targetUrl)
             }}
-            className="group block w-full p-4 text-left transition-colors hover:bg-lime-400/[0.035]"
+            className="group block w-full p-4 pr-12 text-left transition-colors hover:bg-lime-400/[0.035]"
           >
             <div className="flex items-start gap-3">
               <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center border border-lime-400/30 bg-lime-400/[0.04] text-lime-200">
@@ -313,19 +356,16 @@ export default function GlobalNotificationToasts() {
                   {toast.body}
                 </span>
               </span>
-
-              <button
-                type="button"
-                aria-label="Értesítés bezárása"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  dismissToast(toast.id)
-                }}
-                className="shrink-0 text-zinc-700 transition-colors hover:text-zinc-300"
-              >
-                <X className="h-4 w-4" />
-              </button>
             </div>
+          </button>
+
+          <button
+            type="button"
+            aria-label="Értesítés bezárása"
+            onClick={() => dismissToast(toast.id)}
+            className="absolute right-3 top-3 p-1 text-zinc-700 transition-colors hover:text-zinc-300"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
       ))}
