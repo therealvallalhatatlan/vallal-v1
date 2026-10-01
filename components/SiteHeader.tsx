@@ -3,10 +3,11 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ArrowUpRight, Menu } from "lucide-react"
+import { BellIcon, ArrowUpRight, Menu } from "lucide-react"
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js"
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTrigger } from "@/components/ui/sheet"
 import { createClient } from "@/lib/browser"
+import { getUnreadSnapshot, subscribeUnread } from "@/lib/notifications/unreadStore"
 
 const menuSections = [
   {
@@ -69,6 +70,7 @@ type AuthUser = {
 export default function SiteHeader() {
   const pathname = usePathname()
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
@@ -114,6 +116,18 @@ export default function SiteHeader() {
 
   const avatarLetter = displayName.charAt(0).toUpperCase()
 
+  useEffect(() => {
+    const refreshUnread = () => {
+      const snapshot = getUnreadSnapshot()
+      const personal = snapshot.sources["personal-notifications"] ?? 0
+      const pm = snapshot.sources["personal-pm"] ?? 0
+      setUnreadCount(personal + pm)
+    }
+
+    refreshUnread()
+    return subscribeUnread(refreshUnread)
+  }, [])
+
   return (
     <header
       className="fixed left-0 right-0 top-0 z-50 flex h-16 items-center justify-between border-b border-zinc-800 bg-zinc-950 px-5 sm:px-6"
@@ -140,6 +154,21 @@ export default function SiteHeader() {
           <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.7)]" />
           HÁLÓZAT: ONLINE
         </span>
+
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent("network-inbox:open"))}
+          aria-label="Értesítések megnyitása"
+          title="Értesítések"
+          className="relative inline-flex h-10 w-10 items-center justify-center border border-zinc-700 bg-zinc-950 text-zinc-300 transition-all hover:border-lime-400/70 hover:bg-lime-400/5 hover:text-lime-200"
+        >
+          <BellIcon className="h-4 w-4" />
+          {unreadCount > 0 ? (
+            <span className="absolute -right-1 -top-1 flex min-w-[17px] items-center justify-center rounded-full bg-lime-400 px-1 text-[9px] font-bold leading-[17px] text-black">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          ) : null}
+        </button>
 
         {user ? (
           <Link
