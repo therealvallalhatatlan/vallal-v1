@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { guardWriteOperation } from '@/lib/systemGuard'
+import { buildCheckoutMetadata } from '@/lib/stripeAttribution'
 
 const stripeKey = process.env.STRIPE_SECRET_KEY
 const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: '2025-07-30.basil' }) : null
@@ -36,6 +37,17 @@ export async function POST(req: NextRequest) {
     const configuredBase = process.env.NEXT_PUBLIC_SITE_URL
     const baseUrl = configuredBase && configuredBase.trim().length > 0 ? configuredBase : origin
 
+    const metadata = await buildCheckoutMetadata(
+      req,
+      {
+        project: 'vallalhatatlan',
+        type: 'tamogatas',
+        amount_huf: String(amount),
+        product_id: 'tamogatas',
+      },
+      { cartSummary: 'tamogatas:' + String(amount) },
+    )
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       currency: 'huf',
@@ -43,11 +55,9 @@ export async function POST(req: NextRequest) {
       billing_address_collection: 'auto',
       success_url: `${baseUrl}/tamogatas/koszonom?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/tamogatas`,
-      metadata: {
-        project: 'vallalhatatlan',
-        type: 'tamogatas',
-        amount_huf: String(amount),
-      },
+      client_reference_id: metadata.order_id,
+      metadata,
+      payment_intent_data: { metadata },
       line_items: [
         {
           price_data: {
