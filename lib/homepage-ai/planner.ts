@@ -58,24 +58,6 @@ function validatePlan(value: unknown, context: HomepageContext): HomepagePlan | 
     // The AI only chooses personalized commerce/order blocks here.
     if (type === "story" || type === "network" || type === "badges") continue
 
-    if (type === "badges") {
-      const codeMap = [
-        ["book1", "first_book"],
-        ["book2", "second_book"],
-        ["mecenas", "mecenas"],
-        ["founder", "founder"],
-        ["merch", "merch"],
-      ] as const
-
-      blocks.push({
-        type: "badges",
-        codes: codeMap
-          .filter(([key]) => context.ownership[key])
-          .map(([, code]) => code),
-      })
-      continue
-    }
-
     if (type === "product") {
       const productId = typeof block.productId === "string" ? block.productId : ""
       if (!isAllowedProduct(context, productId)) continue
