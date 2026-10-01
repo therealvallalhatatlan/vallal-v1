@@ -108,6 +108,74 @@ function isInAppBrowser() {
   )
 }
 
+function MemberTerminalTrace({
+  loading,
+  loaderIndex,
+}: {
+  loading: boolean
+  loaderIndex: number
+}) {
+  const visibleLines = loading
+    ? LOADER_LINES.slice(0, loaderIndex + 1)
+    : LOADER_LINES
+  const lastIndex = visibleLines.length - 1
+
+  return (
+    <section
+      className="mt-16 border-b border-zinc-900 bg-[#010101]/95"
+      aria-label="Member channel állapot"
+    >
+      <div className="mx-auto w-full max-w-5xl px-5 py-3 sm:px-8 sm:py-4">
+        <div
+          className="flex items-center justify-between border-b border-zinc-900 pb-2 text-[8px] uppercase tracking-[0.22em] text-zinc-700 sm:text-[9px]"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          <span>VÁLLALHATATLAN / MEMBER CHANNEL</span>
+          <span className="flex items-center gap-2 text-zinc-700">
+            <span
+              className={
+                "h-1.5 w-1.5 rounded-full " +
+                (loading
+                  ? "animate-pulse bg-lime-300"
+                  : "bg-lime-300/35")
+              }
+            />
+            {loading ? "BUILDING" : "READY"}
+          </span>
+        </div>
+
+        <div
+          className="mt-2 grid gap-x-8 gap-y-0.5 text-[8px] leading-4 sm:grid-cols-2 sm:text-[9px]"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          {visibleLines.map((line, index) => (
+            <p
+              key={line}
+              className={
+                loading && index === lastIndex
+                  ? "text-lime-200/90"
+                  : loading
+                    ? "text-zinc-700"
+                    : index === LOADER_LINES.length - 1
+                      ? "text-lime-200/35"
+                      : "text-zinc-800"
+              }
+            >
+              <span className="mr-2 text-zinc-800">
+                [{String(index + 1).padStart(2, "0")}]
+              </span>
+              {line}
+              {loading && index === lastIndex ? (
+                <span className="ml-1 animate-pulse">_</span>
+              ) : null}
+            </p>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function FixedBadgesSection({
   codes,
 }: {
@@ -136,7 +204,7 @@ function FixedBadgesSection({
           </p>
           <Link
             href="/shop"
-            className="mt-4 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-lime-200/80 hover:text-lime-100"
+            className="mt-4 inline-flex items-center gap-2 border-2 border-lime-400/45 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-lime-200/90 transition-colors hover:border-lime-300 hover:text-lime-100"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             NÉZZ KÖRÜL A SHOPBAN
@@ -250,7 +318,7 @@ function ProductBlockView({
 
             <Link
               href={href}
-              className="group mt-4 flex items-center justify-between border border-zinc-800 px-3 py-2.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-300 transition-all hover:border-lime-400/50 hover:bg-lime-400/[0.035] hover:text-lime-100"
+              className="group mt-4 flex items-center justify-between border-2 border-zinc-700 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-200 transition-all hover:border-lime-400/70 hover:bg-lime-400/[0.035] hover:text-lime-100"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               <span>{block.cta || "MEGNÉZEM"}</span>
@@ -344,7 +412,7 @@ function OrderStatusBlockView({
         <div className="mt-5 flex flex-wrap items-center gap-4">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.2em] text-lime-200/80 hover:text-lime-100"
+            className="inline-flex items-center gap-2 border-2 border-lime-400/45 px-3 py-2 text-[9px] uppercase tracking-[0.2em] text-lime-200/90 transition-colors hover:border-lime-300 hover:text-lime-100"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             {block.cta || "RENDELÉSEM"}
@@ -355,7 +423,7 @@ function OrderStatusBlockView({
             type="button"
             onClick={() => void markReceived()}
             disabled={!token || receiving}
-            className="inline-flex items-center gap-2 border border-zinc-800 px-3 py-2 text-[9px] uppercase tracking-[0.18em] text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-200 disabled:cursor-wait disabled:opacity-40"
+            className="inline-flex items-center gap-2 border-2 border-zinc-700 px-3 py-2 text-[9px] uppercase tracking-[0.18em] text-zinc-500 transition-colors hover:border-zinc-500 hover:text-zinc-200 disabled:cursor-wait disabled:opacity-40"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             {receiving ? (
@@ -464,7 +532,7 @@ function NetworkSnapshotSection() {
 
       <Link
         href="/halozat"
-        className="group mt-3 flex items-center justify-between border border-zinc-800 px-4 py-3 transition-colors hover:border-lime-400/50 hover:bg-lime-400/[0.025]"
+        className="group mt-3 flex items-center justify-between border-2 border-zinc-700 px-4 py-3 transition-colors hover:border-lime-400/70 hover:bg-lime-400/[0.025]"
       >
         <div>
           <p
@@ -634,7 +702,7 @@ function RandomStorySection() {
             <button
               type="button"
               onClick={() => setExpanded((value) => !value)}
-              className="mx-auto mt-5 flex w-1/2 items-center justify-between border border-zinc-800 px-3 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-zinc-400 transition-all hover:border-lime-100/50 hover:bg-lime-100/[0.03] hover:text-lime-100 sm:w-1/3"
+              className="mx-auto mt-5 flex w-1/2 items-center justify-between border-2 border-zinc-700 px-3 py-3 text-left text-[9px] uppercase tracking-[0.2em] text-zinc-300 transition-all hover:border-lime-100/60 hover:bg-lime-100/[0.03] hover:text-lime-100 sm:w-1/3"
               style={{ fontFamily: "var(--font-mono-tech)" }}
               aria-expanded={expanded}
             >
@@ -674,7 +742,9 @@ export default function PersonalizedMemberHome() {
   useEffect(() => {
     if (!loading && loadingPlan) {
       const interval = window.setInterval(() => {
-        setLoaderIndex((current) => (current + 1) % LOADER_LINES.length)
+        setLoaderIndex((current) =>
+          Math.min(current + 1, LOADER_LINES.length - 1),
+        )
       }, 650)
 
       return () => window.clearInterval(interval)
@@ -855,87 +925,31 @@ export default function PersonalizedMemberHome() {
   }, [loading, token])
 
   if (loading || loadingPlan) {
-    const visibleLoaderLines = LOADER_LINES.slice(0, loaderIndex + 1)
-    const percent = Math.round(
-      ((loaderIndex + 1) / LOADER_LINES.length) * 100,
-    )
-
     return (
-      <div className="relative flex min-h-[78vh] w-full items-center justify-center overflow-hidden bg-[#010101] px-5 py-20 sm:px-8">
-        <div className="pointer-events-none absolute inset-0 opacity-20 [background:repeating-linear-gradient(to_bottom,rgba(163,230,53,0.035)_0,rgba(163,230,53,0.035)_1px,transparent_1px,transparent_22px)]" />
-
-        <div className="relative w-full max-w-3xl overflow-hidden border border-zinc-800 bg-black/95 p-5 shadow-[0_0_70px_rgba(163,230,53,0.04)] sm:p-7">
-          <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
-            <span
-              className="text-[10px] uppercase tracking-[0.28em] text-zinc-500"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              VÁLLALHATATLAN / MEMBER CHANNEL
-            </span>
-            <span
-              className="flex items-center gap-2 text-[9px] uppercase tracking-[0.18em] text-lime-200/60"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime-300" />
-              LIVE
-            </span>
-          </div>
-
-          <div
-            className="mt-8 space-y-3 text-[12px] leading-6 text-zinc-500 sm:text-sm"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            {visibleLoaderLines.map((line, index) => (
-              <p
-                key={line}
-                className={
-                  index === visibleLoaderLines.length - 1
-                    ? "text-lime-200"
-                    : "text-zinc-700"
-                }
-              >
-                <span className="mr-3 text-zinc-800">
-                  [{String(index + 1).padStart(2, "0")}]
-                </span>
-                {line}
-                {index === visibleLoaderLines.length - 1 ? (
-                  <span className="ml-1 animate-pulse">_</span>
-                ) : null}
-              </p>
-            ))}
-          </div>
-
-          <div className="mt-8 h-px w-full bg-zinc-900">
-            <div
-              className="h-px bg-lime-300/40 transition-all duration-500"
-              style={{ width: percent + "%" }}
-            />
-          </div>
-
-          <p
-            className="mt-3 text-[9px] uppercase tracking-[0.22em] text-zinc-700"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            PERSONALIZED HOMEPAGE BUILD / {percent}%
-          </p>
-        </div>
-      </div>
+      <>
+        <SiteHeader />
+        <MemberTerminalTrace loading loaderIndex={loaderIndex} />
+      </>
     )
   }
 
   if (error || !plan) {
     return (
-      <div className="mx-auto flex min-h-[60vh] w-full max-w-5xl items-center px-5 sm:px-8">
-        <div>
-          <p className="text-3xl text-zinc-300">Szia.</p>
-          <p
-            className="mt-4 text-sm text-zinc-600"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            Most valami nem állt össze. Próbáld újra egy pillanat múlva.
-          </p>
+      <>
+        <SiteHeader />
+        <MemberTerminalTrace loading={false} loaderIndex={loaderIndex} />
+        <div className="mx-auto flex min-h-[50vh] w-full max-w-5xl items-center px-5 sm:px-8">
+          <div>
+            <p className="text-3xl text-zinc-300">Szia.</p>
+            <p
+              className="mt-4 text-sm text-zinc-600"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              Most valami nem állt össze. Próbáld újra egy pillanat múlva.
+            </p>
+          </div>
         </div>
-      </div>
+      </>
     )
   }
 
@@ -958,8 +972,9 @@ export default function PersonalizedMemberHome() {
   return (
     <>
       <SiteHeader />
+      <MemberTerminalTrace loading={false} loaderIndex={loaderIndex} />
 
-      <main className="mx-auto w-full max-w-5xl px-5 pb-24 pt-16 sm:px-8 sm:pb-32 sm:pt-20">
+      <main className="mx-auto w-full max-w-5xl px-5 pb-24 pt-6 sm:px-8 sm:pb-32 sm:pt-8">
         <section className="border-b border-zinc-900 py-10 sm:py-16">
           <div className="max-w-4xl">
             <p
