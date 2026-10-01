@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import Footer from "@/components/Footer"
+import SiteHeader from "@/components/SiteHeader"
 // Keep the member homepage isolated from the legacy homepage.
 import type { HomepageBlock, HomepagePlan } from "@/lib/homepage-ai/types"
 
