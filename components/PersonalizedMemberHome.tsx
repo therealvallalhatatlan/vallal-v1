@@ -1049,14 +1049,14 @@ export default function PersonalizedMemberHome() {
         <RecommendedProductsSection products={recommendedProducts} />
 
         <div>
-          {usefulBlocks.map((block) => {
-              <OrderStatusBlockView
-                key={"order-" + block.orderId}
-                block={block}
-                token={token}
+          {usefulBlocks.map((block) => (
+            <OrderStatusBlockView
+              key={"order-" + block.orderId}
+              block={block}
+              token={token}
               onReceived={handleReceived}
             />
-          })}
+          ))}
         </div>
 
         <NetworkSnapshotSection />
