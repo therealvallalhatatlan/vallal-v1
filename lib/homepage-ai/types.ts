@@ -103,6 +103,9 @@ export type HomepageBlock =
       headline: string
       body: string
       cta: string
+      productName?: string
+      productImage?: string
+      productPrice?: number
     }
   | {
       type: "story"
