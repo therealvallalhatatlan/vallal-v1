@@ -73,6 +73,34 @@ function isPriorityOrder(status: string, label: string, productId: string | null
   );
 }
 
+async function reconcileLegacyProfileForAuthUser(
+  db: ReturnType<typeof supabaseAdmin>,
+  userId: string,
+  email: string | null,
+) {
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (!normalizedEmail) return;
+
+  const { data: legacyProfile, error: legacyProfileError } = await db
+    .from("users")
+    .select("id, email, nickname")
+    .eq("email", normalizedEmail)
+    .neq("id", userId)
+    .maybeSingle();
+
+  if (legacyProfileError || !legacyProfile) return;
+
+  const { error: reconcileError } = await db.rpc("reconcile_legacy_user", {
+    p_legacy_user_id: legacyProfile.id,
+    p_canonical_user_id: userId,
+    p_note: "Automatic reconciliation on authenticated account access",
+  });
+
+  if (reconcileError) {
+    console.warn("[user/account] legacy reconciliation skipped", reconcileError.message);
+  }
+}
+
 export async function GET(req: NextRequest) {
   const token = parseBearerToken(req.headers);
   if (!token) return NextResponse.json({ ok: false, error: "missing_token" }, { status: 401 });
@@ -81,6 +109,8 @@ export async function GET(req: NextRequest) {
   if (!user) return NextResponse.json({ ok: false, error: "unauthenticated" }, { status: 401 });
 
   const db = supabaseAdmin();
+
+  await reconcileLegacyProfileForAuthUser(db, user.id, user.email);
 
   const [authUserRes, profileRes, bookOrdersRes, shopOrdersRes, claimsRes, spotsRes, copiesRes] =
     await Promise.all([
