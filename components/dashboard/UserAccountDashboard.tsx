@@ -381,7 +381,7 @@ export default function UserAccountDashboard({ account, token }: Props) {
                       className="text-[9px] uppercase tracking-[0.08em] text-zinc-700"
                       style={{ fontFamily: "var(--font-mono-tech)" }}
                     >
-                      NODE · {user.id.slice(0, 8).toUpperCase()}
+                      NODE · {typeof user.id === "string" && user.id ? user.id.slice(0, 8).toUpperCase() : "UNKNOWN"}
                     </p>
                     <span className="h-1 w-1 rounded-full bg-zinc-800" aria-hidden="true" />
                     <p
