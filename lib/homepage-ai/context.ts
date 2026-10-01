@@ -217,7 +217,7 @@ export async function buildHomepageContext(
 
   const orderContexts: HomepageOrderContext[] = [
     ...(bookOrdersRes.data ?? []).map((order) => ({
-      id: \`book:\${order.id}\`,
+      id: "book:" + order.id,
       label: mapBookLabel(order.product_id ?? null),
       status: orderStatus(order.status),
       createdAt: order.created_at,
@@ -225,7 +225,7 @@ export async function buildHomepageContext(
       deliveryType: order.delivery_type ?? null,
     })),
     ...(shopOrdersRes.data ?? []).map((order) => ({
-      id: \`shop:\${order.id}\`,
+      id: "shop:" + order.id,
       label: "Merch rendelés",
       status: orderStatus(order.status),
       createdAt: order.created_at,
