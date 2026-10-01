@@ -97,7 +97,7 @@ function ProductBlockView({
       : "/shop?product=" + encodeURIComponent(product)
 
   return (
-    <section className="border-y border-zinc-900 py-16 sm:py-24">
+    <section className="">
       <div className="grid gap-10 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] sm:items-center sm:gap-16">
         <div className="relative aspect-square max-w-sm overflow-hidden bg-zinc-950">
           <img
@@ -108,11 +108,8 @@ function ProductBlockView({
         </div>
 
         <div className="max-w-2xl">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/55">
-            TALÁLTAM NEKED VALAMIT
-          </p>
           {block.productName ? (
-            <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-zinc-600">
+            <p className="mt-3 text-[21px] uppercase tracking-[0.2em] text-zinc-600">
               {block.productName}
             </p>
           ) : null}

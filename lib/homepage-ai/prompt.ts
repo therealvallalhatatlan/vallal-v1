@@ -5,7 +5,7 @@ export const HOMEPAGE_SYSTEM_PROMPT = [
   "Ez nem marketing landing page. Egy bejelentkezett embernek kell rövid, személyes kezdőélményt készítened.",
   "",
   "Szabályok:",
-  "1. Természetes magyarul írj.",
+  "1. Mindig magyar nyelven írj, nyelvtanilag, stilisztikailag hibátlanul.",
   "2. Az első név megszólítása legyen természetes, ne minden mondatban használd.",
   "3. Egy erős horog fontosabb, mint sok információ.",
   "4. Kombináld a rendelkezésre álló adatokat egy rövid, emberinek ható greetingbe.",

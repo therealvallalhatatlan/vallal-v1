@@ -88,12 +88,12 @@ export function getCoreHomepageBlocks(
       productId: product.id,
       headline:
         product.id === "book-2"
-          ? "AZ ELSŐ MÁR NÁLAD VAN."
-          : "A KÖNYV MELLÉ EZ IS ÉRDEKELHET.",
+          ? "Az első könyv megvan, gratulálok!!"
+          : "A könyv mellett ez is érdekelhet",
       body:
         product.id === "book-2"
-          ? "A második kötetet még nem láttam nálad."
-          : "Egy konkrét tárgyat választottam neked az elérhető dolgok közül.",
+          ? "A második kötet szerintem nincs meg."
+          : "Ezt választottam neked a cuccaink közül",
       cta: "MEGNÉZEM",
     })
   }
@@ -103,7 +103,7 @@ export function getCoreHomepageBlocks(
     blocks.push({
       type: "story",
       storySlug: story.slug,
-      headline: "EGY SZTORI, AMIT MOST IDE TENNÉK.",
+      headline: "Ezt a sztorit hátha nem olvastad",
       cta: "ELOLVASOM",
     })
   }
@@ -118,8 +118,8 @@ export function getCoreHomepageBlocks(
       type: "network",
       headline:
         context.network.acceptedClaims > 0 || context.network.activeSpots > 0
-          ? "KÖZBEN A HÁLÓZAT SEM ÁLLT MEG."
-          : "MÉG NINCS NYOMOD A HÁLÓZATBAN.",
+          ? "Közben a hálózat sem állt ám meg."
+          : "Ne bassz, még semmi nyomot nem hagytál itt",
       body:
         context.network.acceptedClaims > 0 || context.network.activeSpots > 0
           ? "Nézd meg, mi történt, amíg nem figyeltél."
@@ -153,13 +153,13 @@ export function getDeterministicHomepageFallback(
     context.visit.daysSinceLastVisit >= 8
       ? "Szia " + firstName + ", több mint egy hete nem láttalak. Minden oké?"
       : context.visit.source === "facebook"
-        ? "Na, mi volt a Facebookon, " + firstName + "?"
+        ? "Na, mi volt a Facebookon " + firstName + "?"
         : context.visit.source === "instagram"
-          ? "Csak nem az Instáról estél be, " + firstName + "?"
+          ? "Uhh, csak nem az Instáról estél be " + firstName + "?"
           : context.visit.source === "reddit"
-            ? "Megint a Redditről jössz, " + firstName + "?"
+            ? "Megint a Redditről na szép, kedves " + firstName + "?"
             : context.visit.source === "substack"
-              ? "Te még mindig olvasod a leveleimet, " + firstName + "?"
+              ? "Te tényleg olvasod a leveleimet " + firstName + "?"
               : context.visit.source === "qr"
                 ? "Megint egy QR-nyom vezetett ide, " + firstName + "?"
                 : mood === "late_night"
