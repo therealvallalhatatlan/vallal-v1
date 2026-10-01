@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { ArrowUpRight, LockKeyhole, Radio, Sparkles, Users } from "lucide-react"
+import { ArrowUpRight, Radio, Sparkles, Users } from "lucide-react"
 import { createClient } from "@/lib/browser"
 import { persistAuthReturnTarget } from "@/lib/authRedirect"
 
@@ -128,26 +128,6 @@ function getNextMove(account: DashboardAccountResponse) {
   }
 }
 
-function getLockedRows() {
-  return [
-    {
-      code: "01",
-      label: "HÁLÓZAT",
-      text: "Aktív pontok, megtalálások, üzenetek.",
-    },
-    {
-      code: "02",
-      label: "FEED",
-      text: "A tagok nyomai, amik nem feltétlenül kerülnek máshová.",
-    },
-    {
-      code: "03",
-      label: "SAJÁT RÉTEG",
-      text: "Jelvények, tárgyak, aktivitás, személyes állapot.",
-    },
-  ]
-}
-
 function BadgeRail({ account }: { account: DashboardAccountResponse }) {
   const earned = account.badges
 
@@ -208,126 +188,42 @@ function GuestHome() {
     <>
       <SiteHeader />
 
-      <div className="mx-auto w-full max-w-6xl px-5 pb-24 pt-24 sm:px-8">
+      <div className="mx-auto w-full max-w-4xl px-5 pb-24 pt-24 sm:px-8">
         <section className="relative overflow-hidden border border-zinc-800 bg-[#020202]">
           <div className="pointer-events-none absolute inset-0 opacity-40">
             <div className="absolute inset-0 bg-[linear-gradient(rgba(163,230,53,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(163,230,53,0.025)_1px,transparent_1px)] bg-[size:32px_32px]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(163,230,53,0.07),transparent_34%)]" />
           </div>
 
-          <div className="relative grid min-h-[72vh] lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="flex flex-col justify-between border-b border-zinc-800 p-7 sm:p-10 lg:border-b-0 lg:border-r">
-              <div>
-                <p
-                  className="max-w-xl text-right text-[23px] font-normal italic leading-relaxed tracking-tight text-zinc-300 sm:text-base"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  "Archetípus vagyok.<br/>A funkcionális rendszerhiba, az elbaszott túlélő, a káosz-építész archetípusa. Egy csótány fejlett idegrendszerrel."<br/>
-                </p>
-                <p className="mt-4 text-right text-lg italic tracking-wide text-zinc-600">
-                  — Író Úr
-                </p>
+          <div className="relative p-7 sm:p-12">
+            <p
+              className="max-w-3xl text-right text-[23px] font-normal italic leading-relaxed tracking-tight text-zinc-300 sm:text-[20px]"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              "Archetípus vagyok.<br/>A funkcionális rendszerhiba, az elbaszott túlélő, a káosz-építész archetípusa. Egy csótány fejlett idegrendszerrel."<br/>
+            </p>
+            <p className="mt-4 text-right text-lg italic tracking-wide text-zinc-600">
+              — Író Úr
+            </p>
 
-                <div className="mt-8 flex gap-3 sm:max-w-xl">
-                  <Link
-                    href="/auth?from=%2F&next=%2F"
-                    className="inline-flex min-h-12 flex-1 items-center justify-center border border-lime-400/45 bg-lime-400/[0.035] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white"
-                  >
-                    BELÉPÉS
-                  </Link>
+            <div className="mt-8 flex gap-3 sm:max-w-2xl sm:ml-auto">
+              <Link
+                href="/auth?from=%2F&next=%2F"
+                className="inline-flex min-h-12 flex-1 items-center justify-center border border-lime-400/45 bg-lime-400/[0.035] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white"
+              >
+                BELÉPÉS
+              </Link>
 
-                  <button
-                    type="button"
-                    onClick={() => void handleGoogleLogin()}
-                    disabled={googleLoading}
-                    className="inline-flex min-h-12 flex-1 items-center justify-center border border-zinc-700 bg-zinc-950 px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300 transition-all hover:border-lime-400/60 hover:bg-zinc-900 hover:text-lime-100 disabled:cursor-wait disabled:opacity-50"
-                  >
-                    {googleLoading ? "GOOGLE..." : "GOOGLE LOGIN"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-12 border-t border-zinc-900 pt-6">
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-zinc-700">
-                  <LockKeyhole className="h-3.5 w-3.5 text-zinc-800" />
-                  PUBLIC SURFACE / RESTRICTED
-                </div>
-                <p className="mt-3 text-2xl text-zinc-300">ONLINE / IDENTITÁS NÉLKÜL</p>
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-between p-7 sm:p-10">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.32em] text-zinc-700">
-                  // AMIT MOST LÁTSZ
-                </p>
-
-                <div className="mt-5 space-y-3">
-                  {getLockedRows().map((row) => (
-                    <div
-                      key={row.code}
-                      className="group border border-zinc-900 bg-black/40 p-4 transition-colors hover:border-zinc-800"
-                    >
-                      <div className="flex items-start justify-between gap-5">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-700">
-                            {row.code}
-                          </p>
-                          <p className="mt-1 text-sm uppercase tracking-[0.16em] text-zinc-300">
-                            {row.label}
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-zinc-600">{row.text}</p>
-                        </div>
-                        <LockKeyhole className="mt-1 h-4 w-4 shrink-0 text-zinc-800 transition-colors group-hover:text-zinc-600" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-10 border-t border-zinc-900 pt-6">
-                <p className="text-sm leading-6 text-zinc-600">
-                  A belépés nem kötelező. Csak enélkül ugyanazt az oldalt látod,
-                  amit mindenki más.
-                </p>
-
-                <Link
-                  href="/auth?from=%2F&next=%2F"
-                  className="group mt-5 flex w-full items-center justify-between border border-lime-400/45 bg-lime-400/[0.035] px-5 py-4 text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.07]"
-                >
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em]">
-                    AZONOSÍTSD MAGAD
-                  </span>
-                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                </Link>
-
-                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[9px] uppercase tracking-[0.24em] text-zinc-700">
-                  <span>NO PROFILE</span>
-                  <span>NO PERSONAL FEED</span>
-                  <span>NO PRIVATE LAYER</span>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => void handleGoogleLogin()}
+                disabled={googleLoading}
+                className="inline-flex min-h-12 flex-1 items-center justify-center border border-zinc-700 bg-zinc-950 px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-300 transition-all hover:border-lime-400/60 hover:bg-zinc-900 hover:text-lime-100 disabled:cursor-wait disabled:opacity-50"
+              >
+                {googleLoading ? "GOOGLE..." : "GOOGLE LOGIN"}
+              </button>
             </div>
           </div>
-        </section>
-
-        <section className="mt-8 grid gap-4 md:grid-cols-3">
-          {[
-            ["KÖNYV", "/konyv", "A történetek publikus kapuja."],
-            ["HÁLÓZAT", "/halozat", "A helyekről keveset mutatunk."],
-            ["SUBSTACK", "https://vallalhatatlan.substack.com/", "A websorozat külön csatornán fut."],
-          ].map(([label, href, text]) => (
-            <a
-              key={label}
-              href={href}
-              target={href.startsWith("http") ? "_blank" : undefined}
-              rel={href.startsWith("http") ? "noreferrer" : undefined}
-              className="border border-zinc-900 bg-black/30 p-5 transition-colors hover:border-zinc-800"
-            >
-              <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-700">{label}</p>
-              <p className="mt-2 text-sm leading-6 text-zinc-500">{text}</p>
-            </a>
-          ))}
         </section>
       </div>
     </>
