@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useMemo, useRef, useState } from "react"
 import { BookMarked, BookOpen, Check, ChevronDown, Crown, HeartHandshake, Pencil, ShoppingBag, X } from "lucide-react"
 import { Montserrat } from "next/font/google"
+import { createClient } from "@/lib/browser"
 import type { DashboardAccountResponse, DashboardUnifiedOrder } from "@/types/dashboard"
 
 const DASHBOARD_BADGE_ICONS = {
@@ -133,9 +134,21 @@ export default function UserAccountDashboard({ account, token }: Props) {
   const [receivingOrderKey, setReceivingOrderKey] = useState<string | null>(null)
   const [receiptError, setReceiptError] = useState<string | null>(null)
   const [receivedAtByOrderKey, setReceivedAtByOrderKey] = useState<Record<string, string>>({})
+  const [loggingOut, setLoggingOut] = useState(false)
 
   const displayName = nickname.trim() || user.email || "NODE"
   const avatarLetter = displayName.charAt(0).toUpperCase() || "N"
+
+  const handleLogout = async () => {
+    setLoggingOut(true)
+
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut({ scope: "local" })
+    } finally {
+      window.location.replace("/")
+    }
+  }
 
   const openOrder = useMemo(
     () => orders.find((order) => order.id === openOrderId) ?? null,
@@ -361,6 +374,15 @@ export default function UserAccountDashboard({ account, token }: Props) {
                     </div>
                   )}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => void handleLogout()}
+                  disabled={loggingOut}
+                  className="mt-2 inline-flex items-center justify-center gap-2 border border-zinc-800 bg-black/30 px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500 transition-colors hover:border-zinc-600 hover:text-lime-200 disabled:cursor-wait disabled:opacity-50"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  {loggingOut ? "KILÉPÉS…" : "KILÉPÉS"}
+                </button>
               </div>
             </div>
           </div>
