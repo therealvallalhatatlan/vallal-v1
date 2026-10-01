@@ -82,6 +82,11 @@ function ProductBlockView({
           <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/55">
             TALÁLTAM NEKED VALAMIT
           </p>
+          {block.productName ? (
+            <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-zinc-600">
+              {block.productName}
+            </p>
+          ) : null}
           <h2
             className="mt-4 text-3xl leading-tight text-zinc-100 sm:text-5xl"
             style={{ fontFamily: "var(--font-heading), serif" }}
