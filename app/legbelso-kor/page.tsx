@@ -183,8 +183,8 @@ export default function LegbelsoKorPage() {
                   onChange={(event) => setMessage(event.target.value)}
                   maxLength={500}
                   rows={4}
-                  placeholder="Pár sor, amit itt hagynál..."
-                  className="min-h-28 w-full resize-y rounded-md border border-zinc-500 bg-black px-3 py-3 text-[18px] leading-7 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-lime-300/60"
+                  placeholder="Üzeneted (opcionális)"
+                  className="min-h-28 w-full resize-y rounded-md border border-zinc-500 bg-black px-3 py-3 text-[21px] leading-7 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-lime-300/60"
                 />
               </label>
 
@@ -216,7 +216,7 @@ export default function LegbelsoKorPage() {
                   </span>
                 </div>
 
-                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="mt-4 mb-5 grid grid-cols-2 gap-5 sm:grid-cols-4">
                   {QUICK_AMOUNTS.map((quickAmount) => {
                     const selected = amount === quickAmount
                     return (
@@ -225,10 +225,10 @@ export default function LegbelsoKorPage() {
                         type="button"
                         onClick={() => setAmount(quickAmount)}
                         className={[
-                          "min-h-11 rounded-md border px-3 text-[11px] uppercase tracking-[0.12em] transition",
+                          "min-h-11 rounded-md border px-3 py-4 text-[12px] uppercase tracking-normal transition",
                           selected
                             ? "border-lime-200 bg-lime-300/10 text-lime-100"
-                            : "border-zinc-800 bg-black text-zinc-500 hover:border-zinc-600 hover:text-zinc-200",
+                            : "border-zinc-500 bg-black text-zinc-500 hover:border-zinc-600 hover:text-zinc-200",
                         ].join(" ")}
                         style={{ fontFamily: "var(--font-mono-tech)" }}
                       >
@@ -286,9 +286,9 @@ export default function LegbelsoKorPage() {
               </button>
 
               <p
-                className="mt-3 text-center text-[11px] leading-5 text-zinc-500"
+                className="mt-5 text-center text-[20px] leading-normal text-zinc-500"
               >
-                15 000 forintos támogatói összeg felett megkapod a dedikált bővített kiadást is.
+                Minden Alapító megkapja a dedikált bővített kiadást, és valami különleges dolgot.
               </p>
             </div>
           </form>
@@ -301,7 +301,7 @@ export default function LegbelsoKorPage() {
           </p>
         </section>
 
-        <section className="mx-auto w-full max-w-3xl px-0">
+        <section className="text-left w-full max-w-3xl">
           <SupportersTicker
             names={SUPPORTER_NAMES}
             label="Támogatók nevei"
