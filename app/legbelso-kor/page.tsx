@@ -214,7 +214,7 @@ export default function LegbelsoKorPage() {
                       if (!Number.isFinite(next)) return
                       setAmount(Math.max(MIN_AMOUNT_HUF, Math.min(MAX_AMOUNT_HUF, Math.round(next))))
                     }}
-                    className="h-14 w-full bg-transparent px-3 text-right text-xl font-semibold text-zinc-100 outline-none"
+                    className="rounded-md h-14 w-full bg-transparent px-3 text-right text-xl font-semibold text-zinc-100 outline-none"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   />
                   <span
@@ -238,7 +238,7 @@ export default function LegbelsoKorPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex min-h-14 w-full items-center justify-between border-2 border-lime-200/80 bg-lime-300/[0.03] px-4 transition hover:bg-lime-300/[0.09] hover:shadow-[0_0_30px_rgba(163,230,53,0.08)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-md flex min-h-14 w-full items-center justify-between border-2 border-lime-200/80 bg-lime-300/[0.03] px-4 transition hover:bg-lime-300/[0.09] hover:shadow-[0_0_30px_rgba(163,230,53,0.08)] disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
                 <span className="text-sm uppercase tracking-[0.18em] text-lime-100">
