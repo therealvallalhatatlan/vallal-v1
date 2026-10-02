@@ -8,7 +8,7 @@ const stripe = stripeKey
   ? new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" })
   : null
 
-const MIN_AMOUNT_HUF = 10
+const MIN_AMOUNT_HUF = 175
 const MAX_AMOUNT_HUF = 1000000
 const MAX_NAME_LENGTH = 120
 const MAX_MESSAGE_LENGTH = 500
