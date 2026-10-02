@@ -4,6 +4,7 @@ import { useState } from "react"
 import type { FormEvent } from "react"
 import MainContent from "@/components/MainContent"
 import Footer from "@/components/Footer"
+import Image from "next/image"
 
 const MIN_AMOUNT_HUF = 175
 const MAX_AMOUNT_HUF = 1000000
@@ -74,7 +75,7 @@ export default function LegbelsoKorPage() {
     <MainContent>
       <main className="min-h-screen bg-black text-zinc-200">
         <section className="mx-auto w-full max-w-3xl px-5 pb-20 sm:px-6">
-          <div className="border-y border-zinc-800 py-3">
+          <div className="border-b border-zinc-800 pt-0 pb-3">
             <div className="flex items-center justify-between gap-4">
               <span
                 className="text-[10px] uppercase tracking-[0.18em] text-zinc-500"
@@ -86,35 +87,19 @@ export default function LegbelsoKorPage() {
                 className="shrink-0 text-[9px] tracking-[0.12em] text-zinc-700"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                2026.10.26 17:10
+                2026.10.02.
               </span>
             </div>
           </div>
 
-          <article className="py-12 sm:py-16">
-            <p className="text-sm text-zinc-400">Szia,</p>
-
-            <h1 className="mt-3 max-w-2xl text-4xl font-black uppercase italic leading-[0.95] tracking-[-0.035em] text-zinc-100 sm:text-6xl">
-              Drága húgom, kedves barátom!
+          <article className="py-12 sm:py-16 px-12">
+            <h1 className="mt-3 max-w-2xl text-4xl font-black leading-[0.95] tracking-[-0.035em] text-zinc-200 sm:text-6xl">
+              Drága húgom,<br/>kedves barátom!
             </h1>
 
-            <p className="mt-5 text-5xl font-black uppercase italic leading-[0.92] tracking-[-0.04em] text-zinc-100 sm:text-7xl">
-              már vártalak.
-            </p>
-
-            <div className="mt-8 max-w-2xl space-y-5 text-[17px] leading-8 text-zinc-300 sm:text-lg">
+            <div className="mt-8 max-w-2xl space-y-5 text-[20px] leading-8 text-zinc-300 sm:text-lg">
               <p>
-                Kérsz egy kávét vagy sört öö... bocs semmivel nem tudlak megkínálni.
-              </p>
-
-              <p className="text-zinc-100">
-                De adok valami sokkal jobbat.
-              </p>
-
-              <p>
-                Alapítói Részvételt ebben a{" "}
-                <span className="italic text-lime-200">„nagyon mai, és nagyon eredeti dologban”</span>,
-                ami élőben tárul fel a szemünk előtt, és szippant magába tömegeket.
+                Örülök hogy itt vagy, és hogy Alapítóként veszel részt ebben a „nagyon mai, és nagyon eredeti dologban”, ami élőben tárul fel a szemünk előtt, és szippant magába gyanútlan tömegeket.
               </p>
 
               <p>
@@ -122,7 +107,7 @@ export default function LegbelsoKorPage() {
               </p>
 
               <p>
-                Ha beszállsz, a sikereken is osztozunk. És ezek a sikerek erősen közelednek.
+                Ha beszállsz, a sikereken is osztozunk.<br/>És ezek a sikerek gyanúsan közelednek.
               </p>
             </div>
 
@@ -130,12 +115,12 @@ export default function LegbelsoKorPage() {
               className="mt-10 text-sm text-zinc-500"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              V
+              <Image src="/img/logo.png" alt={`100`} width={128} height={55} className="w-18 h-auto float-right object-contain" />
             </p>
           </article>
 
-          <section className="border-t border-zinc-800 pt-8">
-            <div className="flex items-end justify-between gap-4">
+          <section className="pt-8">
+            <div className="flex items-end justify-between gap-4 ">
               <div>
                 <p
                   className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
@@ -174,28 +159,22 @@ export default function LegbelsoKorPage() {
 
           <form
             onSubmit={handleSubmit}
-            className="mt-10 border border-zinc-800 bg-zinc-950/60 p-5 sm:p-7"
+            className="mt-10 px-10 p-5 sm:p-7"
           >
             <div className="space-y-6">
               <label className="block">
-                <span
-                  className="mb-2 block text-[10px] uppercase tracking-[0.18em] text-zinc-600"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  NEVED
-                </span>
                 <input
                   type="text"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   maxLength={120}
                   autoComplete="name"
-                  placeholder="Hogy szólíthatlak?"
-                  className="h-12 w-full border border-zinc-800 bg-black px-3 text-base text-zinc-100 outline-none transition placeholder:text-zinc-700 focus:border-lime-300/60"
+                  placeholder="Alapítói Neved"
+                  className="rounded-md h-12 w-full border border-zinc-500 bg-black px-3 text-[20px] text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-lime-300/60"
                 />
               </label>
 
-              <label className="flex items-start gap-3 border-t border-zinc-900 pt-5">
+              <label className="flex items-start gap-3 pt-5">
                 <input
                   type="checkbox"
                   checked={publishName}
@@ -203,44 +182,27 @@ export default function LegbelsoKorPage() {
                   className="mt-1 h-4 w-4 accent-lime-300"
                 />
                 <span className="text-sm leading-6 text-zinc-400">
-                  Feltüntethetlek a támogatók között a neveddel.
+                  Feltüntethetlek a támogatók között.
                 </span>
               </label>
 
-              <label className="block border-t border-zinc-900 pt-5">
-                <span
-                  className="mb-2 block text-[10px] uppercase tracking-[0.18em] text-zinc-600"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  PÁR SOR, HA VAN KEDVED
-                </span>
-                <textarea
-                  value={message}
-                  onChange={(event) => setMessage(event.target.value)}
-                  maxLength={500}
-                  rows={5}
-                  placeholder="Írhatsz pár sort. Nem kötelező."
-                  className="w-full resize-none border border-zinc-800 bg-black px-3 py-3 text-base leading-7 text-zinc-100 outline-none transition placeholder:text-zinc-700 focus:border-lime-300/60"
-                />
-              </label>
-
-              <div className="border-t border-zinc-900 pt-5">
+              <div className="pt-5">
                 <div className="flex items-center justify-between gap-4">
                   <label
-                    className="text-[10px] uppercase tracking-[0.18em] text-zinc-600"
+                    className="text-[12px] uppercase tracking-[0.18em] text-zinc-500"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
                     BESZÁLLÁS / FT
                   </label>
                   <span
-                    className="text-xs text-zinc-600"
+                    className="text-[12px] text-zinc-500"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
                     minimum {formatHuf(MIN_AMOUNT_HUF)} Ft
                   </span>
                 </div>
 
-                <div className="mt-2 flex items-center border border-zinc-800 bg-black">
+                <div className="mt-2 flex items-center rounded-md border border-zinc-500 bg-black">
                   <input
                     type="number"
                     min={MIN_AMOUNT_HUF}
