@@ -22,7 +22,7 @@ export default function LegbelsoKorPage() {
   const [publishName, setPublishName] = useState(false)
   const [message, setMessage] = useState("")
   const QUICK_AMOUNTS = [10000, 25000, 50000, 100000]
-  const [amount, setAmount] = useState(10000)
+  const [amount, setAmount] = useState(25000)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
