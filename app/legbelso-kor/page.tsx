@@ -8,7 +8,7 @@ import Image from "next/image"
 import { SupportersTicker } from "@/components/supporters/SupportersTicker";
 import { SUPPORTER_NAMES } from "@/data/supporters";
 
-const MIN_AMOUNT_HUF = 175
+const MIN_AMOUNT_HUF = 15000
 const MAX_AMOUNT_HUF = 1000000
 const CURRENT_HUF = 128000
 const TARGET_HUF = 255000
@@ -21,7 +21,7 @@ export default function LegbelsoKorPage() {
   const [name, setName] = useState("")
   const [publishName, setPublishName] = useState(false)
   const [message, setMessage] = useState("")
-  const QUICK_AMOUNTS = [10000, 25000, 50000, 100000]
+  const QUICK_AMOUNTS = [15000, 25000, 50000, 100000]
   const [amount, setAmount] = useState(25000)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
