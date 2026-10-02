@@ -18,7 +18,7 @@ export default function LegbelsoKorPage() {
   const [name, setName] = useState("")
   const [publishName, setPublishName] = useState(false)
   const [message, setMessage] = useState("")
-  const [amount, setAmount] = useState(50000)
+  const [amount, setAmount] = useState(175)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -245,7 +245,7 @@ export default function LegbelsoKorPage() {
                     type="number"
                     min={MIN_AMOUNT_HUF}
                     max={MAX_AMOUNT_HUF}
-                    step={1000}
+                    step={1}
                     value={amount}
                     onChange={(event) => {
                       const next = Number(event.target.value)
