@@ -21,7 +21,7 @@ export default function LegbelsoKorPage() {
   const [name, setName] = useState("")
   const [publishName, setPublishName] = useState(false)
   const [message, setMessage] = useState("")
-  const [amount, setAmount] = useState(175)
+  const QUICK_AMOUNTS = [10000, 25000, 50000, 100000]\n\n  const [amount, setAmount] = useState(10000)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -204,6 +204,28 @@ export default function LegbelsoKorPage() {
                   </span>
                 </div>
 
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {QUICK_AMOUNTS.map((quickAmount) => {
+                    const selected = amount === quickAmount
+                    return (
+                      <button
+                        key={quickAmount}
+                        type="button"
+                        onClick={() => setAmount(quickAmount)}
+                        className={[
+                          "min-h-11 rounded-md border px-3 text-[11px] uppercase tracking-[0.12em] transition",
+                          selected
+                            ? "border-lime-200 bg-lime-300/10 text-lime-100"
+                            : "border-zinc-800 bg-black text-zinc-500 hover:border-zinc-600 hover:text-zinc-200",
+                        ].join(" ")}
+                        style={{ fontFamily: "var(--font-mono-tech)" }}
+                      >
+                        {formatHuf(quickAmount)} Ft
+                      </button>
+                    )
+                  })}
+                </div>
+
                 <div className="mt-2 flex items-center rounded-md border border-zinc-500 bg-black">
                   <input
                     type="number"
@@ -250,6 +272,12 @@ export default function LegbelsoKorPage() {
                   {formatHuf(amount)} Ft ↗
                 </span>
               </button>
+
+              <p
+                className="mt-3 text-center text-[11px] leading-5 text-zinc-500"
+              >
+                15 000 forintos támogatói összeg felett megkapod a dedikált bővített kiadást is.
+              </p>
             </div>
           </form>
 
