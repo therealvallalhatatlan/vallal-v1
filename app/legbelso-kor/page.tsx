@@ -5,6 +5,8 @@ import type { FormEvent } from "react"
 import MainContent from "@/components/MainContent"
 import Footer from "@/components/Footer"
 import Image from "next/image"
+import { SupportersTicker } from "@/components/supporters/SupportersTicker";
+import { SUPPORTER_NAMES } from "@/data/supporters";
 
 const MIN_AMOUNT_HUF = 175
 const MAX_AMOUNT_HUF = 1000000
@@ -97,7 +99,7 @@ export default function LegbelsoKorPage() {
               Drága húgom,<br/>kedves barátom!
             </h1>
 
-            <div className="mt-8 max-w-2xl space-y-5 text-[20px] leading-8 text-zinc-300 sm:text-lg">
+            <div className="mt-8 max-w-2xl space-y-5 text-[20px] leading-8 text-zinc-300/80 sm:text-lg">
               <p>
                 Örülök hogy itt vagy, és hogy Alapítóként veszel részt ebben a „nagyon mai, és nagyon eredeti dologban”, ami élőben tárul fel a szemünk előtt, és szippant magába gyanútlan tömegeket.
               </p>
@@ -115,7 +117,7 @@ export default function LegbelsoKorPage() {
               className="mt-10 text-sm text-zinc-500"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              <Image src="/img/logo.png" alt={`100`} width={128} height={55} className="w-18 h-auto float-right object-contain" />
+              <Image src="/img/logo.png" alt={`100`} width={128} height={55} className="opacity-70 w-18 h-auto float-right object-contain" />
             </p>
           </article>
 
@@ -123,19 +125,19 @@ export default function LegbelsoKorPage() {
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p
-                  className="text-[12px] uppercase tracking-[0.2em] text-zinc-600"
+                  className="text-[14px] uppercase tracking-[0.2em] text-zinc-500"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   CÉL
                 </p>
-                <p className="mt-2 text-xl font-semibold text-zinc-100">
+                <p className="mt-2 text-xl font-normal text-zinc-100">
                   100 könyv + 5 nagyváros
                 </p>
               </div>
 
               <div className="text-right">
                 <p
-                  className="text-[12px] uppercase tracking-[0.2em] text-zinc-600"
+                  className="text-[14px] uppercase tracking-[0.2em] text-zinc-500"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   JELENLEGI ÁLLAPOT
@@ -149,7 +151,7 @@ export default function LegbelsoKorPage() {
               </div>
             </div>
 
-            <div className="mt-5 h-2 overflow-hidden border border-zinc-800 bg-zinc-950">
+            <div className="mt-5 h-1 overflow-hidden border border-zinc-800 bg-zinc-950">
               <div
                 className="h-full bg-lime-300 transition-all duration-500"
                 style={{ width: `${progress}%` }}
@@ -257,6 +259,13 @@ export default function LegbelsoKorPage() {
           >
             Stripe / biztonságos fizetés
           </p>
+        </section>
+
+        <section className="mx-auto w-full max-w-3xl px-0">
+          <SupportersTicker
+            names={SUPPORTER_NAMES}
+            label="Támogatók nevei"
+          />
         </section>
 
         <Footer />

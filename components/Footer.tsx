@@ -12,7 +12,7 @@ export default function Footer() {
       className="px-6 py-6 bg-black border-t border-zinc-800 font-mono text-gray-200">
       <div className="max-w-5xl mx-auto text-center">
 
-        <div className="space-x-6 text-zinc-100/50 hover:text-zinc-100 uppercase mb-6" style={{ fontFamily: "var(--font-mono-tech)" }}>
+        <div className="space-x-6 text-zinc-100/50 hover:text-zinc-100 uppercase mb-6 text-[12px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
           <a
             href="https://reddit.com/r/vallalhatatlan"
             target="_blank"
@@ -57,7 +57,7 @@ export default function Footer() {
           </a>
         </div>
 
-        <p className="text-zinc-300/70 text-sm mb-2">
+        <p className="text-zinc-300/70 text-[10px] mb-2">
           © 2025 Vállalhatatlan / rickandpam.digital
         </p>
 
