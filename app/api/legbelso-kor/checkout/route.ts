@@ -4,10 +4,21 @@ import { guardWriteOperation } from "@/lib/systemGuard"
 import { buildCheckoutMetadata } from "@/lib/stripeAttribution"
 
 const stripeKey = process.env.STRIPE_SECRET_KEY
-const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" }) : null
+const stripe = stripeKey
+  ? new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" })
+  : null
 
-const MIN_AMOUNT_HUF = 1000
+const MIN_AMOUNT_HUF = 10000
 const MAX_AMOUNT_HUF = 1000000
+const MAX_NAME_LENGTH = 120
+const MAX_MESSAGE_LENGTH = 500
+
+type CheckoutBody = {
+  amount?: unknown
+  supporter_name?: unknown
+  publish_name?: unknown
+  message?: unknown
+}
 
 export async function POST(req: NextRequest) {
   const guardResponse = await guardWriteOperation(req)
@@ -18,26 +29,52 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body: unknown = await req.json()
-    const amount =
-      typeof body === "object" &&
-      body !== null &&
-      "amount" in body &&
-      typeof body.amount === "number"
-        ? body.amount
-        : Number.NaN
+    const body = (await req.json()) as CheckoutBody
+    const amount = typeof body.amount === "number" ? body.amount : Number.NaN
+    const supporterName =
+      typeof body.supporter_name === "string" ? body.supporter_name.trim() : ""
+    const publishName = body.publish_name === true
+    const message =
+      typeof body.message === "string" ? body.message.trim() : ""
 
     if (!Number.isFinite(amount) || !Number.isInteger(amount)) {
-      return NextResponse.json({ error: "Az összegnek egész számnak kell lennie." }, { status: 400 })
+      return NextResponse.json(
+        { error: "Az összegnek egész számnak kell lennie." },
+        { status: 400 },
+      )
     }
 
     if (amount < MIN_AMOUNT_HUF) {
-      return NextResponse.json({ error: `A minimális összeg ${MIN_AMOUNT_HUF} Ft.` }, { status: 400 })
+      return NextResponse.json(
+        { error: `A minimális beszállás ${MIN_AMOUNT_HUF} Ft.` },
+        { status: 400 },
+      )
     }
 
     if (amount > MAX_AMOUNT_HUF) {
       return NextResponse.json(
         { error: `A maximális összeg ${MAX_AMOUNT_HUF.toLocaleString("hu-HU")} Ft.` },
+        { status: 400 },
+      )
+    }
+
+    if (!supporterName) {
+      return NextResponse.json(
+        { error: "A név megadása kötelező." },
+        { status: 400 },
+      )
+    }
+
+    if (supporterName.length > MAX_NAME_LENGTH) {
+      return NextResponse.json(
+        { error: `A név maximum ${MAX_NAME_LENGTH} karakter lehet.` },
+        { status: 400 },
+      )
+    }
+
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      return NextResponse.json(
+        { error: `Az üzenet maximum ${MAX_MESSAGE_LENGTH} karakter lehet.` },
         { status: 400 },
       )
     }
@@ -54,6 +91,9 @@ export async function POST(req: NextRequest) {
         amount_huf: String(amount),
         product_id: "legbelso-kor",
         source: "legbelso-kor",
+        supporter_name: supporterName,
+        publish_name: publishName ? "true" : "false",
+        supporter_message: message,
       },
       { cartSummary: `legbelso-kor:${amount}` },
     )
@@ -73,7 +113,7 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: "huf",
             product_data: {
-              name: "Vállalhatatlan / Leg Belső Kör beszállás",
+              name: "Vállalhatatlan / Leg Belső Kör Alapítói Részvétel",
             },
             unit_amount: amount * 100,
           },
