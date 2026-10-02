@@ -94,9 +94,13 @@ export default function LegbelsoKorPage() {
           <article className="py-12 sm:py-16">
             <p className="text-sm text-zinc-400">Szia,</p>
 
-            <h1 className="mt-3 max-w-2xl text-5xl font-black uppercase italic leading-[0.92] tracking-[-0.04em] text-zinc-100 sm:text-7xl">
-              már vártalak.
+            <h1 className="mt-3 max-w-2xl text-4xl font-black uppercase italic leading-[0.95] tracking-[-0.035em] text-zinc-100 sm:text-6xl">
+              Drága húgom, kedves barátom!
             </h1>
+
+            <p className="mt-5 text-5xl font-black uppercase italic leading-[0.92] tracking-[-0.04em] text-zinc-100 sm:text-7xl">
+              már vártalak.
+            </p>
 
             <div className="mt-8 max-w-2xl space-y-5 text-[17px] leading-8 text-zinc-300 sm:text-lg">
               <p>
