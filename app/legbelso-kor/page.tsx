@@ -177,7 +177,18 @@ export default function LegbelsoKorPage() {
                 />
               </label>
 
-              <label className="flex items-start gap-3 pt-5">
+              <label className="block">
+                <textarea
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  maxLength={500}
+                  rows={4}
+                  placeholder="Pár sor, amit itt hagynál..."
+                  className="min-h-28 w-full resize-y rounded-md border border-zinc-500 bg-black px-3 py-3 text-[18px] leading-7 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-lime-300/60"
+                />
+              </label>
+
+              <label className="flex items-start gap-3 pt-1">
                 <input
                   type="checkbox"
                   checked={publishName}
