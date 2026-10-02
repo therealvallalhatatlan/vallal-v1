@@ -1,42 +1,57 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import Link from "next/link"
-import { Montserrat } from "next/font/google"
+import { useState } from "react"
 import MainContent from "@/components/MainContent"
 import Footer from "@/components/Footer"
 
-const display = Montserrat({
-  subsets: ["latin-ext"],
-  weight: ["800"],
-  style: ["italic"],
-  display: "swap",
-})
-
-const PRESET_AMOUNTS = [25000, 50000, 100000, 250000]
-const MIN_AMOUNT_HUF = 1000
+const MIN_AMOUNT_HUF = 10000
 const MAX_AMOUNT_HUF = 1000000
+const CURRENT_HUF = 128000
+const TARGET_HUF = 255000
 
 function formatHuf(value: number) {
   return new Intl.NumberFormat("hu-HU").format(value)
 }
 
 export default function LegbelsoKorPage() {
+  const [name, setName] = useState("")
+  const [publishName, setPublishName] = useState(false)
+  const [message, setMessage] = useState("")
   const [amount, setAmount] = useState(50000)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const amountLabel = useMemo(() => `${formatHuf(amount)} Ft`, [amount])
-
-  async function handleCheckout() {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     setError(null)
+
+    const trimmedName = name.trim()
+    const trimmedMessage = message.trim()
+
+    if (!trimmedName) {
+      setError("Írd be a neved.")
+      return
+    }
+
+    if (amount < MIN_AMOUNT_HUF) {
+      setError(`A legkisebb beszállás ${formatHuf(MIN_AMOUNT_HUF)} Ft.`)
+      return
+    }
+
     setIsLoading(true)
 
     try {
       const res = await fetch("/api/legbelso-kor/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount,
+          supporter_name: trimmedName,
+          publish_name: publishName,
+          message: trimmedMessage,
+        }),
       })
 
       const data: { url?: string; error?: string } = await res.json().catch(() => ({}))
@@ -52,335 +67,233 @@ export default function LegbelsoKorPage() {
     }
   }
 
+  const progress = Math.min(100, (CURRENT_HUF / TARGET_HUF) * 100)
+
   return (
     <MainContent>
-      <div className="min-h-screen bg-black text-zinc-200">
-        <section className="mx-auto w-full max-w-5xl px-5 pb-20 sm:px-6">
-          <div className="border-t border-zinc-800">
-            <div className="flex items-center justify-between border-b border-zinc-800 py-3">
+      <main className="min-h-screen bg-black text-zinc-200">
+        <section className="mx-auto w-full max-w-3xl px-5 pb-20 sm:px-6">
+          <div className="border-y border-zinc-800 py-3">
+            <div className="flex items-center justify-between gap-4">
               <span
-                className="text-[10px] uppercase tracking-[0.24em] text-lime-300/75"
+                className="text-[10px] uppercase tracking-[0.18em] text-zinc-500"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                INTERNAL CHANNEL / LEG BELSŐ KÖR
+                KOMMUNIKÁCIÓS CSATORNA - LEG BELSŐ KÖR
               </span>
               <span
-                className="hidden text-[9px] uppercase tracking-[0.18em] text-zinc-700 sm:block"
+                className="shrink-0 text-[9px] tracking-[0.12em] text-zinc-700"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                ACCESS: FOUNDERS
+                2026.10.26 17:10
               </span>
             </div>
+          </div>
 
-            <div className="grid gap-10 py-12 lg:grid-cols-[1.35fr_.65fr] lg:gap-14 lg:py-16">
+          <article className="py-12 sm:py-16">
+            <p className="text-sm text-zinc-400">Szia,</p>
+
+            <h1 className="mt-3 max-w-2xl text-5xl font-black uppercase italic leading-[0.92] tracking-[-0.04em] text-zinc-100 sm:text-7xl">
+              már vártalak.
+            </h1>
+
+            <div className="mt-8 max-w-2xl space-y-5 text-[17px] leading-8 text-zinc-300 sm:text-lg">
+              <p>
+                Kérsz egy kávét vagy sört öö... bocs semmivel nem tudlak megkínálni.
+              </p>
+
+              <p className="text-zinc-100">
+                De adok valami sokkal jobbat.
+              </p>
+
+              <p>
+                Alapítói Részvételt ebben a{" "}
+                <span className="italic text-lime-200">„nagyon mai, és nagyon eredeti dologban”</span>,
+                ami élőben tárul fel a szemünk előtt, és szippant magába tömegeket.
+              </p>
+
+              <p>
+                Add meg a neved, hogy feltüntethetlek-e a támogatóim között, és írj pár sort ha van kedved.
+              </p>
+
+              <p>
+                Ha beszállsz, a sikereken is osztozunk. És ezek a sikerek erősen közelednek.
+              </p>
+            </div>
+
+            <p
+              className="mt-10 text-sm text-zinc-500"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              V
+            </p>
+          </article>
+
+          <section className="border-t border-zinc-800 pt-8">
+            <div className="flex items-end justify-between gap-4">
               <div>
                 <p
-                  className="mb-5 text-[10px] uppercase tracking-[0.22em] text-zinc-500"
+                  className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
-                  50 EMBER / 100 KÖNYV / EGY HÁLÓZAT
+                  CÉL
                 </p>
+                <p className="mt-2 text-xl font-semibold text-zinc-100">
+                  100 könyv + 5 nagyváros
+                </p>
+              </div>
 
-                <h1
-                  className={`${display.className} text-5xl uppercase italic leading-[0.92] tracking-[-0.03em] text-zinc-100 sm:text-7xl lg:text-8xl`}
+              <div className="text-right">
+                <p
+                  className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
-                  Te már<br />
-                  benne vagy.
-                </h1>
+                  JELENLEGI ÁLLAPOT
+                </p>
+                <p
+                  className="mt-2 text-lg font-semibold text-lime-200"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  {formatHuf(CURRENT_HUF)} / {formatHuf(TARGET_HUF)} Ft
+                </p>
+              </div>
+            </div>
 
-                <div className="mt-8 max-w-xl space-y-4 text-base leading-7 text-zinc-300 sm:text-lg">
-                  <p>
-                    Most két dolgot indítunk el: <strong className="text-zinc-100">100 új könyvet</strong> és egy
-                    országos dead drop hálózatot.
-                  </p>
-                  <p>
-                    A pénz nagy része már megvan. A hiányzó részt nem támogatásként kérem.
-                    <span className="text-lime-200"> Beszállást ajánlok.</span>
-                  </p>
-                </div>
+            <div className="mt-5 h-2 overflow-hidden border border-zinc-800 bg-zinc-950">
+              <div
+                className="h-full bg-lime-300 transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </section>
 
-                <div className="mt-9 inline-flex items-center gap-3 border border-zinc-800 bg-zinc-950 px-3 py-2">
-                  <span
-                    className="h-2 w-2 animate-pulse rounded-full bg-lime-300"
-                    aria-hidden="true"
-                  />
-                  <span
-                    className="text-[10px] uppercase tracking-[0.18em] text-zinc-400"
+          <form
+            onSubmit={handleSubmit}
+            className="mt-10 border border-zinc-800 bg-zinc-950/60 p-5 sm:p-7"
+          >
+            <div className="space-y-6">
+              <label className="block">
+                <span
+                  className="mb-2 block text-[10px] uppercase tracking-[0.18em] text-zinc-600"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  NEVED
+                </span>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  maxLength={120}
+                  autoComplete="name"
+                  placeholder="Hogy szólíthatlak?"
+                  className="h-12 w-full border border-zinc-800 bg-black px-3 text-base text-zinc-100 outline-none transition placeholder:text-zinc-700 focus:border-lime-300/60"
+                />
+              </label>
+
+              <label className="flex items-start gap-3 border-t border-zinc-900 pt-5">
+                <input
+                  type="checkbox"
+                  checked={publishName}
+                  onChange={(event) => setPublishName(event.target.checked)}
+                  className="mt-1 h-4 w-4 accent-lime-300"
+                />
+                <span className="text-sm leading-6 text-zinc-400">
+                  Feltüntethetlek a támogatók között a neveddel.
+                </span>
+              </label>
+
+              <label className="block border-t border-zinc-900 pt-5">
+                <span
+                  className="mb-2 block text-[10px] uppercase tracking-[0.18em] text-zinc-600"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  PÁR SOR, HA VAN KEDVED
+                </span>
+                <textarea
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  maxLength={500}
+                  rows={5}
+                  placeholder="Írhatsz pár sort. Nem kötelező."
+                  className="w-full resize-none border border-zinc-800 bg-black px-3 py-3 text-base leading-7 text-zinc-100 outline-none transition placeholder:text-zinc-700 focus:border-lime-300/60"
+                />
+              </label>
+
+              <div className="border-t border-zinc-900 pt-5">
+                <div className="flex items-center justify-between gap-4">
+                  <label
+                    className="text-[10px] uppercase tracking-[0.18em] text-zinc-600"
                     style={{ fontFamily: "var(--font-mono-tech)" }}
                   >
-                    AZ INDULÁSHOZ SZÜKSÉGES ÖSSZEG NAGY RÉSZE MÁR MEGVAN
+                    BESZÁLLÁS / FT
+                  </label>
+                  <span
+                    className="text-xs text-zinc-600"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    minimum {formatHuf(MIN_AMOUNT_HUF)} Ft
+                  </span>
+                </div>
+
+                <div className="mt-2 flex items-center border border-zinc-800 bg-black">
+                  <input
+                    type="number"
+                    min={MIN_AMOUNT_HUF}
+                    max={MAX_AMOUNT_HUF}
+                    step={1000}
+                    value={amount}
+                    onChange={(event) => {
+                      const next = Number(event.target.value)
+                      if (!Number.isFinite(next)) return
+                      setAmount(Math.max(MIN_AMOUNT_HUF, Math.min(MAX_AMOUNT_HUF, Math.round(next))))
+                    }}
+                    className="h-14 w-full bg-transparent px-3 text-right text-xl font-semibold text-zinc-100 outline-none"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  />
+                  <span
+                    className="pr-4 text-xs text-zinc-600"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >
+                    HUF
                   </span>
                 </div>
               </div>
 
-              <div className="self-end border-l border-zinc-800 pl-6 lg:pl-8">
+              {error && (
                 <div
-                  className="text-[10px] uppercase tracking-[0.22em] text-zinc-600"
+                  className="border border-red-500/30 bg-red-500/[0.04] px-3 py-3 text-xs leading-5 text-red-300"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
-                  PROJECT TARGETS
+                  [ ERROR ] {error}
                 </div>
+              )}
 
-                <div className="mt-5 space-y-5">
-                  <div>
-                    <div className="flex items-end justify-between gap-4">
-                      <span
-                        className="text-sm uppercase tracking-[0.14em] text-zinc-300"
-                        style={{ fontFamily: "var(--font-mono-tech)" }}
-                      >
-                        KÖNYV
-                      </span>
-                      <span className="text-3xl font-black tracking-tight text-lime-200">100</span>
-                    </div>
-                    <div className="mt-2 h-px bg-gradient-to-r from-lime-300/90 via-lime-300/35 to-zinc-900" />
-                    <p
-                      className="mt-2 text-[10px] uppercase tracking-[0.14em] text-zinc-600"
-                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                    >
-                      számozott új példányok
-                    </p>
-                  </div>
-
-                  <div>
-                    <div className="flex items-end justify-between gap-4">
-                      <span
-                        className="text-sm uppercase tracking-[0.14em] text-zinc-300"
-                        style={{ fontFamily: "var(--font-mono-tech)" }}
-                      >
-                        DEAD DROP
-                      </span>
-                      <span className="text-3xl font-black tracking-tight text-lime-200">5</span>
-                    </div>
-                    <div className="mt-2 h-px bg-gradient-to-r from-lime-300/90 via-lime-300/35 to-zinc-900" />
-                    <p
-                      className="mt-2 text-[10px] uppercase tracking-[0.14em] text-zinc-600"
-                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                    >
-                      induló városi pontok
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-5 border-y border-zinc-800 py-8 lg:grid-cols-2">
-              <div className="border border-zinc-800 bg-zinc-950/70 p-5 sm:p-6">
-                <div
-                  className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  [ 01 / KÖNYV ]
-                </div>
-                <div className="mt-4 text-3xl font-black uppercase tracking-tight text-zinc-100">
-                  100 példány.
-                </div>
-                <p className="mt-3 max-w-md text-sm leading-6 text-zinc-400">
-                  Az I. könyv bővített kiadása és az újranyomott II. könyv együtt viszi tovább a történetet.
-                </p>
-              </div>
-
-              <div className="border border-zinc-800 bg-zinc-950/70 p-5 sm:p-6">
-                <div
-                  className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  [ 02 / DEAD DROP ]
-                </div>
-                <div className="mt-4 text-3xl font-black uppercase tracking-tight text-zinc-100">
-                  Országos hálózat.
-                </div>
-                <p className="mt-3 max-w-md text-sm leading-6 text-zinc-400">
-                  Városi pontok, nyomok, kihelyezés. A könyvet nem mindig megveszed. Néha levadászod.
-                </p>
-              </div>
-            </div>
-
-            <section className="py-14 sm:py-16">
-              <div className="mx-auto max-w-3xl text-center">
-                <p
-                  className="text-[10px] uppercase tracking-[0.24em] text-zinc-600"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  NEM EGY ÚJABB TÁRGY
-                </p>
-                <h2
-                  className={`${display.className} mt-4 text-4xl uppercase italic leading-none text-zinc-100 sm:text-6xl`}
-                >
-                  Egy hely ebben
-                  <br />
-                  a történetben.
-                </h2>
-
-                <div className="mt-10 grid gap-4 text-left sm:grid-cols-3">
-                  {[
-                    ["ELSŐKÉNT", "Bizonyos dolgokról ti tudtok majd először."],
-                    ["ZÁRTAN", "Lesznek esték és alkalmak, ahová ez a kör kap meghívást."],
-                    ["NYOMOT HAGY", "Az indulásnak lesz látható és maradandó nyoma."],
-                  ].map(([title, body]) => (
-                    <div key={title} className="border border-zinc-800 bg-zinc-950/50 p-5">
-                      <div
-                        className="text-[10px] uppercase tracking-[0.18em] text-lime-300/75"
-                        style={{ fontFamily: "var(--font-mono-tech)" }}
-                      >
-                        {title}
-                      </div>
-                      <p className="mt-3 text-sm leading-6 text-zinc-400">{body}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="border border-zinc-800 bg-zinc-950/80 p-5 sm:p-7">
-              <div className="flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
-                <div className="max-w-xl">
-                  <div
-                    className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    [ BESZÁLLÁS ]
-                  </div>
-                  <h2 className="mt-3 text-2xl font-semibold uppercase tracking-tight text-zinc-100">
-                    Mennyivel szállsz be?
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-zinc-500">
-                    Az összeg teljes egészében az induló könyvnyomás és a dead drop hálózat megvalósítását segíti.
-                  </p>
-                </div>
-
-                <div className="w-full lg:max-w-md">
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {PRESET_AMOUNTS.map((preset) => {
-                      const selected = amount === preset
-                      return (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => setAmount(preset)}
-                          className={`min-h-12 border px-3 text-[11px] uppercase tracking-[0.13em] transition ${
-                            selected
-                              ? "border-lime-200 bg-lime-300/10 text-lime-100"
-                              : "border-zinc-800 bg-black text-zinc-500 hover:border-zinc-600 hover:text-zinc-200"
-                          }`}
-                          style={{ fontFamily: "var(--font-mono-tech)" }}
-                        >
-                          {formatHuf(preset)} Ft
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  <label className="mt-3 block">
-                    <span
-                      className="mb-2 block text-[9px] uppercase tracking-[0.16em] text-zinc-600"
-                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                    >
-                      SAJÁT ÖSSZEG / FT
-                    </span>
-                    <input
-                      type="number"
-                      min={MIN_AMOUNT_HUF}
-                      max={MAX_AMOUNT_HUF}
-                      step={1000}
-                      value={amount}
-                      onChange={(event) => {
-                        const next = Number(event.target.value)
-                        if (!Number.isFinite(next)) return
-                        setAmount(Math.max(MIN_AMOUNT_HUF, Math.min(MAX_AMOUNT_HUF, Math.round(next))))
-                      }}
-                      className="h-12 w-full border border-zinc-800 bg-black px-3 text-right text-sm text-zinc-100 outline-none focus:border-lime-300/60"
-                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                    />
-                  </label>
-
-                  {error && (
-                    <div
-                      className="mt-3 border border-red-500/30 bg-red-500/[0.04] px-3 py-3 text-[10px] leading-relaxed text-red-300"
-                      style={{ fontFamily: "var(--font-mono-tech)" }}
-                    >
-                      [ ERROR ] {error}
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={handleCheckout}
-                    disabled={isLoading}
-                    className="mt-3 flex min-h-14 w-full items-center justify-between border-2 border-lime-100/80 bg-lime-300/[0.03] px-4 transition hover:border-lime-200 hover:bg-lime-300/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    <span className="text-xs uppercase tracking-[0.18em] text-lime-100">
-                      {isLoading ? "ÁTIRÁNYÍTÁS..." : "BESZÁLLOK"}
-                    </span>
-                    <span className="text-sm text-lime-300">
-                      {amountLabel} ↗
-                    </span>
-                  </button>
-
-                  <p
-                    className="mt-3 text-center text-[9px] uppercase tracking-[0.13em] text-zinc-700"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    STRIPE / BIZTONSÁGOS FIZETÉS
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="py-12">
-              <div className="grid gap-10 lg:grid-cols-[1fr_1fr]">
-                <div>
-                  <div
-                    className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    [ UTÁNA ]
-                  </div>
-                  <div className="mt-5 space-y-2 text-sm text-zinc-400">
-                    <p>100 könyv elkészül.</p>
-                    <p>A hálózat első pontjai felállnak.</p>
-                    <p>Jönnek az első zárt alkalmak.</p>
-                    <p>És indul a következő fejezet.</p>
-                  </div>
-                </div>
-
-                <div className="border-l border-zinc-800 pl-5 lg:pl-8">
-                  <div
-                    className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
-                    style={{ fontFamily: "var(--font-mono-tech)" }}
-                  >
-                    [ ALAPÍTÓK ]
-                  </div>
-                  <p className="mt-5 text-base leading-7 text-zinc-300">
-                    Te már ott voltál, amikor még nem lehetett tudni, hogy ebből bármi lesz.
-                  </p>
-                  <p className="mt-4 text-sm leading-6 text-zinc-500">
-                    Ez az oldal azért létezik, mert az indulás első köre nem véletlenül alakult ki.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <div className="flex flex-col items-start justify-between gap-5 border-t border-zinc-800 pt-6 text-[10px] uppercase tracking-[0.16em] sm:flex-row sm:items-center">
-              <span
-                className="text-zinc-700"
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="flex min-h-14 w-full items-center justify-between border-2 border-lime-200/80 bg-lime-300/[0.03] px-4 transition hover:bg-lime-300/[0.09] hover:shadow-[0_0_30px_rgba(163,230,53,0.08)] disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                VÁLLALHATATLAN / LEG BELSŐ KÖR
-              </span>
-              <Link
-                href="/"
-                className="text-zinc-600 transition hover:text-lime-200"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                ← VISSZA A HÁLÓZATBA
-              </Link>
+                <span className="text-sm uppercase tracking-[0.18em] text-lime-100">
+                  {isLoading ? "PILLANAT..." : "BESZÁLLOK"}
+                </span>
+                <span className="text-sm text-lime-300">
+                  {formatHuf(amount)} Ft ↗
+                </span>
+              </button>
             </div>
-          </div>
+          </form>
+
+          <p
+            className="mt-4 text-center text-[9px] uppercase tracking-[0.14em] text-zinc-700"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            Stripe / biztonságos fizetés
+          </p>
         </section>
 
         <Footer />
-      </div>
+      </main>
     </MainContent>
   )
 }
