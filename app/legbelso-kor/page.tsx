@@ -120,10 +120,10 @@ export default function LegbelsoKorPage() {
           </article>
 
           <section className="pt-8">
-            <div className="flex items-end justify-between gap-4 ">
+            <div className="flex items-end justify-between gap-4">
               <div>
                 <p
-                  className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                  className="text-[12px] uppercase tracking-[0.2em] text-zinc-600"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   CÉL
@@ -135,7 +135,7 @@ export default function LegbelsoKorPage() {
 
               <div className="text-right">
                 <p
-                  className="text-[10px] uppercase tracking-[0.2em] text-zinc-600"
+                  className="text-[12px] uppercase tracking-[0.2em] text-zinc-600"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
                   JELENLEGI ÁLLAPOT
@@ -144,7 +144,7 @@ export default function LegbelsoKorPage() {
                   className="mt-2 text-lg font-semibold text-lime-200"
                   style={{ fontFamily: "var(--font-mono-tech)" }}
                 >
-                  {formatHuf(CURRENT_HUF)} / {formatHuf(TARGET_HUF)} Ft
+                  {formatHuf(CURRENT_HUF)} <span className="text-zinc-100"> / {formatHuf(TARGET_HUF)} Ft</span>
                 </p>
               </div>
             </div>
