@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import type { FormEvent } from "react"
 import MainContent from "@/components/MainContent"
 import Footer from "@/components/Footer"
 
@@ -21,7 +22,7 @@ export default function LegbelsoKorPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
 
