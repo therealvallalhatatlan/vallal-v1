@@ -5,7 +5,7 @@ import type { FormEvent } from "react"
 import MainContent from "@/components/MainContent"
 import Footer from "@/components/Footer"
 
-const MIN_AMOUNT_HUF = 10000
+const MIN_AMOUNT_HUF = 10
 const MAX_AMOUNT_HUF = 1000000
 const CURRENT_HUF = 128000
 const TARGET_HUF = 255000
