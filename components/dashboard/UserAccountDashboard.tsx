@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from "react"
 import { BookMarked, BookOpen, Check, ChevronDown, Crown, HeartHandshake, Pencil, ShoppingBag, X } from "lucide-react"
 import { Montserrat } from "next/font/google"
 import { createClient } from "@/lib/browser"
+import UserAvatarWithBadges from "@/components/UserAvatarWithBadges"
 import type { DashboardAccountResponse, DashboardUnifiedOrder } from "@/types/dashboard"
 
 const DASHBOARD_BADGE_ICONS = {
@@ -263,20 +264,17 @@ export default function UserAccountDashboard({ account, token }: Props) {
           <div className="border-y border-zinc-800/80 py-6 sm:py-7">
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-center lg:gap-10">
               <div className="flex min-w-0 items-center gap-4 sm:gap-5">
-                <div className="relative h-[92px] w-[92px] shrink-0 rounded-full border border-zinc-700/90 bg-zinc-950 p-1 sm:h-[104px] sm:w-[104px]">
-                  <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border border-zinc-800 bg-zinc-900 text-2xl font-black text-lime-200">
-                    {user.avatar_url ? (
-                      <img
-                        src={user.avatar_url}
-                        alt=""
-                        className="h-full w-full object-cover grayscale transition-all duration-300 hover:grayscale-0"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      avatarLetter
-                    )}
-                  </div>
-                  <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-[#010101] bg-lime-400 shadow-[0_0_10px_rgba(163,230,53,0.65)]" aria-label="Aktív" />
+                <div className="relative shrink-0 p-1">
+                  <UserAvatarWithBadges
+                    avatarUrl={user.avatar_url}
+                    fallback={avatarLetter}
+                    badges={badges}
+                    size="xl"
+                  />
+                  <span
+                    className="absolute bottom-1 right-1 z-20 h-3.5 w-3.5 rounded-full border-2 border-[#010101] bg-lime-400 shadow-[0_0_10px_rgba(163,230,53,0.65)]"
+                    aria-label="Aktív"
+                  />
                 </div>
 
                 <div className="min-w-0 flex-1">
