@@ -112,7 +112,7 @@ export default function SiteHeader() {
   }, [])
 
   useEffect(() => {
-    if (!user) {
+    if (!user?.id) {
       setBadges([])
       return
     }
@@ -120,11 +120,31 @@ export default function SiteHeader() {
     let cancelled = false
     const loadBadges = async () => {
       try {
-        const response = await fetch("/api/user/badges", { cache: "no-store" })
-        if (!response.ok) return
+        const supabase = createClient()
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (!session?.access_token) {
+          if (!cancelled) setBadges([])
+          return
+        }
+
+        const response = await fetch("/api/user/badges", {
+          headers: {
+            Authorization: "Bearer " + session.access_token,
+          },
+          cache: "no-store",
+        })
+
+        if (!response.ok) throw new Error("badge_request_failed")
+
         const payload = await response.json()
-        if (!cancelled) setBadges(Array.isArray(payload?.badges) ? payload.badges : [])
-      } catch {
+        if (!cancelled) {
+          setBadges(Array.isArray(payload?.badges) ? payload.badges : [])
+        }
+      } catch (error) {
+        console.error("[SiteHeader] badge load failed", error)
         if (!cancelled) setBadges([])
       }
     }
