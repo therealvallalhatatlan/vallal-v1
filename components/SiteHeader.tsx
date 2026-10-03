@@ -8,6 +8,7 @@ import type { AuthChangeEvent, Session } from "@supabase/supabase-js"
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTrigger } from "@/components/ui/sheet"
 import { createClient } from "@/lib/browser"
 import { getUnreadSnapshot, subscribeUnread } from "@/lib/notifications/unreadStore"
+import UserAvatarWithBadges from "@/components/UserAvatarWithBadges"
 
 const menuSections = [
   {
@@ -58,6 +59,7 @@ const menuSections = [
 ] as const
 
 type AuthUser = {
+  id?: string
   email?: string | null
   user_metadata?: {
     avatar_url?: string | null
@@ -67,9 +69,15 @@ type AuthUser = {
   }
 }
 
+type Badge = {
+  code: string
+  name?: string | null
+}
+
 export default function SiteHeader() {
   const pathname = usePathname()
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [badges, setBadges] = useState<Badge[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
@@ -102,6 +110,30 @@ export default function SiteHeader() {
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    if (!user) {
+      setBadges([])
+      return
+    }
+
+    let cancelled = false
+    const loadBadges = async () => {
+      try {
+        const response = await fetch("/api/user/badges", { cache: "no-store" })
+        if (!response.ok) return
+        const payload = await response.json()
+        if (!cancelled) setBadges(Array.isArray(payload?.badges) ? payload.badges : [])
+      } catch {
+        if (!cancelled) setBadges([])
+      }
+    }
+
+    void loadBadges()
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
 
   const avatarUrl =
     user?.user_metadata?.avatar_url ||
@@ -174,18 +206,15 @@ export default function SiteHeader() {
           <Link
             href="/dashboard"
             aria-label="Saját fiók"
-            title="Saját fiók"
-            className="group relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-900 transition-all hover:border-lime-400/70 hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]"
+            title={badges.some((badge) => badge.code === "founder") ? "Saját fiók · ALAPÍTÓ" : "Saját fiók"}
+            className="group relative flex h-10 w-10 items-center justify-center rounded-full transition-all hover:shadow-[0_0_12px_rgba(163,230,53,0.15)]"
           >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                className="h-full w-full object-cover grayscale transition-all group-hover:grayscale-0"
-              />
-            ) : (
-              <span className="text-xs font-bold text-lime-200">{avatarLetter}</span>
-            )}
+            <UserAvatarWithBadges
+              avatarUrl={avatarUrl}
+              fallback={avatarLetter}
+              badges={badges}
+              size="md"
+            />
             <span
               className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.8)]"
               aria-hidden="true"
