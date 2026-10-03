@@ -63,12 +63,46 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
     }
   };
 
+  const handleFacebookSignIn = async () => {
+    setStatus(null);
+    setError(null);
+    setOauthLoading(true);
+    try {
+      // Use the same auth/callback flow as the existing Google Login.
+      await supabase.auth.signOut();
+
+      persistAuthReturnTarget(next);
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "facebook",
+        options: {
+          redirectTo,
+        },
+      });
+      if (error) {
+        setError(error.message);
+      }
+    } finally {
+      setOauthLoading(false);
+    }
+  };
+
   const autoGoogleStarted = useRef(false);
+  const autoFacebookStarted = useRef(false);
 
   useEffect(() => {
-    if (searchParams?.get("provider") !== "google" || autoGoogleStarted.current) return;
-    autoGoogleStarted.current = true;
-    void handleGoogleSignIn();
+    const provider = searchParams?.get("provider");
+
+    if (provider === "google" && !autoGoogleStarted.current) {
+      autoGoogleStarted.current = true;
+      void handleGoogleSignIn();
+      return;
+    }
+
+    if (provider === "facebook" && !autoFacebookStarted.current) {
+      autoFacebookStarted.current = true;
+      void handleFacebookSignIn();
+    }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -141,6 +175,15 @@ function AuthContent({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement 
             className="mx-auto w-full items-center justify-center rounded-full border border-lime-100/70 bg-neutral-900 px-5 py-4 text-lg font-semibold text-lime-100 shadow-[0_0_22px_rgba(132,204,22,0.16)] transition hover:border-lime-400 hover:bg-neutral-800 hover:shadow-[0_0_28px_rgba(132,204,22,0.24)] disabled:opacity-60"
           >
             {oauthLoading ? "Google belépés…" : "Google Login"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleFacebookSignIn}
+            disabled={loading || oauthLoading}
+            className="mx-auto w-full items-center justify-center rounded-full border border-neutral-600 bg-neutral-900 px-5 py-4 text-lg font-semibold text-neutral-100 transition hover:border-neutral-400 hover:bg-neutral-800 disabled:opacity-60"
+          >
+            {oauthLoading ? "Facebook belépés…" : "Facebook Login"}
           </button>
         </form>
       )}
