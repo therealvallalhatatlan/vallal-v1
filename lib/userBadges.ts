@@ -32,7 +32,7 @@ export const BADGE_DEFINITIONS: Record<
   },
   founder: {
     name: "ALAPÍTÓ",
-    description: "45 000 Ft feletti összesített aktivitás.",
+    description: "Leg Belső Kör Alapítói Részvétel.",
   },
   merch: {
     name: "MERCH",
@@ -179,17 +179,6 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
     }
   }
 
-  const totalCents =
-    paidBookOrders.reduce((sum, order) => sum + toHufCents(order.amount), 0) +
-    paidShopOrders.reduce(
-      (sum, order) => sum + toHufCents(order.subtotal_amount),
-      0,
-    );
-
-  if (totalCents >= 4_500_000) {
-    earned.add("founder");
-  }
-
   return earned;
 }
 
@@ -214,11 +203,14 @@ export async function getUserBadges(
     "merch",
   ];
 
-  const computedEarned = new Set(orderedCodes.filter((code) => earnedCodes.has(code)));
+  const computedEarned = new Set(
+    orderedCodes.filter((code) => earnedCodes.has(code)),
+  );
 
   const db = supabaseAdmin();
 
-  // Historical exceptions can be granted explicitly, with an audit trail.
+  // Historical and business-rule exceptions are granted explicitly with an audit trail.
+  // The Leg Belső Kör founder rule is synchronized from public.orders by a DB trigger.
   const { data: overrideRows, error: overrideError } = await db
     .from("user_badge_overrides")
     .select("badge_id")
