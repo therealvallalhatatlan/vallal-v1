@@ -84,13 +84,13 @@ export default function BelsoKorPage() {
                 className="text-[10px] uppercase tracking-[0.18em] text-zinc-500"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                KOMMUNIKÁCIÓS CSATORNA - LEG BELSŐ KÖR
+                KOMMUNIKÁCIÓS CSATORNA - BELSŐ KÖR
               </span>
               <span
                 className="shrink-0 text-[9px] tracking-[0.12em] text-zinc-700"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
               >
-                2026.10.02.
+                2026.10.03.
               </span>
             </div>
           </div>
