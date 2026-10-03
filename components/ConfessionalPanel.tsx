@@ -20,6 +20,7 @@ import PushPermissionPrompt from './gyontatoszek/PushPermissionPrompt';
 import { createClient } from '@/lib/browser';
 import { useSessionGuard } from '@/hooks/useSessionGuard';
 import { sendMessagesAsJsonl } from '@/utils/exportFineTuning';
+import UserAvatarWithBadges from '@/components/UserAvatarWithBadges';
 
 const SESSION_STORAGE_KEY = 'gyontatoszek-session-id';
 const MODE_STORAGE_KEY = 'gyontatoszek-mode';
@@ -419,21 +420,14 @@ function buildReadingInsight(messages: GyontatasMessage[]): VReadingInsight | nu
   };
 }
 
-function UserAvatar({ url }: { url?: string }) {
-  const [broken, setBroken] = useState(false);
-  const cls = 'flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-[13px] text-neutral-400 ring-1 ring-white/10';
-
-  if (!url || broken) {
-    return <span className={cls}>U</span>;
-  }
-
+function UserAvatar({ url, isFounder }: { url?: string; isFounder?: boolean }) {
   return (
-    <img
-      src={url}
-      alt="avatar"
-      className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-white/10"
-      onError={() => setBroken(true)}
-      referrerPolicy="no-referrer"
+    <UserAvatarWithBadges
+      avatarUrl={url}
+      fallback="U"
+      badges={isFounder ? [{ code: "founder", name: "ALAPÍTÓ" }] : []}
+      size="sm"
+      className="text-[13px]"
     />
   );
 }
@@ -446,6 +440,45 @@ export default function ConfessionalPanel() {
   };
   const supabaseRef = useRef(createClient());
   const storageKeyRef = useRef(SESSION_STORAGE_KEY);
+  const [isFounder, setIsFounder] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFounderBadge = async () => {
+      if (!session?.access_token) {
+        if (!cancelled) setIsFounder(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/user/badges', {
+          headers: {
+            Authorization: 'Bearer ' + session.access_token,
+          },
+          cache: 'no-store',
+        });
+
+        if (!response.ok) throw new Error('badge_request_failed');
+
+        const payload = await response.json();
+        const founder = Array.isArray(payload?.badges)
+          ? payload.badges.some((badge: { code?: unknown }) => badge.code === 'founder')
+          : false;
+
+        if (!cancelled) setIsFounder(founder);
+      } catch (error) {
+        console.error('[ConfessionalPanel] founder badge load failed', error);
+        if (!cancelled) setIsFounder(false);
+      }
+    };
+
+    void loadFounderBadge();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.access_token]);
   const [confession, setConfession] = useState('');
   const [messages, setMessages] = useState<GyontatasMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -938,7 +971,7 @@ export default function ConfessionalPanel() {
             </div>
 
             <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-3 py-2 ring-1 ring-white/8 transition-opacity duration-200">
-              <UserAvatar url={session?.user?.user_metadata?.avatar_url} />
+              <UserAvatar url={session?.user?.user_metadata?.avatar_url} isFounder={isFounder} />
               <button
                 type="button"
                 onClick={() => void handleSignOut()}
