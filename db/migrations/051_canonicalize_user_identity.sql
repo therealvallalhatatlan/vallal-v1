@@ -32,12 +32,15 @@ BEGIN
   IF v_nullable IS NULL THEN
     RAISE EXCEPTION '051 aborted: public.orders.user_id column does not exist';
   END IF;
-
-  IF v_nullable <> 'YES' THEN
-    RAISE EXCEPTION '051 aborted: public.orders.user_id must be nullable';
-  END IF;
 END;
 $pg$;
+
+-- Legacy orders may currently require a user_id because the old model used
+-- public.users.id as the foreign key. The canonical model must allow NULL so
+-- historical orders belonging to a person who no longer has an Auth account
+-- can retain their legacy identity without inventing an Auth user.
+ALTER TABLE public.orders
+  ALTER COLUMN user_id DROP NOT NULL;
 
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS legacy_public_user_id UUID;
@@ -119,6 +122,27 @@ BEGIN
   THEN
     RAISE EXCEPTION
       '051 aborted: confirmed legacy_user_id alias points to a different Auth user';
+  END IF;
+END;
+$pg$;
+
+-- 4) Do not overwrite a previously confirmed email alias that points elsewhere.
+DO $pg$
+BEGIN
+  IF to_regclass('public.user_identity_aliases') IS NOT NULL
+     AND EXISTS (
+       SELECT 1
+       FROM _user_identity_051_map m
+       JOIN public.user_identity_aliases a
+         ON a.identity_type = 'email'
+        AND a.normalized_value = lower(trim(m.email))
+        AND a.confidence = 'confirmed'
+        AND a.user_id <> m.canonical_auth_user_id
+      WHERE m.canonical_auth_user_id IS NOT NULL
+    )
+  THEN
+    RAISE EXCEPTION
+      '051 aborted: confirmed email alias points to a different Auth user';
   END IF;
 END;
 $pg$;
