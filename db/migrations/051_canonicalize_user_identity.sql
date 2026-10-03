@@ -18,7 +18,7 @@
 
 BEGIN;
 
-DO $
+DO $pg$
 DECLARE
   v_nullable TEXT;
 BEGIN
@@ -37,7 +37,7 @@ BEGIN
     RAISE EXCEPTION '051 aborted: public.orders.user_id must be nullable';
   END IF;
 END;
-$;
+$pg$;
 
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS legacy_public_user_id UUID;
@@ -68,7 +68,7 @@ WHERE pu.id IS DISTINCT FROM au.id;
 
 -- Safety checks:
 -- 1) Every email-based legacy match must resolve to at most one Auth account.
-DO $$
+DO $pg$
 BEGIN
   IF EXISTS (
     SELECT 1
@@ -83,10 +83,10 @@ BEGIN
       '051 aborted: an email maps to multiple Auth users';
   END IF;
 END;
-$$;
+$pg$;
 
 -- 2) A canonical Auth UUID must not already belong to another public.users row.
-DO $$
+DO $pg$
 BEGIN
   IF EXISTS (
     SELECT 1
@@ -100,10 +100,10 @@ BEGIN
       '051 aborted: canonical Auth UUID already exists in public.users';
   END IF;
 END;
-$$;
+$pg$;
 
 -- 3) Do not overwrite a previously confirmed alias that points elsewhere.
-DO $$
+DO $pg$
 BEGIN
   IF to_regclass('public.user_identity_aliases') IS NOT NULL
      AND EXISTS (
@@ -121,7 +121,7 @@ BEGIN
       '051 aborted: confirmed legacy_user_id alias points to a different Auth user';
   END IF;
 END;
-$$;
+$pg$;
 
 -- Preserve the old public.users ID on every affected historical order before
 -- changing the ownership column.
@@ -227,7 +227,7 @@ DO UPDATE SET
   updated_at = now();
 
 -- The remaining non-null order ownership must now be valid Auth ownership.
-DO $$
+DO $pg$
 BEGIN
   IF EXISTS (
     SELECT 1
@@ -241,7 +241,7 @@ BEGIN
       '051 aborted: orders.user_id still contains a non-Auth UUID';
   END IF;
 END;
-$$;
+$pg$;
 
 ALTER TABLE public.orders
   ADD CONSTRAINT orders_user_id_fkey
@@ -260,7 +260,7 @@ RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $pg$
 DECLARE
   v_legacy users%ROWTYPE;
   v_auth_email TEXT;
@@ -459,7 +459,7 @@ BEGIN
     'book_copies_moved', v_book_copies_moved
   );
 END;
-$$;
+$pg$;
 
 REVOKE ALL ON FUNCTION public.reconcile_legacy_user(uuid, uuid, text)
   FROM PUBLIC, anon, authenticated;
@@ -476,7 +476,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $
+AS $pg$
 DECLARE
   v_profile users%ROWTYPE;
   v_legacy_user_id UUID;
@@ -650,7 +650,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$pg$;
 
 REVOKE ALL ON FUNCTION public.handle_new_auth_user()
   FROM PUBLIC, anon, authenticated;
@@ -667,7 +667,7 @@ CREATE TRIGGER on_auth_user_created_profile
   EXECUTE FUNCTION public.handle_new_auth_user();
 
 -- Final sanity checks.
-DO $$
+DO $pg$
 DECLARE
   v_auth_users INTEGER;
   v_exact_matches INTEGER;
@@ -721,6 +721,6 @@ BEGIN
      LEFT JOIN auth.users au ON au.id = pu.id
      WHERE au.id IS NULL);
 END;
-$$;
+$pg$;
 
 COMMIT;
