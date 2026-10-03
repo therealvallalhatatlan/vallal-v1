@@ -32,7 +32,7 @@ export const BADGE_DEFINITIONS: Record<
   },
   founder: {
     name: "ALAPÍTÓ",
-    description: "Leg Belső Kör Alapítói Részvétel.",
+    description: "Leg Belső Kör Alapítói Részvétel vagy legalább 45 000 Ft összesített költés.",
   },
   merch: {
     name: "MERCH",
@@ -117,9 +117,16 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
   const copies = copiesRes.data ?? [];
   const shopItems = shopItemsRes.data ?? [];
 
-  const paidBookOrders = bookOrders.filter(
-    (order) => isEarnedBookOrder(order.status) && !isCancelled(order.status),
-  );
+  const paidBookOrders = bookOrders.filter((order) => {
+    if (!isEarnedBookOrder(order.status) || isCancelled(order.status)) return false;
+
+    const metadata =
+      order.metadata && typeof order.metadata === "object"
+        ? (order.metadata as Record<string, unknown>)
+        : {};
+
+    return String(metadata.payment_mismatch ?? "").toLowerCase() !== "true";
+  });
   const paidShopOrders = shopOrders.filter(
     (order) => order.status === "paid",
   );
@@ -177,6 +184,20 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
     if (isMerchType(item.product_type)) {
       earned.add("merch");
     }
+  }
+
+  // Founder is earned either through a successful Leg Belső Kör
+  // participation or by reaching the cumulative 45 000 Ft spend threshold.
+  // Amounts in orders/shop_orders are stored in Stripe minor units (fillér).
+  const totalPaidMinor =
+    paidBookOrders.reduce((sum, order) => sum + toHufCents(order.amount), 0) +
+    paidShopOrders.reduce(
+      (sum, order) => sum + toHufCents(order.subtotal_amount),
+      0,
+    );
+
+  if (totalPaidMinor >= 4_500_000) {
+    earned.add("founder");
   }
 
   return earned;
