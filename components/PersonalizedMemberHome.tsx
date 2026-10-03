@@ -12,13 +12,13 @@ import {
   LoaderCircle,
   RefreshCw,
   ShoppingBag,
-  UserRound,
   MapPinned,
   Globe2,
 } from "lucide-react"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import Footer from "@/components/Footer"
 import SiteHeader from "@/components/SiteHeader"
+import UserAvatarWithBadges from "@/components/UserAvatarWithBadges"
 import type {
   HomepageBlock,
   HomepagePlan,
@@ -132,17 +132,10 @@ function FixedBadgesSection({
         </div>
       ) : codes.length === 0 ? (
         <div className="mt-6 flex items-center gap-5">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-zinc-700 bg-zinc-950 text-zinc-500">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <UserRound className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
-            )}
-          </div>
+          <UserAvatarWithBadges
+            avatarUrl={avatarUrl}
+            size="lg"
+          />
 
           <div className="max-w-xl">
             <p
@@ -163,16 +156,12 @@ function FixedBadgesSection({
         </div>
       ) : (
         <div className="grid grid-cols-12 overflow-x-auto px-2 py-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-lime-200/40 bg-zinc-950 text-zinc-500 outline-4 outline-offset-2 outline-lime-100/10" title="Profilkép">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Profilkép"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <UserRound className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
-            )}
+          <div className="outline-4 outline-offset-2 outline-lime-100/10" title="Profilkép">
+            <UserAvatarWithBadges
+              avatarUrl={avatarUrl}
+              badges={codes.map((code) => ({ code }))}
+              size="lg"
+            />
           </div>
           {codes.map((code) => {
             const Icon = BADGE_ICONS[code]
