@@ -27,16 +27,93 @@ function toDeterministicUuid(seed: string): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
 }
 
-function resolveLegacyOrderUserId(rawValue: string | null): string | null {
-  if (!rawValue) return null;
+type ResolvedOrderIdentity = {
+  userId: string | null;
+  legacyPublicUserId: string | null;
+};
 
-  const trimmed = rawValue.trim();
-  if (!trimmed) return null;
-
+async function resolveOrderIdentity(
+  db: SupabaseClient,
+  rawValue: string | null,
+  customerEmail: string | null,
+): Promise<ResolvedOrderIdentity> {
+  const trimmed = rawValue?.trim() ?? "";
   const uuidLike = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-  if (uuidLike.test(trimmed)) return trimmed;
 
-  return toDeterministicUuid(`telegram:${trimmed}`);
+  if (trimmed && uuidLike.test(trimmed)) {
+    const { data: authById, error: authByIdError } = await db.auth.admin.getUserById(trimmed);
+    if (!authByIdError && authById.user?.id) {
+      return {
+        userId: authById.user.id,
+        legacyPublicUserId: null,
+      };
+    }
+
+    const { data: alias, error: aliasError } = await db
+      .from("user_identity_aliases")
+      .select("user_id")
+      .eq("identity_type", "legacy_user_id")
+      .eq("normalized_value", trimmed)
+      .eq("confidence", "confirmed")
+      .maybeSingle<{ user_id: string }>();
+
+    if (!aliasError && alias?.user_id) {
+      return {
+        userId: alias.user_id,
+        legacyPublicUserId: trimmed,
+      };
+    }
+
+    const { data: legacyProfile, error: legacyProfileError } = await db
+      .from("users")
+      .select("id, email")
+      .eq("id", trimmed)
+      .maybeSingle<{ id: string; email: string }>();
+
+    if (!legacyProfileError && legacyProfile?.email) {
+      const { data: authByEmail, error: authByEmailError } =
+        await db.auth.admin.getUserByEmail(legacyProfile.email);
+
+      if (!authByEmailError && authByEmail.user?.id) {
+        return {
+          userId: authByEmail.user.id,
+          legacyPublicUserId: trimmed,
+        };
+      }
+    }
+
+    return {
+      userId: null,
+      legacyPublicUserId: trimmed,
+    };
+  }
+
+  const normalizedEmail = customerEmail?.trim() ?? "";
+  if (normalizedEmail) {
+    const { data: authByEmail, error: authByEmailError } =
+      await db.auth.admin.getUserByEmail(normalizedEmail);
+
+    if (!authByEmailError && authByEmail.user?.id) {
+      const { data: publicProfile, error: publicProfileError } = await db
+        .from("users")
+        .select("id")
+        .eq("email", normalizedEmail)
+        .maybeSingle<{ id: string }>();
+
+      return {
+        userId: authByEmail.user.id,
+        legacyPublicUserId:
+          !publicProfileError && publicProfile?.id && publicProfile.id !== authByEmail.user.id
+            ? publicProfile.id
+            : null,
+      };
+    }
+  }
+
+  return {
+    userId: null,
+    legacyPublicUserId: null,
+  };
 }
 
 function getWebhookSupabase(): SupabaseClient | null {
@@ -269,19 +346,11 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
 
   const telegramChatId = metadata.telegram_chat_id ?? null;
   const legacyUserIdRaw = metadata.user_uuid ?? metadata.telegram_user_id ?? telegramChatId ?? null;
-  let legacyUserId = resolveLegacyOrderUserId(legacyUserIdRaw);
-
-  if (!legacyUserId && session.customer_details?.email) {
-    const { data: matchingProfile, error: profileLookupError } = await db
-      .from('users')
-      .select('id')
-      .ilike('email', session.customer_details.email.trim())
-      .maybeSingle<{ id: string }>();
-
-    if (!profileLookupError && matchingProfile?.id) {
-      legacyUserId = matchingProfile.id;
-    }
-  }
+  const orderIdentity = await resolveOrderIdentity(
+    db,
+    legacyUserIdRaw,
+    session.customer_details?.email ?? null,
+  );
 
   const rawTelegramIdentity = metadata.telegram_user_ephemeral ?? metadata.telegram_user_id ?? telegramChatId ?? null;
   const anonymizedUserHash = rawTelegramIdentity ? hashTelegramId(String(rawTelegramIdentity)) : null;
@@ -311,7 +380,8 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
     .upsert(
       {
         stripe_session_id: session.id,
-        user_id: legacyUserId,
+        user_id: orderIdentity.userId,
+        legacy_public_user_id: orderIdentity.legacyPublicUserId,
         telegram_chat_id: telegramChatId,
         anonymized_user_hash: anonymizedUserHash,
         product_id: productId,
@@ -396,7 +466,7 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
   const productId = metadata.product_id ?? metadata.telegram_product_id ?? 'multi_cart';
   const telegramChatId = metadata.telegram_chat_id ?? null;
   const legacyUserIdRaw = metadata.user_uuid ?? metadata.telegram_user_id ?? telegramChatId ?? null;
-  const legacyUserId = resolveLegacyOrderUserId(legacyUserIdRaw);
+  const orderIdentity = await resolveOrderIdentity(db, legacyUserIdRaw, null);
   const orderId = metadata.order_id ?? null;
   const amount = typeof paymentIntent.amount_received === 'number'
     ? paymentIntent.amount_received
@@ -420,6 +490,8 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
       .from('orders')
       .update({
         stripe_session_id: paymentIntent.id,
+        user_id: orderIdentity.userId,
+        legacy_public_user_id: orderIdentity.legacyPublicUserId,
         telegram_chat_id: telegramChatId,
         status: 'paid',
         amount,
@@ -443,7 +515,8 @@ async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentInt
       .upsert(
         {
           stripe_session_id: paymentIntent.id,
-          user_id: legacyUserId,
+          user_id: orderIdentity.userId,
+          legacy_public_user_id: orderIdentity.legacyPublicUserId,
           telegram_chat_id: telegramChatId,
           anonymized_user_hash: metadata.telegram_user_hash ?? null,
           product_id: productId,
