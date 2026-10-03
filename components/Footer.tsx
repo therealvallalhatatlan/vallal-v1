@@ -62,7 +62,12 @@ export default function Footer() {
         </p>
 
         <p className="text-zinc-500 text-xs">
-          Terms of Service • Privacy Policy
+          <a
+            href="/privacy-policy"
+            className="hover:text-zinc-300 transition-colors"
+          >
+            Adatkezelési tájékoztató
+          </a>
         </p>
       </div>
     </footer>
