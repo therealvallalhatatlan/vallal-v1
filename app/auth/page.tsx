@@ -9,7 +9,7 @@ import {
 } from "@/lib/authRedirect";
 
 const supabase = createClient();
-const VIDEO_SRC = "/videos/0420.mp4";
+const VIDEO_SRC = "/videos/film2.mp4";
 
 export default function AuthPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
