@@ -345,9 +345,17 @@ async function handleCheckoutSessionNotifications(session: Stripe.Checkout.Sessi
   );
 }
 
-async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
+type PaidOrderResult = {
+  ok: boolean;
+  paymentMismatch?: boolean;
+  reason?: string;
+};
+
+async function upsertPaidOrderFromSession(
+  session: Stripe.Checkout.Session,
+): Promise<PaidOrderResult> {
   const db = getWebhookSupabase();
-  if (!db) return;
+  if (!db) return { ok: false, reason: 'missing_database_configuration' };
 
   const metadata = session.metadata ?? {};
   const productId = metadata.product_id ?? metadata.productId ?? 'unknown';
@@ -367,7 +375,7 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
   const anonymizedUserHash = rawTelegramIdentity ? hashTelegramId(String(rawTelegramIdentity)) : null;
   const deliveryType = metadata.delivery_type === 'anonymous_locker' ? 'anonymous_locker' : 'dead_drop';
   const packageLabel = metadata.package_label ?? metadata.product_alias ?? productId;
-  const amount = typeof session.amount_total === 'number' ? session.amount_total : 0;
+  const stripeAmountMinor = typeof session.amount_total === 'number' ? session.amount_total : null;
   const currency = (session.currency ?? 'huf').toLowerCase();
   const safeMetadata = sanitizeOrderMetadata(metadata);
   const shippingDetails = (session as Stripe.Checkout.Session & {
@@ -385,6 +393,99 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
         address: shippingDetails.address ?? null,
       }
     : null;
+
+  const isLegBelsoKor = metadata.type === 'legbelso-kor';
+  let amount = stripeAmountMinor ?? 0;
+
+  if (isLegBelsoKor) {
+    if (session.payment_status !== 'paid') {
+      console.warn(`⚠️ Leg Belső Kör session ${session.id} is not paid; refusing finalization`);
+      return { ok: false, reason: 'session_not_paid' };
+    }
+
+    const expectedAmountHuf = Number.parseInt(
+      metadata.expected_amount_huf ?? metadata.amount_huf ?? '',
+      10,
+    );
+    const expectedStripeAmountMinor = Number.parseInt(
+      metadata.expected_stripe_amount_minor ?? '',
+      10,
+    );
+    const expectedMinor =
+      Number.isInteger(expectedStripeAmountMinor) && expectedStripeAmountMinor > 0
+        ? expectedStripeAmountMinor
+        : Number.isInteger(expectedAmountHuf) && expectedAmountHuf > 0
+          ? expectedAmountHuf * 100
+          : null;
+
+    const amountMismatch =
+      !Number.isInteger(expectedAmountHuf) ||
+      expectedAmountHuf < 15000 ||
+      expectedAmountHuf > 1000000 ||
+      expectedMinor === null ||
+      stripeAmountMinor === null ||
+      stripeAmountMinor !== expectedMinor;
+
+    if (amountMismatch) {
+      const actualAmountHuf =
+        stripeAmountMinor !== null && Number.isInteger(stripeAmountMinor)
+          ? stripeAmountMinor / 100
+          : null;
+
+      const mismatchMetadata = {
+        ...safeMetadata,
+        payment_mismatch: 'true',
+        expected_amount_huf: Number.isInteger(expectedAmountHuf) ? String(expectedAmountHuf) : '',
+        actual_amount_huf: actualAmountHuf !== null ? String(actualAmountHuf) : '',
+        expected_stripe_amount_minor: expectedMinor !== null ? String(expectedMinor) : '',
+        actual_stripe_amount_minor: stripeAmountMinor !== null ? String(stripeAmountMinor) : '',
+      };
+
+      console.error(`❌ Leg Belső Kör payment mismatch for session ${session.id}`, {
+        expectedAmountHuf,
+        expectedStripeAmountMinor: expectedMinor,
+        actualStripeAmountMinor: stripeAmountMinor,
+        actualAmountHuf,
+      });
+
+      const { error: mismatchUpsertError } = await db
+        .from('orders')
+        .upsert(
+          {
+            stripe_session_id: session.id,
+            user_id: orderIdentity.userId,
+            legacy_public_user_id: orderIdentity.legacyPublicUserId,
+            telegram_chat_id: telegramChatId,
+            anonymized_user_hash: anonymizedUserHash,
+            product_id: productId,
+            delivery_type: deliveryType,
+            amount: actualAmountHuf ?? 0,
+            currency,
+            status: 'pending',
+            customer_email: session.customer_details?.email ?? null,
+            customer_name: session.customer_details?.name ?? null,
+            shipping_address: shippingAddress,
+            metadata: mismatchMetadata,
+          },
+          { onConflict: 'stripe_session_id' },
+        );
+
+      if (mismatchUpsertError) {
+        console.error(
+          `❌ Failed to persist Leg Belső Kör payment mismatch for Stripe session ${session.id}:`,
+          mismatchUpsertError,
+        );
+      }
+
+      return {
+        ok: false,
+        paymentMismatch: true,
+        reason: 'stripe_amount_mismatch',
+      };
+    }
+
+    amount = expectedAmountHuf;
+  }
 
   const { data: upsertedOrder, error } = await db
     .from('orders')
@@ -416,18 +517,18 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
 
   if (error) {
     console.error(`❌ Failed to upsert order for Stripe session ${session.id}:`, error);
-    return;
+    return { ok: false, reason: 'orders_upsert_failed' };
   }
 
   console.log(`✅ Orders table upserted for Stripe session ${session.id}`);
 
   if (!telegramChatId || !telegramBotToken) {
-    return;
+    return { ok: true };
   }
 
   if (upsertedOrder?.telegram_sent_at) {
     console.log(`ℹ️ Telegram confirmation already sent for Stripe session ${session.id}`);
-    return;
+    return { ok: true };
   }
 
   const sendResult = await sendTelegramCompletionMessage({
@@ -467,6 +568,8 @@ async function upsertPaidOrderFromSession(session: Stripe.Checkout.Session) {
   if (failedUpdateError) {
     console.error(`⚠️ Failed to persist Telegram error for ${session.id}:`, failedUpdateError);
   }
+
+  return { ok: true };
 }
 
 async function upsertPaidOrderFromPaymentIntent(paymentIntent: Stripe.PaymentIntent) {
@@ -721,9 +824,25 @@ export async function PATCH(request: NextRequest) {
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeEventId: string) {
   console.log(`💳 Processing checkout completion for session: ${session.id}`);
 
-  await handleCheckoutSessionNotifications(session);
-
   const metadata = session.metadata;
+
+  // Leg Belső Kör has an explicit amount invariant. Validate and persist it
+  // before sending a success notification, so underpayments never look successful.
+  if (metadata?.type === 'legbelso-kor') {
+    const result = await upsertPaidOrderFromSession(session);
+
+    if (result.ok) {
+      await handleCheckoutSessionNotifications(session);
+    } else {
+      console.warn(
+        `⚠️ Leg Belső Kör session ${session.id} was not finalized as paid: ${result.reason ?? 'unknown'}`,
+      );
+    }
+
+    return;
+  }
+
+  await handleCheckoutSessionNotifications(session);
   if (metadata?.type === 'spot_unlock') {
     await handleSpotUnlockCheckoutCompleted(session);
     return;
@@ -735,14 +854,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
   }
 
   if (metadata?.type === 'mecenas') {
-    await upsertPaidOrderFromSession(session);
-    return;
-  }
-
-  // Leg Belső Kör alapítói részvétel:
-  // the checkout creates a normal Stripe Checkout Session, so on successful
-  // payment persist it in the canonical orders table as well.
-  if (metadata?.type === 'legbelso-kor') {
     await upsertPaidOrderFromSession(session);
     return;
   }
