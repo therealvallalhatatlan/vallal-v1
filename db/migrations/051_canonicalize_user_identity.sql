@@ -18,6 +18,27 @@
 
 BEGIN;
 
+DO $
+DECLARE
+  v_nullable TEXT;
+BEGIN
+  SELECT is_nullable
+  INTO v_nullable
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'orders'
+    AND column_name = 'user_id';
+
+  IF v_nullable IS NULL THEN
+    RAISE EXCEPTION '051 aborted: public.orders.user_id column does not exist';
+  END IF;
+
+  IF v_nullable <> 'YES' THEN
+    RAISE EXCEPTION '051 aborted: public.orders.user_id must be nullable';
+  END IF;
+END;
+$;
+
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS legacy_public_user_id UUID;
 
@@ -445,6 +466,205 @@ REVOKE ALL ON FUNCTION public.reconcile_legacy_user(uuid, uuid, text)
 
 GRANT EXECUTE ON FUNCTION public.reconcile_legacy_user(uuid, uuid, text)
   TO service_role;
+
+-- Keep Auth and public.users synchronized for every future registration.
+-- When a newly-created Auth user has an existing legacy public profile with the
+-- same email, reuse that profile row, migrate its historical orders, and retain
+-- the old public.users ID as legacy_public_user_id.
+CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $
+DECLARE
+  v_profile users%ROWTYPE;
+  v_legacy_user_id UUID;
+  v_found_by_email BOOLEAN := false;
+BEGIN
+  -- First prefer the canonical public profile if it already exists.
+  SELECT *
+  INTO v_profile
+  FROM public.users
+  WHERE id = NEW.id
+  FOR UPDATE;
+
+  IF FOUND THEN
+    UPDATE public.users
+    SET
+      email = COALESCE(NEW.email, email),
+      updated_at = now()
+    WHERE id = NEW.id;
+
+    RETURN NEW;
+  END IF;
+
+  -- Otherwise reclaim an existing historical profile by email.
+  IF NEW.email IS NOT NULL AND trim(NEW.email) <> '' THEN
+    SELECT *
+    INTO v_profile
+    FROM public.users
+    WHERE lower(trim(email)) = lower(trim(NEW.email))
+    LIMIT 1
+    FOR UPDATE;
+
+    v_found_by_email := FOUND;
+  END IF;
+
+  IF v_found_by_email THEN
+    v_legacy_user_id := v_profile.id;
+
+    UPDATE public.orders
+    SET
+      user_id = NEW.id,
+      legacy_public_user_id = COALESCE(
+        legacy_public_user_id,
+        v_legacy_user_id
+      )
+    WHERE user_id = v_legacy_user_id
+       OR legacy_public_user_id = v_legacy_user_id;
+
+    UPDATE public.book_copies
+    SET
+      user_id = NEW.id,
+      updated_at = now()
+    WHERE lower(trim(COALESCE(order_email, ''))) =
+          lower(trim(NEW.email))
+      AND user_id IS NULL;
+
+    UPDATE public.users
+    SET
+      id = NEW.id,
+      email = NEW.email,
+      updated_at = now()
+    WHERE id = v_legacy_user_id;
+
+    IF NOT EXISTS (
+      SELECT 1
+      FROM public.user_identity_aliases a
+      WHERE a.identity_type = 'legacy_user_id'
+        AND a.normalized_value = v_legacy_user_id::text
+        AND a.confidence = 'confirmed'
+        AND a.user_id <> NEW.id
+    ) THEN
+      INSERT INTO public.user_identity_aliases (
+        user_id,
+        identity_type,
+        identity_value,
+        normalized_value,
+        source,
+        confidence,
+        note
+      )
+      VALUES (
+        NEW.id,
+        'legacy_user_id',
+        v_legacy_user_id::text,
+        v_legacy_user_id::text,
+        'auth_user_trigger',
+        'confirmed',
+        'Legacy public.users profile reclaimed by matching Auth email'
+      )
+      ON CONFLICT (user_id, identity_type, normalized_value)
+      DO UPDATE SET
+        updated_at = now(),
+        note = EXCLUDED.note;
+    END IF;
+
+    IF NEW.email IS NOT NULL
+       AND NOT EXISTS (
+         SELECT 1
+         FROM public.user_identity_aliases a
+         WHERE a.identity_type = 'email'
+           AND a.normalized_value = lower(trim(NEW.email))
+           AND a.confidence = 'confirmed'
+           AND a.user_id <> NEW.id
+       )
+    THEN
+      INSERT INTO public.user_identity_aliases (
+        user_id,
+        identity_type,
+        identity_value,
+        normalized_value,
+        source,
+        confidence,
+        note
+      )
+      VALUES (
+        NEW.id,
+        'email',
+        NEW.email,
+        lower(trim(NEW.email)),
+        'auth_user_trigger',
+        'confirmed',
+        'Auth user matched to historical public.users email'
+      )
+      ON CONFLICT (user_id, identity_type, normalized_value)
+      DO UPDATE SET
+        updated_at = now(),
+        note = EXCLUDED.note;
+    END IF;
+
+    INSERT INTO public.user_reconciliation_log (
+      user_id,
+      related_user_id,
+      related_legacy_user_id,
+      action,
+      reason,
+      metadata
+    )
+    VALUES (
+      NEW.id,
+      NULL,
+      v_legacy_user_id,
+      'merge_legacy_user',
+      'Automatic Auth registration reconciliation',
+      jsonb_build_object(
+        'legacy_email', v_profile.email,
+        'canonical_email', NEW.email
+      )
+    );
+
+    RETURN NEW;
+  END IF;
+
+  -- No historical profile exists. Create the normal application profile.
+  INSERT INTO public.users (
+    id,
+    email,
+    nickname,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    NEW.email,
+    NULL,
+    COALESCE(NEW.created_at, now()),
+    now()
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET
+    email = COALESCE(EXCLUDED.email, public.users.email),
+    updated_at = now();
+
+  RETURN NEW;
+END;
+$;
+
+REVOKE ALL ON FUNCTION public.handle_new_auth_user()
+  FROM PUBLIC, anon, authenticated;
+
+GRANT EXECUTE ON FUNCTION public.handle_new_auth_user()
+  TO postgres, service_role;
+
+DROP TRIGGER IF EXISTS on_auth_user_created_profile
+  ON auth.users;
+
+CREATE TRIGGER on_auth_user_created_profile
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_auth_user();
 
 -- Final sanity checks.
 DO $$
