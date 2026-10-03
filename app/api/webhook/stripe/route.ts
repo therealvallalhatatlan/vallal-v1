@@ -65,14 +65,21 @@ async function resolveOrderIdentity(
       .maybeSingle<{ id: string; email: string }>();
 
     if (!legacyProfileError && legacyProfile?.email) {
-      const { data: authByEmail, error: authByEmailError } =
-        await db.auth.admin.getUserByEmail(legacyProfile.email);
+      const { data: authUsers, error: authUsersError } =
+        await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
 
-      if (!authByEmailError && authByEmail.user?.id) {
-        return {
-          userId: authByEmail.user.id,
-          legacyPublicUserId: trimmed,
-        };
+      if (!authUsersError) {
+        const normalizedLegacyEmail = legacyProfile.email.trim().toLowerCase();
+        const authByEmail = authUsers.users.find(
+          (user) => user.email?.trim().toLowerCase() === normalizedLegacyEmail,
+        );
+
+        if (authByEmail?.id) {
+          return {
+            userId: authByEmail.id,
+            legacyPublicUserId: trimmed,
+          };
+        }
       }
     }
 
@@ -84,23 +91,33 @@ async function resolveOrderIdentity(
 
   const normalizedEmail = customerEmail?.trim() ?? "";
   if (normalizedEmail) {
-    const { data: authByEmail, error: authByEmailError } =
-      await db.auth.admin.getUserByEmail(normalizedEmail);
+    const normalizedEmailLower = normalizedEmail.toLowerCase();
 
-    if (!authByEmailError && authByEmail.user?.id) {
-      const { data: publicProfile, error: publicProfileError } = await db
-        .from("users")
-        .select("id")
-        .eq("email", normalizedEmail)
-        .maybeSingle<{ id: string }>();
+    const { data: authUsers, error: authUsersError } =
+      await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
 
-      return {
-        userId: authByEmail.user.id,
-        legacyPublicUserId:
-          !publicProfileError && publicProfile?.id && publicProfile.id !== authByEmail.user.id
-            ? publicProfile.id
-            : null,
-      };
+    if (!authUsersError) {
+      const authByEmail = authUsers.users.find(
+        (user) => user.email?.trim().toLowerCase() === normalizedEmailLower,
+      );
+
+      if (authByEmail?.id) {
+        const { data: publicProfile, error: publicProfileError } = await db
+          .from("users")
+          .select("id")
+          .eq("email", normalizedEmail)
+          .maybeSingle<{ id: string }>();
+
+        return {
+          userId: authByEmail.id,
+          legacyPublicUserId:
+            !publicProfileError &&
+            publicProfile?.id &&
+            publicProfile.id !== authByEmail.id
+              ? publicProfile.id
+              : null,
+        };
+      }
     }
   }
 
