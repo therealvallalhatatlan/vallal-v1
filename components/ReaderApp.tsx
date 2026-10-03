@@ -14,6 +14,8 @@ import {
 import AudioPlayer3 from "@/components/AudioPlayer3";
 import { usePresence } from "@/hooks/usePresence";
 import ReaderPWAPrompt from "@/components/ReaderPWAPrompt";
+import { createClient } from "@/lib/browser";
+import UserAvatarWithBadges from "@/components/UserAvatarWithBadges";
 
 // import BookCover from "@/components/BookCover";
 
@@ -142,7 +144,59 @@ export default function ReaderApp({ stories, initialSlug, userEmail, avatarUrl, 
   const [playlist, setPlaylist] = useState<PlaylistData | null>(null);
   const [playlistLoading, setPlaylistLoading] = useState(false);
   const { activeCount } = usePresence();
+  const [badges, setBadges] = useState<Array<{ code: string; name?: string | null }>>([]);
   const isValidInitialSlug = !!initialSlug && stories.some((story) => story.slug === initialSlug);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadFounderBadge = async () => {
+      try {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session?.access_token) {
+          if (!cancelled) setBadges([]);
+          return;
+        }
+
+        const response = await fetch("/api/user/badges", {
+          headers: {
+            Authorization: "Bearer " + session.access_token,
+          },
+          cache: "no-store",
+        });
+
+        if (!response.ok) throw new Error("badge_request_failed");
+
+        const payload = (await response.json()) as {
+          badges?: Array<{ code?: unknown; name?: unknown }>;
+        };
+
+        const nextBadges = Array.isArray(payload.badges)
+          ? payload.badges
+              .filter((badge) => typeof badge.code === "string")
+              .map((badge) => ({
+                code: badge.code as string,
+                name: typeof badge.name === "string" ? badge.name : null,
+              }))
+          : [];
+
+        if (!cancelled) setBadges(nextBadges);
+      } catch (error) {
+        console.error("[ReaderApp] founder badge load failed", error);
+        if (!cancelled) setBadges([]);
+      }
+    };
+
+    void loadFounderBadge();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userEmail]);
 
   const currentIndex = useMemo(
     () => stories.findIndex((s) => s.slug === currentSlug),
@@ -640,17 +694,13 @@ export default function ReaderApp({ stories, initialSlug, userEmail, avatarUrl, 
 
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-neutral-800 bg-neutral-950/60 px-3 py-2">
             <div className="flex items-center gap-3">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="avatar"
-                  className="h-9 w-9 rounded-full object-cover ring-1 ring-lime-500/50"
-                />
-              ) : (
-                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-lime-500/80 to-emerald-500/60 flex items-center justify-center text-sm font-semibold text-black ring-1 ring-lime-300/50">
-                  {userInitial}
-                </div>
-              )}
+              <UserAvatarWithBadges
+                avatarUrl={avatarUrl}
+                fallback={userInitial}
+                badges={badges}
+                size="sm"
+                className="text-sm"
+              />
               <div className="flex flex-col">
                 <span className="text-xs text-neutral-200 truncate max-w-[140px]">
                   {userEmail || "Belépett olvasó"}
