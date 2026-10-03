@@ -143,23 +143,14 @@ function AuthPageContent() {
       <div className="absolute inset-0 bg-black/45" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(0,0,0,0.08),rgba(0,0,0,0.7)_78%)]" />
 
-      <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-5 py-8">
+      <div className="relative z-10 flex min-h-[100svh] items-end justify-center px-5 py-8">
         <section className="w-full max-w-[540px]">
-          <div className="mb-8 text-center">
-            <h1
-              className="text-[27px] font-semibold tracking-[-0.025em] text-white/95 sm:text-[32px]"
-              style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
-            >
-              Üdv a fedélzeten
-            </h1>
-          </div>
-
           <div className="grid gap-4">
             <button
               type="button"
               onClick={() => void signInWithProvider("facebook")}
               disabled={busy}
-              className="flex min-h-[72px] w-full items-center justify-center gap-4 rounded-[14px] bg-white px-6 text-[18px] font-semibold text-[#1877F2] shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition duration-200 hover:scale-[1.01] hover:bg-white disabled:cursor-wait disabled:opacity-55 sm:min-h-[80px] sm:text-[20px]"
+              className="flex min-h-[72px] w-full items-center justify-center gap-4 rounded-[14px] bg-[#1877F2] px-6 text-[18px] font-semibold text-zinc-100 shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition duration-200 hover:scale-[1.01] hover:bg-[#2281fc] disabled:cursor-wait disabled:opacity-55 sm:min-h-[80px] sm:text-[20px]"
               style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
             >
               <FacebookLogo />
@@ -174,7 +165,7 @@ function AuthPageContent() {
               type="button"
               onClick={() => void signInWithProvider("google")}
               disabled={busy}
-              className="flex min-h-[72px] w-full items-center justify-center gap-4 rounded-[14px] bg-white px-6 text-[18px] font-semibold text-[#222] shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition duration-200 hover:scale-[1.01] hover:bg-white disabled:cursor-wait disabled:opacity-55 sm:min-h-[80px] sm:text-[20px]"
+              className="flex min-h-[72px] w-full items-center justify-center gap-4 rounded-[14px] bg-zinc-900 px-6 text-[18px] font-semibold text-zinc-100 shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition duration-200 hover:scale-[1.01] hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-55 sm:min-h-[80px] sm:text-[20px]"
               style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
             >
               <GoogleLogo />
@@ -213,7 +204,7 @@ function AuthPageContent() {
               onChange={(event) => setEmail(event.target.value)}
               placeholder="email címed"
               autoComplete="email"
-              className="min-h-[56px] flex-1 rounded-[14px] bg-black/45 px-5 text-[15px] text-white outline-none placeholder:text-white/35 backdrop-blur-md focus:bg-black/55"
+              className="min-h-[56px] flex-1 border border-zinc-700 rounded-[14px] bg-black/45 px-5 text-[15px] text-white outline-none placeholder:text-white/35 backdrop-blur-md focus:bg-black/55"
               style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
             />
 

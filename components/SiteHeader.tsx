@@ -212,9 +212,9 @@ export default function SiteHeader() {
           onClick={() => window.dispatchEvent(new CustomEvent("network-inbox:open"))}
           aria-label="Értesítések megnyitása"
           title="Értesítések"
-          className="relative inline-flex h-10 w-10 items-center justify-center border border-zinc-700 bg-zinc-950 text-zinc-300 transition-all hover:border-lime-400/70 hover:bg-lime-400/5 hover:text-lime-200"
+          className="relative inline-flex h-10 w-10 items-center justify-center bg-zinc-950 text-zinc-300 transition-all hover:scale-120 hover:text-lime-200"
         >
-          <BellIcon className="h-4 w-4" />
+          <BellIcon className="h-5 w-5" />
           {unreadCount > 0 ? (
             <span className="absolute -right-1 -top-1 flex min-w-[17px] items-center justify-center rounded-full bg-lime-400 px-1 text-[9px] font-bold leading-[17px] text-black">
               {unreadCount > 99 ? "99+" : unreadCount}
@@ -233,7 +233,7 @@ export default function SiteHeader() {
               avatarUrl={avatarUrl}
               fallback={avatarLetter}
               badges={badges}
-              size="md"
+              size="sm"
             />
             <span
               className="absolute bottom-0 right-0 h-2 w-2 rounded-full border border-zinc-950 bg-lime-400 shadow-[0_0_6px_rgba(163,230,53,0.8)]"
@@ -254,7 +254,7 @@ export default function SiteHeader() {
             <button
               type="button"
               aria-label="Navigáció megnyitása"
-              className="group inline-flex h-10 w-10 items-center justify-center border border-zinc-700 bg-zinc-950 text-zinc-300 transition-all hover:border-lime-400/70 hover:bg-lime-400/5 hover:text-lime-200"
+              className="group inline-flex h-10 w-10 items-center justify-center bg-zinc-950 text-zinc-300 transition-all hover:bg-lime-400/5 hover:text-lime-200"
             >
               <Menu className="h-5 w-5 transition-transform group-hover:scale-105" />
             </button>
