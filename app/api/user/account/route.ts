@@ -268,7 +268,10 @@ export async function GET(req: NextRequest) {
   );
 
   const totalSpendHuf = orders
-    .filter((order) => !["cancelled", "canceled"].includes(order.status))
+    .filter((order) =>
+      ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(order.status) &&
+      !["cancelled", "canceled"].includes(order.status),
+    )
     .reduce((sum, order) => sum + order.amountHuf, 0);
 
   const circle: UserCircle = getUserCircle(totalSpendHuf);
