@@ -98,6 +98,8 @@ export async function POST(req: NextRequest) {
       { cartSummary: `legbelso-kor:${amount}` },
     )
 
+    const expectedStripeAmountMinor = amount * 100
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       currency: "huf",
@@ -106,8 +108,18 @@ export async function POST(req: NextRequest) {
       success_url: `${baseUrl}/legbelso-kor/koszonom?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/legbelso-kor`,
       client_reference_id: metadata.order_id,
-      metadata,
-      payment_intent_data: { metadata },
+      metadata: {
+        ...metadata,
+        expected_amount_huf: String(amount),
+        expected_stripe_amount_minor: String(expectedStripeAmountMinor),
+      },
+      payment_intent_data: {
+        metadata: {
+          ...metadata,
+          expected_amount_huf: String(amount),
+          expected_stripe_amount_minor: String(expectedStripeAmountMinor),
+        },
+      },
       line_items: [
         {
           price_data: {
@@ -115,12 +127,41 @@ export async function POST(req: NextRequest) {
             product_data: {
               name: "Vállalhatatlan / Leg Belső Kör Alapítói Részvétel",
             },
-            unit_amount: amount * 100,
+            // Stripe expects HUF charges in minor units.
+            unit_amount: expectedStripeAmountMinor,
           },
           quantity: 1,
         },
       ],
     })
+
+    // Defense in depth: confirm Stripe created exactly the amount
+    // validated by this server.
+    if (
+      session.amount_total !== expectedStripeAmountMinor ||
+      session.amount_subtotal !== expectedStripeAmountMinor
+    ) {
+      console.error("[legbelso-kor/checkout] Stripe amount mismatch", {
+        sessionId: session.id,
+        expectedAmountHuf: amount,
+        expectedStripeAmountMinor,
+        amountSubtotal: session.amount_subtotal,
+        amountTotal: session.amount_total,
+      })
+
+      try {
+        if (session.status === "open") {
+          await stripe.checkout.sessions.expire(session.id)
+        }
+      } catch (expireError) {
+        console.error("[legbelso-kor/checkout] Failed to expire mismatched session", expireError)
+      }
+
+      return NextResponse.json(
+        { error: "A fizetési összeg ellenőrzése sikertelen. A fizetés nem indítható el." },
+        { status: 500 },
+      )
+    }
 
     return NextResponse.json({ id: session.id, url: session.url })
   } catch (err: unknown) {
