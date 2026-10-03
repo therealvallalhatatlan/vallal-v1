@@ -11,7 +11,6 @@ import { Crimson_Pro, Inter, VT323, Special_Elite, Oswald, Roboto_Condensed, Jet
 import PWAInstallManager from "@/components/PWAInstallManager";
 import AuthUrlSessionSync from "@/components/AuthUrlSessionSync";
 import { ThemeProvider } from "@/components/theme-provider";
-import BgVideoGate from "@/components/BgVideoGate";
 import TrafficSourceHeuristics from "@/components/TrafficSourceHeuristics";
 import StatusBanner from "@/components/StatusBanner";
 import FacebookSDK from "@/components/FacebookSDK";
@@ -167,7 +166,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <FacebookSDK />
-          <BgVideoGate />
           <div className="content-above relative z-20">
             <AuthUrlSessionSync />
             <PWAInstallManager />
@@ -185,7 +183,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", name: "Vállalhatatlan", url: "https://vallalhatatlan.online", sameAs: ["https://www.reddit.com/r/vallalhatatlan/", "https://www.facebook.com/vallalhatatlan2000", "mailto:therealvallalhatatlan@gmail.com"] }) }} />
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", name: "Vállalhatatlan", url: "https://vallalhatatlan.online", potentialAction: { "@type": "SearchAction", target: "https://vallalhatatlan.online/search?q={query}", "query-input": "required name=query" } }) }} />
-          <style>{`html,body { overscroll-behavior-x:none; overflow-x:hidden; } @media (hover:none) { html,body { touch-action:pan-y; } } h1, h2, h3, .heading-serif { font-family: var(--font-heading), serif; font-weight: 400; letter-spacing: -0.01em; } .bg-video { position:fixed; inset:0; overflow:hidden; } .bg-video__media { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:1; pointer-events:none; } .bg-video__overlay { position:absolute; inset:0; pointer-events:none; background:rgba(0,0,0,0.5); }`}</style>
+          <style>{`html,body { overscroll-behavior-x:none; overflow-x:hidden; } @media (hover:none) { html,body { touch-action:pan-y; } } h1, h2, h3, .heading-serif { font-family: var(--font-heading), serif; font-weight: 400; letter-spacing: -0.01em; }`}</style>
         </ThemeProvider>
       </body>
     </html>
