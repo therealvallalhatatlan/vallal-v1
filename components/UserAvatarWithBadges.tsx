@@ -11,14 +11,15 @@ type UserAvatarWithBadgesProps = {
   avatarUrl?: string | null
   fallback?: string
   badges?: AvatarBadge[]
-  size?: "sm" | "md" | "lg"
+  size?: "sm" | "md" | "lg" | "xl"
   className?: string
 }
 
 const sizes = {
   sm: { wrapper: "h-8 w-8", icon: "h-3 w-3", badge: "-right-1 -bottom-1 h-4 w-4", badgeIcon: "h-2.5 w-2.5" },
   md: { wrapper: "h-10 w-10", icon: "h-3.5 w-3.5", badge: "-right-1 -bottom-1 h-5 w-5", badgeIcon: "h-3 w-3" },
-  lg: { wrapper: "h-20 w-20", icon: "h-5 w-5", badge: "right-0 bottom-0 h-7 w-7", badgeIcon: "h-4 w-4" },
+  lg: { wrapper: "h-14 w-14", icon: "h-4 w-4", badge: "-right-1 -bottom-1 h-6 w-6", badgeIcon: "h-3 w-3" },
+  xl: { wrapper: "h-[92px] w-[92px] sm:h-[104px] sm:w-[104px]", icon: "h-7 w-7", badge: "right-0 bottom-0 h-8 w-8", badgeIcon: "h-4 w-4" },
 } as const
 
 export default function UserAvatarWithBadges({
