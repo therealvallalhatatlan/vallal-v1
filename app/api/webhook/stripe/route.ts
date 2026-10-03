@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import crypto from 'crypto';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
@@ -21,11 +20,6 @@ const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 let cachedWebhookSupabase: SupabaseClient | null = null;
-
-function toDeterministicUuid(seed: string): string {
-  const hex = crypto.createHash('sha256').update(seed).digest('hex').slice(0, 32);
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
-}
 
 type ResolvedOrderIdentity = {
   userId: string | null;
