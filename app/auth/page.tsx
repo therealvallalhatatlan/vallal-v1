@@ -2,18 +2,25 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/browser";
 import {
   persistAuthReturnTarget,
   resolveAuthReturnTarget,
 } from "@/lib/authRedirect";
 
+const montserrat = Montserrat({
+  subsets: ["latin-ext"],
+  weight: ["500", "600", "700"],
+  variable: "--font-auth",
+});
+
 const supabase = createClient();
 const VIDEO_SRC = "/videos/film2.mp4";
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+    <Suspense fallback={<div className="min-h-[100svh] bg-black" />}>
       <AuthPageContent />
     </Suspense>
   );
@@ -21,13 +28,14 @@ export default function AuthPage() {
 
 function AuthPageContent() {
   const searchParams = useSearchParams();
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const autoProviderStarted = useRef(false);
+
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<"facebook" | "google" | "">("");
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const autoProviderStarted = useRef(false);
 
   const next = resolveAuthReturnTarget({
     nextParam: searchParams.get("next"),
@@ -107,14 +115,20 @@ function AuthPageContent() {
         setMessage("Okés. Küldtem egy belépő linket az email címedre.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "A belépő link küldése nem sikerült.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "A belépő link küldése nem sikerült."
+      );
     } finally {
       setEmailLoading(false);
     }
   };
 
+  const busy = emailLoading || Boolean(oauthLoading);
+
   return (
-    <main className="relative min-h-[100svh] overflow-hidden bg-black text-white">
+    <main className={`relative min-h-[100svh] overflow-hidden bg-black text-white ${montserrat.variable}`}>
       <video
         ref={videoRef}
         autoPlay
@@ -122,203 +136,177 @@ function AuthPageContent() {
         muted
         playsInline
         preload="metadata"
-        className="absolute inset-0 h-full w-full object-cover opacity-55"
+        className="absolute inset-0 h-full w-full object-cover"
         src={VIDEO_SRC}
       />
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(0,0,0,0.12),rgba(0,0,0,0.78)_72%),linear-gradient(180deg,rgba(0,0,0,0.42),rgba(0,0,0,0.86))]" />
-      <div className="pointer-events-none absolute inset-0 opacity-15 [background-image:repeating-linear-gradient(to_bottom,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_1px,transparent_1px,transparent_5px)]" />
+      <div className="absolute inset-0 bg-black/45" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(0,0,0,0.08),rgba(0,0,0,0.7)_78%)]" />
 
-      <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-4 py-8 sm:px-6">
-        <div className="w-full max-w-3xl">
-          <div className="mb-3 flex items-center justify-between border-b border-white/10 px-1 pb-3 font-mono text-[9px] uppercase tracking-[0.2em] text-lime-200/55">
-            <span>VALLALHATATLAN // AUTH</span>
-            <span>NODE 07</span>
+      <div className="relative z-10 flex min-h-[100svh] items-center justify-center px-5 py-8">
+        <section className="w-full max-w-[540px]">
+          <div className="mb-8 text-center">
+            <h1
+              className="text-[27px] font-semibold tracking-[-0.025em] text-white/95 sm:text-[32px]"
+              style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
+            >
+              Üdv a fedélzeten
+            </h1>
           </div>
 
-          <section className="overflow-hidden border border-white/15 bg-black/55 shadow-[0_30px_100px_rgba(0,0,0,0.5)] backdrop-blur-xl">
-            <div className="grid md:grid-cols-[90px_1fr]">
-              <aside className="hidden border-r border-white/10 bg-black/20 md:flex md:flex-col md:items-center md:justify-between md:p-4">
-                <div className="grid h-11 w-11 place-items-center border border-lime-200/40 font-bold text-2xl text-lime-100">
-                  V
-                </div>
-                <div className="w-px flex-1 bg-gradient-to-b from-lime-200/20 to-transparent" />
-                <span className="[writing-mode:vertical-rl] rotate-180 font-mono text-[8px] uppercase tracking-[0.28em] text-white/25">
-                  Zárt közösség
-                </span>
-              </aside>
+          <div className="grid gap-4">
+            <button
+              type="button"
+              onClick={() => void signInWithProvider("facebook")}
+              disabled={busy}
+              className="flex min-h-[72px] w-full items-center justify-center gap-4 rounded-[14px] bg-white px-6 text-[18px] font-semibold text-[#1877F2] shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition duration-200 hover:scale-[1.01] hover:bg-white disabled:cursor-wait disabled:opacity-55 sm:min-h-[80px] sm:text-[20px]"
+              style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
+            >
+              <FacebookLogo />
+              <span>
+                {oauthLoading === "facebook"
+                  ? "Kapcsolódás..."
+                  : "Belépés Facebookkal"}
+              </span>
+            </button>
 
-              <div className="p-6 sm:p-10">
-                <div className="flex items-start justify-between gap-6">
-                  <div>
-                    <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.28em] text-lime-300/75">
-                      BELÉPÉSI PONT
-                    </div>
-                    <h1 className="font-serif text-[clamp(42px,8vw,78px)] font-normal leading-[0.88] tracking-[-0.045em]">
-                      Találkozunk
-                      <br />
-                      odabent.
-                    </h1>
-                  </div>
-
-                  <div className="hidden h-16 w-16 shrink-0 flex-col justify-between border border-lime-200/20 p-2 font-mono text-lime-100/60 sm:flex">
-                    <span className="text-[8px] uppercase tracking-[0.18em]">
-                      ACCESS
-                    </span>
-                    <span className="self-end text-2xl">V</span>
-                  </div>
-                </div>
-
-                <div className="my-7 h-px bg-gradient-to-r from-lime-300/35 via-white/10 to-transparent" />
-
-                <div className="mb-2 font-mono text-[9px] uppercase tracking-[0.18em] text-white/35">
-                  GYORS BELÉPÉS
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => void signInWithProvider("facebook")}
-                    disabled={emailLoading || Boolean(oauthLoading)}
-                    className="group min-h-[86px] border border-white/12 bg-black/35 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-blue-200/40 hover:bg-blue-300/5 disabled:cursor-wait disabled:opacity-55"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="grid h-11 w-11 shrink-0 place-items-center border border-blue-300/35 font-bold text-xl text-blue-200">
-                        f
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block font-mono text-[8px] uppercase tracking-[0.15em] text-white/30">
-                          META / IDENTITY
-                        </span>
-                        <span className="mt-1 block truncate font-mono text-[13px] text-white/90">
-                          {oauthLoading === "facebook"
-                            ? "KAPCSOLÓDÁS..."
-                            : "Belépés Facebookkal"}
-                        </span>
-                      </span>
-                      <span className="ml-auto text-lg text-white/30 transition group-hover:text-blue-200">
-                        ↗
-                      </span>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => void signInWithProvider("google")}
-                    disabled={emailLoading || Boolean(oauthLoading)}
-                    className="group min-h-[86px] border border-white/12 bg-black/35 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:border-lime-200/40 hover:bg-lime-300/5 disabled:cursor-wait disabled:opacity-55"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="grid h-11 w-11 shrink-0 place-items-center border border-lime-200/25 font-bold text-lg text-lime-100">
-                        G
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block font-mono text-[8px] uppercase tracking-[0.15em] text-white/30">
-                          GOOGLE / IDENTITY
-                        </span>
-                        <span className="mt-1 block truncate font-mono text-[13px] text-white/90">
-                          {oauthLoading === "google"
-                            ? "KAPCSOLÓDÁS..."
-                            : "Belépés Google-fiókkal"}
-                        </span>
-                      </span>
-                      <span className="ml-auto text-lg text-white/30 transition group-hover:text-lime-200">
-                        ↗
-                      </span>
-                    </div>
-                  </button>
-                </div>
-
-                <div className="my-6 flex items-center gap-3 font-mono text-[9px] uppercase tracking-[0.16em] text-white/30">
-                  <span className="h-px flex-1 bg-white/10" />
-                  <span>vagy belépés emaillel</span>
-                  <span className="h-px flex-1 bg-white/10" />
-                </div>
-
-                <form
-                  onSubmit={handleEmailLogin}
-                  className="grid gap-2 sm:grid-cols-[1fr_230px]"
-                >
-                  <label htmlFor="auth-email" className="sr-only">
-                    Emailcímed
-                  </label>
-
-                  <div className="flex min-h-[58px] items-center border border-white/12 bg-black/30 focus-within:border-lime-300/45">
-                    <span className="pl-4 font-mono text-lime-200/45">@</span>
-                    <input
-                      id="auth-email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      placeholder="email címed"
-                      autoComplete="email"
-                      className="w-full border-0 bg-transparent px-3 text-sm text-white outline-none placeholder:text-white/25"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={emailLoading || Boolean(oauthLoading)}
-                    className="flex min-h-[58px] items-center justify-between border border-lime-300/55 bg-lime-300 px-4 font-mono text-[10px] font-bold tracking-[0.12em] text-black transition hover:bg-lime-200 disabled:cursor-wait disabled:opacity-55"
-                  >
-                    <span>
-                      {emailLoading ? "LINK KÉSZÜL..." : "BELÉPŐ LINK KÜLDÉSE"}
-                    </span>
-                    <span aria-hidden="true">↗</span>
-                  </button>
-                </form>
-
-                <div className="mt-5 flex flex-col gap-2 border-t border-white/8 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="font-mono text-[9px] leading-relaxed text-white/35">
-                    Problémád van? Írj ide:{" "}
-                    <a
-                      href="mailto:therealvallalhatatlan@gmail.com"
-                      className="text-lime-200/75 underline underline-offset-3 hover:text-white"
-                    >
-                      therealvallalhatatlan@gmail.com
-                    </a>
-                  </p>
-
-                  <span className="font-mono text-[8px] uppercase tracking-[0.18em] text-lime-200/45">
-                    ● ONLINE
-                  </span>
-                </div>
-
-                {message ? (
-                  <div className="mt-3 border border-lime-300/15 bg-lime-300/5 p-3 font-mono text-[10px] leading-relaxed text-lime-100">
-                    {message}
-                  </div>
-                ) : null}
-
-                {error ? (
-                  <div className="mt-3 border border-red-400/20 bg-red-400/5 p-3 font-mono text-[10px] leading-relaxed text-red-300">
-                    {error}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </section>
-
-          <div className="mt-3 flex items-center justify-between px-1 font-mono text-[8px] uppercase tracking-[0.18em] text-white/20">
-            <span>NO PASSWORDS / NO NOISE</span>
-            <span>PRIVATE NODE // V.01</span>
+            <button
+              type="button"
+              onClick={() => void signInWithProvider("google")}
+              disabled={busy}
+              className="flex min-h-[72px] w-full items-center justify-center gap-4 rounded-[14px] bg-white px-6 text-[18px] font-semibold text-[#222] shadow-[0_18px_55px_rgba(0,0,0,0.22)] transition duration-200 hover:scale-[1.01] hover:bg-white disabled:cursor-wait disabled:opacity-55 sm:min-h-[80px] sm:text-[20px]"
+              style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
+            >
+              <GoogleLogo />
+              <span>
+                {oauthLoading === "google"
+                  ? "Kapcsolódás..."
+                  : "Belépés Google-fiókkal"}
+              </span>
+            </button>
           </div>
-        </div>
-      </div>
 
-      {next === "/reader" ? (
-        <div className="fixed inset-x-4 bottom-4 z-20 sm:inset-x-auto sm:right-6">
-          <a
-            href="https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 border border-lime-300/35 bg-black/70 px-4 py-3 font-mono text-[10px] uppercase tracking-[0.14em] text-lime-200 backdrop-blur-md"
+          <div className="my-7 flex items-center gap-4 text-white/35">
+            <span className="h-px flex-1 bg-white/15" />
+            <span
+              className="text-[11px] uppercase tracking-[0.16em]"
+              style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
+            >
+              vagy emaillel
+            </span>
+            <span className="h-px flex-1 bg-white/15" />
+          </div>
+
+          <form
+            onSubmit={handleEmailLogin}
+            className="flex flex-col gap-3 sm:flex-row"
           >
-            Alkalmazás megvásárlása <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-      ) : null}
+            <label htmlFor="auth-email" className="sr-only">
+              Emailcímed
+            </label>
+
+            <input
+              id="auth-email"
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="email címed"
+              autoComplete="email"
+              className="min-h-[56px] flex-1 rounded-[14px] bg-black/45 px-5 text-[15px] text-white outline-none placeholder:text-white/35 backdrop-blur-md focus:bg-black/55"
+              style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
+            />
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="min-h-[56px] rounded-[14px] bg-white/14 px-6 text-[13px] font-semibold tracking-[0.03em] text-white/82 backdrop-blur-md transition hover:bg-white/20 hover:text-white disabled:cursor-wait disabled:opacity-45"
+              style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
+            >
+              {emailLoading ? "Küldés..." : "Belépő link"}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p
+              className="text-[12px] text-white/55"
+              style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
+            >
+              Problémád van? Írj ide:{" "}
+              <a
+                href="mailto:therealvallalhatatlan@gmail.com"
+                className="text-white/80 underline underline-offset-4 transition hover:text-white"
+              >
+                therealvallalhatatlan@gmail.com
+              </a>
+            </p>
+          </div>
+
+          {message ? (
+            <div
+              className="mt-4 text-center text-sm text-lime-200"
+              style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
+            >
+              {message}
+            </div>
+          ) : null}
+
+          {error ? (
+            <div
+              className="mt-4 text-center text-sm text-red-300"
+              style={{ fontFamily: "var(--font-auth), Montserrat, sans-serif" }}
+            >
+              {error}
+            </div>
+          ) : null}
+        </section>
+      </div>
     </main>
+  );
+}
+
+function FacebookLogo() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="30"
+      height="30"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="currentColor"
+        d="M13.65 22v-8.22h2.76l.41-3.2h-3.17V8.54c0-.93.26-1.57 1.6-1.57h1.71V4.1c-.3-.04-1.34-.1-2.55-.1-2.52 0-4.25 1.54-4.25 4.37v2.21H7.3v3.2h2.87V22h3.48Z"
+      />
+    </svg>
+  );
+}
+
+function GoogleLogo() {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      width="30"
+      height="30"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 5.98 1.53 7.36 2.81l5.38-5.25C33.45 4.13 29.1 2.5 24 2.5 14.61 2.5 6.58 7.88 2.76 15.72l6.25 4.85C10.89 14.01 16.93 9.5 24 9.5Z"
+      />
+      <path
+        fill="#4285F4"
+        d="M45.5 24.5c0-1.56-.14-2.68-.44-3.85H24v7.3h12.36c-.25 1.82-1.6 4.56-4.62 6.4l6.17 4.79c3.6-3.32 7.59-8.16 7.59-14.64Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M9.01 29.57A14.57 14.57 0 0 1 8.2 24c0-1.93.32-3.8.76-5.5l-6.2-4.83A22.83 22.83 0 0 0 1.5 24c0 3.7.89 7.22 2.6 10.33l6.2-4.76Z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 45.5c6.36 0 11.7-2.08 15.6-5.67l-6.17-4.79c-1.68 1.15-4.02 1.96-7.43 1.96-6.94 0-12.96-4.58-15.1-10.93l-6.2 4.76C8.58 39.62 15.5 45.5 24 45.5Z"
+      />
+    </svg>
   );
 }
