@@ -722,6 +722,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
     return;
   }
 
+  // Leg Belső Kör alapítói részvétel:
+  // the checkout creates a normal Stripe Checkout Session, so on successful
+  // payment persist it in the canonical orders table as well.
+  if (metadata?.type === 'legbelso-kor') {
+    await upsertPaidOrderFromSession(session);
+    return;
+  }
+
   const orderType = metadata?.orderType ?? metadata?.type;
 
   if (orderType === 'merch') {
