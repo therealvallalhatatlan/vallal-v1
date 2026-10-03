@@ -196,7 +196,11 @@ async function computeEarnedBadgeCodes(userId: string, email: string | null) {
       0,
     );
 
-  if (totalPaidMinor >= 4_500_000) {
+  const hasValidFounderParticipation = paidBookOrders.some(
+    (order) => order.product_id === "legbelso-kor",
+  );
+
+  if (hasValidFounderParticipation || totalPaidMinor >= 4_500_000) {
     earned.add("founder");
   }
 
