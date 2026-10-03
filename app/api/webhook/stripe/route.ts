@@ -459,7 +459,7 @@ async function upsertPaidOrderFromSession(
             anonymized_user_hash: anonymizedUserHash,
             product_id: productId,
             delivery_type: deliveryType,
-            amount: actualAmountHuf ?? 0,
+            amount: stripeAmountMinor ?? 0,
             currency,
             status: 'pending',
             customer_email: session.customer_details?.email ?? null,
@@ -484,7 +484,7 @@ async function upsertPaidOrderFromSession(
       };
     }
 
-    amount = expectedAmountHuf;
+    amount = expectedMinor!;
   }
 
   const { data: upsertedOrder, error } = await db
