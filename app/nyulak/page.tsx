@@ -263,7 +263,7 @@ export default function NyulakPage() {
 
               <div
                 className={[
-                  "grid transition-[grid-template-rows,opacity] duration-400 ease-out",
+                  "grid transition-[grid-template-rows,opacity] duration-500 ease-out",
                   mode === "monthly"
                     ? "grid-rows-[1fr] opacity-100"
                     : "grid-rows-[0fr] opacity-0",
@@ -456,7 +456,7 @@ export default function NyulakPage() {
 
               <div
                 className={[
-                  "grid transition-[grid-template-rows,opacity] duration-400 ease-out",
+                  "grid transition-[grid-template-rows,opacity] duration-500 ease-out",
                   mode === "once"
                     ? "grid-rows-[1fr] opacity-100"
                     : "grid-rows-[0fr] opacity-0",
@@ -637,7 +637,7 @@ export default function NyulakPage() {
 
               <div
                 className={[
-                  "grid transition-[grid-template-rows,opacity] duration-400 ease-out",
+                  "grid transition-[grid-template-rows,opacity] duration-500 ease-out",
                   mode === "natural"
                     ? "grid-rows-[1fr] opacity-100"
                     : "grid-rows-[0fr] opacity-0",
