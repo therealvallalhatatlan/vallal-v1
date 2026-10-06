@@ -98,12 +98,11 @@ export default function TrafficSourceHeuristics() {
       // Optional: keep a short-lived hint to help correlate multi-visit funnels.
       setWithTtl(lastHintKey, sourceHint, 24 * 60 * 60 * 1000);
 
-      const source =
-        probableQr
-          ? "probable_qr"
-          : referrerHost
-            ? safeReferrerHost(referrerHost) || sourceHint
-            : sourceHint;
+      const source = probableQr
+        ? "probable_qr"
+        : referrerHost
+          ? referrerHost.replace(/^www\./i, "").slice(0, 80)
+          : sourceHint;
 
       vercelTrack("landing_source_heuristic", {
         source,
