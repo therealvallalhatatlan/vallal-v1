@@ -8,6 +8,7 @@ import {
   persistAuthReturnTarget,
   resolveAuthReturnTarget,
 } from "@/lib/authRedirect";
+import { getAttributionSource, trackEvent } from "@/lib/siteAnalytics";
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -49,6 +50,10 @@ function AuthPageContent() {
     setMessage("");
     setError("");
     setOauthLoading(provider);
+    trackEvent("auth_start", {
+      provider,
+      source: getAttributionSource(),
+    });
 
     try {
       await supabase.auth.signOut();
@@ -71,10 +76,18 @@ function AuthPageContent() {
       });
 
       if (oauthError) {
+        trackEvent("auth_error", {
+          provider,
+          stage: "oauth_start",
+        });
         setError(oauthError.message);
         setOauthLoading("");
       }
     } catch (err) {
+      trackEvent("auth_error", {
+        provider,
+        stage: "oauth_exception",
+      });
       setError(err instanceof Error ? err.message : "A belépés nem sikerült.");
       setOauthLoading("");
     }
@@ -97,6 +110,10 @@ function AuthPageContent() {
     setMessage("");
     setError("");
     setEmailLoading(true);
+    trackEvent("auth_email_start", {
+      source: getAttributionSource(),
+      destination: next,
+    });
 
     try {
       persistAuthReturnTarget(next);
@@ -110,6 +127,10 @@ function AuthPageContent() {
       });
 
       if (otpError) {
+        trackEvent("auth_error", {
+          provider: "email",
+          stage: "magiclink_start",
+        });
         setError(otpError.message);
       } else {
         setMessage("Okés. Küldtem egy belépő linket az email címedre.");
