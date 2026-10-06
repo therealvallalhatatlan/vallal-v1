@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createCheckoutSession, getSiteUrl } from "@/lib/stripe";
-import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
+import { buildCheckoutMetadata, getAttributionSource } from "@/lib/stripeAttribution";
+import { trackServerEvent } from "@/lib/siteAnalyticsServer";
 
 type FilmSupportRequest = {
   novellaSlug: string;
@@ -108,6 +109,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     if (sessionUrl) {
+      await trackServerEvent("checkout_created", {
+        product: "film-support",
+        source: getAttributionSource(request),
+      });
       return NextResponse.json<ApiResponse>({ success: true, url: sessionUrl });
     }
 
@@ -117,6 +122,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       message: "Köszönjük a támogatást! Felvesszük a kapcsolatot.",
     });
   } catch (error) {
+    await trackServerEvent("checkout_error", {
+      product: "film-support",
+      stage: "create_session",
+    });
     console.error("film support route error", error);
     return NextResponse.json<ApiResponse>({ success: false, error: "Sikertelen kérés" }, { status: 500 });
   }
