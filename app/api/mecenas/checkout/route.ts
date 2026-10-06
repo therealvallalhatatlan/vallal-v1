@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import { guardWriteOperation } from "@/lib/systemGuard";
 import { getUserFromToken, parseBearerToken } from "@/lib/auth";
 import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
+import { trackServerEvent } from "@/lib/siteAnalyticsServer";
+import { getAttributionSource } from "@/lib/stripeAttribution";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY!;
 const stripe = new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" });
@@ -85,6 +87,11 @@ export async function POST(req: NextRequest) {
         },
       ],
     });
+
+    await trackServerEvent("checkout_created", {
+    product: "mecenas",
+    source: getAttributionSource(req),
+  });
 
     return NextResponse.json({ id: session.id, url: session.url });
   } catch (err: any) {
