@@ -7,7 +7,9 @@ import { TELEGRAM_MINI_APP_SESSION_COOKIE, verifyTelegramMiniAppSessionToken } f
 import {
   ATTRIBUTION_COOKIE_MAX_AGE,
   ATTRIBUTION_COOKIE_PREFIX,
+  ATTRIBUTION_SOURCE_COOKIE,
   UTM_KEYS,
+  normalizeAttributionSource,
 } from './lib/stripeAttribution';
 
 let cachedMode: { mode: 'SAFE' | 'READ_ONLY'; timestamp: number } | null = null;
@@ -94,6 +96,33 @@ function withAttributionCookies(req: NextRequest, response: NextResponse): NextR
         path: "/",
       });
     }
+  }
+
+  const sourceCookie = ATTRIBUTION_SOURCE_COOKIE;
+  if (!req.cookies.get(sourceCookie)?.value) {
+    const utmSource = req.nextUrl.searchParams.get("utm_source")?.trim() || "";
+    const referer = req.headers.get("referer") || "";
+    let source = "direct";
+
+    if (utmSource) {
+      source = normalizeAttributionSource(utmSource);
+    } else if (referer) {
+      try {
+        source = normalizeAttributionSource(new URL(referer).hostname);
+      } catch {
+        source = "unknown";
+      }
+    }
+
+    response.cookies.set({
+      name: sourceCookie,
+      value: source.slice(0, 80),
+      maxAge: ATTRIBUTION_COOKIE_MAX_AGE,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
   }
 
   const landingPathCookie = ATTRIBUTION_COOKIE_PREFIX + "landing_path";
