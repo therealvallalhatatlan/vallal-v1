@@ -7,6 +7,7 @@ import Footer from "@/components/Footer"
 import Image from "next/image"
 import { SupportersTicker } from "@/components/supporters/SupportersTicker";
 import { SUPPORTER_NAMES } from "@/data/supporters";
+import { getAttributionSource, trackEvent } from "@/lib/siteAnalytics";
 
 const MIN_AMOUNT_HUF = 15000
 const MAX_AMOUNT_HUF = 1000000
@@ -29,6 +30,10 @@ export default function LegbelsoKorPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
+    trackEvent("checkout_start_click", {
+      product: "legbelso-kor",
+      source: getAttributionSource(),
+    })
 
     const trimmedName = name.trim()
     const trimmedMessage = message.trim()
