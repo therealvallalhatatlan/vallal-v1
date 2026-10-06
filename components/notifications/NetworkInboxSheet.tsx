@@ -977,7 +977,7 @@ export default function NetworkInboxSheet() {
     <Sheet open={sheetOpen} onOpenChange={handleOpenChange}>
       <SheetContent
         side="right"
-        className="z-[120] flex h-full w-[min(26rem,calc(100vw-1.5rem))] flex-col bg-transparent text-white"
+        className="z-[120] flex h-full w-[min(26rem,calc(100vw-1.5rem))] flex-col border-l border-zinc-800 bg-zinc-950/95 text-white shadow-[-20px_0_60px_rgba(0,0,0,0.55)] backdrop-blur-xl backdrop-saturate-150"
         style={{
           paddingTop: "env(safe-area-inset-top,1rem)",
           paddingBottom: "env(safe-area-inset-bottom,1rem)",
