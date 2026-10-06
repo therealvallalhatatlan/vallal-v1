@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { guardWriteOperation } from "@/lib/systemGuard";
-import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
+import { buildCheckoutMetadata, getAttributionSource } from "@/lib/stripeAttribution";
+import { trackServerEvent } from "@/lib/siteAnalyticsServer";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY!;
 const stripe = new Stripe(stripeKey, { apiVersion: "2025-07-30.basil" });
@@ -62,9 +63,18 @@ export async function POST(req: NextRequest) {
       ],
     });
 
+    await trackServerEvent("checkout_created", {
+      product: "book-1",
+      source: getAttributionSource(req),
+    });
+
     return NextResponse.json({ id: session.id, url: session.url });
   } catch (err: any) {
     const message = err?.message || "Stripe error";
+    await trackServerEvent("checkout_error", {
+      product: "book-1",
+      stage: "create_session",
+    });
     console.error("Stripe Checkout create error:", message);
     return NextResponse.json({ error: message }, { status: 400 });
   }
