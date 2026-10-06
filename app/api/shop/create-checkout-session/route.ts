@@ -11,7 +11,8 @@ import {
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getUserFromToken, parseBearerToken } from "@/lib/auth";
 import { guardWriteOperation } from "@/lib/systemGuard";
-import { buildCartSummary, buildCheckoutMetadata } from "@/lib/stripeAttribution";
+import { buildCartSummary, buildCheckoutMetadata, getAttributionSource } from "@/lib/stripeAttribution";
+import { trackServerEvent } from "@/lib/siteAnalyticsServer";
 
 const stripeKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeKey
@@ -132,6 +133,11 @@ export async function POST(req: NextRequest) {
 
     await attachStripeSessionToOrder(draftOrder.orderId, session.id);
 
+    await trackServerEvent("checkout_created", {
+      product: validatedItems.length === 1 ? validatedItems[0]?.product.id ?? "multi_cart" : "multi_cart",
+      source: getAttributionSource(req),
+    });
+
     return NextResponse.json({ url: session.url });
   } catch (error: unknown) {
     if (draftOrderId) {
@@ -143,6 +149,11 @@ export async function POST(req: NextRequest) {
         })
         .eq("id", draftOrderId);
     }
+
+    await trackServerEvent("checkout_error", {
+      product: draftOrderId ? "merch" : "unknown",
+      stage: "create_session",
+    });
 
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
