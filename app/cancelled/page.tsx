@@ -15,6 +15,7 @@ export default function CancelledPage() {
   return (
     <Container className="py-12">
       <Card>
+        <CheckoutReturnTracker product="book-1" status="cancelled" />
         <div className="text-center space-y-6">
           <div className="text-6xl text-red-400 mb-4">✕</div>
           <h1 className="text-3xl font-bold text-red-400">Payment was cancelled.</h1>
