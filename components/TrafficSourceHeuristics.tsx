@@ -98,18 +98,17 @@ export default function TrafficSourceHeuristics() {
       // Optional: keep a short-lived hint to help correlate multi-visit funnels.
       setWithTtl(lastHintKey, sourceHint, 24 * 60 * 60 * 1000);
 
-      const payload: HeuristicPayload = {
-        probable_qr: probableQr,
-        qr_score: score,
-        referrer_empty: referrerEmpty,
-        is_mobile: isMobile,
-        is_in_app: isInApp,
-        first_pv_of_session: true,
-        path: pathname,
-      };
-      if (referrerHost) payload.referrer_host = referrerHost;
+      const source =
+        probableQr
+          ? "probable_qr"
+          : referrerHost
+            ? safeReferrerHost(referrerHost) || sourceHint
+            : sourceHint;
 
-      vercelTrack("landing_source_heuristic", payload);
+      vercelTrack("landing_source_heuristic", {
+        source,
+        landing_path: pathname,
+      });
     } catch {
       // Never break page load for analytics.
     }
