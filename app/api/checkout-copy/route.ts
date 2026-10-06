@@ -4,7 +4,8 @@ import { cookies } from 'next/headers';
 import { createCheckoutForCopy } from '../../../lib/reservations';
 import type { CheckoutCopyRequest, CheckoutCopyResponse } from '../../../types/reservations';
 import { getUserFromToken, parseBearerToken } from '@/lib/auth';
-import { buildCheckoutMetadata } from '@/lib/stripeAttribution';
+import { buildCheckoutMetadata, getAttributionSource } from '@/lib/stripeAttribution';
+import { trackServerEvent } from '@/lib/siteAnalyticsServer';
 
 export async function POST(request: NextRequest): Promise<Response> {
   try {
@@ -49,8 +50,24 @@ export async function POST(request: NextRequest): Promise<Response> {
       checkoutMetadata,
     );
 
+    if (result.success) {
+      await trackServerEvent("checkout_created", {
+        product: "numbered_copy",
+        source: getAttributionSource(request),
+      });
+    } else {
+      await trackServerEvent("checkout_error", {
+        product: "numbered_copy",
+        stage: "create_session",
+      });
+    }
+
     return Response.json(result);
   } catch (error) {
+    await trackServerEvent("checkout_error", {
+      product: "numbered_copy",
+      stage: "create_session",
+    });
     console.error('Error creating checkout for copy:', error);
     const errorResponse: CheckoutCopyResponse = { success: false, error: 'Failed to create checkout' };
     return Response.json(errorResponse, { status: 500 });
