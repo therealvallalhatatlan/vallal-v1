@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { guardWriteOperation } from "@/lib/systemGuard"
-import { buildCheckoutMetadata } from "@/lib/stripeAttribution"
+import { buildCheckoutMetadata, getAttributionSource } from "@/lib/stripeAttribution"
+import { trackServerEvent } from "@/lib/siteAnalyticsServer"
 
 const stripeKey = process.env.STRIPE_SECRET_KEY
 const stripe = stripeKey
@@ -163,9 +164,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    await trackServerEvent("checkout_created", {
+      product: "legbelso-kor",
+      source: getAttributionSource(req),
+    })
+
     return NextResponse.json({ id: session.id, url: session.url })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Stripe error"
+    await trackServerEvent("checkout_error", {
+      product: "legbelso-kor",
+      stage: "create_session",
+    })
     console.error("[legbelso-kor/checkout] Stripe error:", message)
     return NextResponse.json({ error: message }, { status: 400 })
   }
