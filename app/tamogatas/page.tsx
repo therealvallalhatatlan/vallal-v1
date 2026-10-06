@@ -7,6 +7,7 @@ import { SupportersTicker } from "@/components/supporters/SupportersTicker";
 import { SUPPORTER_NAMES } from "@/data/supporters";
 import Footer from "@/components/Footer";
 import MainContent from "@/components/MainContent";
+import { getAttributionSource, trackEvent } from "@/lib/siteAnalytics";
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -121,6 +122,10 @@ export default function TamogatasPage() {
   const handleSubmit = async () => {
     setError(null);
     setIsLoading(true);
+    trackEvent("checkout_start_click", {
+      product: "tamogatas",
+      source: getAttributionSource(),
+    });
 
     try {
       const res = await fetch("/api/tamogatas/checkout", {
