@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/browser";
 import { clearStoredAuthReturnTarget, readStoredAuthReturnTarget, resolveAuthReturnTarget } from "@/lib/authRedirect";
+import { trackEvent } from "@/lib/siteAnalytics";
 
 const supabase = createClient();
 
@@ -133,6 +134,16 @@ function AuthCallbackContent() {
       }
 
       clearStoredAuthReturnTarget();
+
+      const finalSession = await supabase.auth.getSession();
+      const provider =
+        finalSession.data.session?.user?.app_metadata?.provider ||
+        (tokenHash ? "email" : "oauth");
+
+      trackEvent("auth_success", {
+        provider,
+        destination: next,
+      });
 
       setMessage(`Sikeres belépés, irány a ${next}...`);
       if (typeof window !== "undefined") {
