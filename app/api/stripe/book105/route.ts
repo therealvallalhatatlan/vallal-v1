@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
+import { trackServerEvent } from "@/lib/siteAnalyticsServer";
+import { getAttributionSource } from "@/lib/stripeAttribution";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
@@ -55,5 +57,10 @@ export async function POST(req: NextRequest) {
     success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/105?success=1`,
     cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/105?cancelled=1`,
   });
-  return NextResponse.json({ url: session.url });
+  await trackServerEvent("checkout_created", {
+    product: "book-105",
+    source: getAttributionSource(req),
+  });
+
+    return NextResponse.json({ url: session.url });
 }
