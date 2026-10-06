@@ -1,9 +1,8 @@
 // app/api/checkout/digital/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
+import { buildCheckoutMetadata, getAttributionSource } from "@/lib/stripeAttribution";
 import { trackServerEvent } from "@/lib/siteAnalyticsServer";
-import { getAttributionSource } from "@/lib/stripeAttribution";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-07-30.basil",
@@ -45,6 +44,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (e) {
+    await trackServerEvent("checkout_error", {
+      product: "digital-reader",
+      stage: "create_session",
+    });
     console.error(e);
     return new NextResponse("Stripe error", { status: 500 });
   }
