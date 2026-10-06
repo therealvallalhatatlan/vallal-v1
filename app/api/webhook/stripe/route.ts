@@ -8,6 +8,7 @@ import { DEFAULT_PREORDER_CAMPAIGN_SLUG } from '@/lib/shop/preorder';
 import { PAID_SPOT_UNLOCK_HOURS } from '@/lib/matricaUnlocks';
 import { formatTerminalTelegramMessage, sendTelegramMessage } from '@/lib/telegram';
 import { hashTelegramId } from '@/lib/security/hash';
+import { trackServerEvent } from '@/lib/siteAnalyticsServer';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',
@@ -771,6 +772,37 @@ export async function POST(request: NextRequest) {
       console.log('🎯 Processing checkout.session.completed event');
       const session = event.data.object as Stripe.Checkout.Session;
       await handleCheckoutCompleted(session, event.id);
+
+      if (session.payment_status === 'paid') {
+        const metadata = session.metadata ?? {};
+        const product =
+          metadata.product_id ??
+          metadata.orderType ??
+          metadata.type ??
+          'unknown';
+        const source =
+          metadata.source ??
+          metadata.utm_source ??
+          'unknown';
+
+        await trackServerEvent('purchase_completed', {
+          product,
+          source,
+        });
+
+        const amountHuf =
+          typeof session.amount_total === 'number'
+            ? Math.round(session.amount_total / 100)
+            : null;
+
+        if (amountHuf !== null) {
+          await trackServerEvent('purchase_value', {
+            product,
+            amount_huf: amountHuf,
+          });
+        }
+      }
+
       break;
     case 'payment_intent.succeeded':
       console.log('🎯 Processing payment_intent.succeeded event');
