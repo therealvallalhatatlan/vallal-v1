@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { usePreorderCampaign } from "@/hooks/usePreorderCampaign";
 import { DEFAULT_PREORDER_CAMPAIGN_SLUG } from "@/lib/shop/preorder";
 import { PreorderCampaignPanel } from "@/components/shop/PreorderCampaignPanel";
+import { getAttributionSource, trackEvent } from "@/lib/siteAnalytics";
 
 export default function ShopCheckoutPage() {
   const { items, deliveryMethod, setDeliveryMethod, clearCart } = useCartStore();
@@ -30,6 +31,10 @@ export default function ShopCheckoutPage() {
   const handleCheckout = async () => {
     setLoading(true);
     setError(null);
+    trackEvent("checkout_start_click", {
+      product: "merch",
+      source: getAttributionSource(),
+    });
     try {
       const res = await fetch("/api/shop/create-checkout-session", {
         method: "POST",
