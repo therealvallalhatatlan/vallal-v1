@@ -1,7 +1,10 @@
 import Link from "next/link";
+import CheckoutReturnTracker from "@/components/CheckoutReturnTracker";
 
 export default function ShopOrderCancelPage() {
   return (
+    <CheckoutReturnTracker product="merch" status="cancelled" />
+
     <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 py-16">
       <div className="w-full max-w-md bg-neutral-900/90 rounded-2xl shadow-xl p-10 flex flex-col gap-8 items-center">
         <div className="text-6xl text-red-400 mb-2">✕</div>
