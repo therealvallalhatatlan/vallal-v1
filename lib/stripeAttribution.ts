@@ -140,10 +140,19 @@ export async function buildCheckoutMetadata(
     if (value) metadata[key] = value;
   }
 
+  const source = cleanValue(
+    req.cookies.get(ATTRIBUTION_SOURCE_COOKIE)?.value,
+  );
+  if (source) metadata.source = normalizeAttributionSource(source);
+
   const landingPath = cleanValue(
     req.cookies.get(ATTRIBUTION_COOKIE_PREFIX + "landing_path")?.value,
   );
   if (landingPath) metadata.landing_path = landingPath;
+
+  if (!metadata.source) {
+    metadata.source = getAttributionSource(req);
+  }
 
   return metadata;
 }
