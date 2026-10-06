@@ -95,6 +95,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ id: session.id, url: session.url });
   } catch (err: any) {
+    await trackServerEvent("checkout_error", {
+      product: "mecenas",
+      stage: "create_session",
+    });
     const message = err?.message || "Stripe error";
     console.error("[mecenas/checkout] Stripe error:", message);
     return NextResponse.json({ error: message }, { status: 400 });
