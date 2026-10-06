@@ -4,14 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatSequence } from "@/lib/format";
+import { trackEvent, getAttributionSource } from "@/lib/siteAnalytics";
 
 export function track(event: string, params: Record<string, any> = {}) {
-  if (typeof window !== "undefined" && (window as any).umami) {
-    try { (window as any).umami.track(event, params); } catch {}
-  }
-  if (typeof window !== "undefined" && (window as any).gtag) {
-    try { (window as any).gtag("event", event, params); } catch {}
-  }
+  const entries = Object.entries(params)
+    .filter(([, value]) => value !== null && value !== undefined)
+    .slice(0, 1);
+
+  trackEvent(event, {
+    ...Object.fromEntries(entries),
+    source: getAttributionSource(),
+  });
 }
 
 export function LightboxTrigger({
