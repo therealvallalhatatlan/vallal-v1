@@ -6,6 +6,7 @@ import { Card } from "@/components/Card"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/format"
 import { useState, useEffect } from "react"
+import { getAttributionSource, trackEvent } from "@/lib/siteAnalytics"
 
 export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -28,6 +29,10 @@ export default function CheckoutPage() {
   const handlePayment = async () => {
     setIsLoading(true)
     setError(null)
+    trackEvent("checkout_start_click", {
+      product: "book-1",
+      source: getAttributionSource(),
+    })
 
     // Fallback Payment Link (ha az API nem ad vissza session URL-t)
     const PAYMENT_LINK = "https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
@@ -148,7 +153,7 @@ export default function CheckoutPage() {
                 size="lg"
                 className="w-full py-6 text-lg bg-green-400/20 border-green-400 text-green-400 hover:bg-green-400 hover:text-black"
                 disabled={isLoading}
-                data-umami-event="checkout_pay_click"
+                aria-label="Belépek a kalandba"
               >
                 {isLoading ? "Átirányítás a Stripe-ra…" : "Belépek a kalandba"}
               </Button>
