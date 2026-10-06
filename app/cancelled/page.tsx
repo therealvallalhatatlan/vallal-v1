@@ -3,6 +3,7 @@ import { Card } from "@/components/Card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import type { Metadata } from "next"
+import CheckoutReturnTracker from "@/components/CheckoutReturnTracker";
 
 export const metadata: Metadata = {
   title: "Payment Cancelled | Next.js App",
