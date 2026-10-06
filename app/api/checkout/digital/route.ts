@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { buildCheckoutMetadata } from "@/lib/stripeAttribution";
+import { trackServerEvent } from "@/lib/siteAnalyticsServer";
+import { getAttributionSource } from "@/lib/stripeAttribution";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-07-30.basil",
@@ -35,6 +37,11 @@ export async function POST(req: NextRequest) {
       allow_promotion_codes: true,
       billing_address_collection: "auto",
     });
+
+    await trackServerEvent("checkout_created", {
+    product: "digital-reader",
+    source: getAttributionSource(req),
+  });
 
     return NextResponse.json({ url: session.url });
   } catch (e) {
