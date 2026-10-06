@@ -70,8 +70,6 @@ function emitDiscovery(name: string, score: number, points = 0) {
     vercelTrack("curiosity_easter_egg", {
       discovery: name,
       curiosity_score: score,
-      points,
-      path: window.location.pathname,
     })
   } catch {}
 
