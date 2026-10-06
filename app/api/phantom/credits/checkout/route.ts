@@ -4,7 +4,8 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { normalizeUuid } from '@/lib/phantom'
 import { guardWriteOperation } from '@/lib/systemGuard'
 import { getUserFromToken, parseBearerToken } from '@/lib/auth'
-import { buildCheckoutMetadata } from '@/lib/stripeAttribution'
+import { buildCheckoutMetadata, getAttributionSource } from '@/lib/stripeAttribution'
+import { trackServerEvent } from '@/lib/siteAnalyticsServer'
 
 export const dynamic = 'force-dynamic'
 
@@ -124,8 +125,17 @@ export async function POST(req: NextRequest) {
       payment_intent_data: { metadata },
     })
 
+    await trackServerEvent("checkout_created", {
+      product: "phantom-credits",
+      source: getAttributionSource(req),
+    })
+
     return NextResponse.json({ ok: true, url: session.url })
   } catch (error) {
+    await trackServerEvent("checkout_error", {
+      product: "phantom-credits",
+      stage: "create_session",
+    })
     console.error('[phantom/credits/checkout] stripe error', error)
     return NextResponse.json({ error: 'stripe_checkout_failed' }, { status: 500 })
   }
