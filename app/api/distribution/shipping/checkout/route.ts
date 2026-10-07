@@ -5,9 +5,7 @@ import {
   DISTRIBUTION_DEFAULT_BOOK_PRICE_HUF,
   DISTRIBUTION_SHIPPING,
   SHIPPING_COUNTRIES,
-  type DistributionFulfillmentMethod,
 } from "@/lib/distributionNetwork"
-import { supabaseAdmin } from "@/lib/supabaseAdmin"
 
 export const dynamic = "force-dynamic"
 
@@ -46,8 +44,6 @@ export async function POST(request: NextRequest) {
 
   const shippingFee = DISTRIBUTION_SHIPPING[method]
   const totalHuf = DISTRIBUTION_DEFAULT_BOOK_PRICE_HUF + shippingFee
-  const db = supabaseAdmin()
-
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -94,7 +90,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, url: session.url, session_id: session.id, total_huf: totalHuf })
   } catch (error) {
     console.error("[distribution/shipping] Stripe error", error)
-    await db.from("orders").update({ metadata: { last_checkout_error: "stripe_checkout_failed" } }).eq("user_id", user.id).eq("status", "pending")
     return NextResponse.json({ error: "stripe_checkout_failed" }, { status: 500 })
   }
 }
