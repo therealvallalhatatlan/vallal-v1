@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
         !Array.isArray(snapshot.unreadByUserId)
           ? snapshot.unreadByUserId
           : {},
+      unreadUsers: Array.isArray(snapshot.unreadUsers) ? snapshot.unreadUsers : [],
     },
     { headers: { "Cache-Control": "no-store" } },
   )
