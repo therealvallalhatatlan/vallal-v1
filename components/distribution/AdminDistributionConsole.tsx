@@ -14,6 +14,25 @@ type Cell = {
   stripe_payouts_enabled: boolean
 }
 
+type QueueOrder = {
+  id: string
+  created_at: string
+  amount: number
+  customer_email: string | null
+  customer_name: string | null
+  distribution_product_name: string | null
+}
+
+type QueueDrop = {
+  id: string
+  cell_id: string
+  product_name: string
+  city: string
+  district: string | null
+  location_hint: string
+  hidden_at: string
+}
+
 type Commission = {
   id: string
   order_id: string
@@ -32,6 +51,8 @@ export default function AdminDistributionConsole() {
   const [token, setToken] = useState<string | null>(null)
   const [cells, setCells] = useState<Cell[]>([])
   const [commissions, setCommissions] = useState<Commission[]>([])
+  const [queueOrders, setQueueOrders] = useState<QueueOrder[]>([])
+  const [queueDrops, setQueueDrops] = useState<QueueDrop[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -58,17 +79,23 @@ export default function AdminDistributionConsole() {
     }
 
     const headers = { Authorization: "Bearer " + authToken }
-    const [cellsResponse, commissionsResponse] = await Promise.all([
+    const [cellsResponse, commissionsResponse, queueResponse] = await Promise.all([
       fetch("/api/admin/distribution/cells", { headers, cache: "no-store" }),
       fetch("/api/admin/distribution/commissions", { headers, cache: "no-store" }),
+      fetch("/api/admin/distribution/queue", { headers, cache: "no-store" }),
     ])
 
     const cellsJson = await cellsResponse.json()
     const commissionsJson = await commissionsResponse.json()
+    const queueJson = await queueResponse.json()
 
     if (cellsResponse.ok && cellsJson?.ok) setCells(Array.isArray(cellsJson.cells) ? cellsJson.cells : [])
     if (commissionsResponse.ok && commissionsJson?.ok) setCommissions(Array.isArray(commissionsJson.commissions) ? commissionsJson.commissions : [])
-    if (!cellsResponse.ok || !commissionsResponse.ok) setMessage(cellsJson?.error || commissionsJson?.error || "Nem sikerült betölteni az admin adatokat.")
+    if (queueResponse.ok && queueJson?.ok) {
+      setQueueOrders(Array.isArray(queueJson.orders) ? queueJson.orders : [])
+      setQueueDrops(Array.isArray(queueJson.drops) ? queueJson.drops : [])
+    }
+    if (!cellsResponse.ok || !commissionsResponse.ok || !queueResponse.ok) setMessage(cellsJson?.error || commissionsJson?.error || queueJson?.error || "Nem sikerült betölteni az admin adatokat.")
     setLoading(false)
   }
 
@@ -126,6 +153,29 @@ export default function AdminDistributionConsole() {
     }
 
     window.location.href = json.url
+  }
+
+  async function assignQueueOrder(orderId: string, dropId: string) {
+    if (!token) return
+    setBusyId(orderId + ":" + dropId)
+    setMessage(null)
+
+    const response = await fetch("/api/admin/distribution/queue", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ order_id: orderId, drop_id: dropId }),
+    })
+    const json = await response.json()
+
+    if (!response.ok || !json?.ok) {
+      setMessage(json?.error || "A rendelés hozzárendelése nem sikerült.")
+      setBusyId(null)
+      return
+    }
+
+    setMessage("Dead drop hozzárendelve. A vásárló most már megkaphatja a pontos helyszínt.")
+    await load()
+    setBusyId(null)
   }
 
   async function approveCommission(commissionId: string) {
@@ -197,6 +247,31 @@ export default function AdminDistributionConsole() {
               )) : <div className="px-4 py-8 text-sm text-zinc-600">Még nincs sejt.</div>}
             </div>
           )}
+        </section>
+
+        <section className="mt-12 border-t border-zinc-800 pt-7">
+          <p className="text-[10px] uppercase tracking-[0.25em] text-lime-200/60">VÁRÓLISTA / DEAD DROP KIOSZTÁS</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">Azok a már kifizetett dead-drop rendelések vannak itt, amelyekhez még nincs szpot rendelve.</p>
+          <div className="mt-4 divide-y divide-zinc-800 border-y border-zinc-800">
+            {queueOrders.length ? queueOrders.map((order) => (
+              <div key={order.id} className="grid gap-4 px-4 py-5 lg:grid-cols-[1fr_1fr]">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-100">{order.distribution_product_name || "Vállalhatatlan II."}</div>
+                  <div className="mt-1 text-[10px] uppercase tracking-[0.14em] text-zinc-600">#{order.id.slice(0, 8)} · {order.customer_name || order.customer_email || "ISMERETLEN"}</div>
+                  <div className="mt-2 text-sm font-semibold text-zinc-300">{Number(order.amount / 100).toLocaleString("hu-HU")} Ft · VÁRÓLISTA</div>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {queueDrops.map((drop) => (
+                    <button key={drop.id} type="button" onClick={() => void assignQueueOrder(order.id, drop.id)} disabled={busyId === order.id + ":" + drop.id} className="border border-zinc-800 px-3 py-3 text-left hover:border-lime-200/50 disabled:opacity-40">
+                      <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-lime-100">{drop.city}{drop.district ? " · " + drop.district : ""}</div>
+                      <div className="mt-1 text-xs text-zinc-300">{drop.location_hint}</div>
+                      <div className="mt-2 text-[9px] uppercase tracking-[0.16em] text-zinc-600">{busyId === order.id + ":" + drop.id ? "KIOSZTÁS…" : "EHHEZ RENDELEM"}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )) : <div className="px-4 py-8 text-sm text-zinc-600">Nincs kiosztatlan dead-drop rendelés.</div>}
+          </div>
         </section>
 
         <section className="mt-12 border-t border-zinc-800 pt-7">
