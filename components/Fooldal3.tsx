@@ -7,6 +7,7 @@ import MainContent from "@/components/MainContent"
 import { createClient } from "@/lib/browser"
 import { buildAuthHref } from "@/lib/authRedirect"
 import {
+  DISTRIBUTION_DEFAULT_BOOK_PRICE_HUF,
   fulfillmentLabel,
   shippingFeeHuf,
   type DistributionFulfillmentMethod,
