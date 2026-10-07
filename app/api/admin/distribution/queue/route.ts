@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
   const { data: order, error: orderError } = await db
     .from("orders")
-    .select("id, user_id, status, distribution_fulfillment_method, distribution_drop_id")
+    .select("id, user_id, status, distribution_fulfillment_method, distribution_drop_id, metadata")
     .eq("id", orderId)
     .maybeSingle()
 
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
       distribution_cell_id: drop.cell_id,
       distribution_commission_huf: commission,
       metadata: {
-        ...(typeof order === "object" ? {} : {}),
+        ...(order.metadata && typeof order.metadata === "object" ? order.metadata : {}),
         distribution_waitlist_assigned_at: new Date().toISOString(),
       },
     })
