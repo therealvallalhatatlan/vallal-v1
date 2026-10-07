@@ -1,5 +1,3 @@
-import "server-only"
-
 export const DISTRIBUTION_PRODUCT_ID = "book_ii"
 export const DISTRIBUTION_PRODUCT_NAME = "Vállalhatatlan II."
 export const DISTRIBUTION_DEFAULT_BOOK_PRICE_HUF = 15000
