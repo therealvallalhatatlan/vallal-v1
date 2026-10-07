@@ -139,10 +139,62 @@ export async function GET(req: NextRequest) {
   }
 
   const pmUnreadRows = pmUnreadRes.data ?? []
+  const pmUnreadByUserId: Record<string, number> = {}
   const pmUnreadCount = pmUnreadRows.reduce((acc, row) => {
-    const value = typeof row?.unread_count === "number" && Number.isFinite(row.unread_count) ? row.unread_count : 0
-    return acc + Math.max(0, Math.floor(value))
+    const value =
+      typeof row?.unread_count === "number" && Number.isFinite(row.unread_count)
+        ? Math.max(0, Math.floor(row.unread_count))
+        : 0
+
+    if (row?.other_user_id && value > 0) {
+      pmUnreadByUserId[row.other_user_id] = value
+    }
+
+    return acc + value
   }, 0)
+
+  const pmUserIds = Object.keys(pmUnreadByUserId)
+  let pmUnreadUsers: Array<{
+    user_id: string
+    unread_count: number
+    nickname: string | null
+    avatar_url: string | null
+  }> = []
+
+  if (pmUserIds.length > 0) {
+    const { data: pmProfiles, error: pmProfilesError } = await supabase
+      .from("users")
+      .select("id, nickname, avatar_url")
+      .in("id", pmUserIds)
+
+    if (pmProfilesError) {
+      console.error("[notifications] PM profile fetch error", pmProfilesError)
+      return NextResponse.json({ error: "server_error" }, { status: 500 })
+    }
+
+    const profileMap = new Map(
+      (pmProfiles ?? []).map((profile) => [
+        profile.id,
+        {
+          nickname: typeof profile.nickname === "string" ? profile.nickname : null,
+          avatar_url: typeof profile.avatar_url === "string" ? profile.avatar_url : null,
+        },
+      ]),
+    )
+
+    pmUnreadUsers = pmUnreadRows
+      .filter((row) => row?.other_user_id && (pmUnreadByUserId[row.other_user_id] ?? 0) > 0)
+      .map((row) => {
+        const userId = row.other_user_id as string
+        const profile = profileMap.get(userId)
+        return {
+          user_id: userId,
+          unread_count: pmUnreadByUserId[userId] ?? 0,
+          nickname: profile?.nickname ?? null,
+          avatar_url: profile?.avatar_url ?? null,
+        }
+      })
+  }
 
   if (conversationRes.data?.id) {
     const conversation = conversationRes.data
