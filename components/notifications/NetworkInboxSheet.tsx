@@ -297,7 +297,9 @@ export default function NetworkInboxSheet() {
       }
       controller.abort()
     }
-  }, [currentUserId, token])  const fetchInbox = useCallback(async () => {
+  }, [currentUserId, token])
+
+  const fetchInbox = useCallback(async () => {
     if (!headers) return
 
     const controller = new AbortController()
