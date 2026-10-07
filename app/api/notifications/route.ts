@@ -230,6 +230,8 @@ export async function GET(req: NextRequest) {
     notifications,
     unreadNotificationCount,
     messageOverview,
+    pmUnreadByUserId,
+    pmUnreadUsers,
     networkActivity: {
       summary: networkSummary,
       items: networkItems,
