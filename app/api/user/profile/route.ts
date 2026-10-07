@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getUserRoleByEmail } from "@/lib/auth";
+import { getUserRoleByEmail, getUserFromToken } from "@/lib/auth";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -39,9 +39,9 @@ export async function PATCH(req: Request) {
     }
 
     const token = authHeader.split("Bearer ")[1];
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const user = await getUserFromToken(token);
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ ok: false, error: "invalid_token" }, { status: 401 });
     }
 
@@ -245,7 +245,7 @@ export async function GET(req: Request) {
     // Fetch user's public profile (nickname from DB)
     const { data, error } = await supabase
       .from("users")
-      .select("id, nickname")
+      .select("id, nickname, avatar_url, email")
       .eq("id", userId)
       .maybeSingle();
 
@@ -280,27 +280,16 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: false, error: "db_error", details: acceptedError.message }, { status: 500 });
     }
 
-    // Fetch avatar from Auth user metadata
-    let avatar_url: string | null = null;
-    let authEmail: string | null = null;
-    try {
-      const { data: authUser, error: authError } = await adminClient.auth.admin.getUserById(userId);
-      authEmail = authUser?.user?.email ?? null;
-      if (!authError && authUser?.user?.user_metadata?.avatar_url) {
-        avatar_url = authUser.user.user_metadata.avatar_url;
-      }
-    } catch (err) {
-      console.warn('Failed to fetch avatar from auth:', err);
-    }
-
     return NextResponse.json({
       ok: true,
       profile: {
         ...data,
-        avatar_url,
+        avatar_url: typeof data?.avatar_url === "string" ? data.avatar_url : null,
         score: foundCount ?? 0,
         accepted: acceptedCount ?? 0,
-        role: getUserRoleByEmail(authEmail),
+        role: getUserRoleByEmail(
+          typeof data?.email === "string" ? data.email : null,
+        ),
       },
     });
   } catch (err) {
