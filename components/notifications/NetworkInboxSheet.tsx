@@ -353,7 +353,9 @@ export default function NetworkInboxSheet() {
         setLoadingPmConversations(false)
       }
     }
-  }, [currentUserId, token])  const fetchInbox = useCallback(async () => {
+  }, [currentUserId, token])
+
+  const fetchInbox = useCallback(async () => {
     if (!headers) return
 
     const controller = new AbortController()
