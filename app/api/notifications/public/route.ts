@@ -58,7 +58,9 @@ export async function GET(req: NextRequest) {
       headers: {
         // Public/system notifications are identical for every visitor. Let the
         // Vercel edge cache absorb most client polls instead of querying Supabase.
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        "Cache-Control": "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
+        "CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        "Vercel-CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
       },
     },
   );
