@@ -23,9 +23,17 @@ export function parseBearerToken(headers: Headers): string | null {
 
 export async function getUserFromToken(token: string): Promise<AuthenticatedUser | null> {
   const supabase = supabaseAdmin()
-  const { data, error } = await supabase.auth.getUser(token)
-  if (error || !data?.user) return null
-  return { id: data.user.id, email: data.user.email }
+  const { data, error } = await supabase.auth.getClaims(token)
+  const claims = data?.claims
+
+  if (error || !claims?.sub || typeof claims.sub !== 'string') {
+    return null
+  }
+
+  return {
+    id: claims.sub,
+    email: typeof claims.email === 'string' ? claims.email : null,
+  }
 }
 
 export function isAdminEmail(email: string | null | undefined): boolean {
