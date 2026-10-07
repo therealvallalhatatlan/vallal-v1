@@ -24,6 +24,9 @@ type Cell = {
 const FULFILLMENT = [
   ["dead_drop", "DEAD DROP"],
   ["personal", "SZEMÉLYES"],
+  ["hu_shipping", "AUTOMATA / HU"],
+  ["eu_shipping", "POSTA / EU"],
+  ["global_shipping", "POSTA / GLOBAL"],
 ] as const
 
 export default function CellConsole() {
@@ -222,7 +225,6 @@ export default function CellConsole() {
               {FULFILLMENT.map(([value, label]) => (
                 <button key={value} type="button" onClick={() => toggleMethod(value)} className={"border px-3 py-2 text-[10px] uppercase tracking-[0.18em] " + (methods.includes(value) ? "border-lime-200/50 bg-lime-100/10 text-lime-100" : "border-zinc-800 text-zinc-600")}>{label}</button>
               ))}
-              <span className="border border-zinc-900 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-zinc-700">POSTA: KÖVETKEZŐ ITERÁCIÓ</span>
             </div>
           </div>
 
