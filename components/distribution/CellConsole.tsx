@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { createClient } from "@/lib/browser"
+import { DISTRIBUTION_DEFAULT_BOOK_PRICE_HUF } from "@/lib/distributionNetwork"
 
 type Inventory = {
   id: string
@@ -141,7 +142,7 @@ export default function CellConsole() {
       body: JSON.stringify({
         cell_id: currentCell.id,
         product_id: "book_ii",
-        price_huf: 15000,
+        price_huf: DISTRIBUTION_DEFAULT_BOOK_PRICE_HUF,
         city: currentCell.city,
         district,
         location_hint: locationHint,
