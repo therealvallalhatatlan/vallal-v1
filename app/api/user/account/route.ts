@@ -124,7 +124,7 @@ export async function GET(req: NextRequest) {
       db
         .from("orders")
         .select(
-          "id, created_at, status, amount, currency, product_id, delivery_type, customer_email, fulfilled_at, dispatch_sent_at, user_received_at, metadata"
+          "id, created_at, status, amount, currency, product_id, delivery_type, customer_email, fulfilled_at, dispatch_sent_at, user_received_at, metadata, distribution_drop_id, distribution_fulfillment_method"
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -182,6 +182,8 @@ export async function GET(req: NextRequest) {
       label,
       productId: order.product_id ?? null,
       deliveryType: order.delivery_type ?? null,
+      distributionDropId: order.distribution_drop_id ?? null,
+      distributionFulfillmentMethod: order.distribution_fulfillment_method ?? null,
       fulfilled_at: order.fulfilled_at ?? null,
       dispatched_at: order.dispatch_sent_at ?? null,
       user_received_at: order.user_received_at ?? null,
