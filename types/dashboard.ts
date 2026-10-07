@@ -51,6 +51,8 @@ export interface DashboardUnifiedOrder {
   label: string
   productId: string | null
   deliveryType: string | null
+  distributionDropId: string | null
+  distributionFulfillmentMethod: string | null
   fulfilled_at: string | null
   dispatched_at: string | null
   user_received_at: string | null
