@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { getUserFromToken } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,13 +8,12 @@ async function requireUser(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
   if (!token) return { user: null, error: 'missing_token' as const }
 
-  const anonClient = await createClient()
-  const { data: authData, error: authError } = await anonClient.auth.getUser(token)
-  if (authError || !authData?.user) {
+  const user = await getUserFromToken(token)
+  if (!user) {
     return { user: null, error: 'unauthenticated' as const }
   }
 
-  return { user: authData.user, error: null }
+  return { user, error: null }
 }
 
 export async function GET(req: NextRequest) {
