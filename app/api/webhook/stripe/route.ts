@@ -804,6 +804,14 @@ export async function POST(request: NextRequest) {
       }
 
       break;
+    case 'checkout.session.expired':
+      console.log('🎯 Processing checkout.session.expired event');
+      await handleDistributionDropCheckoutExpired(event.data.object as Stripe.Checkout.Session);
+      break;
+    case 'account.updated':
+      console.log('🎯 Processing account.updated event');
+      await handleDistributionStripeAccountUpdated(event.data.object as Stripe.Account);
+      break;
     case 'payment_intent.succeeded':
       console.log('🎯 Processing payment_intent.succeeded event');
       await handleTelegramMiniAppPayment(event.data.object as Stripe.PaymentIntent);
@@ -854,6 +862,52 @@ export async function PATCH(request: NextRequest) {
 }
 
 
+
+
+async function handleDistributionDropCheckoutExpired(session: Stripe.Checkout.Session) {
+  const metadata = session.metadata ?? {}
+  const dropId = metadata.drop_id
+  if (!dropId) return
+
+  const db = supabaseAdmin()
+  const { data, error } = await db
+    .from('distribution_drops')
+    .update({
+      status: 'active',
+      reserved_by_user_id: null,
+      reserved_until: null,
+      reserved_fulfillment_method: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', dropId)
+    .eq('status', 'reserved')
+    .select('id')
+    .maybeSingle()
+
+  if (error) {
+    console.error('[distribution] expired checkout release failed', session.id, error)
+    return
+  }
+
+  if (data) {
+    revalidatePath('/fooldal-3')
+  }
+}
+
+async function handleDistributionStripeAccountUpdated(account: Stripe.Account) {
+  const db = supabaseAdmin()
+  const { error } = await db
+    .from('distribution_cells')
+    .update({
+      stripe_payouts_enabled: Boolean(account.payouts_enabled),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('stripe_connected_account_id', account.id)
+
+  if (error) {
+    console.error('[distribution] account sync failed', account.id, error)
+  }
+}
 
 async function handleDistributionShippingCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (session.payment_status !== 'paid') return
