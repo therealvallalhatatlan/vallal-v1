@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Bell, MessageCircle, X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
-import { createClient } from "@/lib/browser"
 import { buildPrivateRoomId } from "@/lib/live/privateRooms"
 import { setUnreadSource } from "@/lib/notifications/unreadStore"
 
@@ -16,14 +15,17 @@ type ToastItem = {
   targetUrl?: string
 }
 
-type NotificationItem = {
-  id: string
-  type?: string
-  title: string
-  body: string | null
-  data: Record<string, unknown>
-  read_at: string | null
-  created_at: string
+type UnreadSnapshotResponse = {
+  ok: boolean
+  unreadNotificationCount: number
+  latestNotification: {
+    id: string
+    title: string
+    body: string | null
+    data: Record<string, unknown>
+    created_at: string
+  } | null
+  unreadByUserId: Record<string, number>
 }
 
 type PublicNotificationItem = {
@@ -35,7 +37,8 @@ type PublicNotificationItem = {
 
 const PUBLIC_UNREAD_SOURCE_KEY = "public-system"
 const PUBLIC_SEEN_STORAGE_KEY = "vallalhatatlan:public-notifications-seen-v1"
-const PUBLIC_POLL_INTERVAL_MS = 15_000
+const PUBLIC_POLL_INTERVAL_MS = 60_000
+const PRIVATE_POLL_INTERVAL_MS = 60_000
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
@@ -237,191 +240,151 @@ export default function GlobalNotificationToasts() {
     if (!token || !currentUserId || loading) return
 
     try {
-      const [notificationsResponse, pmResponse] = await Promise.all([
-        fetch("/api/notifications", {
-          headers: { Authorization: "Bearer " + token },
-          cache: "no-store",
-        }),
-        fetch("/api/matrica/pm-unread", {
-          headers: { Authorization: "Bearer " + token },
-          cache: "no-store",
-        }),
-      ])
+      const response = await fetch("/api/notifications/unread", {
+        headers: { Authorization: "Bearer " + token },
+        cache: "no-store",
+      })
 
-      const notificationsJson: unknown = await notificationsResponse.json().catch(() => null)
-      const pmJson: unknown = await pmResponse.json().catch(() => null)
+      const raw: unknown = await response.json().catch(() => null)
+      if (!response.ok || !isRecord(raw) || raw.ok !== true) return
+
+      const latestRaw = raw.latestNotification
+      const latestNotification =
+        isRecord(latestRaw) &&
+        typeof latestRaw.id === "string" &&
+        typeof latestRaw.title === "string" &&
+        typeof latestRaw.created_at === "string"
+          ? {
+              id: latestRaw.id,
+              title: latestRaw.title,
+              body: typeof latestRaw.body === "string" ? latestRaw.body : null,
+              data: isRecord(latestRaw.data) ? latestRaw.data : {},
+              created_at: latestRaw.created_at,
+            }
+          : null
+
+      const unreadNotificationCount =
+        typeof raw.unreadNotificationCount === "number" &&
+        Number.isFinite(raw.unreadNotificationCount)
+          ? Math.max(0, Math.floor(raw.unreadNotificationCount))
+          : 0
+
+      const nextPm: Record<string, number> = {}
+      if (isRecord(raw.unreadByUserId)) {
+        for (const [userId, rawCount] of Object.entries(raw.unreadByUserId)) {
+          if (typeof rawCount !== "number" || !Number.isFinite(rawCount)) continue
+          const count = Math.max(0, Math.floor(rawCount))
+          if (count > 0) nextPm[userId] = count
+        }
+      }
+
+      const snapshot: UnreadSnapshotResponse = {
+        ok: true,
+        unreadNotificationCount,
+        latestNotification,
+        unreadByUserId: nextPm,
+      }
+
+      setUnreadSource("personal-notifications", snapshot.unreadNotificationCount)
+      const pmTotal = Object.values(snapshot.unreadByUserId).reduce(
+        (total, count) => total + count,
+        0,
+      )
+      setUnreadSource("personal-pm", pmTotal)
+
+      const previousNotificationId = notificationBaselineRef.current
+      const latestNotificationId = snapshot.latestNotification?.id ?? null
 
       if (
-        isRecord(notificationsJson) &&
-        Array.isArray(notificationsJson.notifications)
+        previousNotificationId !== null &&
+        latestNotificationId &&
+        latestNotificationId !== previousNotificationId
       ) {
-        const notifications = notificationsJson.notifications.filter(
-          (item): item is NotificationItem =>
-            isRecord(item) &&
-            typeof item.id === "string" &&
-            typeof item.title === "string",
-        )
-
-        const currentIds = new Set(notifications.map((item) => item.id))
-
-        if (notificationBaselineRef.current === null) {
-          notificationBaselineRef.current = currentIds
-        } else {
-          const newUnread = notifications
-            .filter(
-              (item) =>
-                !item.read_at &&
-                !notificationBaselineRef.current?.has(item.id),
-            )
-            .sort(
-              (a, b) =>
-                new Date(b.created_at).getTime() -
-                new Date(a.created_at).getTime(),
-            )
-
-          const newest = newUnread[0]
-          if (newest) {
-            pushToast({
-              id: "notification-" + newest.id,
-              kind: "system",
-              title: newest.title,
-              body: clip(newest.body || "Új rendszerüzenet érkezett."),
-              targetUrl: getTargetUrl(newest.data),
-            })
-          }
-
-          notificationBaselineRef.current = currentIds
+        const latest = snapshot.latestNotification
+        if (latest) {
+          pushToast({
+            id: "notification-" + latest.id,
+            kind: "system",
+            title: latest.title,
+            body: clip(latest.body || "Új rendszerüzenet érkezett."),
+            targetUrl: getTargetUrl(latest.data),
+          })
         }
       }
 
-      if (isRecord(pmJson) && isRecord(pmJson.unreadByUserId)) {
-        const next: Record<string, number> = {}
+      notificationBaselineRef.current = latestNotificationId
 
-        for (const [userId, rawCount] of Object.entries(pmJson.unreadByUserId)) {
-          const count =
-            typeof rawCount === "number" && Number.isFinite(rawCount)
-              ? Math.max(0, Math.floor(rawCount))
-              : 0
-          if (count > 0) next[userId] = count
-        }
-
-        if (pmBaselineRef.current === null) {
-          pmBaselineRef.current = next
-        } else {
-          const previous = pmBaselineRef.current
-
-          for (const [userId, count] of Object.entries(next)) {
-            if ((previous[userId] ?? 0) < count) {
-              await showPrivateMessageToast(userId)
-              break
-            }
+      if (pmBaselineRef.current === null) {
+        pmBaselineRef.current = snapshot.unreadByUserId
+      } else {
+        const previous = pmBaselineRef.current
+        for (const [userId, count] of Object.entries(snapshot.unreadByUserId)) {
+          if ((previous[userId] ?? 0) < count) {
+            await showPrivateMessageToast(userId)
+            break
           }
-
-          pmBaselineRef.current = next
         }
+        pmBaselineRef.current = snapshot.unreadByUserId
       }
     } catch (error) {
-      console.error("[global-notifications] poll failed", error)
+      console.error("[global-notifications] unread poll failed", error)
     }
   }, [currentUserId, loading, pushToast, showPrivateMessageToast, token])
-
-
-  useEffect(() => {
-    if (loading || !token || !currentUserId) return
-
-    const supabase = createClient()
-    let debounceTimer: number | null = null
-
-    const channel = supabase
-      .channel("global:pm-unread:" + currentUserId)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "pm_unread_counts",
-          filter: "user_id=eq." + currentUserId,
-        },
-        () => {
-          if (debounceTimer) window.clearTimeout(debounceTimer)
-          debounceTimer = window.setTimeout(() => {
-            void poll()
-          }, 450)
-        },
-      )
-      .subscribe()
-
-    return () => {
-      if (debounceTimer) window.clearTimeout(debounceTimer)
-      void channel.unsubscribe()
-    }
-  }, [currentUserId, loading, poll, token])
   useEffect(() => {
     if (loading) return
 
-    if (token && currentUserId) {
-      publicToastIdsRef.current.clear()
-      setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, 0)
-      return
+    let intervalId: number | null = null
+
+    const stop = () => {
+      if (intervalId !== null) {
+        window.clearInterval(intervalId)
+        intervalId = null
+      }
     }
 
-    void pollPublicNotifications()
+    const start = () => {
+      stop()
+      if (document.visibilityState !== "visible") return
 
-    const intervalId = window.setInterval(() => {
-      void pollPublicNotifications()
-    }, PUBLIC_POLL_INTERVAL_MS)
-
-    const handleFocus = () => {
-      void pollPublicNotifications()
+      if (token && currentUserId) {
+        void poll()
+        intervalId = window.setInterval(() => {
+          void poll()
+        }, PRIVATE_POLL_INTERVAL_MS)
+      } else {
+        void pollPublicNotifications()
+        intervalId = window.setInterval(() => {
+          void pollPublicNotifications()
+        }, PUBLIC_POLL_INTERVAL_MS)
+      }
     }
 
+    const handleFocus = () => start()
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") start()
+      else stop()
+    }
+
+    start()
     window.addEventListener("focus", handleFocus)
+    document.addEventListener("visibilitychange", handleVisibility)
 
     return () => {
-      window.clearInterval(intervalId)
+      stop()
       window.removeEventListener("focus", handleFocus)
-      setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, 0)
-    }
-  }, [currentUserId, loading, pollPublicNotifications, token])
-
-  useEffect(() => {
-    if (loading || !token || !currentUserId) {
-      setToasts([])
-      notificationBaselineRef.current = null
-      pmBaselineRef.current = null
-      return
-    }
-
-    let cancelled = false
-
-    const run = async () => {
-      if (cancelled) return
-      await poll()
-    }
-
-    void run()
-
-    const intervalId = window.setInterval(() => {
-      void run()
-    }, 15_000)
-
-    const handleFocus = () => {
-      void run()
-    }
-
-    window.addEventListener("focus", handleFocus)
-
-    return () => {
-      cancelled = true
-      window.clearInterval(intervalId)
-      window.removeEventListener("focus", handleFocus)
+      document.removeEventListener("visibilitychange", handleVisibility)
 
       for (const timer of Object.values(toastTimersRef.current)) {
         window.clearTimeout(timer)
       }
       toastTimersRef.current = {}
+      setUnreadSource("personal-notifications", 0)
+      setUnreadSource("personal-pm", 0)
+      setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, 0)
+      notificationBaselineRef.current = null
+      pmBaselineRef.current = null
     }
-  }, [currentUserId, loading, poll, token])
+  }, [currentUserId, loading, poll, pollPublicNotifications, token])
 
   if (toasts.length === 0) return null
 
