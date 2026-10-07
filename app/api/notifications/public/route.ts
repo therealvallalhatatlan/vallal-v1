@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-export const dynamic = "force-dynamic";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -55,6 +54,14 @@ export async function GET(req: NextRequest) {
         created_at: item.created_at,
       })),
     },
-    { headers: { "Cache-Control": "no-store" } },
+    {
+      headers: {
+        // Public/system notifications are identical for every visitor. Let the
+        // Vercel edge cache absorb most client polls instead of querying Supabase.
+        "Cache-Control": "public, max-age=0, s-maxage=60, stale-while-revalidate=300",
+        "CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        "Vercel-CDN-Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    },
   );
 }

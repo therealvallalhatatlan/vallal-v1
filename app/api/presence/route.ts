@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getUserFromToken } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,16 +12,13 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.slice(7)
-    const supabase = supabaseAdmin()
-    
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token)
+    const user = await getUserFromToken(token)
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
+
+    const supabase = supabaseAdmin()
 
     // Parse optional location data from request body
     let lat: number | null = null
