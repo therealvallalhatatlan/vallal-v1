@@ -812,6 +812,10 @@ export async function POST(request: NextRequest) {
       console.log('🎯 Processing account.updated event');
       await handleDistributionStripeAccountUpdated(event.data.object as Stripe.Account);
       break;
+    case 'checkout.session.async_payment_succeeded':
+      console.log('🎯 Processing checkout.session.async_payment_succeeded event');
+      await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session, event.id);
+      break;
     case 'payment_intent.succeeded':
       console.log('🎯 Processing payment_intent.succeeded event');
       await handleTelegramMiniAppPayment(event.data.object as Stripe.PaymentIntent);
@@ -863,6 +867,56 @@ export async function PATCH(request: NextRequest) {
 
 
 
+
+
+async function handleDistributionWaitlistCheckoutCompleted(session: Stripe.Checkout.Session) {
+  if (session.payment_status !== 'paid') return
+
+  const metadata = session.metadata ?? {}
+  const userId = metadata.user_id
+  if (!userId) {
+    console.error('[distribution/waitlist] missing user_id', session.id)
+    return
+  }
+
+  const db = supabaseAdmin()
+  const amount = typeof session.amount_total === 'number' ? session.amount_total : 0
+  const currency = (session.currency ?? 'huf').toLowerCase()
+  const paymentIntentId =
+    typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null
+
+  const { error } = await db
+    .from('orders')
+    .upsert({
+      stripe_session_id: session.id,
+      user_id: userId,
+      product_id: metadata.product_id ?? 'book_ii',
+      delivery_type: 'dead_drop',
+      amount,
+      currency,
+      status: 'paid',
+      customer_email: session.customer_details?.email ?? null,
+      customer_name: session.customer_details?.name ?? null,
+      distribution_fulfillment_method: 'dead_drop',
+      distribution_commission_huf: 0,
+      distribution_product_name: metadata.product_name ?? 'Vállalhatatlan II.',
+      metadata: {
+        ...metadata,
+        payment_intent_id: paymentIntentId,
+        distribution_waitlist: true,
+      },
+    }, { onConflict: 'stripe_session_id' })
+
+  if (error) {
+    console.error('[distribution/waitlist] order upsert failed', session.id, error)
+    return
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/fooldal-3')
+}
 
 async function handleDistributionDropCheckoutExpired(session: Stripe.Checkout.Session) {
   const metadata = session.metadata ?? {}
