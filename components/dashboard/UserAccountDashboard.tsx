@@ -673,6 +673,19 @@ export default function UserAccountDashboard({ account, token }: Props) {
                               </div>
                             ))}
                           </div>
+
+                          {order.distributionFulfillmentMethod === "dead_drop" && order.distributionDropId ? (
+                            <Link
+                              href={"/halozat?distribution_drop=" + encodeURIComponent(order.distributionDropId)}
+                              className="mt-3 inline-flex min-h-10 items-center border border-lime-200/40 bg-lime-100/5 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-lime-100 transition hover:bg-lime-100 hover:text-black"
+                            >
+                              PONTOS HELYSZÍN / HÁLÓZAT →
+                            </Link>
+                          ) : order.distributionFulfillmentMethod === "dead_drop" ? (
+                            <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                              KÖVETKEZŐ DEAD DROPRA VÁR
+                            </p>
+                          ) : null}
                         </div>
                       )}
                     </article>
