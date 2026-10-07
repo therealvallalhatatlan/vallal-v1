@@ -83,6 +83,7 @@ type InboxPayload = {
   notifications: InboxNotification[]
   unreadNotificationCount: number
   messageOverview: MessageOverview | null
+  pmUnreadByUserId: Record<string, number>
   networkActivity: {
     summary: Array<{ label: string; count: number }>
     items: NetworkActivityItem[]
@@ -102,7 +103,8 @@ function isInboxPayload(value: unknown): value is InboxPayload {
     (value.messageOverview === null || isRecord(value.messageOverview)) &&
     isRecord(value.networkActivity) &&
     Array.isArray(value.networkActivity.summary) &&
-    Array.isArray(value.networkActivity.items)
+    Array.isArray(value.networkActivity.items) &&
+    isRecord(value.pmUnreadByUserId)
   )
 }
 
@@ -247,46 +249,7 @@ export default function NetworkInboxSheet() {
     [pathname, router],
   )
 
-  const syncPmUnread = useCallback(async (signal?: AbortSignal) => {
-    if (!token || !currentUserId) {
-      setUnreadSource(PM_UNREAD_SOURCE_KEY, 0)
-      return
-    }
-
-    try {
-      const response = await fetch("/api/matrica/pm-unread", {
-        headers: { Authorization: `Bearer ${token}` },
-        signal,
-        cache: "no-store",
-      })
-
-      const data: unknown = await response.json().catch(() => null)
-
-      if (signal?.aborted) return
-
-      if (!response.ok || !isRecord(data) || !data.ok || !isRecord(data.unreadByUserId)) {
-        return
-      }
-
-      const totalUnread = Object.values(data.unreadByUserId as Record<string, unknown>).reduce(
-        (total, count) => {
-          const value =
-            typeof count === "number" && Number.isFinite(count)
-              ? Math.max(0, Math.floor(count))
-              : 0
-          return total + value
-        },
-        0,
-      )
-
-      setUnreadSource(PM_UNREAD_SOURCE_KEY, totalUnread)
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return
-      console.error("[network-inbox] PM unread sync failed", error)
-    }
-  }, [currentUserId, token])
-
-  const loadPmConversations = useCallback(async () => {
+  const loadPmConversations = useCallback(async (unreadByUserId: Record<string, number>) => {
     if (!token || !currentUserId) {
       setPmConversations([])
       return
@@ -300,26 +263,14 @@ export default function NetworkInboxSheet() {
     setLoadingPmConversations(true)
 
     try {
-      const response = await fetch("/api/matrica/pm-unread", {
-        headers: { Authorization: `Bearer ${token}` },
-        signal: controller.signal,
-        cache: "no-store",
-      })
-
-      const data: unknown = await response.json().catch(() => null)
-
-      if (requestId !== pmLoadRequestIdRef.current) return
-
-      if (!response.ok || !isRecord(data) || !data.ok || !isRecord(data.unreadByUserId)) {
-        setPmConversations([])
-        return
-      }
-
-      const entries = Object.entries(data.unreadByUserId as Record<string, unknown>)
-        .map(([userId, count]) => {
-          const value = typeof count === "number" && Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0
-          return { userId, unreadCount: value }
-        })
+      const entries = Object.entries(unreadByUserId)
+        .map(([userId, count]) => ({
+          userId,
+          unreadCount:
+            typeof count === "number" && Number.isFinite(count)
+              ? Math.max(0, Math.floor(count))
+              : 0,
+        }))
         .filter((entry) => entry.unreadCount > 0)
 
       if (entries.length === 0) {
@@ -330,24 +281,36 @@ export default function NetworkInboxSheet() {
       const profileResults = await Promise.all(
         entries.map(async (entry) => {
           try {
-            const profileResponse = await fetch(`/api/user/profile?userId=${encodeURIComponent(entry.userId)}`, {
-              signal: controller.signal,
-              cache: "no-store",
-            })
+            const profileResponse = await fetch(
+              `/api/user/profile?userId=${encodeURIComponent(entry.userId)}`,
+              {
+                signal: controller.signal,
+                cache: "no-store",
+              },
+            )
             const profileJson: unknown = await profileResponse.json().catch(() => null)
-            const profile = isRecord(profileJson) && profileJson.ok && isRecord(profileJson.profile) ? profileJson.profile : null
-            const nickname = typeof profile?.nickname === "string" && profile.nickname.trim()
-              ? profile.nickname.trim()
-              : `user-${entry.userId.slice(0, 6)}`
-            const avatarUrl = typeof profile?.avatar_url === "string" ? profile.avatar_url : null
+            const profile =
+              isRecord(profileJson) &&
+              profileJson.ok === true &&
+              isRecord(profileJson.profile)
+                ? profileJson.profile
+                : null
 
-            return {
-              ...entry,
-              nickname,
-              avatarUrl,
-            }
+            const nickname =
+              typeof profile?.nickname === "string" && profile.nickname.trim()
+                ? profile.nickname.trim()
+                : `user-${entry.userId.slice(0, 6)}`
+            const avatarUrl =
+              typeof profile?.avatar_url === "string"
+                ? profile.avatar_url
+                : null
+
+            return { ...entry, nickname, avatarUrl }
           } catch (error) {
-            if (error instanceof DOMException && error.name === "AbortError") return null
+            if (error instanceof DOMException && error.name === "AbortError") {
+              return null
+            }
+
             return {
               ...entry,
               nickname: `user-${entry.userId.slice(0, 6)}`,
@@ -359,33 +322,38 @@ export default function NetworkInboxSheet() {
 
       if (requestId !== pmLoadRequestIdRef.current) return
 
-      const nextConversations: PMConversation[] = profileResults
-        .filter((entry): entry is { userId: string; unreadCount: number; nickname: string; avatarUrl: string | null } => Boolean(entry))
-        .map((entry) => ({
-          userId: entry.userId,
-          unreadCount: entry.unreadCount,
-          nickname: entry.nickname,
-          avatarUrl: entry.avatarUrl,
-          preview: "Új privát üzenet",
-          timestamp: null,
-          roomId: buildPrivateRoomId(currentUserId, entry.userId),
-        }))
-        .sort((a, b) => b.unreadCount - a.unreadCount)
-
-      setPmConversations(nextConversations)
+      setPmConversations(
+        profileResults
+          .filter(
+            (
+              entry,
+            ): entry is {
+              userId: string
+              unreadCount: number
+              nickname: string
+              avatarUrl: string | null
+            } => Boolean(entry),
+          )
+          .map((entry) => ({
+            userId: entry.userId,
+            unreadCount: entry.unreadCount,
+            nickname: entry.nickname,
+            avatarUrl: entry.avatarUrl,
+            preview: "Új privát üzenet",
+            timestamp: null,
+            roomId: buildPrivateRoomId(currentUserId, entry.userId),
+          }))
+          .sort((a, b) => b.unreadCount - a.unreadCount),
+      )
     } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return
-      }
+      if (error instanceof DOMException && error.name === "AbortError") return
       setPmConversations([])
     } finally {
       if (requestId === pmLoadRequestIdRef.current) {
         setLoadingPmConversations(false)
       }
     }
-  }, [currentUserId, token])
-
-  const fetchInbox = useCallback(async () => {
+  }, [currentUserId, token])  const fetchInbox = useCallback(async () => {
     if (!headers) return
 
     const controller = new AbortController()
@@ -430,21 +398,9 @@ export default function NetworkInboxSheet() {
   }, [headers])
 
   useEffect(() => {
-    if (!isAuthenticated || !headers) return
-
-    let cancelled = false
-
-    const load = async () => {
-      if (cancelled) return
-      await fetchInbox()
-    }
-
-    void load()
-
-    return () => {
-      cancelled = true
-    }
-  }, [isAuthenticated, headers, fetchInbox])
+    if (!isAuthenticated || !headers || !sheetOpen) return
+    void fetchInbox()
+  }, [fetchInbox, headers, isAuthenticated, sheetOpen])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -686,23 +642,6 @@ export default function NetworkInboxSheet() {
   }, [disablePushNotifications, enablePushNotifications, pushEnabled])
 
   useEffect(() => {
-    if (!isAuthenticated || !token || !currentUserId || typeof navigator === "undefined") return
-
-    const handleSwMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string } | null
-      if (data?.type === "PUSH_RECEIVED") {
-        void syncPmUnread()
-      }
-    }
-
-    navigator.serviceWorker?.addEventListener("message", handleSwMessage)
-
-    return () => {
-      navigator.serviceWorker?.removeEventListener("message", handleSwMessage)
-    }
-  }, [currentUserId, isAuthenticated, syncPmUnread, token])
-
-  useEffect(() => {
     if (!isAuthenticated || !token || !currentUserId) return
     if (!isStandaloneApp) {
       setPushEnabled(false)
@@ -804,34 +743,24 @@ export default function NetworkInboxSheet() {
   }, [refreshPrivacyState])
 
   useEffect(() => {
-    if (!isAuthenticated || !token || !currentUserId) {
-      setUnreadSource(PM_UNREAD_SOURCE_KEY, 0)
+    if (!isAuthenticated || !token || !currentUserId || !sheetOpen) {
+      if (!sheetOpen) setPmConversations([])
       return
     }
 
-    const controller = new AbortController()
-    void syncPmUnread(controller.signal)
-
-    const intervalId = window.setInterval(() => {
-      void syncPmUnread()
-    }, 45_000)
-
-    return () => {
-      controller.abort()
-      window.clearInterval(intervalId)
-    }
-  }, [currentUserId, isAuthenticated, syncPmUnread, token])
-
-  useEffect(() => {
-    if (!isAuthenticated || !token || !currentUserId) return
-    if (!sheetOpen) return
-
-    void loadPmConversations()
+    void loadPmConversations(payload?.pmUnreadByUserId ?? {})
 
     return () => {
       pmLoadAbortRef.current?.abort()
     }
-  }, [currentUserId, isAuthenticated, loadPmConversations, sheetOpen, token])
+  }, [
+    currentUserId,
+    isAuthenticated,
+    loadPmConversations,
+    payload?.pmUnreadByUserId,
+    sheetOpen,
+    token,
+  ])
 
   useEffect(() => {
     if (sheetOpen) {
