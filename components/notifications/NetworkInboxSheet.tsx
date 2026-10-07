@@ -84,6 +84,12 @@ type InboxPayload = {
   unreadNotificationCount: number
   messageOverview: MessageOverview | null
   pmUnreadByUserId: Record<string, number>
+  pmUnreadUsers: Array<{
+    user_id: string
+    unread_count: number
+    nickname: string | null
+    avatar_url: string | null
+  }>
   networkActivity: {
     summary: Array<{ label: string; count: number }>
     items: NetworkActivityItem[]
@@ -104,7 +110,8 @@ function isInboxPayload(value: unknown): value is InboxPayload {
     isRecord(value.networkActivity) &&
     Array.isArray(value.networkActivity.summary) &&
     Array.isArray(value.networkActivity.items) &&
-    isRecord(value.pmUnreadByUserId)
+    isRecord(value.pmUnreadByUserId) &&
+    Array.isArray(value.pmUnreadUsers)
   )
 }
 
@@ -249,113 +256,48 @@ export default function NetworkInboxSheet() {
     [pathname, router],
   )
 
-  const loadPmConversations = useCallback(async (unreadByUserId: Record<string, number>) => {
+  const loadPmConversations = useCallback(async (unreadUsers: InboxPayload["pmUnreadUsers"]) => {
     if (!token || !currentUserId) {
       setPmConversations([])
       return
     }
 
+    const requestId = ++pmLoadRequestIdRef.current
     pmLoadAbortRef.current?.abort()
     const controller = new AbortController()
     pmLoadAbortRef.current = controller
-    const requestId = ++pmLoadRequestIdRef.current
-
     setLoadingPmConversations(true)
 
     try {
-      const entries = Object.entries(unreadByUserId)
-        .map(([userId, count]) => ({
-          userId,
-          unreadCount:
-            typeof count === "number" && Number.isFinite(count)
-              ? Math.max(0, Math.floor(count))
-              : 0,
+      const conversations: PMConversation[] = unreadUsers
+        .filter((entry) => entry.user_id && entry.unread_count > 0)
+        .map((entry) => ({
+          userId: entry.user_id,
+          unreadCount: Math.max(0, Math.floor(entry.unread_count)),
+          nickname:
+            typeof entry.nickname === "string" && entry.nickname.trim()
+              ? entry.nickname.trim()
+              : `user-${entry.user_id.slice(0, 6)}`,
+          avatarUrl:
+            typeof entry.avatar_url === "string" && entry.avatar_url.trim()
+              ? entry.avatar_url
+              : null,
+          preview: "Új privát üzenet",
+          timestamp: null,
+          roomId: buildPrivateRoomId(currentUserId, entry.user_id),
         }))
-        .filter((entry) => entry.unreadCount > 0)
+        .sort((a, b) => b.unreadCount - a.unreadCount)
 
-      if (entries.length === 0) {
-        setPmConversations([])
-        return
+      if (requestId === pmLoadRequestIdRef.current) {
+        setPmConversations(conversations)
       }
-
-      const profileResults = await Promise.all(
-        entries.map(async (entry) => {
-          try {
-            const profileResponse = await fetch(
-              `/api/user/profile?userId=${encodeURIComponent(entry.userId)}`,
-              {
-                signal: controller.signal,
-                cache: "no-store",
-              },
-            )
-            const profileJson: unknown = await profileResponse.json().catch(() => null)
-            const profile =
-              isRecord(profileJson) &&
-              profileJson.ok === true &&
-              isRecord(profileJson.profile)
-                ? profileJson.profile
-                : null
-
-            const nickname =
-              typeof profile?.nickname === "string" && profile.nickname.trim()
-                ? profile.nickname.trim()
-                : `user-${entry.userId.slice(0, 6)}`
-            const avatarUrl =
-              typeof profile?.avatar_url === "string"
-                ? profile.avatar_url
-                : null
-
-            return { ...entry, nickname, avatarUrl }
-          } catch (error) {
-            if (error instanceof DOMException && error.name === "AbortError") {
-              return null
-            }
-
-            return {
-              ...entry,
-              nickname: `user-${entry.userId.slice(0, 6)}`,
-              avatarUrl: null,
-            }
-          }
-        }),
-      )
-
-      if (requestId !== pmLoadRequestIdRef.current) return
-
-      setPmConversations(
-        profileResults
-          .filter(
-            (
-              entry,
-            ): entry is {
-              userId: string
-              unreadCount: number
-              nickname: string
-              avatarUrl: string | null
-            } => Boolean(entry),
-          )
-          .map((entry) => ({
-            userId: entry.userId,
-            unreadCount: entry.unreadCount,
-            nickname: entry.nickname,
-            avatarUrl: entry.avatarUrl,
-            preview: "Új privát üzenet",
-            timestamp: null,
-            roomId: buildPrivateRoomId(currentUserId, entry.userId),
-          }))
-          .sort((a, b) => b.unreadCount - a.unreadCount),
-      )
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return
-      setPmConversations([])
     } finally {
       if (requestId === pmLoadRequestIdRef.current) {
         setLoadingPmConversations(false)
       }
+      controller.abort()
     }
-  }, [currentUserId, token])
-
-  const fetchInbox = useCallback(async () => {
+  }, [currentUserId, token])  const fetchInbox = useCallback(async () => {
     if (!headers) return
 
     const controller = new AbortController()
@@ -750,7 +692,7 @@ export default function NetworkInboxSheet() {
       return
     }
 
-    void loadPmConversations(payload?.pmUnreadByUserId ?? {})
+    void loadPmConversations(payload?.pmUnreadUsers ?? [])
 
     return () => {
       pmLoadAbortRef.current?.abort()
