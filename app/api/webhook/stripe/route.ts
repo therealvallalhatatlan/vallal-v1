@@ -854,6 +854,74 @@ export async function PATCH(request: NextRequest) {
 }
 
 
+
+async function handleDistributionShippingCheckoutCompleted(session: Stripe.Checkout.Session) {
+  if (session.payment_status !== 'paid') return
+
+  const metadata = session.metadata ?? {}
+  const userId = metadata.user_id
+  const method = metadata.fulfillment_method
+
+  if (!userId || !method) {
+    console.error('[distribution/shipping] missing checkout metadata', session.id)
+    return
+  }
+
+  const amount = typeof session.amount_total === 'number' ? session.amount_total : 0
+  const currency = (session.currency ?? 'huf').toLowerCase()
+  const paymentIntentId =
+    typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null
+
+  const shippingDetails = (session as Stripe.Checkout.Session & {
+    shipping_details?: {
+      name?: string | null
+      phone?: string | null
+      address?: Stripe.Address | null
+    } | null
+  }).shipping_details
+
+  const shippingAddress = shippingDetails
+    ? {
+        name: shippingDetails.name ?? null,
+        phone: shippingDetails.phone ?? null,
+        address: shippingDetails.address ?? null,
+      }
+    : null
+
+  const db = supabaseAdmin()
+
+  const { error } = await db
+    .from('orders')
+    .upsert({
+      stripe_session_id: session.id,
+      user_id: userId,
+      product_id: metadata.product_id ?? 'book_ii',
+      delivery_type: method,
+      amount,
+      currency,
+      status: 'paid',
+      customer_email: session.customer_details?.email ?? null,
+      customer_name: session.customer_details?.name ?? null,
+      shipping_address: shippingAddress,
+      distribution_fulfillment_method: method,
+      distribution_commission_huf: 0,
+      distribution_product_name: metadata.product_name ?? 'Vállalhatatlan II.',
+      metadata: {
+        ...metadata,
+        payment_intent_id: paymentIntentId,
+      },
+    }, { onConflict: 'stripe_session_id' })
+
+  if (error) {
+    console.error('[distribution/shipping] order upsert failed', session.id, error)
+    return
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/fooldal-3')
+}
 async function handleDistributionDropCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (session.payment_status !== 'paid') return
 
@@ -1034,6 +1102,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
   await handleCheckoutSessionNotifications(session);
   if (metadata?.type === 'distribution_drop') {
     await handleDistributionDropCheckoutCompleted(session);
+    return;
+  }
+  if (metadata?.type === 'distribution_shipping') {
+    await handleDistributionShippingCheckoutCompleted(session);
     return;
   }
 
