@@ -283,8 +283,10 @@ export async function GET(req: Request) {
     return NextResponse.json({
       ok: true,
       profile: {
-        ...data,
-        avatar_url: typeof data?.avatar_url === "string" ? data.avatar_url : null,
+        id: data?.id ?? userId,
+        nickname: data?.nickname ?? null,
+        avatar_url:
+          typeof data?.avatar_url === "string" ? data.avatar_url : null,
         score: foundCount ?? 0,
         accepted: acceptedCount ?? 0,
         role: getUserRoleByEmail(
