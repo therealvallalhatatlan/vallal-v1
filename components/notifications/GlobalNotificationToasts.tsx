@@ -26,6 +26,12 @@ type UnreadSnapshotResponse = {
     created_at: string
   } | null
   unreadByUserId: Record<string, number>
+  unreadUsers: Array<{
+    user_id: string
+    unread_count: number
+    nickname: string | null
+    avatar_url: string | null
+  }>
 }
 
 type PublicNotificationItem = {
@@ -90,6 +96,7 @@ export default function GlobalNotificationToasts() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
   const notificationBaselineRef = useRef<Set<string> | null>(null)
   const pmBaselineRef = useRef<Record<string, number> | null>(null)
+  const pmProfilesRef = useRef<Record<string, { nickname: string; avatarUrl: string | null }>>({})
   const publicToastIdsRef = useRef<Set<string>>(new Set())
   const toastTimersRef = useRef<Record<string, number>>({})
 
@@ -130,38 +137,27 @@ export default function GlobalNotificationToasts() {
     if (!token || !currentUserId || otherUserId === currentUserId) return
 
     const roomId = buildPrivateRoomId(currentUserId, otherUserId)
+    const profile = pmProfilesRef.current[otherUserId]
 
     try {
-      const [profileResponse, messagesResponse] = await Promise.all([
-        fetch("/api/user/profile?userId=" + encodeURIComponent(otherUserId), {
-          cache: "no-store",
-        }),
-        fetch("/api/live-chat?room_id=" + encodeURIComponent(roomId) + "&limit=1", {
+      const response = await fetch(
+        "/api/live-chat?room_id=" + encodeURIComponent(roomId) + "&limit=1",
+        {
           headers: { Authorization: "Bearer " + token },
           cache: "no-store",
-        }),
-      ])
-
-      const profileJson: unknown = await profileResponse.json().catch(() => null)
-      const messageJson: unknown = await messagesResponse.json().catch(() => null)
-
-      const nickname =
-        isRecord(profileJson) &&
-        profileJson.ok &&
-        isRecord(profileJson.profile) &&
-        typeof profileJson.profile.nickname === "string" &&
-        profileJson.profile.nickname.trim()
-          ? profileJson.profile.nickname.trim()
-          : "Új privát üzenet"
+        },
+      )
+      const messageJson: unknown = await response.json().catch(() => null)
 
       const messages =
         isRecord(messageJson) && Array.isArray(messageJson.messages)
           ? messageJson.messages
           : []
 
-      const latest = messages.length > 0 && isRecord(messages[messages.length - 1])
-        ? messages[messages.length - 1]
-        : null
+      const latest =
+        messages.length > 0 && isRecord(messages[messages.length - 1])
+          ? messages[messages.length - 1]
+          : null
 
       const body =
         latest && typeof latest.body === "string" && latest.body.trim()
@@ -169,25 +165,23 @@ export default function GlobalNotificationToasts() {
           : "Új privát üzenet érkezett."
 
       pushToast({
-        id: "pm-" + otherUserId + "-" + Date.now(),
+        id: "pm-" + otherUserId,
         kind: "private",
-        title: nickname,
+        title: profile?.nickname || "Új privát üzenet",
         body,
         targetUrl: "/halozat?pm=" + encodeURIComponent(otherUserId),
       })
     } catch (error) {
       console.error("[global-notifications] PM toast failed", error)
       pushToast({
-        id: "pm-" + otherUserId + "-" + Date.now(),
+        id: "pm-" + otherUserId,
         kind: "private",
-        title: "Új privát üzenet",
+        title: profile?.nickname || "Új privát üzenet",
         body: "Új üzenet érkezett.",
         targetUrl: "/halozat?pm=" + encodeURIComponent(otherUserId),
       })
     }
-  }, [currentUserId, pushToast, token])
-
-  const pollPublicNotifications = useCallback(async () => {
+  }, [currentUserId, pushToast, token])  const pollPublicNotifications = useCallback(async () => {
     if (loading || token || currentUserId) {
       setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, 0)
       return
@@ -278,11 +272,43 @@ export default function GlobalNotificationToasts() {
         }
       }
 
+      const unreadUsers = Array.isArray(raw.unreadUsers)
+        ? raw.unreadUsers
+            .filter(isRecord)
+            .map((item) => ({
+              user_id: typeof item.user_id === "string" ? item.user_id : "",
+              unread_count:
+                typeof item.unread_count === "number" && Number.isFinite(item.unread_count)
+                  ? Math.max(0, Math.floor(item.unread_count))
+                  : 0,
+              nickname:
+                typeof item.nickname === "string" && item.nickname.trim()
+                  ? item.nickname.trim()
+                  : null,
+              avatar_url:
+                typeof item.avatar_url === "string" && item.avatar_url.trim()
+                  ? item.avatar_url
+                  : null,
+            }))
+            .filter((item) => item.user_id && item.unread_count > 0)
+        : []
+
+      pmProfilesRef.current = Object.fromEntries(
+        unreadUsers.map((item) => [
+          item.user_id,
+          {
+            nickname: item.nickname || "Új privát üzenet",
+            avatarUrl: item.avatar_url,
+          },
+        ]),
+      )
+
       const snapshot: UnreadSnapshotResponse = {
         ok: true,
         unreadNotificationCount,
         latestNotification,
         unreadByUserId: nextPm,
+        unreadUsers,
       }
 
       setUnreadSource("personal-notifications", snapshot.unreadNotificationCount)
@@ -383,6 +409,7 @@ export default function GlobalNotificationToasts() {
       setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, 0)
       notificationBaselineRef.current = null
       pmBaselineRef.current = null
+      pmProfilesRef.current = {}
     }
   }, [currentUserId, loading, poll, pollPublicNotifications, token])
 
