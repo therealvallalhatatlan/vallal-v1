@@ -5,8 +5,8 @@ export function usePresence() {
   const [activeCount, setActiveCount] = useState(0)
   const supabaseRef = useRef(createClient())
 
-  const HEARTBEAT_INTERVAL_MS = 25_000
-  const ACTIVE_COUNT_POLL_MS = 30_000
+  const HEARTBEAT_INTERVAL_MS = 60_000
+  const ACTIVE_COUNT_POLL_MS = 60_000
 
   // Helper to get current location if available
   const getCurrentPosition = (): Promise<{ lat: number; lng: number } | null> => {
@@ -107,13 +107,13 @@ export function usePresence() {
 
       // Send heartbeat frequently for near real-time presence
       heartbeatInterval = setInterval(async () => {
-        if (!mounted) return
+        if (!mounted || document.visibilityState !== 'visible') return
         await sendHeartbeat()
       }, HEARTBEAT_INTERVAL_MS)
 
       // Poll active count as a lightweight indicator
       pollInterval = setInterval(async () => {
-        if (!mounted) return
+        if (!mounted || document.visibilityState !== 'visible') return
         try {
           const response = await fetch('/api/presence', {
             signal: AbortSignal.timeout(5000),
