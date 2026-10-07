@@ -853,6 +853,163 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
+
+async function handleDistributionDropCheckoutCompleted(session: Stripe.Checkout.Session) {
+  if (session.payment_status !== 'paid') return
+
+  const metadata = session.metadata ?? {}
+  const dropId = metadata.drop_id
+  const userId = metadata.user_id
+  const cellId = metadata.cell_id
+  const method = metadata.fulfillment_method
+  const productId = metadata.product_id ?? 'book_ii'
+  const productName = metadata.product_name ?? 'Vállalhatatlan II.'
+
+  if (!dropId || !userId || !cellId || !method) {
+    console.error('[distribution] missing checkout metadata', session.id)
+    return
+  }
+
+  const db = supabaseAdmin()
+  const paymentIntentId =
+    typeof session.payment_intent === 'string'
+      ? session.payment_intent
+      : session.payment_intent?.id ?? null
+
+  const shippingDetails = (session as Stripe.Checkout.Session & {
+    shipping_details?: {
+      name?: string | null
+      phone?: string | null
+      address?: Stripe.Address | null
+    } | null
+  }).shipping_details
+
+  const shippingAddress = shippingDetails
+    ? {
+        name: shippingDetails.name ?? null,
+        phone: shippingDetails.phone ?? null,
+        address: shippingDetails.address ?? null,
+      }
+    : null
+
+  const { data: drop, error: dropError } = await db
+    .from('distribution_drops')
+    .select('id, cell_id, product_id, product_name, price_huf, status, reserved_by_user_id, order_id')
+    .eq('id', dropId)
+    .maybeSingle()
+
+  if (dropError || !drop) {
+    console.error('[distribution] drop lookup failed', session.id, dropError)
+    return
+  }
+
+  if (drop.cell_id !== cellId || drop.reserved_by_user_id !== userId) {
+    console.error('[distribution] reservation identity mismatch', session.id)
+    return
+  }
+
+  const amount = typeof session.amount_total === 'number' ? session.amount_total : 0
+  const currency = (session.currency ?? 'huf').toLowerCase()
+
+  const { data: order, error: orderError } = await db
+    .from('orders')
+    .upsert({
+      stripe_session_id: session.id,
+      user_id: userId,
+      product_id: productId,
+      delivery_type: method,
+      amount,
+      currency,
+      status: 'paid',
+      customer_email: session.customer_details?.email ?? null,
+      customer_name: session.customer_details?.name ?? null,
+      shipping_address: shippingAddress,
+      distribution_drop_id: drop.id,
+      distribution_cell_id: drop.cell_id,
+      distribution_fulfillment_method: method,
+      distribution_commission_huf: 0,
+      distribution_product_name: productName,
+      metadata: { ...metadata, payment_intent_id: paymentIntentId },
+    }, { onConflict: 'stripe_session_id' })
+    .select('id')
+    .single<{ id: string }>()
+
+  if (orderError || !order?.id) {
+    console.error('[distribution] order upsert failed', session.id, orderError)
+    return
+  }
+
+  const { data: finalizedDrop, error: finalizeError } = await db
+    .from('distribution_drops')
+    .update({
+      status: 'purchased',
+      order_id: order.id,
+      buyer_user_id: userId,
+      reserved_by_user_id: null,
+      reserved_until: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', drop.id)
+    .eq('status', 'reserved')
+    .eq('reserved_by_user_id', userId)
+    .select('id')
+    .maybeSingle()
+
+  if (finalizeError) {
+    console.error('[distribution] finalize failed', session.id, finalizeError)
+    return
+  }
+
+  if (!finalizedDrop && !(drop.status === 'purchased' && drop.order_id === order.id)) {
+    const { data: currentDrop } = await db
+      .from('distribution_drops')
+      .select('status, order_id')
+      .eq('id', drop.id)
+      .maybeSingle()
+    if (!(currentDrop?.status === 'purchased' && currentDrop.order_id === order.id)) {
+      console.error('[distribution] lost reservation during finalization', session.id)
+      return
+    }
+  }
+
+  const { data: cell, error: cellError } = await db
+    .from('distribution_cells')
+    .select('commission_default_huf')
+    .eq('id', drop.cell_id)
+    .maybeSingle<{ commission_default_huf: number }>()
+
+  if (cellError) {
+    console.error('[distribution] commission lookup failed', cellError)
+    return
+  }
+
+  const commissionHuf = Number.isFinite(cell?.commission_default_huf)
+    ? Math.max(0, Math.round(cell!.commission_default_huf))
+    : 0
+
+  await db.from('orders')
+    .update({ distribution_commission_huf: commissionHuf })
+    .eq('id', order.id)
+
+  const { error: commissionError } = await db
+    .from('distribution_commissions')
+    .upsert({
+      order_id: order.id,
+      cell_id: drop.cell_id,
+      amount_huf: commissionHuf,
+      status: 'pending',
+    }, { onConflict: 'order_id' })
+
+  if (commissionError) {
+    console.error('[distribution] commission ledger write failed', commissionError)
+    return
+  }
+
+  revalidatePath('/fooldal-3')
+  revalidatePath('/dashboard')
+  revalidatePath('/halozat')
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeEventId: string) {
   console.log(`💳 Processing checkout completion for session: ${session.id}`);
 
@@ -875,6 +1032,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
   }
 
   await handleCheckoutSessionNotifications(session);
+  if (metadata?.type === 'distribution_drop') {
+    await handleDistributionDropCheckoutCompleted(session);
+    return;
+  }
+
   if (metadata?.type === 'spot_unlock') {
     await handleSpotUnlockCheckoutCompleted(session);
     return;
