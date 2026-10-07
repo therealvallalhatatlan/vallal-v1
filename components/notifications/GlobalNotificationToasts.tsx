@@ -181,7 +181,9 @@ export default function GlobalNotificationToasts() {
         targetUrl: "/halozat?pm=" + encodeURIComponent(otherUserId),
       })
     }
-  }, [currentUserId, pushToast, token])  const pollPublicNotifications = useCallback(async () => {
+  }, [currentUserId, pushToast, token])
+
+  const pollPublicNotifications = useCallback(async () => {
     if (loading || token || currentUserId) {
       setUnreadSource(PUBLIC_UNREAD_SOURCE_KEY, 0)
       return
