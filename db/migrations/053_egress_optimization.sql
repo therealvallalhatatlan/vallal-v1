@@ -96,7 +96,24 @@ AS $$
         FROM public.pm_unread_counts
         WHERE user_id = p_user_id
           AND unread_count > 0
-      ), '{}'::jsonb)
+      ), '{}'::jsonb),
+    'unreadUsers',
+      COALESCE((
+        SELECT jsonb_agg(
+          jsonb_build_object(
+            'user_id', p.other_user_id,
+            'unread_count', p.unread_count,
+            'nickname', u.nickname,
+            'avatar_url', u.avatar_url
+          )
+          ORDER BY p.last_message_at DESC
+        )
+        FROM public.pm_unread_counts AS p
+        LEFT JOIN public.users AS u
+          ON u.id = p.other_user_id
+        WHERE p.user_id = p_user_id
+          AND p.unread_count > 0
+      ), '[]'::jsonb)
   );
 $$;
 
