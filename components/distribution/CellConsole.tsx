@@ -32,6 +32,15 @@ const FULFILLMENT = [
 export default function CellConsole() {
   const [token, setToken] = useState<string | null>(null)
   const [cells, setCells] = useState<Cell[]>([])
+  const [orders, setOrders] = useState<Array<{
+    id: string
+    created_at: string
+    status: string
+    amount: number
+    delivery_type: string
+    distribution_fulfillment_method: string | null
+    distribution_product_name: string | null
+  }>>([])
   const [cellId, setCellId] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -59,11 +68,19 @@ export default function CellConsole() {
       return
     }
 
-    const response = await fetch("/api/distribution/cell/me", {
-      headers: { Authorization: "Bearer " + accessToken },
-      cache: "no-store",
-    })
+    const [response, ordersResponse] = await Promise.all([
+      fetch("/api/distribution/cell/me", {
+        headers: { Authorization: "Bearer " + accessToken },
+        cache: "no-store",
+      }),
+      fetch("/api/distribution/cell/orders", {
+        headers: { Authorization: "Bearer " + accessToken },
+        cache: "no-store",
+      }),
+    ])
     const json = await response.json()
+    const ordersJson = await ordersResponse.json()
+    if (ordersResponse.ok && ordersJson?.ok) setOrders(Array.isArray(ordersJson.orders) ? ordersJson.orders : [])
     if (!response.ok || !json?.ok) {
       setMessage(json?.error || "Nem sikerült betölteni a sejtet.")
       setLoading(false)
@@ -185,6 +202,58 @@ export default function CellConsole() {
           <div className="border border-zinc-800 p-5">
             <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-600">FOLYAMAT</p>
             <p className="mt-3 text-sm leading-6 text-zinc-400">A sejt maga helyezi ki a könyvet, a vásárló központilag fizet, a teljesítés után jutalék jár.</p>
+          </div>
+        </section>
+
+        <section className="mt-10 border-t border-zinc-800 pt-7">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/60">FIZETETT RENDELÉSEK</p>
+          <div className="mt-4 divide-y divide-zinc-800 border-y border-zinc-800">
+            {orders.length ? orders.map((order) => (
+              <div key={order.id} className="grid gap-3 px-4 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-100">{order.distribution_product_name || "Vállalhatatlan II."}</div>
+                  <div className="mt-1 text-[10px] uppercase tracking-[0.14em] text-zinc-600">#{order.id.slice(0, 8)} · {order.distribution_fulfillment_method || order.delivery_type} · {Number(order.amount / 100).toLocaleString("hu-HU")} Ft</div>
+                </div>
+                <div className="flex flex-wrap justify-end gap-2">
+                  {order.status === "paid" && (
+                    <button type="button" onClick={async () => {
+                      if (!token) return
+                      await fetch("/api/distribution/cell/orders/" + order.id, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+                        body: JSON.stringify({ status: order.distribution_fulfillment_method === "dead_drop" || order.distribution_fulfillment_method === "personal" ? "fulfilled" : "ready_to_dispatch" }),
+                      })
+                      await load()
+                    }} className="border border-zinc-700 px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-zinc-300 hover:border-lime-200/50">
+                      {order.distribution_fulfillment_method === "dead_drop" || order.distribution_fulfillment_method === "personal" ? "ÁTADVA" : "ÖSSZEKÉSZÍTVE"}
+                    </button>
+                  )}
+                  {order.status === "ready_to_dispatch" && (
+                    <button type="button" onClick={async () => {
+                      if (!token) return
+                      await fetch("/api/distribution/cell/orders/" + order.id, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+                        body: JSON.stringify({ status: "dispatched" }),
+                      })
+                      await load()
+                    }} className="border border-zinc-700 px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-zinc-300 hover:border-lime-200/50">FELADVA</button>
+                  )}
+                  {order.status === "dispatched" && (
+                    <button type="button" onClick={async () => {
+                      if (!token) return
+                      await fetch("/api/distribution/cell/orders/" + order.id, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+                        body: JSON.stringify({ status: "fulfilled" }),
+                      })
+                      await load()
+                    }} className="border border-lime-200/50 bg-lime-100 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-black">TELJESÍTVE</button>
+                  )}
+                  <span className="self-center text-[10px] uppercase tracking-[0.16em] text-zinc-600">{order.status}</span>
+                </div>
+              </div>
+            )) : <div className="px-4 py-8 text-sm text-zinc-600">Nincs teljesítésre váró rendelés.</div>}
           </div>
         </section>
 
