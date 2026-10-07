@@ -94,7 +94,7 @@ export default function GlobalNotificationToasts() {
   const router = useRouter()
 
   const [toasts, setToasts] = useState<ToastItem[]>([])
-  const notificationBaselineRef = useRef<Set<string> | null>(null)
+  const notificationBaselineRef = useRef<string | null>(null)
   const pmBaselineRef = useRef<Record<string, number> | null>(null)
   const pmProfilesRef = useRef<Record<string, { nickname: string; avatarUrl: string | null }>>({})
   const publicToastIdsRef = useRef<Set<string>>(new Set())
@@ -319,6 +319,14 @@ export default function GlobalNotificationToasts() {
         0,
       )
       setUnreadSource("personal-pm", pmTotal)
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("vallalhatatlan:pm-unread-snapshot", {
+            detail: { unreadByUserId: snapshot.unreadByUserId },
+          }),
+        )
+      }
 
       const previousNotificationId = notificationBaselineRef.current
       const latestNotificationId = snapshot.latestNotification?.id ?? null
