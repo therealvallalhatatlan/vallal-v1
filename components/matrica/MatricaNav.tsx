@@ -938,125 +938,50 @@ function MatricaNav({
   }, [user?.id, pmUnreadCounts])
 
   useEffect(() => {
-    if (!authToken || !user?.id) return
-
-    let cancelled = false
-    let realtimeDebounce: ReturnType<typeof setTimeout> | null = null
-    const controllerRef = { current: null as AbortController | null }
-
-    const reconcileCounts = async ({ silent = false } = {}) => {
-      console.log('[PM UNREAD] reconciliation start', { silent })
-      if (controllerRef.current) controllerRef.current.abort()
-      const controller = new AbortController()
-      controllerRef.current = controller
-
-      try {
-        const res = await fetch('/api/matrica/pm-unread', {
-          headers: { Authorization: `Bearer ${authToken}` },
-          signal: controller.signal,
-          cache: 'no-store',
-        })
-        const json = await res.json().catch(() => null)
-        console.log('[PM UNREAD] reconciliation end', { status: res.status, ok: json?.ok })
-
-        if (
-          cancelled ||
-          !res.ok ||
-          !json?.ok ||
-          typeof (json as any).unreadByUserId !== 'object'
-        ) return
-
-        const next: Record<string, number | undefined> = {}
-        let totalUnread = 0
-
-        for (const [key, value] of Object.entries(
-          (json as any).unreadByUserId as Record<string, unknown>
-        )) {
-          if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-            next[key] = Math.floor(value)
-            totalUnread += Math.floor(value)
-          }
-      }
-
-      console.log('[PM UNREAD] RECON RESULT', { unreadByUserId: next, total: totalUnread })
-
-      // Always synchronize the global unread store after a successful
-      // reconciliation. Do not gate this on mountedRef: this function is
-      // running inside the live component effect and the store is the source
-      // consumed by the notification UI.
-      console.log('[PM UNREAD] unreadStore sync', {
-        source: PM_UNREAD_SOURCE_KEY,
-        total: totalUnread,
-      })
-      setUnreadSource(PM_UNREAD_SOURCE_KEY, totalUnread)
-      console.log('[PM UNREAD] STORE CALLED', {
-        totalUnread,
-        source: PM_UNREAD_SOURCE_KEY,
-      })
+    const handleUnreadSnapshot = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        unreadByUserId?: Record<string, unknown>
+      }>).detail
 
       if (
-        !isEqualShallow(lastRemoteUnreadRef.current, next) ||
-        lastTotalUnreadRef.current !== totalUnread
+        !detail ||
+        typeof detail.unreadByUserId !== 'object' ||
+        detail.unreadByUserId === null
       ) {
-        lastRemoteUnreadRef.current = next
-        lastTotalUnreadRef.current = totalUnread
-        if (mountedRef.current) {
-          setPmUnreadCounts(next)
+        return
+      }
+
+      const next: Record<string, number | undefined> = {}
+      let totalUnread = 0
+
+      for (const [userId, rawCount] of Object.entries(detail.unreadByUserId)) {
+        if (
+          typeof rawCount === 'number' &&
+          Number.isFinite(rawCount) &&
+          rawCount > 0
+        ) {
+          const count = Math.floor(rawCount)
+          next[userId] = count
+          totalUnread += count
         }
       }
-      } catch {
-        // silent
-      }
+
+      setPmUnreadCounts(next)
+      setUnreadSource(PM_UNREAD_SOURCE_KEY, totalUnread)
     }
 
-    void reconcileCounts()
-
-    const interval = setInterval(() => {
-      void reconcileCounts({ silent: true })
-    }, PM_RECONCILE_INTERVAL_MS)
-
-    const scheduleRealtimeReconcile = () => {
-      if (realtimeDebounce) {
-        window.clearTimeout(realtimeDebounce)
-      }
-
-      realtimeDebounce = window.setTimeout(() => {
-        void reconcileCounts({ silent: true })
-      }, PM_REALTIME_DEBOUNCE_MS)
-    }
-
-    const supabase = createClient()
-    let channel: ReturnType<typeof supabase.channel> | null = null
-
-    if (supabase.channel) {
-      console.log('[PM UNREAD REALTIME] SUBSCRIBING user=' + user.id);
-      channel = supabase
-        .channel('public:pm_unread_counts')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'pm_unread_counts',
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            if (!payload?.new) return
-            console.log('[PM UNREAD REALTIME] EVENT', payload.event, payload.new)
-            scheduleRealtimeReconcile()
-          }
-        )
-        .subscribe((status) => console.log('[PM UNREAD REALTIME] STATUS', status))
-    }
+    window.addEventListener(
+      'vallalhatatlan:pm-unread-snapshot',
+      handleUnreadSnapshot,
+    )
 
     return () => {
-      cancelled = true
-      clearInterval(interval)
-      realtimeDebounce && window.clearTimeout(realtimeDebounce)
-      controllerRef.current?.abort()
-      if (channel) channel.unsubscribe()
+      window.removeEventListener(
+        'vallalhatatlan:pm-unread-snapshot',
+        handleUnreadSnapshot,
+      )
     }
-  }, [authToken, currentUserId])
+  }, [])
 
   useEffect(() => {
     if (!user?.id) return
