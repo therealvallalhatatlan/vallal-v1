@@ -39,11 +39,8 @@ type OnlineUserProfile = {
   last_heartbeat?: string;
 };
 
-const RECONCILE_INTERVAL_MS = 40_000
-const REALTIME_DEBOUNCE_MS = 600
+const RECONCILE_INTERVAL_MS = 60_000
 const PM_UNREAD_SOURCE_KEY = 'personal-pm'
-const PM_RECONCILE_INTERVAL_MS = 45_000
-const PM_REALTIME_DEBOUNCE_MS = 600
 
 type SpotEditDraft = {
   title: string;
@@ -75,11 +72,9 @@ export function OnlineUsersBar({
   const [users, setUsers] = useState<OnlineUserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
-  const supabaseRef = useRef(createClient())
   const fetchAbortRef = useRef<AbortController | null>(null)
   const mountedRef = useRef(true)
-  const realtimeDebounceRef = useRef<number | null>(null)
-  const reconcileIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const reconcileIntervalRef = useRef<number | null>(null)
 
   useEffect(() => {
     const updateIsMobile = () => setIsMobile(window.innerWidth < 768)
@@ -146,70 +141,49 @@ export function OnlineUsersBar({
     [authToken]
   )
 
-  const scheduleReconcile = useCallback(() => {
-    if (realtimeDebounceRef.current) {
-      window.clearTimeout(realtimeDebounceRef.current)
-    }
-
-    realtimeDebounceRef.current = window.setTimeout(() => {
-      void fetchOnlineUsers({ silent: true })
-      realtimeDebounceRef.current = null
-    }, REALTIME_DEBOUNCE_MS)
-  }, [fetchOnlineUsers])
-
   useEffect(() => {
     mountedRef.current = true
 
-    if (authToken) {
-      void fetchOnlineUsers()
+    let intervalId: number | null = null
+
+    const stop = () => {
+      if (intervalId !== null) {
+        window.clearInterval(intervalId)
+        intervalId = null
+      }
     }
 
-    reconcileIntervalRef.current = window.setInterval(() => {
-      void fetchOnlineUsers({ silent: true })
-    }, RECONCILE_INTERVAL_MS)
+    const start = () => {
+      stop()
+      if (!authToken || document.visibilityState !== 'visible') return
+
+      void fetchOnlineUsers()
+      intervalId = window.setInterval(() => {
+        void fetchOnlineUsers({ silent: true })
+      }, RECONCILE_INTERVAL_MS)
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') start()
+      else stop()
+    }
+
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') start()
+    }
+
+    start()
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleFocus)
 
     return () => {
       mountedRef.current = false
-      if (realtimeDebounceRef.current) {
-        window.clearTimeout(realtimeDebounceRef.current)
-      }
-      if (reconcileIntervalRef.current) {
-        window.clearInterval(reconcileIntervalRef.current)
-      }
+      stop()
       fetchAbortRef.current?.abort()
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleFocus)
     }
   }, [authToken, fetchOnlineUsers])
-
-  useEffect(() => {
-    const supabase = supabaseRef.current
-
-    if (!authToken) {
-      return
-    }
-
-    if (typeof supabase.channel !== 'function') {
-      return
-    }
-
-    const channel = supabase
-      .channel('public:reader_presence')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'reader_presence',
-        },
-        () => {
-          scheduleReconcile()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      channel.unsubscribe()
-    }
-  }, [authToken, scheduleReconcile])
 
   const visibleUsers = hideCurrentUser
     ? users.filter((u) => u.id !== currentUserId)
