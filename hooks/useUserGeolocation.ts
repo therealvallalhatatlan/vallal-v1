@@ -66,6 +66,8 @@ export default function useUserGeolocation() {
       },
       (geoError) => {
         if (geoError.code === 1) {
+          setPreference(false)
+          setLocation(null)
           setStatus("denied")
           setError("A helymeghatározást a böngésző nem engedélyezi.")
         } else if (geoError.code === 2) {
@@ -84,7 +86,7 @@ export default function useUserGeolocation() {
     )
 
     return true
-  }, [stopWatching])
+  }, [setPreference, stopWatching])
 
   const requestPermission = useCallback(() => {
     setPreference(true)
