@@ -51,6 +51,103 @@ function createDropMarker(drop: DistributionMapDrop, onSelect: (drop: Distributi
   return button
 }
 
+function applyDistributionMapTheme(map: mapboxgl.Map) {
+  const style = map.getStyle()
+  if (!style?.layers) return
+
+  for (const layer of style.layers) {
+    const id = layer.id.toLowerCase()
+    const sourceLayer = String((layer as { "source-layer"?: string })["source-layer"] || "").toLowerCase()
+
+    try {
+      if (layer.type === "background") {
+        map.setPaintProperty(layer.id, "background-color", "#020202")
+        continue
+      }
+
+      if (layer.type === "fill-extrusion" && (id.includes("building") || sourceLayer === "building")) {
+        map.setPaintProperty(layer.id, "fill-extrusion-color", "#101010")
+        map.setPaintProperty(layer.id, "fill-extrusion-opacity", 0.72)
+        continue
+      }
+
+      if (layer.type === "fill") {
+        if (id.includes("building") || sourceLayer === "building") {
+          map.setPaintProperty(layer.id, "fill-color", "#111111")
+          map.setPaintProperty(layer.id, "fill-opacity", 0.74)
+        } else if (id.includes("water") || sourceLayer === "water") {
+          map.setPaintProperty(layer.id, "fill-color", "#050505")
+          map.setPaintProperty(layer.id, "fill-opacity", 0.9)
+        } else if (
+          id.includes("land") ||
+          id.includes("park") ||
+          id.includes("green") ||
+          id.includes("landuse") ||
+          sourceLayer === "landuse" ||
+          sourceLayer === "landcover"
+        ) {
+          map.setPaintProperty(layer.id, "fill-color", "#030303")
+          map.setPaintProperty(layer.id, "fill-opacity", 1)
+        }
+        continue
+      }
+
+      if (layer.type === "line") {
+        if (
+          id.includes("road") ||
+          id.includes("street") ||
+          id.includes("motorway") ||
+          id.includes("trunk") ||
+          id.includes("primary") ||
+          id.includes("secondary") ||
+          id.includes("tertiary") ||
+          sourceLayer === "road"
+        ) {
+          const isMajorRoad =
+            id.includes("motorway") ||
+            id.includes("trunk") ||
+            id.includes("primary")
+
+          map.setPaintProperty(
+            layer.id,
+            "line-color",
+            isMajorRoad ? "#4a4a4a" : "#303030",
+          )
+          map.setPaintProperty(
+            layer.id,
+            "line-opacity",
+            isMajorRoad ? 0.9 : 0.72,
+          )
+        } else if (
+          id.includes("boundary") ||
+          sourceLayer === "admin"
+        ) {
+          map.setPaintProperty(layer.id, "line-color", "#202020")
+          map.setPaintProperty(layer.id, "line-opacity", 0.55)
+        }
+        continue
+      }
+
+      if (layer.type === "symbol") {
+        if ("text-color" in (layer.paint || {})) {
+          map.setPaintProperty(layer.id, "text-color", "#4b4b4b")
+        }
+        if ("text-halo-color" in (layer.paint || {})) {
+          map.setPaintProperty(layer.id, "text-halo-color", "#020202")
+          map.setPaintProperty(layer.id, "text-halo-width", 1)
+          map.setPaintProperty(layer.id, "text-opacity", 0.72)
+        }
+        if ("icon-opacity" in (layer.paint || {})) {
+          map.setPaintProperty(layer.id, "icon-opacity", 0.48)
+        }
+      }
+    } catch {
+      // Some Mapbox layers expose different paint capabilities. Keep the base
+      // style layer untouched when a property cannot be overridden safely.
+    }
+  }
+}
+
 function createUserMarker() {
   const el = document.createElement("div")
   el.style.cssText = [
@@ -122,6 +219,7 @@ export default function DistributionMap({
     }
 
     map.on("load", () => {
+      applyDistributionMapTheme(map)
       resize()
       requestAnimationFrame(resize)
       setMapReady(true)
