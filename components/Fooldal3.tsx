@@ -138,49 +138,50 @@ export default function Fooldal3() {
   return (
     <MainContent fullWidth>
       <div className="min-h-screen bg-[#020202] text-zinc-200">
-        <header className="mx-auto w-full max-w-6xl px-5 pb-12 pt-16 sm:px-8 sm:pt-24">
+        <header className="mx-auto w-full max-w-6xl px-5 pb-24 pt-16 sm:px-8 sm:pt-24">
           <div className="max-w-4xl">
-            <p className="mb-7 text-[10px] uppercase tracking-[0.32em] text-lime-200/70">VÁLLALHATATLAN / DISZTRIBÚCIÓS HÁLÓZAT</p>
-            <h1 className="text-4xl font-extrabold leading-[0.98] tracking-tight text-zinc-50 sm:text-6xl">
-              Ez nem egy könyv.
-            </h1>
-            <p className="mt-7 max-w-3xl text-base leading-8 text-zinc-400 sm:text-xl sm:leading-9">
+            <p className="text-right text-[18px] font-normal italic leading-relaxed tracking-tight text-zinc-300 sm:text-base"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              Ez nem egy könyv.<br />
               Nincs címe, nincs írója, nincs kiadója.<br />
               Nem kapható a könyvesboltokban.<br />
-              <span className="text-zinc-100">Elrejtem, és neked meg kell találnod.</span>
+              Meg kell találnod.
             </p>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl px-5 pb-24 sm:px-8">
+        <main className="mx-auto w-full max-w-6xl px-4 pb-24 sm:px-8">
           <section aria-labelledby="active-spots">
-            <div className="flex flex-col gap-5 border-t border-zinc-800 pt-7 sm:flex-row sm:items-end sm:justify-between">
-              <div>
+            <div className="flex flex-row justify-between gap-5 pt-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex flex-col">
                 <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/60">01 / AKTÍV SZPOTOK</p>
-                <h2 id="active-spots" className="mt-2 text-2xl font-extrabold tracking-tight text-zinc-100 sm:text-3xl">
-                  Ami most az utcán van.
-                </h2>
+                <p id="active-spots" className="text-left text-[15px] uppercase font-normal leading-relaxed tracking-normal text-zinc-400 sm:text-base"
+                style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  Aktív lelőhelyek
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => void fetchDrops(true)}
                 disabled={refreshing}
-                className="inline-flex h-10 items-center gap-2 self-start border border-zinc-700 px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-300 transition hover:border-lime-200/50 hover:text-lime-100 disabled:opacity-50"
+                className="inline-flex gap-4 h-8 px-3 items-center rounded-full bg-lime-300/0 border border-zinc-700/40 text-[10px] font-bold uppercase tracking-[0.2em] text-lime-100 transition hover:border-lime-200/50 hover:text-lime-100 disabled:opacity-50"
               >
-                <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
-                FRISSÍTÉS
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Frissítés</span>
+                <RefreshCw size={14}  className={refreshing ? "animate-spin" : ""} />
               </button>
             </div>
 
-            <div className="mt-8 flex flex-wrap border-y border-zinc-800">
+            <div className="mt-4 flex flex-wrap p-1 border border-zinc-800/70 rounded-md">
               {orderedCities.map((item) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => setCity(item)}
                   className={
-                    "px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] transition " +
-                    (city === item ? "bg-zinc-100 text-black" : "text-zinc-500 hover:text-zinc-200")
+                    "px-3 py-2 text-[14px] font-bold uppercase transition " +
+                    (city === item ? "bg-lime-300/20 rounded-sm text-zinc-100" : "text-zinc-500 hover:text-zinc-200")
                   }
                 >
                   {item === "ALL" ? "ÖSSZES" : item}
@@ -188,47 +189,37 @@ export default function Fooldal3() {
               ))}
             </div>
 
-            <div className="mt-3 text-[10px] uppercase tracking-[0.24em] text-zinc-600">
-              A legrégebb óta kint lévő könyv mindig előre kerül.
-            </div>
-
-            <div className="mt-5 divide-y divide-zinc-800 border-y border-zinc-800">
+            <div className="">
               {loading ? (
-                <div className="px-4 py-16 text-center text-xs uppercase tracking-[0.2em] text-zinc-600">SZPOTOK KERESÉSE…</div>
+                <div className="px-4 text-center text-xs uppercase tracking-[0.2em] text-zinc-600">LELŐHELY KERESÉSE…</div>
               ) : drops.length === 0 ? (
-                <div className="px-5 py-16">
-                  <p className="text-2xl font-black tracking-tight text-zinc-100">Hopp, mindet elkapkodták.</p>
-                  <p className="mt-3 max-w-xl text-sm leading-7 text-zinc-500">
+                <div className="px-4 py-8">
+                  <p className="text-xl font-black tracking-tight text-zinc-100"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >Hopp, mindet elkapkodták.</p>
+                  <p className="mt-3 max-w-xl text-md leading-4 text-zinc-400">
                     Szólj Vállalhatatlannak, hogy tegyen ki párat.
                   </p>
                   <a
                     href="mailto:hello@vallalhatatlan.online?subject=K%C3%B6vetkez%C5%91%20drop"
-                    className="mt-7 inline-flex h-11 items-center border border-lime-200/40 px-5 text-[10px] font-bold uppercase tracking-[0.2em] text-lime-100 transition hover:bg-lime-100 hover:text-black"
+                    className="mt-7 inline-flex h-11 items-center rounded-md border border-lime-200/40 px-5 text-[12px] font-bold uppercase tracking-[0.2em] text-lime-100 transition hover:bg-lime-100 hover:text-black"
                   >
                     KÖVETELEM A KÖVETKEZŐ DROPOT
                   </a>
                 </div>
               ) : (
                 drops.map((drop, index) => (
-                  <article key={drop.id} className="group grid gap-5 px-4 py-6 sm:grid-cols-[72px_1fr_auto] sm:items-center">
+                  <article key={drop.id} className="mt-4 group grid gap-5 px-4 py-6 sm:grid-cols-[72px_1fr_auto] sm:items-center bg-lime-300/5 border border-zinc-800/70 hover:border-lime-200/50 hover:bg-lime-300/15 rounded-md">
                     <div className="hidden text-right text-3xl font-black tabular-nums text-zinc-800 sm:block">
                       {String(index + 1).padStart(2, "0")}
                     </div>
                     <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-lime-200/70">{drop.city}</span>
-                        {drop.district ? <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-600">{drop.district}</span> : null}
-                      </div>
-                      <h3 className="mt-2 text-xl font-extrabold tracking-tight text-zinc-100">{drop.product_name}</h3>
-                      <p className="mt-1 text-sm text-zinc-500">{drop.location_hint}</p>
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-zinc-500">
-                        <span className="inline-flex items-center gap-1.5"><Clock3 size={12} /> {elapsedLabel(drop.hidden_at)}</span>
-                        {drop.fulfillment_options.map((method) => (
-                          <span key={method} className="inline-flex items-center gap-1.5 border border-zinc-800 px-2 py-1 text-zinc-400">
-                            {method === "dead_drop" ? <MapPin size={11} /> : method === "personal" ? <Hand size={11} /> : <Truck size={11} />}
-                            {fulfillmentLabel(method)}
-                          </span>
-                        ))}
+                      <div className="flex flex-row justify-between items-center gap-3">
+                        <h3 className="text-lg font-extrabold tracking-tight text-zinc-100" style={{ fontFamily: "var(--font-mono-tech)" }}>{drop.product_name}</h3>
+                        <div className="flex flex-col text-right">
+                          <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-zinc-600">{drop.city}</span>
+                          <p className="text-[14px] text-lime-100/70">{drop.location_hint}</p>
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between gap-4 sm:block sm:text-right">
@@ -236,9 +227,10 @@ export default function Fooldal3() {
                       <button
                         type="button"
                         onClick={() => openDrop(drop)}
-                        className="mt-2 inline-flex h-10 items-center border border-lime-200/50 px-4 text-[10px] font-bold uppercase tracking-[0.18em] text-lime-100 transition hover:bg-lime-100 hover:text-black"
+                        className="mt-2 inline-flex h-10 items-center rounded-md border border-lime-200/10 px-4 text-[12px] font-normal uppercase tracking-[0.18em] text-lime-100 transition hover:bg-lime-100 hover:text-black"
                       >
-                        PONTOS HELYSZÍN
+                        MUTASD A PONTOS HELYSZÍNT
+                        <MapPin className="ml-2" size={14} />
                       </button>
                     </div>
                   </article>
@@ -246,41 +238,23 @@ export default function Fooldal3() {
               )}
             </div>
           </section>
-
-          <section className="mt-24 border-t border-zinc-800 pt-7" aria-labelledby="shipping">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/60">02 / NEM AKARSZ VADÁSZNI?</p>
-            <div className="mt-2 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-              <div>
-                <h2 id="shipping" className="text-2xl font-extrabold tracking-tight text-zinc-100 sm:text-3xl">
-                  Kérheted automatába vagy postán is.
-                </h2>
-                <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-500">
-                  Belföld 2 500 Ft, EU 4 500 Ft, globálisan 6 500 Ft szállítás. A rendelés állapotát a Dashboardban követheted.
-                </p>
-              </div>
-              <div className="grid grid-cols-3 border border-zinc-800 text-center">
-                <div className="border-r border-zinc-800 px-4 py-4"><div className="text-lg font-black text-zinc-100">2 500</div><div className="mt-1 text-[9px] uppercase tracking-[0.18em] text-zinc-600">HU</div></div>
-                <div className="border-r border-zinc-800 px-4 py-4"><div className="text-lg font-black text-zinc-100">4 500</div><div className="mt-1 text-[9px] uppercase tracking-[0.18em] text-zinc-600">EU</div></div>
-                <div className="px-4 py-4"><div className="text-lg font-black text-zinc-100">6 500</div><div className="mt-1 text-[9px] uppercase tracking-[0.18em] text-zinc-600">GLOBAL</div></div>
-              </div>
-            </div>
-          </section>
         </main>
 
         {selectedDrop ? (
           <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:p-6">
-            <div className="w-full max-w-xl border border-zinc-700 bg-[#080808] p-5 shadow-2xl sm:p-7">
+            <div className="w-full max-w-xl border border-zinc-700/0 bg-[#000000] p-5 shadow-2xl sm:p-7">
               <div className="flex items-start justify-between gap-5">
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.28em] text-lime-200/70">PONTOS HELYSZÍN / ÁTVÉTEL</p>
-                  <h3 className="mt-2 text-2xl font-black text-zinc-100">{selectedDrop.product_name}</h3>
-                  <p className="mt-1 text-sm text-zinc-500">{selectedDrop.city}{selectedDrop.district ? " · " + selectedDrop.district : ""}</p>
+                  <h3 className="mt-2 text-2xl font-black text-zinc-100"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                  >{selectedDrop.product_name}</h3>
+                  <p className="mt-1 text-[18px] text-zinc-500">{selectedDrop.city}{selectedDrop.district ? " · " + selectedDrop.district : ""}</p>
                 </div>
-                <button type="button" onClick={() => setSelectedDrop(null)} className="text-2xl text-zinc-600 hover:text-zinc-200" aria-label="Bezárás">×</button>
+                <button type="button" onClick={() => setSelectedDrop(null)} className="text-4xl text-zinc-600 hover:text-zinc-200" aria-label="Bezárás">×</button>
               </div>
 
-              <div className="mt-7 border border-zinc-800 bg-black/30 p-4">
-                <p className="text-sm leading-6 text-zinc-400">
+              <div className="mt-2 bg-black/30">
+                <p className="text-md leading-6 text-lime-100">
                   A pontos helyszín és az átvételi instrukció a vásárlás után nyílik meg.
                 </p>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -290,14 +264,14 @@ export default function Fooldal3() {
                       type="button"
                       onClick={() => setSelectedMethod(method)}
                       className={
-                        "border px-3 py-3 text-left transition " +
+                        "border px-3 py-1 text-left transition" +
                         (selectedMethod === method
-                          ? "border-lime-200 bg-lime-100/10 text-lime-100"
-                          : "border-zinc-800 text-zinc-500 hover:border-zinc-600 hover:text-zinc-200")
+                          ? "border-lime-100/0 bg-lime-300 text-zinc-900"
+                          : "border-zinc-800/0 text-zinc-500 hover:border-zinc-600 hover:text-zinc-200")
                       }
                     >
-                      <div className="text-[10px] font-bold uppercase tracking-[0.2em]">{fulfillmentLabel(method)}</div>
-                      <div className="mt-1 text-xs text-zinc-500">
+                      <div className="text-[19px] font-bold uppercase tracking-[0em]">{fulfillmentLabel(method)}</div>
+                      <div className="mt-1 text-[16px] text-zinc-800">
                         {shippingFeeHuf(method) > 0 ? "+ " + shippingFeeHuf(method).toLocaleString("hu-HU") + " Ft szállítás" : "nincs plusz díj"}
                       </div>
                     </button>
@@ -318,9 +292,9 @@ export default function Fooldal3() {
                   type="button"
                   disabled={!selectedMethod || checkoutLoading}
                   onClick={() => selectedMethod && void startCheckout(selectedDrop, selectedMethod)}
-                  className="min-h-12 border border-lime-200/50 bg-lime-100 px-5 text-[10px] font-black uppercase tracking-[0.2em] text-black transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                  className="min-h-12 border border-lime-200/50 bg-lime-100 px-5 text-[19px] font-black uppercase tracking-[0em] text-zinc-900 transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {checkoutLoading ? "FIZETÉS…" : "BESZÁLLOK"}
+                  {checkoutLoading ? "FIZETÉS…" : "LEVADÁSZOM"}
                 </button>
               </div>
 
