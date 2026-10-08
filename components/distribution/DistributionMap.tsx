@@ -24,30 +24,25 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""
 function createDropMarker(drop: DistributionMapDrop, onSelect: (drop: DistributionMapDrop) => void) {
   const button = document.createElement("button")
   button.type = "button"
-  button.setAttribute("aria-label", drop.product_name + " lelőhely")
+  button.setAttribute("aria-label", drop.product_name + " hozzávetőleges lelőhely")
+  button.className = "distribution-map-pulse"
   button.style.cssText = [
-    "position:relative","width:52px","height:52px","padding:0","border:0",
+    "position:relative","width:92px","height:92px","padding:0","border:0",
     "background:transparent","cursor:pointer","display:flex",
     "align-items:center","justify-content:center",
   ].join(";")
 
-  const ring = document.createElement("span")
-  ring.style.cssText = [
-    "position:absolute","inset:5px","border-radius:999px",
+  const pulse = document.createElement("span")
+  pulse.style.cssText = [
+    "position:absolute","left:50%","top:50%","width:46px","height:46px",
+    "margin-left:-23px","margin-top:-23px","border-radius:999px",
     "border:1px solid rgba(190,242,100,.42)",
-    "background:rgba(163,230,53,.08)",
-    "box-shadow:0 0 0 8px rgba(163,230,53,.035)",
-    "animation:distributionDropPulse 2.2s ease-in-out infinite",
+    "background:rgba(163,230,53,.045)",
+    "box-shadow:0 0 0 1px rgba(190,242,100,.08),0 0 28px rgba(163,230,53,.12)",
+    "animation:distributionDropPulse 2.2s ease-out infinite",
   ].join(";")
 
-  const core = document.createElement("span")
-  core.style.cssText = [
-    "position:relative","z-index:1","width:15px","height:15px",
-    "border-radius:999px","background:#bef264","border:2px solid #020202",
-    "box-shadow:0 0 0 2px rgba(190,242,100,.45),0 0 18px rgba(163,230,53,.55)",
-  ].join(";")
-
-  button.append(ring, core)
+  button.append(pulse)
   button.addEventListener("click", (event) => {
     event.stopPropagation()
     onSelect(drop)
