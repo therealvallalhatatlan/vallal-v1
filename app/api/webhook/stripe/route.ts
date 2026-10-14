@@ -10,6 +10,7 @@ import { formatTerminalTelegramMessage, sendTelegramMessage } from '@/lib/telegr
 import { hashTelegramId } from '@/lib/security/hash';
 import { trackServerEvent } from '@/lib/siteAnalyticsServer';
 import { createBookRegistryToken, hashBookRegistryToken } from '@/lib/bookRegistryTokens';
+import { parseBookRegistryQuantity } from '@/lib/bookRegistry';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',
@@ -390,14 +391,8 @@ async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Sessi
     return;
   }
 
-  let quantity = 1;
-  try {
-    const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
-    const lineQuantity = (lineItems.data ?? []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
-    if (lineQuantity > 0) quantity = Math.min(20, lineQuantity);
-  } catch (error) {
-    console.warn('[book-registry] Could not load Stripe line item quantity; using one entitlement.', error);
-  }
+  // Quantity is trusted metadata written by our server-side checkout route.
+  const quantity = parseBookRegistryQuantity(metadata.book_registry_quantity);
 
   const origin = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vallalhatatlan.online').replace(/\/+$/, '');
 
@@ -438,7 +433,7 @@ async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Sessi
 
     const claimUrl = origin + '/konyv-1-qr#claim=' + encodeURIComponent(token);
     try {
-      await resend.emails.send({
+      const { error: emailError } = await resend.emails.send({
         from: emailFrom,
         to: [customerEmail],
         subject: 'Regisztráld a Vállalhatatlan könyvpéldányodat',
@@ -450,8 +445,21 @@ async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Sessi
           '<p style="font-size:12px;color:#a1a1aa;line-height:1.5">A linket kezeld személyes jogosultságként. Belépés után a rendszer a fiókodhoz kapcsolja a példányt. A térképes megjelenítés külön hozzájárulást igényel.</p>' +
           '</div>',
       });
+      if (emailError) {
+        const { error: revokeError } = await db
+          .from('book_registry_entitlements')
+          .update({ status: 'revoked' })
+          .eq('id', entitlement.id)
+          .eq('status', 'pending');
+        console.error('[book-registry] Email API rejected registry token; token revoked for admin replacement.', emailError.message, revokeError?.message);
+      }
     } catch (error) {
-      console.error('[book-registry] Registry entitlement email failed; issue a replacement token from the admin endpoint after reviewing the order.', error);
+      const { error: revokeError } = await db
+        .from('book_registry_entitlements')
+        .update({ status: 'revoked' })
+        .eq('id', entitlement.id)
+        .eq('status', 'pending');
+      console.error('[book-registry] Email send failed; token revoked for admin replacement.', error, revokeError?.message);
     }
   }
 }
