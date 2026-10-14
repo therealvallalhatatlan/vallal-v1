@@ -13,6 +13,8 @@ type Copy = {
   locationLng: number | null; registeredAt: string | null;
 };
 type Draft = { lat: number | null; lng: number | null };
+type EditionCode = "book_1" | "book_2";
+type Suggestion = { editionCode: EditionCode; editionTitle: string; serialPrefix: string; serialNumber: number; serialLabel: string };
 
 const supabase = createClient();
 const CLAIM_KEY = "vallal:book-registry:claim-token";
@@ -22,6 +24,11 @@ async function responseMessage(response: Response) {
   const body = await response.json().catch(() => null);
   const errors: Record<string, string> = {
     authentication_required: "A folytatáshoz jelentkezz be.",
+    invalid_edition: "Válassz érvényes kötetet.",
+    edition_unavailable: "Ez a kötet jelenleg nem regisztrálható.",
+    suggested_identifier_unavailable: "Most nem sikerült lekérni a következő azonosítót.",
+    registration_failed: "Nem sikerült regisztrálni a könyvpéldányt. Próbáld újra.",
+    invalid_registration: "A regisztráció adatai nem megfelelőek.",
     valid_claim_token_required: "A kód formátuma nem megfelelő.",
     claim_token_invalid_or_used: "Ez a kód érvénytelen, lejárt vagy már felhasználták.",
     claim_failed: "A regisztráció most nem sikerült.",
@@ -34,12 +41,16 @@ async function responseMessage(response: Response) {
   return errors[typeof body?.error === "string" ? body.error : ""] || "A művelet nem sikerült. Próbáld újra.";
 }
 
-export default function BookRegistryPage() {
+export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaultEdition?: EditionCode }) {
   const [session, setSession] = useState<any>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [copies, setCopies] = useState<Copy[]>([]);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [claimToken, setClaimToken] = useState("");
+  const [selectedEdition, setSelectedEdition] = useState<EditionCode>(defaultEdition);
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [refreshSuggestion, setRefreshSuggestion] = useState(0);
   const [transferToken, setTransferToken] = useState("");
   const [transferLink, setTransferLink] = useState("");
   const [busy, setBusy] = useState("");
@@ -101,13 +112,47 @@ export default function BookRegistryPage() {
     return () => { alive = false; authListener.subscription.unsubscribe(); };
   }, [loadCopies]);
 
+  useEffect(() => {
+    if (!accessToken) {
+      setSuggestion(null);
+      return;
+    }
+
+    let alive = true;
+    setSuggestionLoading(true);
+    fetch("/api/book-registry/register?edition=" + encodeURIComponent(selectedEdition), {
+      headers: { Authorization: "Bearer " + accessToken },
+      cache: "no-store",
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => null);
+        if (!response.ok) {
+          const errors: Record<string, string> = {
+            edition_unavailable: "Ez a kötet jelenleg nem regisztrálható.",
+            suggested_identifier_unavailable: "Most nem sikerült lekérni a következő azonosítót.",
+          };
+          throw new Error(errors[typeof body?.error === "string" ? body.error : ""] || "Nem sikerült lekérni az azonosítót.");
+        }
+        if (alive) setSuggestion(body.suggestion as Suggestion);
+      })
+      .catch((e) => {
+        if (!alive) return;
+        setSuggestion(null);
+        setError(e instanceof Error ? e.message : "Nem sikerült lekérni az azonosítót.");
+      })
+      .finally(() => { if (alive) setSuggestionLoading(false); });
+
+    return () => { alive = false; };
+  }, [accessToken, selectedEdition, refreshSuggestion]);
+
   function login() {
     try {
       if (claimToken) window.sessionStorage.setItem(CLAIM_KEY, claimToken);
       if (transferToken) window.sessionStorage.setItem(TRANSFER_KEY, transferToken);
     } catch {}
-    persistAuthReturnTarget("/konyv-1-qr");
-    window.location.assign(buildAuthHref("/konyv-1-qr"));
+    const returnTo = window.location.pathname.startsWith("/konyv-regiszter") ? "/konyv-regiszter" : "/konyv-1-qr";
+    persistAuthReturnTarget(returnTo);
+    window.location.assign(buildAuthHref(returnTo));
   }
 
   async function claim() {
@@ -129,6 +174,38 @@ export default function BookRegistryPage() {
       await loadCopies(accessToken);
     } catch (e) { setError(e instanceof Error ? e.message : "A regisztráció nem sikerült."); }
     finally { setBusy(""); }
+  }
+
+  async function registerNewCopy() {
+    setError("");
+    setMessage("");
+    if (!accessToken) { login(); return; }
+    if (!suggestion) {
+      setError("Várd meg, amíg megjelenik a következő szabad azonosító.");
+      return;
+    }
+
+    setBusy("register");
+    try {
+      const response = await fetch("/api/book-registry/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + accessToken },
+        body: JSON.stringify({ editionCode: selectedEdition }),
+      });
+      if (!response.ok) throw new Error(await responseMessage(response));
+      const body = await response.json();
+      const copy = body.copy;
+      const label = typeof copy?.serial_label === "string"
+        ? copy.serial_label
+        : String(copy?.serial_prefix || "") + "-" + String(copy?.serial_number || "").padStart(3, "0");
+      setMessage("Sikeres regisztráció: " + label + ". Ez a könyv nyilvántartási azonosítója, nem a kötetbe nyomtatott sorszám.");
+      await loadCopies(accessToken);
+      setRefreshSuggestion((value) => value + 1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "A regisztráció nem sikerült.");
+    } finally {
+      setBusy("");
+    }
   }
 
   async function acceptTransfer() {
@@ -213,7 +290,7 @@ export default function BookRegistryPage() {
         {!sessionLoading && !accessToken ? (
           <section className="mb-7 border border-zinc-800 bg-zinc-950 p-6">
             <h2 className="text-xl font-bold">A regisztráció a fiókodhoz kapcsolódik</h2>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-400">A közös QR-kód önmagában nem igazolja a tulajdonjogot. A regisztrációhoz személyes, egyszer használható jogosultsági kód kell.</p>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-400">A regisztráció a fiókodhoz kapcsolódik. Belépés után a rendszer automatikusan felajánlja a következő szabad nyilvántartási azonosítót. Külön kódra csak akkor van szükség, ha egy előre kijelölt sorszámú példányhoz személyes regisztrációs linket kaptál.</p>
             <button onClick={login} className="mt-5 rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black">Belépek / regisztrálok</button>
           </section>
         ) : null}
@@ -228,14 +305,57 @@ export default function BookRegistryPage() {
 
         {accessToken ? (
           <>
-            <section className="mb-8 border border-zinc-800 p-5 sm:p-6">
-              <h2 className="text-lg font-bold">Könyv regisztrálása</h2>
-              <p className="mt-2 text-sm text-zinc-500">Írd be a személyre szóló jogosultsági kódot vagy nyisd meg a neked küldött regisztrációs linket.</p>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <input value={claimToken} onChange={(e) => setClaimToken(e.target.value)} autoComplete="off" spellCheck={false} placeholder="Egyszer használható kód" className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-3 font-mono text-sm outline-none focus:border-lime-200/70" />
-                <button disabled={!claimToken.trim() || busy !== ""} onClick={() => void claim()} className="rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "claim" ? "Regisztrálás…" : "Könyv regisztrálása"}</button>
-              </div>
-            </section>
+            {claimToken && !transferToken ? (
+              <section className="mb-8 border border-lime-200/30 bg-lime-200/[0.03] p-5 sm:p-6">
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-lime-200/70">Személyes regisztrációs link</p>
+                <h2 className="mt-2 text-lg font-bold">A személyes regisztrációs link beváltása</h2>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">Ezt a linket egy könyvpéldány regisztrálásához kaptad. A regisztráció a fiókodhoz kapcsolja a hozzá tartozó jogosultságot, és a link csak egyszer használható.</p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button disabled={busy !== ""} onClick={() => void claim()} className="rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "claim" ? "Regisztrálás…" : "A példány regisztrálása"}</button>
+                  <button type="button" disabled={busy !== ""} onClick={() => { setClaimToken(""); try { window.sessionStorage.removeItem(CLAIM_KEY); } catch {} }} className="rounded-md border border-zinc-700 px-4 py-3 text-sm text-zinc-300 disabled:opacity-40">Másik könyvet regisztrálok</button>
+                </div>
+              </section>
+            ) : null}
+
+            {!claimToken && !transferToken ? (
+              <section className="mb-8 border border-zinc-800 p-5 sm:p-6">
+                <h2 className="text-lg font-bold">Regisztráld a könyved</h2>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">Nem kell jogosultsági kódot keresned. Válaszd ki a kötetet, a rendszer pedig megmutatja a következő szabad nyilvántartási azonosítót.</p>
+
+                <div className="mt-5 grid grid-cols-2 gap-3" role="group" aria-label="Kötet kiválasztása">
+                  <button type="button" aria-pressed={selectedEdition === "book_1"} onClick={() => setSelectedEdition("book_1")} className={"rounded-md border p-3 text-left transition " + (selectedEdition === "book_1" ? "border-lime-200 bg-lime-200/10 text-lime-100" : "border-zinc-700 text-zinc-400 hover:border-zinc-500")}>
+                    <span className="block text-xs uppercase tracking-wider opacity-70">I. kötet</span>
+                    <span className="mt-1 block text-sm font-bold">Vállalhatatlan I.</span>
+                  </button>
+                  <button type="button" aria-pressed={selectedEdition === "book_2"} onClick={() => setSelectedEdition("book_2")} className={"rounded-md border p-3 text-left transition " + (selectedEdition === "book_2" ? "border-lime-200 bg-lime-200/10 text-lime-100" : "border-zinc-700 text-zinc-400 hover:border-zinc-500")}>
+                    <span className="block text-xs uppercase tracking-wider opacity-70">II. kötet</span>
+                    <span className="mt-1 block text-sm font-bold">Vállalhatatlan II.</span>
+                  </button>
+                </div>
+
+                <div className="mt-4 border border-zinc-800 bg-zinc-950 p-4">
+                  <p className="text-xs uppercase tracking-wider text-zinc-500">Következő szabad azonosító</p>
+                  {suggestionLoading ? (
+                    <p className="mt-2 text-sm text-zinc-400">Azonosító lekérése…</p>
+                  ) : suggestion ? (
+                    <>
+                      <p className="mt-1 font-mono text-3xl font-black text-lime-100">{suggestion.serialLabel}</p>
+                      <p className="mt-2 text-xs leading-relaxed text-zinc-500">Ez a nyilvántartásban használt azonosító, nem a könyvbe nyomtatott sorszám. A végleges sorszámot a regisztráció pillanatában rögzítjük.</p>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-sm text-zinc-400">Az azonosító most nem érhető el. Próbáld meg frissíteni az oldalt.</p>
+                  )}
+                </div>
+
+                <p className="mt-4 text-xs leading-relaxed text-zinc-500">Csak olyan kötetet regisztrálj, amely ténylegesen a birtokodban van. A régi kiadások előre fenntartott sorszámait a rendszer nem osztja ki újra.</p>
+                <button disabled={!suggestion || suggestionLoading || busy !== ""} onClick={() => void registerNewCopy()} className="mt-4 w-full rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "register" ? "Regisztrálás…" : "A következő szabad azonosítóval regisztrálom"}</button>
+
+                <details className="mt-5 border-t border-zinc-800 pt-4">
+                  <summary className="cursor-pointer text-sm text-zinc-400 hover:text-zinc-200">Személyes regisztrációs linket kaptam</summary>
+                  <p className="mt-2 text-xs leading-relaxed text-zinc-500">Ha a könyv vásárlásakor vagy korábbi példányhoz külön linket küldtünk, nyisd meg azt a linket. A link tartalmazza a regisztrációhoz szükséges jogosultságot, így nem kell külön kódot bemásolnod.</p>
+                </details>
+              </section>
+            ) : null}
 
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-xl font-bold">A példányaim <span className="font-mono text-lime-200">({copies.length})</span></h2>
@@ -282,7 +402,7 @@ export default function BookRegistryPage() {
           </section>
         ) : null}
 
-        <p className="mt-10 border-t border-zinc-900 pt-5 text-xs leading-relaxed text-zinc-600">A sorszám kiadásonként egyedi és nem változtatható. Tulajdonosváltáskor a régi térképpont automatikusan törlődik. A QR-kód beolvasása nem ad automatikusan regisztrációs jogosultságot.</p>
+        <p className="mt-10 border-t border-zinc-900 pt-5 text-xs leading-relaxed text-zinc-600">A nyilvántartási azonosító kiadásonként egyedi és nem változtatható. Nem azonos a könyvbe esetleg nyomtatott példányszámmal. Tulajdonosváltáskor a régi térképpont automatikusan törlődik. A térképes megjelenítés alapértelmezetten ki van kapcsolva.</p>
       </div>
     </main>
   );

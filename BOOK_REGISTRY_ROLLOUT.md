@@ -6,8 +6,9 @@ This feature is additive. It does not reuse or rewrite the legacy book_copies re
 
 - db/migrations/054_book_registry.sql: editions, copy register, hashed one-time entitlements, ownership audit events and transfer tokens, row-level security, atomic RPCs, and reserved historical serial ranges.
 - db/migrations/055_book_registry_account_deletion.sql: retire a copy and erase its map location when the owner deletes their account.
+- db/migrations/056_book_registry_self_service.sql: atomically assign a new registry ID when a signed-in user registers a physical book they own.
 - /konyv-1-qr: shared entry page for a printed QR code, sign-in, claiming, location consent and ownership transfer.
-- /api/book-registry/claim, /mine, /location, /transfer, /map: narrow endpoints; public map responses contain only public ID, edition/serial label and a coarse opt-in point.
+- /api/book-registry/register, /claim, /mine, /location, /transfer, /map: authenticated, narrow endpoints; the page previews the next available ID and the server assigns it atomically. Public map responses contain only public ID, edition/serial label and a coarse opt-in point.
 - /api/admin/book-registry/entitlements: admin-only one-time claim-token issuance.
 - A toggleable book layer on the existing /halozat Mapbox map.
 - Paid-checkout integration for explicit per-edition quantities. The webhook uses edition-specific purchase source references for idempotency and emails each token once.
@@ -15,7 +16,7 @@ This feature is additive. It does not reuse or rewrite the legacy book_copies re
 ## Before deploying
 
 1. The current Vállalhatatlan production database already contains the schema seeded by `054_book_registry.sql`, which was run manually in Supabase. Do not run `054` again in production. A direct SQL Editor run does not normally register a CLI migration-history entry; reconcile that with your migration workflow instead of inserting a fabricated history row. For a separate staging database, apply `054` once after review.
-2. Review `db/migrations/055_book_registry_account_deletion.sql`, then apply it to production using the approved database-change process. Verify the project reference before running it.
+2. `db/migrations/055_book_registry_account_deletion.sql` is applied in production. Review `db/migrations/056_book_registry_self_service.sql`, then apply it to production using the approved database-change process before enabling the self-service register route. Verify the project reference before running it.
 3. Confirm SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS, RESEND_API_KEY, EMAIL_FROM, NEXT_PUBLIC_SITE_URL and NEXT_PUBLIC_MAPBOX_TOKEN in the deployment environment.
 4. Configure the server-side checkout metadata for every book-purchase path:
    - The dedicated Volume I endpoint sends `book_registry_edition=book_1` and `book_registry_quantity=1`.
@@ -24,6 +25,7 @@ This feature is additive. It does not reuse or rewrite the legacy book_copies re
    The webhook also recognizes unambiguous legacy metadata values book_ii, book_2, book-2 and book-ii for Volume II.
 5. Do not auto-map legacy `numbered_copy` purchases to printed serials until the physical book serials and historic ownership records have been reconciled. This is deliberate because the old sales table does not currently prove every historical owner/serial pair.
 6. If the email provider rejects or fails to send a registry email, that token is revoked. Review the matching paid Stripe session, then issue a replacement from the admin endpoint using `sourceType: admin` and a `sourceReference` tied to the Stripe session. Run `pnpm test:book-registry` and `pnpm build`, then exercise the checklist in an isolated staging environment before merging.
+7. Self-service registration is an ownership self-attestation and does not verify purchase. Keep historical serials reserved and use verified personal links for the pre-reserved ranges.
 
 ## Issue a verified historical claim code
 
@@ -48,10 +50,10 @@ To issue a future-purchase or distributor entitlement manually, use sourceType p
 
 ## Acceptance checklist
 
-- A missing/invalid bearer token cannot claim, set a location, transfer, or view private copies.
+- A missing/invalid bearer token cannot register a copy, claim a personal entitlement, set a location, transfer, or view private copies.
 - An invalid, expired, revoked or already-redeemed claim token cannot be redeemed.
 - Each historical slot can be issued only once; legacy ranges remain reserved before claim.
-- Concurrent new-copy claims do not receive duplicate edition serials.
+- Concurrent self-service registrations and token-based new-copy claims do not receive duplicate edition serials.
 - New serials begin at I-101 and II-081, because the seeded historical ranges are reserved.
 - Raw claim/transfer tokens are never stored in the database; only SHA-256 digests are stored.
 - The public map only shows opted-in, registered copies; public responses contain no account IDs, email addresses, order references or exact coordinates.
