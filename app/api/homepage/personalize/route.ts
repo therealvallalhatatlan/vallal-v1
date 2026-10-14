@@ -5,7 +5,8 @@ import { checkRateLimit, getClientIp } from "@/lib/security/rateLimit"
 import { buildHomepageContext, recordHomepageVisit } from "@/lib/homepage-ai/context"
 import { prepareHomepagePlan } from "@/lib/homepage-ai/planner"
 import { getRecommendedProducts } from "@/lib/homepage-ai/recommendations"
-import type { HomepagePlan } from "@/lib/homepage-ai/types"
+import { getCoreHomepageBlocks } from "@/lib/homepage-ai/rules"
+import type { HomepageBlock, HomepagePlan } from "@/lib/homepage-ai/types"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -37,18 +38,23 @@ function isPlan(value: unknown): value is HomepagePlan {
 }
 
 function attachOrderProductNames(plan: HomepagePlan, context: Awaited<ReturnType<typeof buildHomepageContext>>): HomepagePlan {
+  // Never trust a cached order block: a new order may have arrived after the
+  // plan was saved, or the previously displayed order may already be received.
+  // Rebuild the order block from the live order context on every request.
+  const liveOrderBlock = getCoreHomepageBlocks(context).find(
+    (block): block is Extract<HomepageBlock, { type: "order_status" }> =>
+      block.type === "order_status",
+  );
+
+  const nonOrderBlocks = plan.blocks.filter((block) => block.type !== "order_status");
+  const blocks: HomepageBlock[] = liveOrderBlock
+    ? [liveOrderBlock, ...nonOrderBlocks]
+    : nonOrderBlocks;
+
   return {
     ...plan,
-    blocks: plan.blocks.flatMap((block) => {
-      if (block.type !== "order_status") return [block];
-
-      // Cached homepage plans can outlive the order's receipt confirmation.
-      // Always re-check the live order context and remove stale/missing orders.
-      const order = context.orders.find((candidate) => candidate.id === block.orderId);
-      if (!order || order.userReceivedAt) return [];
-
-      return [{ ...block, headline: order.label }];
-    }),
+    // The order status has priority so it cannot be pushed off the visible plan.
+    blocks: blocks.slice(0, 3),
   };
 }
 
