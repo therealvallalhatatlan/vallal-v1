@@ -3,14 +3,15 @@ import { formatBookRegistrySerial, isValidRegistryToken, isValidRegistryUuid, pa
 import { createBookRegistryToken, hashBookRegistryToken } from "./bookRegistryTokens";
 
 describe("book registry quantity metadata", () => {
-  it("accepts quantities from one through twenty", () => {
+  it("accepts quantities from one through the catalogue limit", () => {
     expect(parseBookRegistryQuantity("1")).toBe(1);
     expect(parseBookRegistryQuantity("20")).toBe(20);
+    expect(parseBookRegistryQuantity("100")).toBe(100);
     expect(parseBookRegistryQuantity("4")).toBe(4);
   });
 
   it("defaults to one for missing, malformed, or out-of-range metadata", () => {
-    for (const value of ["0", "21", "-2", "1.5", "x", ""]) {
+    for (const value of ["0", "101", "-2", "1.5", "x", "", "1000"]) {
       expect(parseBookRegistryQuantity(value)).toBe(1);
     }
     expect(parseBookRegistryQuantity(undefined)).toBe(1);
