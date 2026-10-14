@@ -39,10 +39,15 @@ function isPlan(value: unknown): value is HomepagePlan {
 function attachOrderProductNames(plan: HomepagePlan, context: Awaited<ReturnType<typeof buildHomepageContext>>): HomepagePlan {
   return {
     ...plan,
-    blocks: plan.blocks.map((block) => {
-      if (block.type !== "order_status") return block;
+    blocks: plan.blocks.flatMap((block) => {
+      if (block.type !== "order_status") return [block];
+
+      // Cached homepage plans can outlive the order's receipt confirmation.
+      // Always re-check the live order context and remove stale/missing orders.
       const order = context.orders.find((candidate) => candidate.id === block.orderId);
-      return order ? { ...block, headline: order.label } : block;
+      if (!order || order.userReceivedAt) return [];
+
+      return [{ ...block, headline: order.label }];
     }),
   };
 }
