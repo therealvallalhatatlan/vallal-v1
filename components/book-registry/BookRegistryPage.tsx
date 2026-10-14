@@ -28,6 +28,7 @@ async function responseMessage(response: Response) {
     edition_unavailable: "Ez a kötet jelenleg nem regisztrálható.",
     suggested_identifier_unavailable: "Most nem sikerült lekérni a következő azonosítót.",
     registration_failed: "Nem sikerült regisztrálni a könyvpéldányt. Próbáld újra.",
+    invalid_registration: "A regisztráció adatai nem megfelelőek.",
     valid_claim_token_required: "A kód formátuma nem megfelelő.",
     claim_token_invalid_or_used: "Ez a kód érvénytelen, lejárt vagy már felhasználták.",
     claim_failed: "A regisztráció most nem sikerült.",
@@ -343,7 +344,7 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
                 </div>
 
                 <p className="mt-4 text-xs leading-relaxed text-zinc-500">Csak olyan kötetet regisztrálj, amely ténylegesen a birtokodban van. A régi kiadások előre fenntartott sorszámait a rendszer nem osztja ki újra.</p>
-                <button disabled={!suggestion || suggestionLoading || busy !== ""} onClick={() => void registerNewCopy()} className="mt-4 w-full rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "register" ? "Regisztrálás…" : "Ezzel az azonosítóval regisztrálom a könyvet"}</button>
+                <button disabled={!suggestion || suggestionLoading || busy !== ""} onClick={() => void registerNewCopy()} className="mt-4 w-full rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "register" ? "Regisztrálás…" : "A következő szabad azonosítóval regisztrálom"}</button>
 
                 <details className="mt-5 border-t border-zinc-800 pt-4">
                   <summary className="cursor-pointer text-sm text-zinc-400 hover:text-zinc-200">Személyes regisztrációs linket kaptam</summary>
