@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Mail, ArrowUpRight, LoaderCircle } from "lucide-react"
 import Reviews from "@/components/Reviews"
 import Footer from "@/components/Footer"
@@ -77,7 +78,7 @@ function OrderStatusBlockView({
   }
 
   return (
-    <section className="border-b border-zinc-900 py-8 sm:py-12">
+    <section className="animate-fadeIn border-b border-zinc-900 py-8 sm:py-12">
       <div className="border border-zinc-800 bg-[#050505] p-5 sm:p-6">
         <p
           className="text-[9px] uppercase tracking-[0.26em] text-lime-200/55"
@@ -97,13 +98,19 @@ function OrderStatusBlockView({
           className="mt-4 max-w-2xl text-sm leading-6 text-zinc-500"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
+          {/folyamatban van/i.test(block.body) ? (
+            <LoaderCircle
+              aria-hidden="true"
+              className="mr-2 inline-block h-3.5 w-3.5 animate-spin align-[-2px] text-lime-200"
+            />
+          ) : null}
           {block.body}
         </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-4">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 border-2 border-lime-400/45 px-3 py-2 text-[9px] uppercase tracking-[0.2em] text-lime-200/90 transition-colors hover:border-lime-300 hover:text-lime-100"
+            className="inline-flex items-center gap-2 border-2 border-zinc-700 px-3 py-2 text-[9px] uppercase tracking-[0.2em] text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-100"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             {block.cta || "RENDELÉSEM"}
@@ -114,14 +121,23 @@ function OrderStatusBlockView({
             type="button"
             onClick={() => void markReceived()}
             disabled={!token || receiving}
-            className="inline-flex items-center gap-2 border-2 border-zinc-700 px-3 py-2 text-[9px] uppercase tracking-[0.18em] text-zinc-500 transition-colors hover:border-zinc-500 hover:text-zinc-200 disabled:cursor-wait disabled:opacity-40"
+            className="inline-flex items-center gap-2 border-2 border-lime-300/65 px-3 py-2 text-[9px] uppercase tracking-[0.18em] text-lime-200 transition-colors hover:border-lime-200 hover:text-lime-100 disabled:cursor-wait disabled:opacity-40"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             {receiving ? (
               <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
             ) : null}
-            {receiving ? "FELDOLGOZÁS..." : "ÁT VETTEM"}
+            {receiving ? "FELDOLGOZÁS..." : "ÁTVETTEM"}
           </button>
+
+          <Link
+            href="/kapcsolat"
+            className="inline-flex items-center gap-2 border-2 border-zinc-800 px-3 py-2 text-[9px] uppercase tracking-[0.18em] text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-100"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            KÉRDÉSEM VAN
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
 
         {error ? <p className="mt-3 text-xs text-red-400">{error}</p> : null}
@@ -215,10 +231,10 @@ function GuestHome() {
     <>
       <SiteHeader />
       <div className="mx-auto w-full pb-28 pt-0 sm:pb-32">
-        <section className="w-full">
+        <section className="w-full animate-fadeIn">
           <video className="relative left-1/2 block aspect-video w-screen -translate-x-1/2 object-cover" src="/videos/dd2.mp4" autoPlay muted loop playsInline controls={false} preload="metadata" />
         </section>
-        <section className="mx-auto mt-12 w-full max-w-5xl px-5 sm:mt-16 sm:px-8">
+        <section className="animate-fadeIn mx-auto mt-12 w-full max-w-5xl px-5 sm:mt-16 sm:px-8">
           <div className="ml-auto max-w-3xl">
             <p className="text-right text-[21px] italic leading-[1.7] text-zinc-300 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
               "Archetípus vagyok.<br/>A funkcionális rendszerhiba, az elbaszott túlélő, a káosz-építész archetípusa. Egy csótány fejlett idegrendszerrel."
@@ -327,42 +343,14 @@ function MemberGreeting({ token }: { token: string }) {
   return (
     <section className="pt-10 pb-8 sm:pt-7" aria-label="Személyes üdvözlés">
       {loadingGreeting ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="max-w-3xl border border-lime-300/20 bg-black/75 p-4 font-mono shadow-[0_0_45px_rgba(163,230,53,0.05)] sm:p-5"
-        >
-          <div className="flex items-center justify-between gap-4 border-b border-lime-300/15 pb-3 text-[9px] uppercase tracking-[0.2em] text-lime-100/55 sm:text-[10px]">
-            <span>V/ TERMINAL :: PERSONALIZE</span>
-            <span className="inline-flex items-center gap-2">
-              <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime-300" />
-              LINK ACTIVE
-            </span>
-          </div>
-          <div className="mt-4 space-y-2 text-[11px] leading-relaxed sm:text-xs">
-            <p className="text-lime-100/75">
-              <span className="mr-2 text-lime-300">$</span>
-              session.verify <span className="ml-2 text-lime-300">[OK]</span>
-            </p>
-            <p className="text-lime-100/75">
-              <span className="mr-2 text-lime-300">$</span>
-              visitor-context.sync <span className="ml-2 animate-pulse text-lime-200">[RUNNING]</span>
-            </p>
-            <p className="text-lime-100/75">
-              <span className="mr-2 text-lime-300">$</span>
-              personal-greeting.fetch <span className="ml-2 text-lime-100/45">[WAIT]</span>
-            </p>
-          </div>
-          <p className="mt-4 flex items-center gap-2 text-[9px] uppercase tracking-[0.17em] text-lime-100/45 sm:text-[10px]">
-            <span className="inline-block h-3 w-1.5 animate-pulse bg-lime-300" aria-hidden="true" />
-            Személyes kezdőüzenet és belépési kontextus betöltése
-          </p>
-          <div className="mt-3 h-px overflow-hidden bg-lime-100/10">
-            <div className="h-full w-2/3 animate-pulse bg-lime-300/80" />
-          </div>
+        <div className="h-8" role="status" aria-label="Betöltés">
+          <span
+            aria-hidden="true"
+            className="inline-block h-6 w-[2px] animate-pulse bg-lime-200 align-middle"
+          />
         </div>
       ) : (
-        <div className="max-w-4xl">
+        <div className="max-w-4xl animate-fadeIn">
           <p className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
             {failed ? "Szia. Most valami nem állt össze. Próbáld újra egy pillanat múlva." : typedGreeting}
             {!failed && <span aria-hidden="true" className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse" />}
@@ -423,19 +411,35 @@ function MemberHome({ session }: { session: SessionShape }) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl px-5 pb-24 pt-0 sm:px-8 sm:pb-32">
+      <main className="animate-fadeIn mx-auto w-full max-w-6xl px-5 pb-24 pt-0 sm:px-8 sm:pb-32">
         <MemberGreeting token={token} />
         {!loadingPlan && !error && usefulBlocks.map(block => (
           <OrderStatusBlockView key={"order-" + block.orderId} block={block} token={token} onReceived={handleReceived} />
         ))}
         {!loadingPlan && !error && (
-          <section className="border-b border-zinc-900 py-2">
-            <Link href="/kapcsolat" className="inline-flex items-center gap-2 border-2 border-lime-400/45 px-4 py-3 text-[11px] uppercase tracking-[0.18em] text-lime-200/90 transition-colors hover:border-lime-300 hover:text-lime-100" style={{ fontFamily: "var(--font-mono-tech)" }}>
-              ÜZENET V.-NEK <ArrowUpRight className="h-3.5 w-3.5" />
+          <div className="animate-fadeIn">
+            <Fooldal4HuntingMap />
+          </div>
+        )}
+        {!loadingPlan && !error && (
+          <section className="animate-fadeIn border-b border-zinc-900 py-5">
+            <Link
+              href="/kapcsolat"
+              className="flex w-full items-center gap-4 border border-zinc-800 bg-zinc-950/70 px-4 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900/80 hover:text-white sm:w-auto"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              <Image
+                src="/img/avatar.webp"
+                alt=""
+                width={44}
+                height={44}
+                className="h-11 w-11 shrink-0 rounded-full border border-zinc-700 object-cover"
+              />
+              <span className="flex-1">ÜZENET V.-NEK</span>
+              <ArrowUpRight className="h-4 w-4 shrink-0" />
             </Link>
           </section>
         )}
-        {!loadingPlan && !error && <Fooldal4HuntingMap />}
         <TrustSection />
       </main>
       <Footer />
@@ -452,7 +456,14 @@ export default function Fooldal4() {
     <MainContent fullWidth>
       {!loading && !session ? <GuestHome /> : null}
       {!loading && session ? <MemberHome session={session} /> : null}
-      {loading ? <SiteHeader /> : null}
+      {loading ? (
+        <>
+          <SiteHeader />
+          <div className="animate-fadeIn flex min-h-[30vh] items-center justify-center" role="status" aria-label="Betöltés">
+            <span aria-hidden="true" className="inline-block h-6 w-[2px] animate-pulse bg-lime-200" />
+          </div>
+        </>
+      ) : null}
     </MainContent>
   )
 }
