@@ -419,11 +419,10 @@ export default function FaszanLevadasztadShare({ compact = false }: Props) {
         </p>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
           <div className="w-full max-w-[118px] shrink-0 overflow-hidden border border-zinc-800 bg-black">
+            <canvas ref={canvasRef} width={540} height={960} className={(videoUrl ? "hidden " : "") + "aspect-[9/16] w-full object-cover"} />
             {videoUrl ? (
               <video src={videoUrl} muted autoPlay loop playsInline className="aspect-[9/16] w-full object-cover" />
-            ) : (
-              <canvas ref={canvasRef} width={540} height={960} className="aspect-[9/16] w-full object-cover" />
-            )}
+            ) : null}
           </div>
           <div className="flex flex-1 flex-wrap content-start gap-2">
             {actionButtons}
@@ -437,11 +436,10 @@ export default function FaszanLevadasztadShare({ compact = false }: Props) {
   return (
     <div className="grid gap-6 md:grid-cols-[minmax(220px,0.8fr)_1.2fr] md:items-start">
       <div className="mx-auto w-full max-w-[280px] overflow-hidden border border-lime-300/30 bg-black shadow-[0_0_50px_rgba(132,204,22,0.08)]">
+        <canvas ref={canvasRef} width={540} height={960} className={(videoUrl ? "hidden " : "") + "aspect-[9/16] w-full"} />
         {videoUrl ? (
           <video src={videoUrl} controls autoPlay loop playsInline className="aspect-[9/16] w-full object-cover" />
-        ) : (
-          <canvas ref={canvasRef} width={540} height={960} className="aspect-[9/16] w-full" />
-        )}
+        ) : null}
       </div>
       <div className="flex flex-col gap-3">
         <p className="text-xs leading-6 text-zinc-400">Készíts belőle saját megosztható videót, vagy küldd tovább a linket. A link előnézetében egy külön, fekvő borítókép jelenik meg, a videó pedig a megosztóoldalon is lejátszható.</p>
