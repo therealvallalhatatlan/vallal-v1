@@ -205,6 +205,19 @@ BEGIN
   v_cutoff := COALESCE(v_cutoff, now());
   v_reserved_max := CASE p_edition_code WHEN 'book_1' THEN 100 ELSE 80 END;
 
+  SELECT COUNT(*)::INTEGER INTO v_purchase_units
+  FROM public.book_registry_purchase_candidates(p_edition_code, p_user_id, p_user_email);
+  SELECT COUNT(DISTINCT ev.copy_id)::INTEGER INTO v_claimed_count
+  FROM public.book_copy_ownership_events ev
+  WHERE ev.event_type = 'claimed'
+    AND ev.actor_user_id = p_user_id
+    AND ev.new_owner_user_id = p_user_id;
+  IF v_purchase_units = 0 THEN
+    RETURN jsonb_build_object('ok', TRUE, 'eligible', FALSE, 'reason', 'purchase_required');
+  ELSIF v_claimed_count >= v_purchase_units THEN
+    RETURN jsonb_build_object('ok', TRUE, 'eligible', FALSE, 'reason', 'purchase_already_used');
+  END IF;
+
   FOR v_candidate IN
     SELECT * FROM public.book_registry_purchase_candidates(p_edition_code, p_user_id, p_user_email)
     ORDER BY purchased_at, source_reference
@@ -343,6 +356,19 @@ BEGIN
   WHERE id = TRUE;
   v_cutoff := COALESCE(v_cutoff, now());
   v_reserved_max := CASE p_edition_code WHEN 'book_1' THEN 100 ELSE 80 END;
+
+  SELECT COUNT(*)::INTEGER INTO v_purchase_units
+  FROM public.book_registry_purchase_candidates(p_edition_code, p_user_id, p_user_email);
+  SELECT COUNT(DISTINCT ev.copy_id)::INTEGER INTO v_claimed_count
+  FROM public.book_copy_ownership_events ev
+  WHERE ev.event_type = 'claimed'
+    AND ev.actor_user_id = p_user_id
+    AND ev.new_owner_user_id = p_user_id;
+  IF v_purchase_units = 0 THEN
+    RAISE EXCEPTION 'purchase_required';
+  ELSIF v_claimed_count >= v_purchase_units THEN
+    RAISE EXCEPTION 'purchase_already_used';
+  END IF;
 
   FOR v_candidate IN
     SELECT * FROM public.book_registry_purchase_candidates(p_edition_code, p_user_id, p_user_email)
