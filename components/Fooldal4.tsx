@@ -87,7 +87,8 @@ function OrderStatusBlockView({
         </p>
 
         <h2
-          className={"mt-3 text-2xl uppercase leading-[0.98] tracking-tight text-zinc-100 sm:text-4xl " + montserrat.className}
+          className="mt-3 text-2xl uppercase leading-[0.98] tracking-tight text-zinc-100 sm:text-4xl"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           {block.headline}
         </h2>
@@ -324,13 +325,50 @@ function MemberGreeting({ token }: { token: string }) {
   }, [greeting])
 
   return (
-    <section className="pt-16 pb-8 sm:pt-7">
-      <div className="max-w-4xl">
-        <p className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
-          {loadingGreeting ? "Kapcsolódás..." : failed ? "Szia. Most valami nem állt össze. Próbáld újra egy pillanat múlva." : typedGreeting}
-          {!loadingGreeting && !failed && <span aria-hidden="true" className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse" />}
-        </p>
-      </div>
+    <section className="pt-10 pb-8 sm:pt-7" aria-label="Személyes üdvözlés">
+      {loadingGreeting ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="max-w-3xl border border-lime-300/20 bg-black/75 p-4 font-mono shadow-[0_0_45px_rgba(163,230,53,0.05)] sm:p-5"
+        >
+          <div className="flex items-center justify-between gap-4 border-b border-lime-300/15 pb-3 text-[9px] uppercase tracking-[0.2em] text-lime-100/55 sm:text-[10px]">
+            <span>V/ TERMINAL :: PERSONALIZE</span>
+            <span className="inline-flex items-center gap-2">
+              <span aria-hidden="true" className="h-1.5 w-1.5 animate-pulse rounded-full bg-lime-300" />
+              LINK ACTIVE
+            </span>
+          </div>
+          <div className="mt-4 space-y-2 text-[11px] leading-relaxed sm:text-xs">
+            <p className="text-lime-100/75">
+              <span className="mr-2 text-lime-300">$</span>
+              session.verify <span className="ml-2 text-lime-300">[OK]</span>
+            </p>
+            <p className="text-lime-100/75">
+              <span className="mr-2 text-lime-300">$</span>
+              visitor-context.sync <span className="ml-2 animate-pulse text-lime-200">[RUNNING]</span>
+            </p>
+            <p className="text-lime-100/75">
+              <span className="mr-2 text-lime-300">$</span>
+              personal-greeting.fetch <span className="ml-2 text-lime-100/45">[WAIT]</span>
+            </p>
+          </div>
+          <p className="mt-4 flex items-center gap-2 text-[9px] uppercase tracking-[0.17em] text-lime-100/45 sm:text-[10px]">
+            <span className="inline-block h-3 w-1.5 animate-pulse bg-lime-300" aria-hidden="true" />
+            Személyes kezdőüzenet és belépési kontextus betöltése
+          </p>
+          <div className="mt-3 h-px overflow-hidden bg-lime-100/10">
+            <div className="h-full w-2/3 animate-pulse bg-lime-300/80" />
+          </div>
+        </div>
+      ) : (
+        <div className="max-w-4xl">
+          <p className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            {failed ? "Szia. Most valami nem állt össze. Próbáld újra egy pillanat múlva." : typedGreeting}
+            {!failed && <span aria-hidden="true" className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse" />}
+          </p>
+        </div>
+      )}
     </section>
   )
 }
