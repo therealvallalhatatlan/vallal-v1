@@ -149,10 +149,9 @@ export default function BookRegistryPage() {
     finally { setBusy(""); }
   }
 
-  async function toggleMap(copy: Copy) {
+  async function toggleMap(copy: Copy, visible: boolean) {
     if (!accessToken) { login(); return; }
     const draft = drafts[copy.publicId] || { lat: copy.locationLat, lng: copy.locationLng };
-    const visible = !copy.mapVisible;
     if (visible && (draft.lat === null || draft.lng === null)) {
       setError("A megosztáshoz válassz egy hozzávetőleges helyet a térképen.");
       return;
@@ -260,7 +259,10 @@ export default function BookRegistryPage() {
                       <h4 className="text-sm font-bold">Térképes megjelenítés</h4>
                       <p className="mb-3 mt-1 text-xs leading-relaxed text-zinc-500">A megosztás önkéntes. Csak hozzávetőleges helyet tárolunk, pontos koordinátát nem.</p>
                       <BookRegistryLocationPicker initialLat={draft.lat} initialLng={draft.lng} onChange={(lat, lng) => setDrafts((prev) => ({ ...prev, [copy.publicId]: { lat, lng } }))} />
-                      <button disabled={busy !== "" || (!copy.mapVisible && (draft.lat === null || draft.lng === null))} onClick={() => void toggleMap(copy)} className="mt-3 rounded-md bg-lime-200 px-4 py-2 text-xs font-bold text-black disabled:opacity-40">{busy === "location:" + copy.publicId ? "Mentés…" : copy.mapVisible ? "Elrejtem a térképről" : "Megosztom a hozzávetőleges helyet"}</button>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button disabled={busy !== "" || draft.lat === null || draft.lng === null} onClick={() => void toggleMap(copy, true)} className="rounded-md bg-lime-200 px-4 py-2 text-xs font-bold text-black disabled:opacity-40">{busy === "location:" + copy.publicId ? "Mentés…" : copy.mapVisible ? "Térképpont mentése" : "Megosztom a hozzávetőleges helyet"}</button>
+                        {copy.mapVisible ? <button disabled={busy !== ""} onClick={() => void toggleMap(copy, false)} className="rounded-md border border-zinc-700 px-4 py-2 text-xs font-semibold text-zinc-300 disabled:opacity-40">Elrejtem a térképről</button> : null}
+                      </div>
                     </div>
                   </article>
                 );
