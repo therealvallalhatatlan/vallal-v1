@@ -82,7 +82,7 @@ BEGIN
         OR (p_edition_code = 'book_2' AND LOWER(COALESCE(o.product_id, '')) IN ('book-2', 'book_2', 'book-ii', 'book_ii'))
         OR LOWER(COALESCE(o.metadata->>'book_registry_edition', '')) = p_edition_code
         OR (
-          COALESCE(o.metadata->>('book_registry_' || p_edition_code || '_quantity'), '') ~ '^[1-9][0-9]{0,2}
+          COALESCE(o.metadata->>('book_registry_' || p_edition_code || '_quantity'), '') ~ '^[1-9][0-9]{0,2}$'
         )
         OR (
           o.metadata->>'historical_data_recovered' = 'true'
@@ -105,7 +105,7 @@ BEGIN
   shop_item_units AS (
     SELECT
       so.id AS order_id,
-      so.created_at AS order_created_at,
+      COALESCE(so.paid_at, so.created_at) AS order_created_at,
       so.stripe_checkout_session_id,
       si.id AS item_id,
       si.created_at AS item_created_at,
@@ -546,88 +546,3 @@ REVOKE ALL ON FUNCTION public.register_book_registry_copy(TEXT, UUID)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.register_book_registry_copy(TEXT, UUID)
   TO service_role;
-
-        )
-        OR (
-          o.metadata->>'historical_data_recovered' = 'true'
-          AND o.metadata->>'historical_product_type' = 'book'
-          AND o.metadata->>'historical_edition' = p_edition_code
-        )
-      )
-  ),
-  order_candidates AS (
-    SELECT
-      CASE
-        WHEN NULLIF(BTRIM(stripe_session_id), '') IS NOT NULL
-          THEN 'stripe:' || BTRIM(stripe_session_id) || ':' || p_edition_code || ':' || unit_number::TEXT
-        ELSE 'paid-order:' || order_id::TEXT || ':' || p_edition_code || ':' || unit_number::TEXT
-      END AS candidate_reference,
-      order_created_at AS candidate_purchased_at,
-      preferred_serial AS candidate_preferred_serial
-    FROM order_units
-  ),
-  shop_item_units AS (
-    SELECT
-      so.id AS order_id,
-      so.created_at AS order_created_at,
-      so.stripe_checkout_session_id,
-      si.id AS item_id,
-      si.created_at AS item_created_at,
-      gs.unit_number::INTEGER AS unit_number,
-      ROW_NUMBER() OVER (
-        PARTITION BY so.id
-        ORDER BY si.created_at, si.id, gs.unit_number
-      )::INTEGER AS edition_unit_number
-    FROM public.shop_orders so
-    JOIN public.shop_order_items si ON si.order_id = so.id
-    CROSS JOIN LATERAL generate_series(1, LEAST(GREATEST(si.quantity, 1), 100)) AS gs(unit_number)
-    WHERE so.status = 'paid'
-      AND si.product_type = 'book'
-      AND (
-        (p_edition_code = 'book_1' AND LOWER(si.product_id) IN ('book-1', 'book_1'))
-        OR (p_edition_code = 'book_2' AND LOWER(si.product_id) IN ('book-2', 'book_2'))
-      )
-      AND (
-        so.user_id = p_user_id
-        OR (
-          NULLIF(BTRIM(p_user_email), '') IS NOT NULL
-          AND LOWER(BTRIM(so.customer_email)) = LOWER(BTRIM(p_user_email))
-        )
-      )
-  ),
-  shop_candidates AS (
-    SELECT
-      CASE
-        WHEN NULLIF(BTRIM(stripe_checkout_session_id), '') IS NOT NULL
-          THEN 'stripe:' || BTRIM(stripe_checkout_session_id) || ':' || p_edition_code || ':' || edition_unit_number::TEXT
-        ELSE 'paid-shop-order:' || order_id::TEXT || ':' || item_id::TEXT || ':' || unit_number::TEXT
-      END AS candidate_reference,
-      order_created_at AS candidate_purchased_at,
-      NULL::INTEGER AS candidate_preferred_serial
-    FROM shop_item_units
-  ),
-  combined_candidates AS (
-    SELECT * FROM order_candidates
-    UNION ALL
-    SELECT * FROM shop_candidates
-  ),
-  deduplicated AS (
-    SELECT DISTINCT ON (candidate_reference)
-      candidate_reference, candidate_purchased_at, candidate_preferred_serial
-    FROM combined_candidates
-    ORDER BY candidate_reference, (candidate_preferred_serial IS NULL), candidate_purchased_at
-  )
-  SELECT
-    d.candidate_reference,
-    d.candidate_purchased_at,
-    d.candidate_preferred_serial
-  FROM deduplicated d
-  ORDER BY d.candidate_purchased_at, d.candidate_reference;
-END;
-$$;
-
-REVOKE ALL ON FUNCTION public.book_registry_purchase_candidates(TEXT, UUID, TEXT)
-  FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.book_registry_purchase_candidates(TEXT, UUID, TEXT)
-  TO service_role;
-
