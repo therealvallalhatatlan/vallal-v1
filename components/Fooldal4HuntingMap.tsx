@@ -190,8 +190,7 @@ export default function Fooldal4HuntingMap() {
 
 
   return (
-    <section className="mt-10 w-full" aria-label="Aktív szpotok">
-          <section aria-labelledby="active-spots">
+    <section className="mt-10 w-full" aria-label="Aktív szpotok" aria-labelledby="active-spots">
             <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/60">01 / AKTÍV SZPOTOK</p>
@@ -373,8 +372,7 @@ export default function Fooldal4HuntingMap() {
                 </div>
               )}
             </div>
-          </section>
-        </main>
+    </section>
 
 
         {selectedDrop ? (
