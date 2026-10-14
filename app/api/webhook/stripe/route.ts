@@ -373,6 +373,11 @@ async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Sessi
     return;
   }
 
+  if (!resend || !emailFrom) {
+    console.error('[book-registry] Entitlement was not created because Resend configuration is missing.');
+    return;
+  }
+
   const db = supabaseAdmin();
   const { data: edition, error: editionError } = await db
     .from('book_editions')
@@ -432,11 +437,6 @@ async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Sessi
     }
 
     const claimUrl = origin + '/konyv-1-qr#claim=' + encodeURIComponent(token);
-    if (!resend || !emailFrom) {
-      console.error('[book-registry] Entitlement created, but registry email could not be sent because Resend configuration is missing.');
-      continue;
-    }
-
     try {
       await resend.emails.send({
         from: emailFrom,
