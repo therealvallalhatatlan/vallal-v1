@@ -313,8 +313,6 @@ REVOKE ALL ON FUNCTION public.preview_book_registry_registration(TEXT, UUID, TEX
 GRANT EXECUTE ON FUNCTION public.preview_book_registry_registration(TEXT, UUID, TEXT)
   TO service_role;
 
-DROP FUNCTION IF EXISTS public.register_book_registry_copy(TEXT, UUID);
-
 CREATE OR REPLACE FUNCTION public.register_book_registry_copy(
   p_edition_code TEXT,
   p_user_id UUID,
@@ -505,4 +503,36 @@ $$;
 REVOKE ALL ON FUNCTION public.register_book_registry_copy(TEXT, UUID, TEXT)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.register_book_registry_copy(TEXT, UUID, TEXT)
+  TO service_role;
+
+-- Compatibility overload for app instances that are still rolling out.
+-- It remains purchase-gated, so the older endpoint cannot bypass the new check.
+CREATE OR REPLACE FUNCTION public.register_book_registry_copy(
+  p_edition_code TEXT,
+  p_user_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user_email TEXT;
+BEGIN
+  IF COALESCE(auth.role(), '') <> 'service_role' THEN
+    RAISE EXCEPTION 'service_role_required' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT CASE WHEN u.email_confirmed_at IS NOT NULL THEN u.email ELSE NULL END
+    INTO v_user_email
+  FROM auth.users u
+  WHERE u.id = p_user_id;
+
+  RETURN public.register_book_registry_copy(p_edition_code, p_user_id, v_user_email);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.register_book_registry_copy(TEXT, UUID)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.register_book_registry_copy(TEXT, UUID)
   TO service_role;
