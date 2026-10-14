@@ -36,6 +36,17 @@ function isPlan(value: unknown): value is HomepagePlan {
   )
 }
 
+function attachOrderProductNames(plan: HomepagePlan, context: Awaited<ReturnType<typeof buildHomepageContext>>): HomepagePlan {
+  return {
+    ...plan,
+    blocks: plan.blocks.map((block) => {
+      if (block.type !== "order_status") return block;
+      const order = context.orders.find((candidate) => candidate.id === block.orderId);
+      return order ? { ...block, headline: order.label } : block;
+    }),
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const token = parseBearerToken(request.headers)
@@ -128,7 +139,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             ok: true,
-            plan: cached.data.last_plan,
+            plan: attachOrderProductNames(cached.data.last_plan, context),
             recommendedProducts,
             cached: true,
           },
@@ -137,7 +148,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const plan = await prepareHomepagePlan(context)
+    const generatedPlan = await prepareHomepagePlan(context)
+    const plan = attachOrderProductNames(generatedPlan, context)
 
     await recordHomepageVisit(context, user.id, sessionId)
 
