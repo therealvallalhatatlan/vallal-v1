@@ -238,6 +238,16 @@ export async function buildHomepageContext(
       (visit) => !input.sessionId || visit.session_id !== input.sessionId,
     )?.visited_at ?? null
 
+  const shopProductNamesByOrder = new Map<string, string[]>();
+  for (const item of shopItems) {
+    if (!item.product_id) continue;
+    const product = products.find((candidate) => candidate.id === item.product_id);
+    const name = product?.name ?? item.product_id.replace(/[-_]+/g, " ");
+    const names = shopProductNamesByOrder.get(item.order_id) ?? [];
+    if (!names.includes(name)) names.push(name);
+    shopProductNamesByOrder.set(item.order_id, names);
+  }
+
   const orderContexts: HomepageOrderContext[] = [
     ...(bookOrdersRes.data ?? []).map((order) => ({
       id: "book:" + order.id,
@@ -247,19 +257,35 @@ export async function buildHomepageContext(
       userReceivedAt: order.user_received_at ?? null,
       deliveryType: order.delivery_type ?? null,
     })),
-    ...(shopOrdersRes.data ?? []).map((order) => ({
-      id: "shop:" + order.id,
-      label: "Merch rendelés",
-      status: orderStatus(order.status),
-      createdAt: order.created_at,
-      userReceivedAt: order.user_received_at ?? null,
-      deliveryType:
-        order.metadata &&
-        typeof order.metadata === "object" &&
-        typeof (order.metadata as Record<string, unknown>).deliveryMethod === "string"
-          ? String((order.metadata as Record<string, unknown>).deliveryMethod)
-          : null,
-    })),
+    ...(shopOrdersRes.data ?? []).map((order) => {
+      const itemNames = shopProductNamesByOrder.get(order.id) ?? [];
+      const metadata =
+        order.metadata && typeof order.metadata === "object"
+          ? (order.metadata as Record<string, unknown>)
+          : {};
+      const metadataName =
+        typeof metadata.product_name === "string"
+          ? metadata.product_name
+          : typeof metadata.productName === "string"
+            ? metadata.productName
+            : null;
+      const label =
+        itemNames.length > 0
+          ? itemNames.slice(0, 2).join(" + ") + (itemNames.length > 2 ? ` +${itemNames.length - 2}` : "")
+          : metadataName ?? "Vállalhatatlan rendelés";
+
+      return {
+        id: "shop:" + order.id,
+        label,
+        status: orderStatus(order.status),
+        createdAt: order.created_at,
+        userReceivedAt: order.user_received_at ?? null,
+        deliveryType:
+          typeof metadata.deliveryMethod === "string"
+            ? metadata.deliveryMethod
+            : null,
+      };
+    }),
   ].slice(0, 12)
 
   const storyCandidates = stories
