@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken, isAdminEmail, parseBearerToken } from "@/lib/auth";
 import { createBookRegistryToken, hashBookRegistryToken } from "@/lib/bookRegistryTokens";
+import { isValidRegistryUuid } from "@/lib/bookRegistry";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
@@ -23,6 +24,28 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
+  const db = supabaseAdmin();
+
+  if (body?.action === "revoke") {
+    const entitlementId = body?.entitlementId;
+    if (!isValidRegistryUuid(entitlementId)) {
+      return NextResponse.json({ error: "valid_entitlement_id_required" }, { status: 400 });
+    }
+    const { data: revoked, error: revokeError } = await db
+      .from("book_registry_entitlements")
+      .update({ status: "revoked" })
+      .eq("id", entitlementId)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
+    if (revokeError) {
+      console.error("[book-registry/admin/entitlement] revoke failed", revokeError.message);
+      return NextResponse.json({ error: "entitlement_revoke_failed" }, { status: 500 });
+    }
+    if (!revoked) return NextResponse.json({ error: "pending_entitlement_not_found" }, { status: 409 });
+    return NextResponse.json({ ok: true, revoked: true, entitlementId }, { headers: { "Cache-Control": "no-store" } });
+  }
+
   const editionCode = typeof body?.editionCode === "string" ? body.editionCode.trim() : "";
   const sourceType = body?.sourceType as SourceType;
   const allowedSources: SourceType[] = ["historical", "purchase", "distributor", "admin"];
@@ -42,7 +65,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "source_reference_too_long" }, { status: 400 });
   }
 
-  const db = supabaseAdmin();
   const { data: edition, error: editionError } = await db
     .from("book_editions")
     .select("id,code,title")
