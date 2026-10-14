@@ -1,6 +1,6 @@
 export const DISTRIBUTION_PRODUCT_ID = "book_ii"
 export const DISTRIBUTION_PRODUCT_NAME = "Vállalhatatlan II."
-export const DISTRIBUTION_DEFAULT_BOOK_PRICE_HUF = 15000
+export const DISTRIBUTION_DEFAULT_BOOK_PRICE_HUF = 10000
 
 export const DISTRIBUTION_SHIPPING = {
   hu_shipping: 2500,
