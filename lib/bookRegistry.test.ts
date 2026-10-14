@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatBookRegistrySerial, isValidRegistryToken, isValidRegistryUuid } from "./bookRegistry";
+import { formatBookRegistrySerial, isValidRegistryToken, isValidRegistryUuid, parseBookRegistryQuantity } from "./bookRegistry";
 import { createBookRegistryToken, hashBookRegistryToken } from "./bookRegistryTokens";
 
 describe("book registry serial labels", () => {
