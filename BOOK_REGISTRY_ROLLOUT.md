@@ -7,8 +7,8 @@ This feature is additive. It does not reuse or rewrite the legacy book_copies re
 - db/migrations/054_book_registry.sql: editions, copy register, hashed one-time entitlements, ownership audit events and transfer tokens, row-level security, atomic RPCs, and reserved historical serial ranges.
 - db/migrations/055_book_registry_account_deletion.sql: retire a copy and erase its map location when the owner deletes their account.
 - db/migrations/056_book_registry_self_service.sql: atomically assign a new registry ID when a signed-in user registers a physical book they own.
-- /konyv-1-qr: shared entry page for a printed QR code, sign-in, claiming, location consent and ownership transfer.
-- /api/book-registry/register, /claim, /mine, /location, /transfer, /map: authenticated, narrow endpoints; the page previews the next available ID and the server assigns it atomically. Public map responses contain only public ID, edition/serial label and a coarse opt-in point.
+- /konyv-1-qr and /konyv-2-qr: separate, edition-locked QR entry pages; each permits registration only for its own volume.
+- /api/book-registry/register, /claim, /mine, /location, /transfer, /map: authenticated, narrow endpoints; register preview and POST both verify a paid order from the matching volume before allocating a serial. Each paid unit can only be consumed once. Public map responses contain only public ID, edition/serial label and a coarse opt-in point.
 - /api/admin/book-registry/entitlements: admin-only one-time claim-token issuance.
 - A toggleable book layer on the existing /halozat Mapbox map.
 - Paid-checkout integration for explicit per-edition quantities. The webhook uses edition-specific purchase source references for idempotency and emails each token once.
@@ -25,7 +25,7 @@ This feature is additive. It does not reuse or rewrite the legacy book_copies re
    The webhook also recognizes unambiguous legacy metadata values book_ii, book_2, book-2 and book-ii for Volume II.
 5. Do not auto-map legacy `numbered_copy` purchases to printed serials until the physical book serials and historic ownership records have been reconciled. This is deliberate because the old sales table does not currently prove every historical owner/serial pair.
 6. If the email provider rejects or fails to send a registry email, that token is revoked. Review the matching paid Stripe session, then issue a replacement from the admin endpoint using `sourceType: admin` and a `sourceReference` tied to the Stripe session. Run `pnpm test:book-registry` and `pnpm build`, then exercise the checklist in an isolated staging environment before merging.
-7. Self-service registration is an ownership self-attestation and does not verify purchase. Keep historical serials reserved and use verified personal links for the pre-reserved ranges.
+7. Migration 057 enforces paid-purchase verification. Existing paid orders in `orders` and `shop_orders` are reconciled by authenticated user ID or verified email (including legacy public-user email linkage). A purchase unit is consumed exactly once; never fall back to account-only registration if an order cannot be proven. The I. and II. printed QR routes are edition-locked.
 
 ## Issue a verified historical claim code
 

@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function BookRegistryEntryPage() {
-  return <BookRegistryPage />;
+  return <BookRegistryPage defaultEdition="book_1" lockedEdition />;
 }

@@ -451,7 +451,8 @@ async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Sessi
         continue;
       }
 
-      const claimUrl = origin + '/konyv-1-qr#claim=' + encodeURIComponent(token);
+      const claimPath = editionCode === 'book_2' ? '/konyv-2-qr' : '/konyv-1-qr';
+      const claimUrl = origin + claimPath + '#claim=' + encodeURIComponent(token);
       try {
         const { error: emailError } = await resend.emails.send({
           from: emailFrom,

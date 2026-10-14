@@ -24,6 +24,12 @@ async function authenticatedUser(request: NextRequest) {
   }
 }
 
+async function getVerifiedEmail(userId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin().auth.admin.getUserById(userId);
+  if (error || !data.user?.email_confirmed_at || !data.user.email) return null;
+  return data.user.email;
+}
+
 export async function GET(request: NextRequest) {
   const auth = await authenticatedUser(request);
   if (auth.response) return auth.response;
@@ -31,43 +37,27 @@ export async function GET(request: NextRequest) {
   const editionCode = parseEditionCode(request.nextUrl.searchParams.get("edition") || "book_1");
   if (!editionCode) return NextResponse.json({ error: "invalid_edition" }, { status: 400 });
 
-  const db = supabaseAdmin();
-  const { data: edition, error: editionError } = await db
-    .from("book_editions")
-    .select("id,code,title,serial_prefix")
-    .eq("code", editionCode)
-    .eq("is_active", true)
-    .single();
+  try {
+    const { data, error } = await supabaseAdmin().rpc("preview_book_registry_registration", {
+      p_edition_code: editionCode,
+      p_user_id: auth.user!.id,
+      p_user_email: await getVerifiedEmail(auth.user!.id),
+    });
 
-  if (editionError || !edition) {
-    console.error("[book-registry/register] edition lookup failed", editionError?.message);
-    return NextResponse.json({ error: "edition_unavailable" }, { status: 500 });
-  }
+    if (error) {
+      const message = String(error.message || "");
+      if (/edition_not_found/i.test(message)) {
+        return NextResponse.json({ error: "edition_unavailable" }, { status: 409 });
+      }
+      console.error("[book-registry/register] purchase preview failed", message);
+      return NextResponse.json({ error: "suggested_identifier_unavailable" }, { status: 500 });
+    }
 
-  const { data: lastCopy, error: copyError } = await db
-    .from("book_registry_copies")
-    .select("serial_number")
-    .eq("edition_id", edition.id)
-    .order("serial_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (copyError) {
-    console.error("[book-registry/register] serial preview failed", copyError.message);
+    return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    console.error("[book-registry/register] preview RPC failed", error);
     return NextResponse.json({ error: "suggested_identifier_unavailable" }, { status: 500 });
   }
-
-  const serialNumber = (lastCopy?.serial_number ?? 0) + 1;
-  return NextResponse.json({
-    ok: true,
-    suggestion: {
-      editionCode: edition.code,
-      editionTitle: edition.title,
-      serialPrefix: edition.serial_prefix,
-      serialNumber,
-      serialLabel: edition.serial_prefix + "-" + String(serialNumber).padStart(3, "0"),
-    },
-  }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(request: NextRequest) {
@@ -82,10 +72,20 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseAdmin().rpc("register_book_registry_copy", {
       p_edition_code: editionCode,
       p_user_id: auth.user!.id,
+      p_user_email: await getVerifiedEmail(auth.user!.id),
     });
 
     if (error) {
       const message = String(error.message || "");
+      if (/purchase_required/i.test(message)) {
+        return NextResponse.json({ error: "purchase_required" }, { status: 403 });
+      }
+      if (/purchase_already_used/i.test(message)) {
+        return NextResponse.json({ error: "purchase_already_used" }, { status: 409 });
+      }
+      if (/historical_slot_unavailable/i.test(message)) {
+        return NextResponse.json({ error: "historical_slot_unavailable" }, { status: 409 });
+      }
       if (/edition_not_found/i.test(message)) {
         return NextResponse.json({ error: "edition_unavailable" }, { status: 409 });
       }

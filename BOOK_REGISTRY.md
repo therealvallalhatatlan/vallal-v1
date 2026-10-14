@@ -7,7 +7,7 @@ Ez a funkció a régi book_copies készlet-/foglalási rendszertől elkülönül
 - Kiadásonként külön sorszámozás fut. A digitális azonosító nem változik tulajdonosváltáskor.
 - Az I. kiadásnál az I-001–I-100, a II. kiadásnál a II-001–II-080 tartomány előre le van foglalva a korábbi vásárlóknak. Az új digitális regisztrációk következő sorszáma I-101, illetve II-081.
 - A már nyomtatott sorszám külön printed_copy_number mező, nem írja felül a digitális sorszámot.
-- A közös QR-kód a belépőoldalra vezet. Bejelentkezve a felhasználó önkiszolgáló módon regisztrálhat egy nála lévő kötetet; a rendszer a következő szabad nyilvántartási azonosítót osztja ki. A korábbi tulajdonosoknak fenntartott I-001–I-100 és II-001–II-080 sorszámok továbbra is csak ellenőrzött, személyes regisztrációs linkkel vehetők át. Az önkiszolgáló regisztráció önbevalláson alapul, nem igazolja a vásárlást.
+- A közös QR-kód a belépőoldalra vezet. Bejelentkezve a felhasználó csak akkor regisztrálhat, ha a szerver igazol egy fizetett rendelést ugyanahhoz a fiókhoz vagy annak ellenőrzött e-mail-címéhez; a vásárlási egység csak egyszer használható fel. A rendszer az adott rendeléshez tartozó fenntartott vagy következő szabad nyilvántartási azonosítót osztja ki. A korábbi tulajdonosoknak fenntartott I-001–I-100 és II-001–II-080 sorszámok továbbra is csak ellenőrzött, személyes regisztrációs linkkel vehetők át. Az önkiszolgáló regisztráció önbevalláson alapul, nem igazolja a vásárlást.
 - A tokenekből csak SHA-256 hash kerül az adatbázisba. A nyers token egyszer jelenik meg az admin-válaszban vagy a vásárlónak küldött e-mail linkben.
 - A térképes megosztás alapértelmezetten kikapcsolt. Bekapcsoláskor a pozíció két tizedesjegyre kerekítve tárolódik; tulajdonosváltáskor a régi pont törlődik.
 - A táblákhoz a böngészős anon és authenticated szerepkör közvetlen hozzáférése tiltott. Az API a szerveroldali service role-on keresztül olvas/ír, és az aktuális Auth-felhasználót minden művelet előtt ellenőrzi.
@@ -29,8 +29,8 @@ Ne futtasd ezt a migrációt a másik, illusztrációs Supabase-projekten.
 
 | Végpont | Művelet | Mire való |
 |---|---|---|
-| GET /api/book-registry/register | Bejelentkezett felhasználó | A következő javasolt nyilvántartási azonosító lekérése |
-| POST /api/book-registry/register | Bejelentkezett felhasználó | Saját könyvpéldány önkiszolgáló regisztrációja, atomikus sorszámkiosztással |
+| GET /api/book-registry/register | Bejelentkezett felhasználó | Fizetett rendelés ellenőrzése és a hozzá tartozó következő azonosító előnézete |
+| POST /api/book-registry/register | Bejelentkezett felhasználó | Fizetett rendeléshez kötött, atomikus példányregisztráció; egy vásárlási egység csak egyszer használható |
 | POST /api/book-registry/claim | Bejelentkezett felhasználó | Személyes regisztrációs link beváltása előre fenntartott / vásárláshoz kötött példányhoz |
 | GET /api/book-registry/mine | Bejelentkezett felhasználó | Saját regisztrált példányok |
 | PATCH /api/book-registry/location | Tulajdonos | Hozzávetőleges térképpont mentése vagy törlése |
