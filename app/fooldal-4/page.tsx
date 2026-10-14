@@ -1,4 +1,4 @@
-import Fooldal4 from "@/components/Fooldal4"
+import Fooldal4 from "./fooldal4-entry"
 
 export const metadata = {
   title: "Vállalhatatlan — Főoldal 4",
