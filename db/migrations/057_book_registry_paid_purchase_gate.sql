@@ -170,13 +170,13 @@ GRANT EXECUTE ON FUNCTION public.book_registry_purchase_candidates(TEXT, UUID, T
 CREATE OR REPLACE FUNCTION public.preview_book_registry_registration(
   p_edition_code TEXT,
   p_user_id UUID,
-  p_user_email TEXT DEFAULT NULL
+  p_user_email TEXT
 )
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $$
+AS $
 DECLARE
   v_edition public.book_editions%ROWTYPE;
   v_candidate RECORD;
