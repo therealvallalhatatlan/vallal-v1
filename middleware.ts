@@ -10,7 +10,7 @@ import {
   ATTRIBUTION_SOURCE_COOKIE,
   UTM_KEYS,
   normalizeAttributionSource,
-} from './lib/stripeAttribution';
+} from './lib/attributionShared';
 
 let cachedMode: { mode: 'SAFE' | 'READ_ONLY'; timestamp: number } | null = null;
 const CACHE_TTL = 30000;
