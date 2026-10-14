@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
   }
 
   const starterItems = [
-    { product_id: "book_ii", product_name: "Vállalhatatlan II.", unit_price_huf: 15000, quantity: 3 },
+    { product_id: "book_ii", product_name: "Vállalhatatlan II.", unit_price_huf: 10000, quantity: 3 },
     { product_id: "men-shirt-1", product_name: "Vállalhatatlan Póló", unit_price_huf: 10000, quantity: 3 },
   ]
 
