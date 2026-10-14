@@ -29,7 +29,7 @@ function OrderStatusBlockView({
 }: {
   block: Extract<HomepageBlock, { type: "order_status" }>
   token: string | null
-  onReceived: (orderId: string) => void
+  onReceived: (orderId: string, productName: string) => void
 }) {
   const [receiving, setReceiving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -65,7 +65,7 @@ function OrderStatusBlockView({
         )
       }
 
-      onReceived(block.orderId)
+      onReceived(block.orderId, block.headline)
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -144,6 +144,88 @@ function OrderStatusBlockView({
 
         {error ? <p className="mt-3 text-xs text-red-400">{error}</p> : null}
       </div>
+    </section>
+  )
+}
+
+
+function OrderReceivedCelebration({ productName }: { productName: string }) {
+  const confettiColors = ["#d9f99d", "#a3e635", "#fafafa", "#facc15", "#bef264", "#67e8f9", "#f0abfc"]
+
+  return (
+    <section
+      className="relative isolate my-8 overflow-hidden border border-lime-300/50 bg-[#080b05] px-5 py-9 sm:px-8 sm:py-12"
+      aria-live="polite"
+      aria-label="Átvétel visszaigazolva"
+    >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        {Array.from({ length: 42 }, (_, index) => (
+          <span
+            key={index}
+            className="order-confetti"
+            style={{
+              left: `${(index * 37) % 100}%`,
+              animationDelay: `${(index % 14) * 0.12}s`,
+              animationDuration: `${2.2 + (index % 6) * 0.18}s`,
+              backgroundColor: confettiColors[index % confettiColors.length],
+              width: `${5 + (index % 3) * 3}px`,
+              height: `${8 + (index % 4) * 3}px`,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center text-center">
+        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-lime-200/70 bg-lime-300/10 text-lime-200 shadow-[0_0_48px_rgba(190,242,100,0.22)]">
+          <span className="text-3xl" aria-hidden="true">✓</span>
+        </div>
+        <p
+          className="text-[9px] uppercase tracking-[0.3em] text-lime-200/65"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          MŰVELET SIKERES / ZSÁKMÁNY BIZTOSÍTVA
+        </p>
+        <h2
+          className="mt-4 text-3xl uppercase leading-[0.98] tracking-tight text-lime-100 sm:text-5xl"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          Faszán levadásztad!
+        </h2>
+        <p
+          className="mt-4 text-base text-zinc-100 sm:text-lg"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          Ügyes vagy, tudsz róla?
+        </p>
+        <p
+          className="mt-4 max-w-xl text-xs leading-5 text-zinc-400"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          {productName} · Átvétel visszaigazolva. Ez az ünnepi visszajelzés az oldal frissítéséig marad itt.
+        </p>
+      </div>
+
+      <style jsx>{`
+        .order-confetti {
+          position: absolute;
+          top: -18px;
+          border-radius: 1px;
+          animation-name: order-confetti-fall;
+          animation-timing-function: cubic-bezier(0.12, 0.75, 0.33, 1);
+          animation-iteration-count: 1;
+          animation-fill-mode: both;
+        }
+
+        @keyframes order-confetti-fall {
+          0% { transform: translateY(-12px) rotate(0deg); opacity: 0; }
+          10% { opacity: 1; }
+          100% { transform: translateY(540px) rotate(720deg); opacity: 0; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .order-confetti { animation: none; display: none; }
+        }
+      `}</style>
     </section>
   )
 }
@@ -368,6 +450,7 @@ function MemberHome({ session }: { session: SessionShape }) {
   const [plan, setPlan] = useState<HomepagePlan | null>(null)
   const [loadingPlan, setLoadingPlan] = useState(true)
   const [error, setError] = useState(false)
+  const [celebratedOrders, setCelebratedOrders] = useState<Array<{ orderId: string; productName: string }>>([])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -406,10 +489,15 @@ function MemberHome({ session }: { session: SessionShape }) {
     return () => controller.abort()
   }, [token])
   const usefulBlocks = plan?.blocks.filter((block) => block.type === "order_status") ?? []
-  const handleReceived = (orderId: string) => setPlan(current => current ? {
-    ...current,
-    blocks: current.blocks.filter(block => block.type !== "order_status" || block.orderId !== orderId)
-  } : current)
+  const handleReceived = (orderId: string, productName: string) => {
+    setCelebratedOrders(current => current.some(item => item.orderId === orderId)
+      ? current
+      : [...current, { orderId, productName }])
+    setPlan(current => current ? {
+      ...current,
+      blocks: current.blocks.filter(block => block.type !== "order_status" || block.orderId !== orderId)
+    } : current)
+  }
   return (
     <>
       <SiteHeader />
@@ -417,6 +505,9 @@ function MemberHome({ session }: { session: SessionShape }) {
         <MemberGreeting token={token} />
         {!loadingPlan && !error && usefulBlocks.map(block => (
           <OrderStatusBlockView key={"order-" + block.orderId} block={block} token={token} onReceived={handleReceived} />
+        ))}
+        {!loadingPlan && celebratedOrders.map(order => (
+          <OrderReceivedCelebration key={"received-" + order.orderId} productName={order.productName} />
         ))}
         {!loadingPlan && (
           <div className="animate-fadeIn">
