@@ -11,6 +11,7 @@ import MainContent from "@/components/MainContent"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import type { HomepageBlock, HomepagePlan } from "@/lib/homepage-ai/types"
 import Fooldal4HuntingMap from "@/components/Fooldal4HuntingMap"
+import FaszanLevadasztadShare from "@/components/FaszanLevadasztadShare"
 
 type SessionShape = {
   access_token?: string
@@ -203,6 +204,9 @@ function OrderReceivedCelebration({ productName }: { productName: string }) {
         >
           {productName} · Átvétel visszaigazolva. Ez az ünnepi visszajelzés az oldal frissítéséig marad itt.
         </p>
+        <div className="mt-2 w-full max-w-4xl text-left">
+          <FaszanLevadasztadShare compact />
+        </div>
       </div>
 
       <style jsx>{`
