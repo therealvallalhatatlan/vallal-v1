@@ -9,7 +9,9 @@
     "ingest": "node scripts/ingest.mjs",
     "ingest:text": "node scripts/ingest.mjs",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest run",
+    "test:book-registry": "vitest run lib/bookRegistry.test.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.50",
