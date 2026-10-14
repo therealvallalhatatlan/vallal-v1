@@ -10,17 +10,17 @@ This feature is additive. It does not reuse or rewrite the legacy book_copies re
 - /api/book-registry/claim, /mine, /location, /transfer, /map: narrow endpoints; public map responses contain only public ID, edition/serial label and a coarse opt-in point.
 - /api/admin/book-registry/entitlements: admin-only one-time claim-token issuance.
 - A toggleable book layer on the existing /halozat Mapbox map.
-- Paid-checkout integration for unambiguous metadata. The webhook uses the unique purchase source reference for idempotency and emails each token once.
+- Paid-checkout integration for explicit per-edition quantities. The webhook uses edition-specific purchase source references for idempotency and emails each token once.
 
 ## Before deploying
 
 1. The current Vállalhatatlan production database already contains the schema seeded by `054_book_registry.sql`, which was run manually in Supabase. Do not run `054` again in production. A direct SQL Editor run does not normally register a CLI migration-history entry; reconcile that with your migration workflow instead of inserting a fabricated history row. For a separate staging database, apply `054` once after review.
 2. Review `db/migrations/055_book_registry_account_deletion.sql`, then apply it to production using the approved database-change process. Verify the project reference before running it.
 3. Confirm SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ADMIN_EMAILS, RESEND_API_KEY, EMAIL_FROM, NEXT_PUBLIC_SITE_URL and NEXT_PUBLIC_MAPBOX_TOKEN in the deployment environment.
-4. Configure Stripe Checkout Session metadata server-side for new book purchases:
-   - Volume I: `book_registry_edition=book_1`
-   - Volume II: `book_registry_edition=book_2`
-   - `book_registry_quantity` must be the number of books only, encoded as a string from `1` to `20`. The webhook does not sum all cart line items, since a cart may contain non-book merchandise. The existing `/api/checkout` endpoint now sends Volume I and quantity `1`.
+4. Configure the server-side checkout metadata for every book-purchase path:
+   - The dedicated Volume I endpoint sends `book_registry_edition=book_1` and `book_registry_quantity=1`.
+   - The shared shop checkout adds `book_registry_book_1_quantity` and/or `book_registry_book_2_quantity`, with values from `1` to `100`, based only on validated products whose type is `book`.
+   - The webhook does not sum all cart line items, so shirts, bags, and shipping never count as book copies. It can process each edition separately when a cart contains multiple eligible editions.
    The webhook also recognizes unambiguous legacy metadata values book_ii, book_2, book-2 and book-ii for Volume II.
 5. Do not auto-map legacy `numbered_copy` purchases to printed serials until the physical book serials and historic ownership records have been reconciled. This is deliberate because the old sales table does not currently prove every historical owner/serial pair.
 6. If the email provider rejects or fails to send a registry email, that token is revoked. Review the matching paid Stripe session, then issue a replacement from the admin endpoint using `sourceType: admin` and a `sourceReference` tied to the Stripe session. Run `pnpm test:book-registry` and `pnpm build`, then exercise the checklist in an isolated staging environment before merging.
