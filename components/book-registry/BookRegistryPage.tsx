@@ -28,7 +28,6 @@ async function responseMessage(response: Response) {
     copy_not_found_or_not_owner: "Ezt a példányt nem tudod kezelni ezzel a fiókkal.",
     transfer_expired: "Az átadási link lejárt.",
     transfer_invalid_or_used: "Az átadási link érvénytelen vagy már felhasználták.",
-    transfer_expired: "Az átadási link lejárt.",
     transfer_accept_failed: "A tulajdonosváltás nem sikerült.",
     location_update_failed: "A térképpozíció mentése nem sikerült.",
   };
