@@ -75,6 +75,9 @@ CREATE TABLE IF NOT EXISTS public.book_registry_entitlements (
 
 CREATE INDEX IF NOT EXISTS idx_book_registry_entitlements_edition_status
   ON public.book_registry_entitlements(edition_id, status);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_book_registry_purchase_source
+  ON public.book_registry_entitlements(source_reference)
+  WHERE source_type = 'purchase' AND source_reference IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_book_registry_active_historical_slot
   ON public.book_registry_entitlements(edition_id, assigned_serial)
   WHERE assigned_serial IS NOT NULL AND status <> 'revoked';
