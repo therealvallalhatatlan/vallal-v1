@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Mail, ArrowUpRight, LoaderCircle } from "lucide-react"
+import { Mail, ArrowUpRight, LoaderCircle, ClipboardList, MessageCircle } from "lucide-react"
 import Reviews from "@/components/Reviews"
 import Footer from "@/components/Footer"
 import SiteHeader from "@/components/SiteHeader"
@@ -107,37 +107,39 @@ function OrderStatusBlockView({
           {block.body}
         </p>
 
-        <div className="mt-5 flex flex-wrap items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 border-2 border-zinc-700 px-3 py-2 text-[9px] uppercase tracking-[0.2em] text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-100"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            {block.cta || "RENDELÉSEM"}
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
-
+        <div className="mt-6 flex items-center justify-between gap-3 border-t border-zinc-900 pt-4">
           <button
             type="button"
             onClick={() => void markReceived()}
             disabled={!token || receiving}
-            className="inline-flex items-center gap-2 border-2 border-lime-300/65 px-3 py-2 text-[9px] uppercase tracking-[0.18em] text-lime-200 transition-colors hover:border-lime-200 hover:text-lime-100 disabled:cursor-wait disabled:opacity-40"
+            className="inline-flex min-h-10 items-center justify-center gap-2 border border-lime-300/65 bg-lime-300/[0.04] px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-lime-200 transition-colors hover:border-lime-200 hover:bg-lime-300/[0.1] hover:text-lime-100 disabled:cursor-wait disabled:opacity-40"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             {receiving ? (
-              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+              <LoaderCircle aria-hidden="true" className="h-3.5 w-3.5 animate-spin" />
             ) : null}
             {receiving ? "FELDOLGOZÁS..." : "ÁTVETTEM"}
           </button>
 
-          <Link
-            href="/kapcsolat"
-            className="inline-flex items-center gap-2 border-2 border-zinc-800 px-3 py-2 text-[9px] uppercase tracking-[0.18em] text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-100"
-            style={{ fontFamily: "var(--font-mono-tech)" }}
-          >
-            KÉRDÉSEM VAN
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard"
+              aria-label="Rendelések"
+              title="Rendelések"
+              className="inline-flex h-10 w-10 items-center justify-center border border-zinc-800 text-zinc-400 transition-colors hover:border-zinc-600 hover:bg-zinc-900 hover:text-lime-100"
+            >
+              <ClipboardList aria-hidden="true" className="h-4 w-4" />
+            </Link>
+
+            <Link
+              href="/kapcsolat"
+              aria-label="Kérdésem van"
+              title="Kérdésem van"
+              className="inline-flex h-10 w-10 items-center justify-center border border-zinc-800 text-zinc-400 transition-colors hover:border-zinc-600 hover:bg-zinc-900 hover:text-lime-100"
+            >
+              <MessageCircle aria-hidden="true" className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
 
         {error ? <p className="mt-3 text-xs text-red-400">{error}</p> : null}
