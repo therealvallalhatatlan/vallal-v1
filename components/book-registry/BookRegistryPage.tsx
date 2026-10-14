@@ -28,7 +28,7 @@ async function responseMessage(response: Response) {
     copy_not_found_or_not_owner: "Ezt a példányt nem tudod kezelni ezzel a fiókkal.",
     transfer_expired: "Az átadási link lejárt.",
     transfer_invalid_or_used: "Az átadási link érvénytelen vagy már felhasználták.",
-    transfer_invalid_or_expired: "Az átadási link érvénytelen, lejárt vagy már felhasználták.",
+    transfer_expired: "Az átadási link lejárt.",
     transfer_accept_failed: "A tulajdonosváltás nem sikerült.",
     location_update_failed: "A térképpozíció mentése nem sikerült.",
   };
@@ -82,6 +82,7 @@ export default function BookRegistryPage() {
     } catch {}
     if (claim || transfer) {
       url.searchParams.delete("claim");
+      url.searchParams.delete("transfer");
       url.hash = "";
       window.history.replaceState({}, "", url.pathname + url.search);
     }
@@ -136,8 +137,8 @@ export default function BookRegistryPage() {
     if (!accessToken) { login(); return; }
     setBusy("accept");
     try {
-      const response = await fetch("/api/book-registry/transfer/accept", {
-        method: "POST",
+      const response = await fetch("/api/book-registry/transfer", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + accessToken },
         body: JSON.stringify({ token: transferToken }),
       });
