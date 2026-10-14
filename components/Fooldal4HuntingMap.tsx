@@ -372,9 +372,6 @@ export default function Fooldal4HuntingMap() {
                 </div>
               )}
             </div>
-    </section>
-
-
         {selectedDrop ? (
           <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:p-6">
             <div className="w-full max-w-xl bg-[#000000] p-5 shadow-2xl sm:p-7">
