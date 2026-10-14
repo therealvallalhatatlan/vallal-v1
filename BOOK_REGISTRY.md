@@ -1,13 +1,13 @@
 # Könyvpéldány-regiszter
 
-Ez a funkció a régi book_copies készlet-/foglalási rendszertől elkülönülten tartja nyilván a kiadásokat, a digitális sorszámot, a tulajdonost, az egyszer használatos jogosultságokat és a térképes megosztást.
+Ez a funkció a régi book_copies készlet-/foglalási rendszertől elkülönülten tartja nyilván a kiadásokat, a nyilvántartási azonosítót, a tulajdonost, az egyszer használatos személyes linkeket és a térképes megosztást.
 
 ## Biztonsági és adatmodell-döntések
 
 - Kiadásonként külön sorszámozás fut. A digitális azonosító nem változik tulajdonosváltáskor.
 - Az I. kiadásnál az I-001–I-100, a II. kiadásnál a II-001–II-080 tartomány előre le van foglalva a korábbi vásárlóknak. Az új digitális regisztrációk következő sorszáma I-101, illetve II-081.
 - A már nyomtatott sorszám külön printed_copy_number mező, nem írja felül a digitális sorszámot.
-- A közös QR-kód csak a belépőoldalra vezet. Könyvregisztrációhoz egy személyes, egyszer használatos jogosultsági kód szükséges.
+- A közös QR-kód a belépőoldalra vezet. Bejelentkezve a felhasználó önkiszolgáló módon regisztrálhat egy nála lévő kötetet; a rendszer a következő szabad nyilvántartási azonosítót osztja ki. A korábbi tulajdonosoknak fenntartott I-001–I-100 és II-001–II-080 sorszámok továbbra is csak ellenőrzött, személyes regisztrációs linkkel vehetők át. Az önkiszolgáló regisztráció önbevalláson alapul, nem igazolja a vásárlást.
 - A tokenekből csak SHA-256 hash kerül az adatbázisba. A nyers token egyszer jelenik meg az admin-válaszban vagy a vásárlónak küldött e-mail linkben.
 - A térképes megosztás alapértelmezetten kikapcsolt. Bekapcsoláskor a pozíció két tizedesjegyre kerekítve tárolódik; tulajdonosváltáskor a régi pont törlődik.
 - A táblákhoz a böngészős anon és authenticated szerepkör közvetlen hozzáférése tiltott. Az API a szerveroldali service role-on keresztül olvas/ír, és az aktuális Auth-felhasználót minden művelet előtt ellenőrzi.
@@ -15,7 +15,7 @@ Ez a funkció a régi book_copies készlet-/foglalási rendszertől elkülönül
 
 ## Migráció
 
-A db/migrations/054_book_registry.sql additív migráció. Új táblákat, korlátozásokat, RLS-policy-ket és tranzakciós RPC-ket hoz létre; a régi book_copies táblát nem módosítja.
+A db/migrations/054_book_registry.sql additív migráció. Új táblákat, korlátozásokat, RLS-policy-ket és tranzakciós RPC-ket hoz létre; a régi book_copies táblát nem módosítja. A db/migrations/056_book_registry_self_service.sql adja hozzá az atomikus önkiszolgáló sorszámkiosztást.
 
 1. Először ellenőrizd, hogy az aktuális main ágon nincs-e ütköző 054_...sql migráció.
 2. Készíts adatbázis-mentést.
@@ -29,7 +29,9 @@ Ne futtasd ezt a migrációt a másik, illusztrációs Supabase-projekten.
 
 | Végpont | Művelet | Mire való |
 |---|---|---|
-| POST /api/book-registry/claim | Bejelentkezett felhasználó | Jogosultsági kód beváltása, példány és sorszám atomikus létrehozása |
+| GET /api/book-registry/register | Bejelentkezett felhasználó | A következő javasolt nyilvántartási azonosító lekérése |
+| POST /api/book-registry/register | Bejelentkezett felhasználó | Saját könyvpéldány önkiszolgáló regisztrációja, atomikus sorszámkiosztással |
+| POST /api/book-registry/claim | Bejelentkezett felhasználó | Személyes regisztrációs link beváltása előre fenntartott / vásárláshoz kötött példányhoz |
 | GET /api/book-registry/mine | Bejelentkezett felhasználó | Saját regisztrált példányok |
 | PATCH /api/book-registry/location | Tulajdonos | Hozzávetőleges térképpont mentése vagy törlése |
 | GET /api/book-registry/map | Nyilvános, szűkített adat | Csak regisztrált és térképes megjelenítéshez hozzájárult példányok |
