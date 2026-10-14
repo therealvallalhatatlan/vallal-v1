@@ -150,8 +150,9 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
       if (claimToken) window.sessionStorage.setItem(CLAIM_KEY, claimToken);
       if (transferToken) window.sessionStorage.setItem(TRANSFER_KEY, transferToken);
     } catch {}
-    persistAuthReturnTarget("/konyv-1-qr");
-    window.location.assign(buildAuthHref("/konyv-1-qr"));
+    const returnTo = window.location.pathname.startsWith("/konyv-regiszter") ? "/konyv-regiszter" : "/konyv-1-qr";
+    persistAuthReturnTarget(returnTo);
+    window.location.assign(buildAuthHref(returnTo));
   }
 
   async function claim() {
@@ -307,9 +308,12 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
             {claimToken && !transferToken ? (
               <section className="mb-8 border border-lime-200/30 bg-lime-200/[0.03] p-5 sm:p-6">
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-lime-200/70">Személyes regisztrációs link</p>
-                <h2 className="mt-2 text-lg font-bold">A neked félretett példány regisztrálása</h2>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-400">Ezt a linket egy előre kijelölt könyvpéldányhoz kaptad. A regisztráció a fiókodhoz kapcsolja a példányt, és a kód csak egyszer használható.</p>
-                <button disabled={busy !== ""} onClick={() => void claim()} className="mt-4 rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "claim" ? "Regisztrálás…" : "A példány regisztrálása"}</button>
+                <h2 className="mt-2 text-lg font-bold">A személyes regisztrációs link beváltása</h2>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">Ezt a linket egy könyvpéldány regisztrálásához kaptad. A regisztráció a fiókodhoz kapcsolja a hozzá tartozó jogosultságot, és a link csak egyszer használható.</p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button disabled={busy !== ""} onClick={() => void claim()} className="rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "claim" ? "Regisztrálás…" : "A példány regisztrálása"}</button>
+                  <button type="button" disabled={busy !== ""} onClick={() => { setClaimToken(""); try { window.sessionStorage.removeItem(CLAIM_KEY); } catch {} }} className="rounded-md border border-zinc-700 px-4 py-3 text-sm text-zinc-300 disabled:opacity-40">Másik könyvet regisztrálok</button>
+                </div>
               </section>
             ) : null}
 
