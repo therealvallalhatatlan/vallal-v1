@@ -27,5 +27,5 @@ export function isValidRegistryToken(value: unknown): value is string {
 export function parseBookRegistryQuantity(value: unknown): number {
   if (typeof value !== "string" || !/^\d{1,2}$/.test(value)) return 1;
   const quantity = Number(value);
-  return Number.isSafeInteger(quantity) && quantity >= 1 && quantity <= 20 ? quantity : 1;
+  return Number.isSafeInteger(quantity) && quantity >= 1 && quantity <= 100 ? quantity : 1;
 }
