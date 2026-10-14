@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
             currency: "huf",
             product_data: { name: "Vállalhatatlan – Preorder" },
             // FONTOS: integer (fillér/pénzegység), nem string!
-            unit_amount: 15000,
+            unit_amount: 10000,
           },
           // FONTOS: integer, nem string!
           quantity: 1,
