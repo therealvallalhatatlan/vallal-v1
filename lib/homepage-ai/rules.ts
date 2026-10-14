@@ -64,12 +64,7 @@ export function getCoreHomepageBlocks(
     blocks.push({
       type: "order_status",
       orderId: pendingOrder.id,
-      headline:
-        pendingOrder.status === "dispatched"
-          ? "MÁR ÚTON VAN"
-          : pendingOrder.status === "fulfilled"
-            ? "MÁR NÁLAD KELL LENNIE"
-            : "MÉG FOLYAMATBAN",
+      headline: pendingOrder.label,
       body:
         pendingOrder.status === "dispatched"
           ? "Úgy látom, a csomagod már úton van. Ha megérkezett, ne felejtsd el megnyomni az „Átvettem” gombot."
