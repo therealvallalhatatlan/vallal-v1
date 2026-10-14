@@ -347,7 +347,16 @@ export default function BookRegistryPage({ defaultEdition = "book_1", lockedEdit
                 <h2 className={`${montserrat.className} text-lg uppercase tracking-tight text-zinc-100`}>Regisztráld a könyved</h2>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">Nem kell jogosultsági kódot keresned. Válaszd ki a kötetet, a rendszer pedig megmutatja a következő szabad nyilvántartási azonosítót.</p>
 
-                <div className="mt-5 grid grid-cols-2 gap-3" role="group" aria-label="Kötet kiválasztása">
+                {lockedEdition ? (
+                  <div className="mt-5 border border-lime-200/30 bg-lime-200/[0.04] p-4">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-lime-200/70">Ehhez a QR-kódhoz rendelve</p>
+                    <p className={`${montserrat.className} mt-2 text-lg uppercase tracking-tight text-zinc-100`}>
+                      {selectedEdition === "book_1" ? "Vállalhatatlan I. kötet" : "Vállalhatatlan II. kötet"}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">Ezen az oldalon csak ezt a kötetet regisztrálhatod.</p>
+                  </div>
+                ) : (
+                  <div className="mt-5 grid grid-cols-2 gap-3" role="group" aria-label="Kötet kiválasztása">
                   <button type="button" aria-pressed={selectedEdition === "book_1"} onClick={() => setSelectedEdition("book_1")} className={"rounded-md border p-3 text-left transition " + (selectedEdition === "book_1" ? "border-lime-200 bg-lime-200/10 text-lime-100" : "border-zinc-700 text-zinc-400 hover:border-zinc-500")}>
                     <span className="block text-xs uppercase tracking-wider opacity-70">I. kötet</span>
                     <span className="mt-1 block text-sm font-bold">Vállalhatatlan I.</span>
@@ -357,6 +366,7 @@ export default function BookRegistryPage({ defaultEdition = "book_1", lockedEdit
                     <span className="mt-1 block text-sm font-bold">Vállalhatatlan II.</span>
                   </button>
                 </div>
+                )}
 
                 <div className="mt-4 border border-zinc-800 bg-zinc-950 p-4">
                   <p className="text-xs uppercase tracking-wider text-zinc-500">Következő szabad azonosító</p>
@@ -372,8 +382,26 @@ export default function BookRegistryPage({ defaultEdition = "book_1", lockedEdit
                   )}
                 </div>
 
-                <p className="mt-4 text-xs leading-relaxed text-zinc-500">Csak olyan kötetet regisztrálj, amely ténylegesen a birtokodban van. A régi kiadások előre fenntartott sorszámait a rendszer nem osztja ki újra.</p>
-                <button disabled={!suggestion || suggestionLoading || busy !== ""} onClick={() => void registerNewCopy()} className="mt-4 w-full rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "register" ? "Regisztrálás…" : "A következő szabad azonosítóval regisztrálom"}</button>
+                {eligibilityReason ? (
+                  <div role="status" className="mt-4 border border-amber-200/20 bg-amber-200/[0.04] p-4">
+                    <p className={`${montserrat.className} text-sm uppercase tracking-tight text-amber-100`}>
+                      {eligibilityReason === "purchase_required" ? "Nem találtunk hozzá vásárlást" : eligibilityReason === "purchase_already_used" ? "A vásárlást már regisztráltad" : "Kézi ellenőrzés szükséges"}
+                    </p>
+                    <p className="mt-2 text-xs leading-relaxed text-zinc-400">
+                      {eligibilityReason === "purchase_required"
+                        ? "A regisztrációhoz ehhez a kötethez tartozó fizetett rendelés szükséges. Ellenőrizd, hogy azzal az e-mail-címmel jelentkeztél-e be, amellyel vásároltál."
+                        : eligibilityReason === "purchase_already_used"
+                          ? "Minden igazolt példányodhoz egyszer lehet nyilvántartási azonosítót igényelni. Ha úgy gondolod, hogy tévedés történt, írj nekünk."
+                          : "A rendelés megvan, de a hozzá tartozó sorszámot nem lehetett biztonságosan kiosztani. Vedd fel velünk a kapcsolatot."}
+                    </p>
+                    <Link href="/kapcsolat" className="mt-3 inline-flex border-b border-lime-300/50 pb-1 text-xs uppercase tracking-[0.12em] text-lime-100/80 hover:text-lime-100">Segítséget kérek →</Link>
+                  </div>
+                ) : (
+                  <>
+                    <p className="mt-4 text-xs leading-relaxed text-zinc-500">A rendszer ellenőrzi a fizetett rendelésedet. A régi kiadások fenntartott sorszámait nem osztjuk ki másnak.</p>
+                    <button disabled={!suggestion || suggestionLoading || busy !== ""} onClick={() => void registerNewCopy()} className="mt-4 w-full rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "register" ? "Regisztrálás…" : "A következő szabad azonosítóval regisztrálom"}</button>
+                  </>
+                )}
 
                 <details className="mt-5 border-t border-zinc-800 pt-4">
                   <summary className="cursor-pointer text-sm text-zinc-400 hover:text-zinc-200">Személyes regisztrációs linket kaptam</summary>
