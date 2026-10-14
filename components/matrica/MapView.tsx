@@ -26,6 +26,7 @@ import PhantomPanel from './PhantomPanel'
 import ToastContainer from './ToastContainer'
 import HalozatWalkthrough, { type HalozatWalkthroughStep } from './HalozatWalkthrough'
 import VirtualContentViewer from './VirtualContentViewer'
+import BookRegistryMapLayer from '@/components/book-registry/BookRegistryMapLayer'
 
 import { useToast } from './useToast'
 import MatricaLivePanel from './MatricaLivePanel'
@@ -2286,6 +2287,7 @@ export default function MapView({ chatDisplayName, chatAuthToken, userRole, geol
               onHoverEnd={handleMarkerHoverEnd}
             />
           ))}
+          <BookRegistryMapLayer map={mapRef.current!} />
         </>
       )}
 
