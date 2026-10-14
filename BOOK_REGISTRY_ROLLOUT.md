@@ -39,7 +39,7 @@ For example, to issue a Volume I historic entitlement for register serial 17:
   "sourceReference": "verified-history-case-123"
 }
 
-Volume II historical serials are 1–80; Volume I historical serials are 1–100. The endpoint returns the raw token and claim URL exactly once. Send the claim URL only to the verified owner over an appropriate channel. Do not put raw tokens into tickets, logs, public chat, or analytics.
+Volume II historical serials are 1–80; Volume I historical serials are 1–100. The endpoint returns the raw token and claim URL exactly once. Send the claim URL only to the verified owner over an appropriate channel. The returned claim URL uses a fragment so the token is not sent in the initial HTTP request. Do not put raw tokens into tickets, logs, public chat, or analytics.
 
 To issue a future-purchase or distributor entitlement manually, use sourceType purchase or distributor and a non-sensitive sourceReference. For normal paid checkouts, the webhook should issue the entitlement automatically only when the edition can be identified unambiguously.
 
@@ -60,4 +60,4 @@ To issue a future-purchase or distributor entitlement manually, use sourceType p
 
 ## Operational note
 
-If a registry-email send fails after an entitlement has been committed, the webhook logs an error but does not store the raw code for later recovery. An administrator should verify the order, revoke the unused entitlement through the approved database operations process, and issue a replacement token with a new source reference. Never query or expose raw customer data in a public support channel.
+If a registry-email send fails after an entitlement has been committed, the webhook logs an error but does not store the raw code for later recovery. An administrator should verify the order, revoke the unused entitlement through POST /api/admin/book-registry/entitlements using action=revoke and the entitlementId, then issue a replacement token with a new source reference. Never query or expose raw customer data in a public support channel.
