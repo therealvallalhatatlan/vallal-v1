@@ -30,7 +30,7 @@ function OrderStatusBlockView({
 }: {
   block: Extract<HomepageBlock, { type: "order_status" }>
   token: string | null
-  onReceived: (orderId: string, productName: string) => void
+  onReceived: (orderId: string) => void
 }) {
   const [receiving, setReceiving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -66,7 +66,7 @@ function OrderStatusBlockView({
         )
       }
 
-      onReceived(block.orderId, block.headline)
+      onReceived(block.orderId)
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -150,7 +150,7 @@ function OrderStatusBlockView({
 }
 
 
-function OrderReceivedCelebration({ productName }: { productName: string }) {
+function OrderReceivedCelebration() {
   const confettiColors = ["#d9f99d", "#a3e635", "#fafafa", "#facc15", "#bef264", "#67e8f9", "#f0abfc"]
 
   return (
@@ -197,12 +197,6 @@ function OrderReceivedCelebration({ productName }: { productName: string }) {
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
           Ügyes vagy, tudsz róla?
-        </p>
-        <p
-          className="mt-4 max-w-xl text-xs leading-5 text-zinc-400"
-          style={{ fontFamily: "var(--font-mono-tech)" }}
-        >
-          {productName} · Átvétel visszaigazolva. Ez az ünnepi visszajelzés az oldal frissítéséig marad itt.
         </p>
         <div className="mt-2 w-full max-w-4xl text-left">
           <FaszanLevadasztadShare compact />
@@ -454,7 +448,7 @@ function MemberHome({ session }: { session: SessionShape }) {
   const [plan, setPlan] = useState<HomepagePlan | null>(null)
   const [loadingPlan, setLoadingPlan] = useState(true)
   const [error, setError] = useState(false)
-  const [celebratedOrders, setCelebratedOrders] = useState<Array<{ orderId: string; productName: string }>>([])
+  const [celebratedOrders, setCelebratedOrders] = useState<Array<{ orderId: string }>>([])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -493,10 +487,10 @@ function MemberHome({ session }: { session: SessionShape }) {
     return () => controller.abort()
   }, [token])
   const usefulBlocks = plan?.blocks.filter((block) => block.type === "order_status") ?? []
-  const handleReceived = (orderId: string, productName: string) => {
+  const handleReceived = (orderId: string) => {
     setCelebratedOrders(current => current.some(item => item.orderId === orderId)
       ? current
-      : [...current, { orderId, productName }])
+      : [...current, { orderId }])
     setPlan(current => current ? {
       ...current,
       blocks: current.blocks.filter(block => block.type !== "order_status" || block.orderId !== orderId)
@@ -511,7 +505,7 @@ function MemberHome({ session }: { session: SessionShape }) {
           <OrderStatusBlockView key={"order-" + block.orderId} block={block} token={token} onReceived={handleReceived} />
         ))}
         {!loadingPlan && celebratedOrders.map(order => (
-          <OrderReceivedCelebration key={"received-" + order.orderId} productName={order.productName} />
+          <OrderReceivedCelebration key={"received-" + order.orderId} />
         ))}
         {!loadingPlan && (
           <div className="animate-fadeIn">
