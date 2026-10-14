@@ -265,7 +265,6 @@ function GuestHome() {
 function MemberGreeting({ token }: { token: string }) {
   const [greeting, setGreeting] = useState("")
   const [loadingGreeting, setLoadingGreeting] = useState(true)
-  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -314,7 +313,8 @@ function MemberGreeting({ token }: { token: string }) {
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return
         console.error("[fooldal-4] személyes üdvözlés betöltése nem sikerült", error)
-        setFailed(true)
+        // A személyre szabás hibája ne akadályozza a főoldal használatát.
+        setGreeting("Szia. Jó, hogy itt vagy.")
       } finally { setLoadingGreeting(false) }
     }
     void load()
@@ -352,8 +352,8 @@ function MemberGreeting({ token }: { token: string }) {
       ) : (
         <div className="max-w-4xl animate-fadeIn">
           <p className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
-            {failed ? "Szia. Most valami nem állt össze. Próbáld újra egy pillanat múlva." : typedGreeting}
-            {!failed && typedGreeting.length < greeting.length && <span aria-hidden="true" className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse" />}
+            {typedGreeting}
+            {typedGreeting.length < greeting.length && <span aria-hidden="true" className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse" />}
           </p>
         </div>
       )}
@@ -416,12 +416,12 @@ function MemberHome({ session }: { session: SessionShape }) {
         {!loadingPlan && !error && usefulBlocks.map(block => (
           <OrderStatusBlockView key={"order-" + block.orderId} block={block} token={token} onReceived={handleReceived} />
         ))}
-        {!loadingPlan && !error && (
+        {!loadingPlan && (
           <div className="animate-fadeIn">
             <Fooldal4HuntingMap />
           </div>
         )}
-        {!loadingPlan && !error && (
+        {!loadingPlan && (
           <section className="animate-fadeIn border-b border-zinc-900 py-5">
             <Link
               href="/kapcsolat"
