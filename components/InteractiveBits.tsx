@@ -94,7 +94,7 @@ export function PrimeCTA({ soldOut }: { soldOut: boolean }) {
         disabled={soldOut}
       >
         <Link href={soldOut ? "#" : "/checkout"}>
-          Sorszám lefoglalása – {formatCurrency(15000)}
+          Sorszám lefoglalása – {formatCurrency(10000)}
         </Link>
       </Button>
       <Button asChild size="lg" variant="outline" className="border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black">
