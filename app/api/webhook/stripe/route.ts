@@ -428,7 +428,7 @@ async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Sessi
       continue;
     }
 
-    const claimUrl = origin + '/konyv-1-qr?claim=' + encodeURIComponent(token);
+    const claimUrl = origin + '/konyv-1-qr#claim=' + encodeURIComponent(token);
     if (!resend || !emailFrom) {
       console.error('[book-registry] Entitlement created, but registry email could not be sent because Resend configuration is missing.');
       continue;
