@@ -353,7 +353,7 @@ function MemberGreeting({ token }: { token: string }) {
         <div className="max-w-4xl animate-fadeIn">
           <p className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
             {failed ? "Szia. Most valami nem állt össze. Próbáld újra egy pillanat múlva." : typedGreeting}
-            {!failed && <span aria-hidden="true" className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse" />}
+            {!failed && typedGreeting.length < greeting.length && <span aria-hidden="true" className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse" />}
           </p>
         </div>
       )}
