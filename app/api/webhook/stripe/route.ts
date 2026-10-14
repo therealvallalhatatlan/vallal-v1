@@ -362,7 +362,10 @@ async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Sessi
     editionCode = 'book_2';
   }
   if (!['book_1', 'book_2'].includes(editionCode)) return;
-  if (product === 'numbered_copy' && declaredEdition !== 'book_1') return;
+  // Legacy numbered_copy identifies a physical inventory slot, not just an edition.
+  // Keep it out of digital serial allocation until its printed copy number is mapped
+  // to the reserved historical range by an explicit reconciliation process.
+  if (product === 'numbered_copy') return;
 
   const customerEmail = session.customer_details?.email?.trim();
   if (!customerEmail) {
