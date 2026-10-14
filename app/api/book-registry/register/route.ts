@@ -24,6 +24,12 @@ async function authenticatedUser(request: NextRequest) {
   }
 }
 
+async function getVerifiedEmail(userId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin().auth.admin.getUserById(userId);
+  if (error || !data.user?.email_confirmed_at || !data.user.email) return null;
+  return data.user.email;
+}
+
 export async function GET(request: NextRequest) {
   const auth = await authenticatedUser(request);
   if (auth.response) return auth.response;
@@ -35,7 +41,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabaseAdmin().rpc("preview_book_registry_registration", {
       p_edition_code: editionCode,
       p_user_id: auth.user!.id,
-      p_user_email: auth.user!.email_confirmed_at ? auth.user!.email : null,
+      p_user_email: await getVerifiedEmail(auth.user!.id),
     });
 
     if (error) {
@@ -66,7 +72,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabaseAdmin().rpc("register_book_registry_copy", {
       p_edition_code: editionCode,
       p_user_id: auth.user!.id,
-      p_user_email: auth.user!.email_confirmed_at ? auth.user!.email : null,
+      p_user_email: await getVerifiedEmail(auth.user!.id),
     });
 
     if (error) {
