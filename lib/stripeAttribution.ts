@@ -1,18 +1,21 @@
 import crypto from "crypto";
 import type { NextRequest } from "next/server";
 import { getUserFromToken, parseBearerToken } from "@/lib/auth";
+import {
+  ATTRIBUTION_COOKIE_PREFIX,
+  ATTRIBUTION_SOURCE_COOKIE,
+  ATTRIBUTION_COOKIE_MAX_AGE,
+  UTM_KEYS,
+  normalizeAttributionSource,
+} from "@/lib/attributionShared";
 
-export const ATTRIBUTION_COOKIE_PREFIX = "vll_utm_";
-export const ATTRIBUTION_SOURCE_COOKIE = "vll_source";
-export const ATTRIBUTION_COOKIE_MAX_AGE = 60 * 60 * 24 * 180;
-
-export const UTM_KEYS = [
-  "utm_source",
-  "utm_medium",
-  "utm_campaign",
-  "utm_term",
-  "utm_content",
-] as const;
+export {
+  ATTRIBUTION_COOKIE_PREFIX,
+  ATTRIBUTION_SOURCE_COOKIE,
+  ATTRIBUTION_COOKIE_MAX_AGE,
+  UTM_KEYS,
+  normalizeAttributionSource,
+} from "@/lib/attributionShared";
 
 const MAX_METADATA_VALUE_LENGTH = 500;
 
@@ -23,19 +26,6 @@ function cleanValue(value: unknown): string {
     .slice(0, MAX_METADATA_VALUE_LENGTH);
 }
 
-export function normalizeAttributionSource(value: string): string {
-  const raw = cleanValue(value).toLowerCase();
-  if (!raw) return "direct";
-  if (raw.includes("facebook")) return "facebook";
-  if (raw.includes("instagram")) return "instagram";
-  if (raw.includes("reddit")) return "reddit";
-  if (raw.includes("google")) return "google";
-  if (raw.includes("tiktok")) return "tiktok";
-  if (raw.includes("youtube")) return "youtube";
-  if (raw.includes("twitter") || raw.includes("t.co")) return "x";
-  if (raw.includes("stripe")) return "stripe";
-  return raw.replace(/^www\./, "").slice(0, 80);
-}
 
 export function getAttributionSource(req: NextRequest): string {
   const cookieSource = cleanValue(req.cookies.get(ATTRIBUTION_SOURCE_COOKIE)?.value);
