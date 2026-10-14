@@ -9,6 +9,7 @@ import { PAID_SPOT_UNLOCK_HOURS } from '@/lib/matricaUnlocks';
 import { formatTerminalTelegramMessage, sendTelegramMessage } from '@/lib/telegram';
 import { hashTelegramId } from '@/lib/security/hash';
 import { trackServerEvent } from '@/lib/siteAnalyticsServer';
+import { createBookRegistryToken, hashBookRegistryToken } from '@/lib/bookRegistryTokens';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',
@@ -344,6 +345,112 @@ async function handleCheckoutSessionNotifications(session: Stripe.Checkout.Sessi
     '[CONFIRMATION] Köszönjük a rendelést!',
     buildThankYouEmailHtml(customerEmail, orderReference),
   );
+}
+
+async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Session) {
+  if (session.payment_status !== 'paid') return;
+
+  const metadata = session.metadata ?? {};
+  const declaredEdition = String(metadata.book_registry_edition ?? '').trim().toLowerCase();
+  const product = String(metadata.product_id ?? metadata.orderType ?? metadata.type ?? '').trim().toLowerCase();
+  let editionCode = declaredEdition;
+
+  // Only explicit edition metadata or an unambiguous product identifier is accepted.
+  // Legacy numbered_copy checkouts are deliberately excluded until physical serials
+  // have been reconciled with the historic inventory.
+  if (!editionCode && ['book_ii', 'book_2', 'book-2', 'book-ii'].includes(product)) {
+    editionCode = 'book_2';
+  }
+  if (!['book_1', 'book_2'].includes(editionCode)) return;
+  if (product === 'numbered_copy' && declaredEdition !== 'book_1') return;
+
+  const customerEmail = session.customer_details?.email?.trim();
+  if (!customerEmail) {
+    console.warn('[book-registry] Paid book order has no customer email; admin follow-up required.');
+    return;
+  }
+
+  const db = supabaseAdmin();
+  const { data: edition, error: editionError } = await db
+    .from('book_editions')
+    .select('id,code,title')
+    .eq('code', editionCode)
+    .single();
+
+  if (editionError || !edition) {
+    console.error('[book-registry] Edition lookup failed; paid order was not given a registry token.', editionError?.message);
+    return;
+  }
+
+  let quantity = 1;
+  try {
+    const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
+    const lineQuantity = (lineItems.data ?? []).reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    if (lineQuantity > 0) quantity = Math.min(20, lineQuantity);
+  } catch (error) {
+    console.warn('[book-registry] Could not load Stripe line item quantity; using one entitlement.', error);
+  }
+
+  const origin = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vallalhatatlan.online').replace(/\/+$/, '');
+
+  for (let index = 1; index <= quantity; index += 1) {
+    const sourceReference = 'stripe:' + session.id + ':' + index;
+    const { data: existing, error: existingError } = await db
+      .from('book_registry_entitlements')
+      .select('id')
+      .eq('source_type', 'purchase')
+      .eq('source_reference', sourceReference)
+      .maybeSingle();
+
+    if (existingError) {
+      console.error('[book-registry] Could not check purchase idempotency; skipping entitlement.', existingError.message);
+      return;
+    }
+    if (existing) continue;
+
+    const token = createBookRegistryToken();
+    const { data: entitlement, error: insertError } = await db
+      .from('book_registry_entitlements')
+      .insert({
+        edition_id: edition.id,
+        token_hash: hashBookRegistryToken(token),
+        source_type: 'purchase',
+        source_reference: sourceReference,
+        status: 'pending',
+      })
+      .select('id')
+      .single();
+
+    if (insertError || !entitlement) {
+      // A concurrent webhook retry can win the unique source_reference index.
+      if (insertError?.code === '23505') continue;
+      console.error('[book-registry] Could not create purchase entitlement.', insertError?.message);
+      continue;
+    }
+
+    const claimUrl = origin + '/konyv-1-qr?claim=' + encodeURIComponent(token);
+    if (!resend || !emailFrom) {
+      console.error('[book-registry] Entitlement created, but registry email could not be sent because Resend configuration is missing.');
+      continue;
+    }
+
+    try {
+      await resend.emails.send({
+        from: emailFrom,
+        to: [customerEmail],
+        subject: 'Regisztráld a Vállalhatatlan könyvpéldányodat',
+        html: '<div style="background:#09090b;color:#f4f4f5;padding:28px;font-family:Arial,sans-serif;max-width:560px;margin:auto">' +
+          '<p style="font-size:11px;letter-spacing:.2em;color:#a3e635;text-transform:uppercase">Vállalhatatlan / könyvregisztráció</p>' +
+          '<h1 style="font-size:25px">A példányodnak mostantól saját nyoma lehet.</h1>' +
+          '<p style="color:#d4d4d8;line-height:1.6">A vásárlásodhoz tartozó egyszer használható regisztrációs jogosultság elkészült a(z) ' + edition.title + ' kiadáshoz.</p>' +
+          '<p style="margin:26px 0"><a href="' + claimUrl + '" style="background:#d9f99d;color:#18181b;text-decoration:none;font-weight:bold;padding:13px 18px;border-radius:5px;display:inline-block">Könyvpéldány regisztrálása</a></p>' +
+          '<p style="font-size:12px;color:#a1a1aa;line-height:1.5">A linket kezeld személyes jogosultságként. Belépés után a rendszer a fiókodhoz kapcsolja a példányt. A térképes megjelenítés külön hozzájárulást igényel.</p>' +
+          '</div>',
+      });
+    } catch (error) {
+      console.error('[book-registry] Registry entitlement email failed; issue a replacement token from the admin endpoint after reviewing the order.', error);
+    }
+  }
 }
 
 type PaidOrderResult = {
@@ -1190,6 +1297,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
   console.log(`💳 Processing checkout completion for session: ${session.id}`);
 
   const metadata = session.metadata;
+
+  await maybeIssueBookRegistryEntitlements(session);
 
   // Leg Belső Kör has an explicit amount invariant. Validate and persist it
   // before sending a success notification, so underpayments never look successful.
