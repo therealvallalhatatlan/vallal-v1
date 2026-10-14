@@ -66,6 +66,10 @@ export default function BookRegistryPage({ defaultEdition = "book_1", lockedEdit
   const [error, setError] = useState("");
   const accessToken = session?.access_token as string | undefined;
 
+  useEffect(() => {
+    setSelectedEdition(defaultEdition);
+  }, [defaultEdition]);
+
   const loadCopies = useCallback(async (token: string) => {
     try {
       const response = await fetch("/api/book-registry/mine", {
