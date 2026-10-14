@@ -313,7 +313,7 @@ Különleges, 100 darabos, limitált kiadás <br/> <span className="text-lime-40
                   ['Megjelenés', 'Május közepe'],
                   ['Terjesztés', 'Dead drop'],
                   ['Példányok', '100 sorszámozott'],
-                  ['Ár', '15 000 Ft'],
+                  ['Ár', '10 000 Ft + postaköltség, ha szükséges'],
                 ] as const
               ).map(([label, value]) => (
                 <div key={label}>
