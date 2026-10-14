@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
         project: "vallalhatatlan",
         type: "preorder",
         product_id: "book-1",
+        book_registry_edition: "book_1",
+        book_registry_quantity: "1",
       },
       { cartSummary: "book-1x1" },
     );

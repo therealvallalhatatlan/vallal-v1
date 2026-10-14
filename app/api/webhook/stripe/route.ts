@@ -9,6 +9,8 @@ import { PAID_SPOT_UNLOCK_HOURS } from '@/lib/matricaUnlocks';
 import { formatTerminalTelegramMessage, sendTelegramMessage } from '@/lib/telegram';
 import { hashTelegramId } from '@/lib/security/hash';
 import { trackServerEvent } from '@/lib/siteAnalyticsServer';
+import { createBookRegistryToken, hashBookRegistryToken } from '@/lib/bookRegistryTokens';
+import { parseBookRegistryQuantity } from '@/lib/bookRegistry';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-07-30.basil',
@@ -346,6 +348,142 @@ async function handleCheckoutSessionNotifications(session: Stripe.Checkout.Sessi
   );
 }
 
+async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Session) {
+  if (session.payment_status !== 'paid') return;
+
+  const metadata = session.metadata ?? {};
+  const declaredEdition = String(metadata.book_registry_edition ?? '').trim().toLowerCase();
+  const product = String(metadata.product_id ?? metadata.orderType ?? metadata.type ?? '').trim().toLowerCase();
+
+  // Legacy numbered_copy identifies a physical inventory slot, not just an edition.
+  // Keep it out of automatic allocation until its printed serial is reconciled.
+  if (product === 'numbered_copy') return;
+
+  const requestedEditions: Array<{ editionCode: 'book_1' | 'book_2'; quantity: number }> = [];
+  for (const editionCode of ['book_1', 'book_2'] as const) {
+    const quantityValue = metadata['book_registry_' + editionCode + '_quantity'];
+    if (typeof quantityValue === 'string' && quantityValue.trim()) {
+      requestedEditions.push({
+        editionCode,
+        quantity: parseBookRegistryQuantity(quantityValue),
+      });
+    }
+  }
+
+  // The simple Volume I checkout predates per-edition quantity fields.
+  // Honour its server-authored edition + quantity metadata when there are no
+  // per-edition quantities on the checkout session.
+  if (requestedEditions.length === 0 && ['book_1', 'book_2'].includes(declaredEdition)) {
+    requestedEditions.push({
+      editionCode: declaredEdition as 'book_1' | 'book_2',
+      quantity: parseBookRegistryQuantity(metadata.book_registry_quantity),
+    });
+  }
+
+  // Compatibility for old, unambiguous Volume II checkouts only.
+  if (requestedEditions.length === 0 && ['book_ii', 'book_2', 'book-2', 'book-ii'].includes(product)) {
+    requestedEditions.push({
+      editionCode: 'book_2',
+      quantity: parseBookRegistryQuantity(metadata.book_registry_quantity),
+    });
+  }
+  if (requestedEditions.length === 0) return;
+
+  const customerEmail = session.customer_details?.email?.trim();
+  if (!customerEmail) {
+    console.warn('[book-registry] Paid book order has no customer email; admin follow-up required.');
+    return;
+  }
+
+  if (!resend || !emailFrom) {
+    console.error('[book-registry] Entitlement was not created because Resend configuration is missing.');
+    return;
+  }
+
+  const db = supabaseAdmin();
+  const origin = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vallalhatatlan.online').replace(/\/+$/, '');
+
+  for (const requested of requestedEditions) {
+    const { editionCode, quantity } = requested;
+    const { data: edition, error: editionError } = await db
+      .from('book_editions')
+      .select('id,code,title')
+      .eq('code', editionCode)
+      .single();
+
+    if (editionError || !edition) {
+      console.error('[book-registry] Edition lookup failed; paid order was not given a registry token.', editionError?.message);
+      continue;
+    }
+
+    for (let index = 1; index <= quantity; index += 1) {
+      const sourceReference = 'stripe:' + session.id + ':' + editionCode + ':' + index;
+      const { data: existing, error: existingError } = await db
+        .from('book_registry_entitlements')
+        .select('id')
+        .eq('source_type', 'purchase')
+        .eq('source_reference', sourceReference)
+        .maybeSingle();
+
+      if (existingError) {
+        console.error('[book-registry] Could not check purchase idempotency; skipping edition entitlement.', existingError.message);
+        break;
+      }
+      if (existing) continue;
+
+      const token = createBookRegistryToken();
+      const { data: entitlement, error: insertError } = await db
+        .from('book_registry_entitlements')
+        .insert({
+          edition_id: edition.id,
+          token_hash: hashBookRegistryToken(token),
+          source_type: 'purchase',
+          source_reference: sourceReference,
+          status: 'pending',
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !entitlement) {
+        // A concurrent webhook retry can win the unique source_reference index.
+        if (insertError?.code === '23505') continue;
+        console.error('[book-registry] Could not create purchase entitlement.', insertError?.message);
+        continue;
+      }
+
+      const claimUrl = origin + '/konyv-1-qr#claim=' + encodeURIComponent(token);
+      try {
+        const { error: emailError } = await resend.emails.send({
+          from: emailFrom,
+          to: [customerEmail],
+          subject: 'Regisztráld a Vállalhatatlan könyvpéldányodat',
+          html: '<div style="background:#09090b;color:#f4f4f5;padding:28px;font-family:Arial,sans-serif;max-width:560px;margin:auto">' +
+            '<p style="font-size:11px;letter-spacing:.2em;color:#a3e635;text-transform:uppercase">Vállalhatatlan / könyvregisztráció</p>' +
+            '<h1 style="font-size:25px">A példányodnak mostantól saját nyoma lehet.</h1>' +
+            '<p style="color:#d4d4d8;line-height:1.6">A vásárlásodhoz tartozó egyszer használható regisztrációs jogosultság elkészült a(z) ' + edition.title + ' kiadáshoz.</p>' +
+            '<p style="margin:26px 0"><a href="' + claimUrl + '" style="background:#d9f99d;color:#18181b;text-decoration:none;font-weight:bold;padding:13px 18px;border-radius:5px;display:inline-block">Könyvpéldány regisztrálása</a></p>' +
+            '<p style="font-size:12px;color:#a1a1aa;line-height:1.5">A linket kezeld személyes jogosultságként. Belépés után a rendszer a fiókodhoz kapcsolja a példányt. A térképes megjelenítés külön hozzájárulást igényel.</p>' +
+            '</div>',
+        });
+        if (emailError) {
+          const { error: revokeError } = await db
+            .from('book_registry_entitlements')
+            .update({ status: 'revoked' })
+            .eq('id', entitlement.id)
+            .eq('status', 'pending');
+          console.error('[book-registry] Email API rejected registry token; token revoked for admin replacement.', emailError.message, revokeError?.message);
+        }
+      } catch (error) {
+        const { error: revokeError } = await db
+          .from('book_registry_entitlements')
+          .update({ status: 'revoked' })
+          .eq('id', entitlement.id)
+          .eq('status', 'pending');
+        console.error('[book-registry] Email send failed; token revoked for admin replacement.', error, revokeError?.message);
+      }
+    }
+  }
+}
 type PaidOrderResult = {
   ok: boolean;
   paymentMismatch?: boolean;
@@ -1190,6 +1328,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
   console.log(`💳 Processing checkout completion for session: ${session.id}`);
 
   const metadata = session.metadata;
+
+  await maybeIssueBookRegistryEntitlements(session);
 
   // Leg Belső Kör has an explicit amount invariant. Validate and persist it
   // before sending a success notification, so underpayments never look successful.
