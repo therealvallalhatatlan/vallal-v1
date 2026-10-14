@@ -2,6 +2,22 @@ import { describe, expect, it } from "vitest";
 import { formatBookRegistrySerial, isValidRegistryToken, isValidRegistryUuid, parseBookRegistryQuantity } from "./bookRegistry";
 import { createBookRegistryToken, hashBookRegistryToken } from "./bookRegistryTokens";
 
+describe("book registry quantity metadata", () => {
+  it("accepts quantities from one through twenty", () => {
+    expect(parseBookRegistryQuantity("1")).toBe(1);
+    expect(parseBookRegistryQuantity("20")).toBe(20);
+    expect(parseBookRegistryQuantity("4")).toBe(4);
+  });
+
+  it("defaults to one for missing, malformed, or out-of-range metadata", () => {
+    for (const value of ["0", "21", "-2", "1.5", "x", ""]) {
+      expect(parseBookRegistryQuantity(value)).toBe(1);
+    }
+    expect(parseBookRegistryQuantity(undefined)).toBe(1);
+    expect(parseBookRegistryQuantity(4)).toBe(1);
+  });
+});
+
 describe("book registry serial labels", () => {
   it("formats per-edition serials consistently", () => {
     expect(formatBookRegistrySerial("I", 1)).toBe("I-001");
