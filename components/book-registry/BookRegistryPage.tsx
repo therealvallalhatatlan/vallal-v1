@@ -28,6 +28,7 @@ async function responseMessage(response: Response) {
     copy_not_found_or_not_owner: "Ezt a példányt nem tudod kezelni ezzel a fiókkal.",
     transfer_expired: "Az átadási link lejárt.",
     transfer_invalid_or_used: "Az átadási link érvénytelen vagy már felhasználták.",
+    transfer_invalid_or_expired: "Az átadási link érvénytelen, lejárt vagy már felhasználták.",
     transfer_accept_failed: "A tulajdonosváltás nem sikerült.",
     location_update_failed: "A térképpozíció mentése nem sikerült.",
   };
@@ -70,8 +71,9 @@ export default function BookRegistryPage() {
 
   useEffect(() => {
     const url = new URL(window.location.href);
-    const claim = url.searchParams.get("claim");
-    const transfer = new URLSearchParams(url.hash.replace(/^#/, "")).get("transfer");
+    const fragment = new URLSearchParams(url.hash.replace(/^#/, ""));
+    const claim = fragment.get("claim") || url.searchParams.get("claim");
+    const transfer = fragment.get("transfer") || url.searchParams.get("transfer");
     try {
       setClaimToken(claim || window.sessionStorage.getItem(CLAIM_KEY) || "");
       setTransferToken(transfer || window.sessionStorage.getItem(TRANSFER_KEY) || "");
@@ -134,8 +136,8 @@ export default function BookRegistryPage() {
     if (!accessToken) { login(); return; }
     setBusy("accept");
     try {
-      const response = await fetch("/api/book-registry/transfer", {
-        method: "PATCH",
+      const response = await fetch("/api/book-registry/transfer/accept", {
+        method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + accessToken },
         body: JSON.stringify({ token: transferToken }),
       });
