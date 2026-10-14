@@ -35,7 +35,7 @@ Ne futtasd ezt a migrációt a másik, illusztrációs Supabase-projekten.
 | GET /api/book-registry/map | Nyilvános, szűkített adat | Csak regisztrált és térképes megjelenítéshez hozzájárult példányok |
 | POST /api/book-registry/transfer | Tulajdonos | Hét napig érvényes egyszer használatos átadási link készítése |
 | PATCH /api/book-registry/transfer | Bejelentkezett átvevő | Tulajdonosváltás elfogadása |
-| POST /api/book-registry/admin/entitlement | Admin | Egyszer használatos jogosultság kibocsátása vagy még fel nem használt jogosultság visszavonása |
+| POST /api/admin/book-registry/entitlements | Admin | Egyszer használatos jogosultság kibocsátása vagy még fel nem használt jogosultság visszavonása |
 
 Minden író végpont tiszteletben tartja a middleware READ_ONLY módját. A publikus térképválasz nem tartalmaz e-mail-címet, rendelésazonosítót vagy Auth-felhasználóazonosítót.
 
@@ -48,12 +48,12 @@ Példakérés korábbi, fizikailag azonosított példányhoz:
     {
       "editionCode": "book_1",
       "sourceType": "historical",
-      "serialNumber": 42,
+      "historicalSerial": 42,
       "sourceReference": "ellenorzott-regi-rendeles-azonosito",
-      "expiresAt": null
+      "expiresInDays": 30
     }
 
-A serialNumber csak a fenntartott tartományba eső, még le nem foglalt történelmi sorszám lehet. Előbb egyeztesd, hogy a vásárló valóban azt a példányt kapta-e. Az API válaszában lévő claimUrl személyes jogosultság, csak a megfelelő tulajdonosnak továbbítsd.
+A historicalSerial csak a fenntartott tartományba eső, még le nem foglalt történelmi sorszám lehet. Az expiresInDays opcionális, 1–90 napos lejáratot állít; kihagyásakor a kód nem jár le. Előbb egyeztesd, hogy a vásárló valóban azt a példányt kapta-e. Az API válaszában lévő claimUrl személyes jogosultság, csak a megfelelő tulajdonosnak továbbítsd.
 
 Még fel nem használt kód visszavonása:
 
