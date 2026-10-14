@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/browser";
+import { Montserrat } from "next/font/google";
+import MainContent from "@/components/MainContent";
+import Footer from "@/components/Footer";
 import { buildAuthHref, persistAuthReturnTarget } from "@/lib/authRedirect";
 import BookRegistryLocationPicker from "@/components/book-registry/BookRegistryLocationPicker";
 
@@ -16,6 +19,7 @@ type Draft = { lat: number | null; lng: number | null };
 type EditionCode = "book_1" | "book_2";
 type Suggestion = { editionCode: EditionCode; editionTitle: string; serialPrefix: string; serialNumber: number; serialLabel: string };
 
+const montserrat = Montserrat({ subsets: ["latin-ext"], weight: "800" });
 const supabase = createClient();
 const CLAIM_KEY = "vallal:book-registry:claim-token";
 const TRANSFER_KEY = "vallal:book-registry:transfer-token";
@@ -24,6 +28,9 @@ async function responseMessage(response: Response) {
   const body = await response.json().catch(() => null);
   const errors: Record<string, string> = {
     authentication_required: "A folytatáshoz jelentkezz be.",
+    purchase_required: "Ehhez a kötethez nem találtunk fizetett rendelést ebben a fiókban. Ugyanazzal az e-mail-címmel lépj be, amellyel a könyvet vásároltad.",
+    purchase_already_used: "Ehhez a kötethez tartozó vásárlási jogosultságot már felhasználták.",
+    historical_slot_unavailable: "A vásárláshoz tartozó példánysorszám most nem rendelhető hozzá. Kérj segítséget a kapcsolat oldalon.",
     invalid_edition: "Válassz érvényes kötetet.",
     edition_unavailable: "Ez a kötet jelenleg nem regisztrálható.",
     suggested_identifier_unavailable: "Most nem sikerült lekérni a következő azonosítót.",
@@ -41,7 +48,7 @@ async function responseMessage(response: Response) {
   return errors[typeof body?.error === "string" ? body.error : ""] || "A művelet nem sikerült. Próbáld újra.";
 }
 
-export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaultEdition?: EditionCode }) {
+export default function BookRegistryPage({ defaultEdition = "book_1", lockedEdition = false }: { defaultEdition?: EditionCode; lockedEdition?: boolean }) {
   const [session, setSession] = useState<any>(null);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [copies, setCopies] = useState<Copy[]>([]);
@@ -49,6 +56,7 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
   const [claimToken, setClaimToken] = useState("");
   const [selectedEdition, setSelectedEdition] = useState<EditionCode>(defaultEdition);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+  const [eligibilityReason, setEligibilityReason] = useState<string | null>(null);
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [refreshSuggestion, setRefreshSuggestion] = useState(0);
   const [transferToken, setTransferToken] = useState("");
@@ -119,6 +127,8 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
     }
 
     let alive = true;
+    setSuggestion(null);
+    setEligibilityReason(null);
     setSuggestionLoading(true);
     fetch("/api/book-registry/register?edition=" + encodeURIComponent(selectedEdition), {
       headers: { Authorization: "Bearer " + accessToken },
@@ -133,7 +143,17 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
           };
           throw new Error(errors[typeof body?.error === "string" ? body.error : ""] || "Nem sikerült lekérni az azonosítót.");
         }
-        if (alive) setSuggestion(body.suggestion as Suggestion);
+        if (!body?.eligible || !body?.suggestion) {
+          if (alive) {
+            setSuggestion(null);
+            setEligibilityReason(typeof body?.reason === "string" ? body.reason : "purchase_required");
+          }
+          return;
+        }
+        if (alive) {
+          setSuggestion(body.suggestion as Suggestion);
+          setEligibilityReason(null);
+        }
       })
       .catch((e) => {
         if (!alive) return;
@@ -150,7 +170,9 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
       if (claimToken) window.sessionStorage.setItem(CLAIM_KEY, claimToken);
       if (transferToken) window.sessionStorage.setItem(TRANSFER_KEY, transferToken);
     } catch {}
-    const returnTo = window.location.pathname.startsWith("/konyv-regiszter") ? "/konyv-regiszter" : "/konyv-1-qr";
+    const pathname = window.location.pathname;
+    const returnTo = pathname.startsWith("/konyv-regiszter") ? "/konyv-regiszter"
+      : pathname.startsWith("/konyv-2-qr") ? "/konyv-2-qr" : "/konyv-1-qr";
     persistAuthReturnTarget(returnTo);
     window.location.assign(buildAuthHref(returnTo));
   }
@@ -272,13 +294,16 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
   }
 
   return (
-    <main className="min-h-[100svh] bg-black text-zinc-100">
-      <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8">
+    <MainContent fullWidth>
+      <div className="mx-auto w-full max-w-4xl px-5 pb-16 pt-8 sm:px-8" style={{ fontFamily: "var(--font-mono-tech)" }}>
         <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.3em] text-lime-200/70">Vállalhatatlan / nyilvántartás</p>
-            <h1 className="mt-2 text-3xl font-black sm:text-5xl">A könyved nyoma.</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">Regisztráld a példányodat, őrizd meg az azonosítóját, és te döntöd el, megjelenhet-e a hozzávetőleges helye a Hálózat térképén.</p>
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">[ KÖNYVREGISZTRÁCIÓ ]</p>
+              <span className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-lime-300/60"><span className="h-1.5 w-1.5 rounded-full bg-lime-400 shadow-[0_0_8px_rgba(163,230,53,0.7)]" />HÁLÓZAT / ONLINE</span>
+            </div>
+            <h1 className={`${montserrat.className} text-4xl uppercase leading-[0.9] tracking-[-0.03em] text-zinc-100 md:text-6xl`}>A KÖNYVED NYOMA.</h1>
+            <p className="mt-6 max-w-2xl text-sm leading-relaxed text-zinc-400">Regisztráld a megvásárolt példányodat, és te döntöd el, megjelenhet-e a hozzávetőleges helye a Hálózat térképén.</p>
           </div>
           <Link href="/halozat" className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:border-lime-200/50">Hálózat ↗</Link>
         </header>
@@ -289,7 +314,7 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
         {sessionLoading ? <div className="border border-zinc-800 p-5 text-sm text-zinc-400">Munkamenet ellenőrzése…</div> : null}
         {!sessionLoading && !accessToken ? (
           <section className="mb-7 border border-zinc-800 bg-zinc-950 p-6">
-            <h2 className="text-xl font-bold">A regisztráció a fiókodhoz kapcsolódik</h2>
+            <h2 className={`${montserrat.className} text-xl uppercase tracking-tight text-zinc-100`}>A regisztráció a fiókodhoz kapcsolódik</h2>
             <p className="mt-2 text-sm leading-relaxed text-zinc-400">A regisztráció a fiókodhoz kapcsolódik. Belépés után a rendszer automatikusan felajánlja a következő szabad nyilvántartási azonosítót. Külön kódra csak akkor van szükség, ha egy előre kijelölt sorszámú példányhoz személyes regisztrációs linket kaptál.</p>
             <button onClick={login} className="mt-5 rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black">Belépek / regisztrálok</button>
           </section>
@@ -297,7 +322,7 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
 
         {transferToken ? (
           <section className="mb-6 border border-fuchsia-200/30 bg-fuchsia-200/5 p-5">
-            <h2 className="text-lg font-bold text-fuchsia-100">Könyv átvétele</h2>
+            <h2 className={`${montserrat.className} text-lg uppercase tracking-tight text-fuchsia-100`}>Könyv átvétele</h2>
             <p className="mt-2 text-sm text-zinc-400">Az elfogadás után a korábbi tulajdonos elveszíti a kezelés jogát, a térképes megosztás pedig kikapcsol.</p>
             <button disabled={!accessToken || busy !== ""} onClick={() => void acceptTransfer()} className="mt-4 rounded-md bg-fuchsia-200 px-4 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "accept" ? "Átvétel…" : "Átveszem a könyvet"}</button>
           </section>
@@ -308,7 +333,7 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
             {claimToken && !transferToken ? (
               <section className="mb-8 border border-lime-200/30 bg-lime-200/[0.03] p-5 sm:p-6">
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-lime-200/70">Személyes regisztrációs link</p>
-                <h2 className="mt-2 text-lg font-bold">A személyes regisztrációs link beváltása</h2>
+                <h2 className={`${montserrat.className} mt-2 text-lg uppercase tracking-tight text-zinc-100`}>A személyes regisztrációs link beváltása</h2>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">Ezt a linket egy könyvpéldány regisztrálásához kaptad. A regisztráció a fiókodhoz kapcsolja a hozzá tartozó jogosultságot, és a link csak egyszer használható.</p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button disabled={busy !== ""} onClick={() => void claim()} className="rounded-md bg-lime-200 px-5 py-3 text-sm font-bold text-black disabled:opacity-40">{busy === "claim" ? "Regisztrálás…" : "A példány regisztrálása"}</button>
@@ -319,7 +344,7 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
 
             {!claimToken && !transferToken ? (
               <section className="mb-8 border border-zinc-800 p-5 sm:p-6">
-                <h2 className="text-lg font-bold">Regisztráld a könyved</h2>
+                <h2 className={`${montserrat.className} text-lg uppercase tracking-tight text-zinc-100`}>Regisztráld a könyved</h2>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">Nem kell jogosultsági kódot keresned. Válaszd ki a kötetet, a rendszer pedig megmutatja a következő szabad nyilvántartási azonosítót.</p>
 
                 <div className="mt-5 grid grid-cols-2 gap-3" role="group" aria-label="Kötet kiválasztása">
@@ -358,7 +383,7 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
             ) : null}
 
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-xl font-bold">A példányaim <span className="font-mono text-lime-200">({copies.length})</span></h2>
+              <h2 className={`${montserrat.className} text-xl uppercase tracking-tight text-zinc-100`}>A példányaim <span className="font-mono text-lime-200">({copies.length})</span></h2>
               <button disabled={busy !== ""} onClick={() => void loadCopies(accessToken)} className="rounded-md border border-zinc-700 px-3 py-2 text-xs text-zinc-300 disabled:opacity-50">Lista frissítése ↻</button>
             </div>
             {copies.length === 0 ? <div className="mb-8 border border-dashed border-zinc-800 p-6 text-sm text-zinc-500">Még nincs regisztrált példány ehhez a fiókhoz.</div> : null}
@@ -395,7 +420,7 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
 
         {transferLink ? (
           <section className="mt-7 border border-fuchsia-200/30 bg-fuchsia-200/5 p-5">
-            <h2 className="font-bold text-fuchsia-100">Egyszer használatos átadási link</h2>
+            <h2 className={`${montserrat.className} text-lg uppercase tracking-tight text-fuchsia-100`}>Egyszer használatos átadási link</h2>
             <p className="mt-2 break-all font-mono text-xs leading-relaxed text-zinc-300">{transferLink}</p>
             <p className="mt-2 text-xs text-zinc-500">A link hét nap múlva lejár vagy egyszeri használat után érvényét veszti.</p>
             <button onClick={() => void copyLink()} className="mt-3 rounded-md border border-fuchsia-100/40 px-4 py-2 text-xs font-bold text-fuchsia-100">Link másolása</button>
@@ -404,6 +429,7 @@ export default function BookRegistryPage({ defaultEdition = "book_1" }: { defaul
 
         <p className="mt-10 border-t border-zinc-900 pt-5 text-xs leading-relaxed text-zinc-600">A nyilvántartási azonosító kiadásonként egyedi és nem változtatható. Nem azonos a könyvbe esetleg nyomtatott példányszámmal. Tulajdonosváltáskor a régi térképpont automatikusan törlődik. A térképes megjelenítés alapértelmezetten ki van kapcsolva.</p>
       </div>
-    </main>
+      <Footer />
+    </MainContent>
   );
 }
