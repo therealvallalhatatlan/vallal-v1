@@ -110,6 +110,6 @@ export async function POST(request: NextRequest) {
       expiresAt: entitlement.expires_at,
     },
     token: rawToken,
-    claimUrl: request.nextUrl.origin + "/konyv-1-qr?token=" + encodeURIComponent(rawToken),
+    claimUrl: request.nextUrl.origin + "/konyv-1-qr#claim=" + encodeURIComponent(rawToken),
   }, { headers: { "Cache-Control": "no-store" } });
 }
