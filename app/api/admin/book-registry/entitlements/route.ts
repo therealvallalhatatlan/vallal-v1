@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromToken, isAdminEmail, parseBearerToken } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createBookRegistryToken, hashBookRegistryToken } from "@/lib/bookRegistryTokens";
+import { isValidRegistryUuid } from "@/lib/bookRegistry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,30 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
+  const db = supabaseAdmin();
+
+  if (body?.action === "revoke") {
+    const entitlementId = body?.entitlementId;
+    if (!isValidRegistryUuid(entitlementId)) {
+      return NextResponse.json({ error: "valid_entitlement_id_required" }, { status: 400 });
+    }
+    const { data: revoked, error: revokeError } = await db
+      .from("book_registry_entitlements")
+      .update({ status: "revoked" })
+      .eq("id", entitlementId)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
+    if (revokeError) {
+      console.error("[admin/book-registry/entitlements] revoke failed", revokeError.message);
+      return NextResponse.json({ error: "entitlement_revoke_failed" }, { status: 500 });
+    }
+    if (!revoked) {
+      return NextResponse.json({ error: "pending_entitlement_not_found" }, { status: 409 });
+    }
+    return NextResponse.json({ ok: true, revoked: true, entitlementId }, { headers: { "Cache-Control": "no-store" } });
+  }
+
   const editionCode = typeof body?.editionCode === "string" ? body.editionCode.trim() : "";
   const sourceType = body?.sourceType;
   const historicalSerial = body?.historicalSerial;
@@ -42,7 +67,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "expires_in_days_must_be_1_to_90" }, { status: 400 });
   }
 
-  const db = supabaseAdmin();
   const { data: edition, error: editionError } = await db
     .from("book_editions").select("id,code,title").eq("code", editionCode).single();
   if (editionError || !edition) {
@@ -97,6 +121,9 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error || !entitlement) {
+    if (error?.code === "23505") {
+      return NextResponse.json({ error: "historical_entitlement_already_issued" }, { status: 409 });
+    }
     console.error("[admin/book-registry/entitlements] insert failed", error?.message);
     return NextResponse.json({ error: "entitlement_create_failed" }, { status: 500 });
   }
@@ -106,7 +133,7 @@ export async function POST(request: NextRequest) {
     edition: { code: edition.code, title: edition.title },
     entitlement,
     token,
-    claimUrl: new URL("/konyv-1-qr?claim=" + encodeURIComponent(token), process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin).toString(),
+    claimUrl: new URL("/konyv-1-qr#claim=" + encodeURIComponent(token), process.env.NEXT_PUBLIC_SITE_URL || request.nextUrl.origin).toString(),
     note: "A token csak most látható. Biztonságos csatornán add át a jogosult tulajdonosnak.",
   }, { headers: { "Cache-Control": "no-store" } });
 }
