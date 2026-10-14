@@ -13,7 +13,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null)
 
   // árak — állítsd, ha kell
-  const price = 15000 // HUF
+  const price = 10000 // HUF
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -34,9 +34,6 @@ export default function CheckoutPage() {
       source: getAttributionSource(),
     })
 
-    // Fallback Payment Link (ha az API nem ad vissza session URL-t)
-    const PAYMENT_LINK = "https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h"
-
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -44,24 +41,15 @@ export default function CheckoutPage() {
         body: JSON.stringify({}),
       })
 
-      if (!res.ok) {
-        console.warn("[checkout] API hiba, fallback Stripe Payment Link")
-        window.location.href = PAYMENT_LINK
-        return
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || "A fizetési oldal létrehozása nem sikerült.")
       }
 
-      const data = await res.json()
-      const url = data?.url
-      if (!url) {
-        console.warn("[checkout] Nincs session URL, fallback Payment Link")
-        window.location.href = PAYMENT_LINK
-        return
-      }
-
-      window.location.href = url
+      window.location.href = data.url
     } catch (err) {
       console.error("Checkout error:", err)
-      window.location.href = PAYMENT_LINK
+      setError("A fizetés indítása most nem sikerült. Kérlek, próbáld újra.")
     } finally {
       setIsLoading(false)
     }
@@ -99,8 +87,13 @@ export default function CheckoutPage() {
                   Sorszámozott példány • Dead-drop élmény + digitális hozzáférés
                 </div>
               </div>
-              <div className="text-2xl font-extrabold text-green-400">
-                {formatCurrency(price)}
+              <div className="text-right">
+                <div className="text-2xl font-extrabold text-green-400">
+                  {formatCurrency(price)}
+                </div>
+                <div className="mt-1 text-[10px] text-green-300/55">
+                  + postaköltség, ha szükséges
+                </div>
               </div>
             </div>
           </div>
