@@ -453,4 +453,4 @@ export default function Fooldal4HuntingMap() {
 
     </section>
   )
-}        {selectedDrop ? (
+}
