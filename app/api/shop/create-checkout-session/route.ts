@@ -97,10 +97,32 @@ export async function POST(req: NextRequest) {
 
     const origin = req.headers.get("origin") || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
+    // Explicit per-edition quantities avoid counting shirts, bags, shipping,
+    // or other merchandise as book registrations when a cart is mixed.
+    const editionByProductId: Record<string, "book_1" | "book_2"> = {
+      "book-1": "book_1",
+      "book-2": "book_2",
+    };
+    const bookQuantities: Partial<Record<"book_1" | "book_2", number>> = {};
+    for (const item of validatedItems) {
+      if (item.product.type !== "book") continue;
+      const editionCode = editionByProductId[item.product.id];
+      if (!editionCode) continue;
+      bookQuantities[editionCode] = (bookQuantities[editionCode] ?? 0) + item.quantity;
+    }
+    const bookRegistryMetadata: Record<string, string> = {};
+    for (const editionCode of ["book_1", "book_2"] as const) {
+      const quantity = bookQuantities[editionCode];
+      if (quantity && quantity > 0) {
+        bookRegistryMetadata["book_registry_" + editionCode + "_quantity"] = String(quantity);
+      }
+    }
+
     const metadata = await buildCheckoutMetadata(
       req,
       {
         orderType: "merch",
+        ...bookRegistryMetadata,
         product_id: validatedItems.length === 1 ? validatedItems[0]?.product.id ?? "multi_cart" : "multi_cart",
         deliveryMethod,
         shippingAmount: String(draftOrder.shippingAmount),
