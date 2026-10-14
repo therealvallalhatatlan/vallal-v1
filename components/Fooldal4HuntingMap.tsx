@@ -151,7 +151,7 @@ export default function Fooldal4HuntingMap() {
 
     if (!token) {
       window.location.href = buildAuthHref(
-        "/fooldal-3?drop=" + encodeURIComponent(drop.id) + "&method=" + encodeURIComponent(method),
+        "/fooldal-4?drop=" + encodeURIComponent(drop.id) + "&method=" + encodeURIComponent(method),
       )
       return
     }
@@ -173,7 +173,7 @@ export default function Fooldal4HuntingMap() {
       if (!response.ok || !json?.ok || !json.url) {
         if (response.status === 401) {
           window.location.href = buildAuthHref(
-            "/fooldal-3?drop=" + encodeURIComponent(drop.id) + "&method=" + encodeURIComponent(method),
+            "/fooldal-4?drop=" + encodeURIComponent(drop.id) + "&method=" + encodeURIComponent(method),
           )
           return
         }
