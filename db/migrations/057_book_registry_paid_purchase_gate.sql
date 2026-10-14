@@ -316,7 +316,7 @@ GRANT EXECUTE ON FUNCTION public.preview_book_registry_registration(TEXT, UUID, 
 CREATE OR REPLACE FUNCTION public.register_book_registry_copy(
   p_edition_code TEXT,
   p_user_id UUID,
-  p_user_email TEXT DEFAULT NULL
+  p_user_email TEXT
 )
 RETURNS JSONB
 LANGUAGE plpgsql
