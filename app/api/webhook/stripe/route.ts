@@ -401,7 +401,7 @@ async function maybeIssueBookRegistryEntitlements(session: Stripe.Checkout.Sessi
   }
 
   const db = supabaseAdmin();
-  const origin = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vallalhatatlan.online').replace(/\\/+$/, '');
+  const origin = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vallalhatatlan.online').replace(/\/+$/, '');
 
   for (const requested of requestedEditions) {
     const { editionCode, quantity } = requested;
