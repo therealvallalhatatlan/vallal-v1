@@ -324,15 +324,36 @@ function GuestHome() {
             <p className="mt-5 text-right text-[21px] italic tracking-wide text-zinc-500">— Író Úr</p>
             <div className="mt-10">
               <p className="text-right text-[11px] uppercase tracking-[0.08em] text-zinc-500">Ez egy privát, zártkörű klub. Jelentkezz be.</p>
-              <div className="mt-5 flex flex-row gap-7 sm:justify-end">
-                <Link href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4" className="outline-4 outline-offset-2 outline-lime-100/10 inline-flex min-h-14 flex-1 items-center justify-center gap-3 rounded-md border-2 border-lime-400/45 bg-lime-400/[0.035] px-4 py-3 text-[17px] font-semibold tracking-[0.04em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white sm:min-w-40 sm:flex-none sm:text-[12px]">
-                  <Mail aria-hidden="true" className="h-6 w-6 shrink-0 text-lime-200 sm:h-5 sm:w-5" />Email
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:ml-auto sm:max-w-xl sm:gap-4">
+                <Link
+                  href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=google"
+                  aria-label="Belépés Google-fiókkal"
+                  className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-md border-2 border-zinc-300/80 bg-zinc-100 px-4 py-3 text-base font-semibold tracking-[0.01em] text-zinc-950 shadow-[0_8px_32px_rgba(255,255,255,0.08)] transition-all hover:border-white hover:bg-white hover:shadow-[0_8px_36px_rgba(255,255,255,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-200 sm:min-h-[64px] sm:text-base"
+                >
+                  <GoogleMark />
+                  <span>Google</span>
                 </Link>
-                <Link href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=google" className="outline-4 outline-offset-2 outline-zinc-100/10 inline-flex min-h-14 flex-1 items-center justify-center gap-3 rounded-md border-2 border-zinc-400 bg-black px-4 py-3 text-[17px] font-semibold tracking-[0.04em] text-zinc-300 transition-all hover:border-zinc-100/60 hover:bg-zinc-900 hover:text-lime-100 sm:min-w-48 sm:flex-none">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0 fill-current text-zinc-200 sm:h-5 sm:w-5"><path d="M21.35 11.1h-9.18v2.98h5.62c-.24 1.56-1.84 4.58-5.62 4.58-3.38 0-6.14-2.8-6.14-6.26s2.76-6.26 6.14-6.26c1.92 0 3.21.82 3.95 1.53l2.14-2.08C16.88 4.3 14.96 3.3 12.17 3.3 7.36 3.3 3.45 7.2 3.45 12s3.91 8.7 8.72 8.7c5.04 0 8.39-3.54 8.39-8.52 0-.57-.06-.99-.13-1.08z" /></svg>
-                  Google
+                <Link
+                  href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=facebook"
+                  aria-label="Belépés Facebookkal"
+                  className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-md border-2 border-[#1877F2] bg-[#1877F2] px-4 py-3 text-base font-semibold tracking-[0.01em] text-white shadow-[0_8px_32px_rgba(24,119,242,0.22)] transition-all hover:border-[#3288ff] hover:bg-[#3288ff] hover:shadow-[0_8px_36px_rgba(24,119,242,0.32)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-200 sm:min-h-[64px] sm:text-base"
+                >
+                  <FacebookMark />
+                  <span>Facebook</span>
                 </Link>
               </div>
+              <div className="mt-3 flex items-center gap-3 sm:ml-auto sm:max-w-xl">
+                <span className="h-px flex-1 bg-zinc-800" />
+                <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">vagy emaillel</span>
+                <span className="h-px flex-1 bg-zinc-800" />
+              </div>
+              <Link
+                href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4"
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-zinc-800 bg-black px-4 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100 sm:ml-auto sm:flex sm:w-auto sm:min-w-48"
+              >
+                <Mail aria-hidden="true" className="h-4 w-4 shrink-0" />
+                Emailes belépés
+              </Link>
             </div>
           </div>
         </section>
@@ -344,104 +365,123 @@ function GuestHome() {
   )
 }
 
-function MemberGreeting({ token }: { token: string }) {
-  const [greeting, setGreeting] = useState("")
-  const [loadingGreeting, setLoadingGreeting] = useState(true)
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" className="h-6 w-6 shrink-0 sm:h-6 sm:w-6">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 5.98 1.53 7.36 2.81l5.38-5.25C33.45 4.13 29.1 2.5 24 2.5 14.61 2.5 6.58 7.88 2.76 15.72l6.25 4.85C10.89 14.01 16.93 9.5 24 9.5Z" />
+      <path fill="#4285F4" d="M45.5 24.5c0-1.56-.14-2.68-.44-3.85H24v7.3h12.36c-.25 1.82-1.6 4.56-4.62 6.4l6.17 4.79c3.6-3.32 7.59-8.16 7.59-14.64Z" />
+      <path fill="#FBBC05" d="M9.01 29.57A14.57 0 0 1 8.2 24c0-1.93.32-3.8.76-5.5l-6.2-4.83A22.83 22.83 0 0 0 1.5 24c0 3.7.89 7.22 2.6 10.33l6.2-4.76Z" />
+      <path fill="#34A853" d="M24 45.5c6.36 0 11.7-2.08 15.6-5.67l-6.17-4.79c-1.68 1.15-4.02 1.96-7.43 1.96-6.94 0-12.96-4.58-15.1-10.93l-6.2 4.76C8.58 39.62 15.5 45.5 24 45.5Z" />
+    </svg>
+  )
+}
 
-  useEffect(() => {
-    const controller = new AbortController()
-    async function load() {
-      try {
-        const url = new URL("/api/homepage/personalize", window.location.origin)
-        const params = new URLSearchParams(window.location.search)
-        if (params.get("utm_source")) url.searchParams.set("utm_source", params.get("utm_source")!)
-        if (params.get("utm_campaign")) url.searchParams.set("utm_campaign", params.get("utm_campaign")!)
-        url.searchParams.set("hour", String(new Date().getHours()))
-        let referrerHost: string | null = null
-        try { referrerHost = document.referrer ? new URL(document.referrer).host : null } catch { referrerHost = null }
-        let sessionId: string | null = null
-        try {
-          sessionId = getSessionId()
-          const stored = sessionStorage.getItem("vh_homepage_entry_v1")
-          if (stored) {
-            const entry = JSON.parse(stored) as { source?: unknown; campaign?: unknown; referrer?: unknown; capturedAt?: unknown }
-            const capturedAt = Number(entry.capturedAt ?? 0)
-            if (capturedAt > 0 && Date.now() - capturedAt < 24 * 60 * 60 * 1000) {
-              if (typeof entry.source === "string" && !url.searchParams.get("utm_source")) url.searchParams.set("utm_source", entry.source)
-              if (typeof entry.campaign === "string" && !url.searchParams.get("utm_campaign")) url.searchParams.set("utm_campaign", entry.campaign)
-              if (!referrerHost && typeof entry.referrer === "string") {
-                try { referrerHost = entry.referrer ? new URL(entry.referrer).host : null } catch { referrerHost = null }
-              }
-            }
-          }
-        } catch { /* Opcionális kampánymérés. */ }
-        const response = await fetch(url.toString(), {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-          body: JSON.stringify({
-            sessionId,
-            isMobile: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ""),
-            isInAppBrowser: /FBAN|FBAV|Instagram|Line\b|TikTok|Twitter|WhatsApp|Snapchat|Pinterest|LinkedInApp|wv\b|WebView/i.test(navigator.userAgent || ""),
-            referrerHost,
-          }),
-          cache: "no-store",
-          signal: controller.signal,
-        })
-        if (!response.ok) throw new Error("homepage_failed")
-        const payload = await response.json() as { ok?: boolean; plan?: HomepagePlan }
-        if (!payload.ok || !payload.plan) throw new Error("homepage_missing")
-        setGreeting(payload.plan.greeting)
-        try { sessionStorage.removeItem("vh_homepage_entry_v1") } catch { /* Opcionális tárolótakarítás. */ }
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return
-        console.error("[fooldal-4] személyes üdvözlés betöltése nem sikerült", error)
-        // A személyre szabás hibája ne akadályozza a főoldal használatát.
-        setGreeting("Szia. Jó, hogy itt vagy.")
-      } finally { setLoadingGreeting(false) }
-    }
-    void load()
-    return () => controller.abort()
-  }, [token])
+function FacebookMark() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="h-6 w-6 shrink-0 sm:h-6 sm:w-6">
+      <path fill="currentColor" d="M13.65 22v-8.22h2.76l.41-3.2h-3.17V8.54c0-.93.26-1.57 1.6-1.57h1.71V4.1c-.3-.04-1.34-.1-2.55-.1-2.52 0-4.25 1.54-4.25 4.37v2.21H7.3v3.2h2.87V22h3.48Z" />
+    </svg>
+  )
+}
 
+
+function MemberGreeting({ greeting, loading, error }: { greeting: string; loading: boolean; error: boolean }) {
+  const visibleGreeting = greeting || (!loading ? "Szia. Jó, hogy itt vagy." : "")
   const [typedGreeting, setTypedGreeting] = useState("")
+
   useEffect(() => {
-    if (!greeting) return
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setTypedGreeting(greeting); return }
+    if (!visibleGreeting) return
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTypedGreeting(visibleGreeting)
+      return
+    }
+
     setTypedGreeting("")
     let index = 0
     let timeoutId: number | null = null
     const tick = () => {
       index += 1
-      setTypedGreeting(greeting.slice(0, index))
-      if (index < greeting.length) {
-        const char = greeting[index - 1] ?? ""
+      setTypedGreeting(visibleGreeting.slice(0, index))
+      if (index < visibleGreeting.length) {
+        const char = visibleGreeting[index - 1] ?? ""
         timeoutId = window.setTimeout(tick, char === " " ? 10 : /[.!?,:]/.test(char) ? 90 : 24)
       }
     }
     timeoutId = window.setTimeout(tick, 140)
     return () => { if (timeoutId !== null) window.clearTimeout(timeoutId) }
-  }, [greeting])
+  }, [visibleGreeting])
 
   return (
-    <section className="pt-10 pb-8 sm:pt-7" aria-label="Személyes üdvözlés">
-      {loadingGreeting ? (
-        <div className="h-8" role="status" aria-label="Betöltés">
-          <span
-            aria-hidden="true"
-            className="inline-block h-6 w-[2px] animate-pulse bg-lime-200 align-middle"
-          />
+    <section className="pt-5 pb-4 sm:pt-7" aria-label="Személyes üdvözlés" aria-busy={loading}>
+      {loading ? (
+        <div className="relative overflow-hidden border border-lime-200/20 bg-[#050605] px-4 py-4 sm:px-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-lime-200 shadow-[0_0_14px_rgba(217,249,157,0.65)]" />
+              <div>
+                <p className="text-[9px] uppercase tracking-[0.24em] text-lime-200/70" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  HÁLÓZATI KAPCSOLAT AKTÍV
+                </p>
+                <p className="mt-1 text-sm text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  Személyes adatok szinkronizálása
+                </p>
+              </div>
+            </div>
+            <LoaderCircle aria-hidden="true" className="h-5 w-5 shrink-0 animate-spin text-lime-200/80" />
+          </div>
+          <p className="mt-3 text-xs leading-5 text-zinc-500">
+            A Vadásztérkép és az aktív lelőhelyek betöltése ettől függetlenül fut. Nem kell megvárnod a személyes köszöntést.
+          </p>
+          <div className="mt-4 h-1 overflow-hidden bg-zinc-900">
+            <div className="h-full w-2/5 animate-pulse bg-lime-200/70" />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[9px] uppercase tracking-[0.16em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <span>01 / TÉRKÉP: KÜLÖN SZÁL</span>
+            <span>02 / RENDELÉSEK: ELLENŐRZÉS</span>
+            <span>03 / PROFIL: SZINKRON</span>
+          </div>
         </div>
       ) : (
         <div className="max-w-4xl animate-fadeIn">
           <p className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
             {typedGreeting}
-            {typedGreeting.length < greeting.length && <span aria-hidden="true" className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse" />}
+            {typedGreeting.length < visibleGreeting.length && <span aria-hidden="true" className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse" />}
           </p>
+          {error ? (
+            <p className="mt-2 text-xs text-zinc-500" role="status">
+              A személyes üdvözlés most nem érhető el, de a Vadásztérkép és a többi funkció használható.
+            </p>
+          ) : null}
         </div>
       )}
     </section>
   )
 }
+
+
+function OrderStatusLoadingBlock() {
+  return (
+    <section className="animate-fadeIn border-b border-zinc-900 py-6 sm:py-8" aria-label="Rendelések betöltése" aria-busy="true">
+      <div className="border border-zinc-800 bg-[#050505] p-5 sm:p-6">
+        <div className="flex items-center gap-3">
+          <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin text-lime-200" />
+          <div>
+            <p className="text-[9px] uppercase tracking-[0.26em] text-lime-200/55" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              RENDELÉS / ÁLLAPOT
+            </p>
+            <p className="mt-2 text-sm text-zinc-200" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              Rendeléseid ellenőrzése folyamatban
+            </p>
+          </div>
+        </div>
+        <p className="mt-3 text-xs leading-5 text-zinc-500">
+          A rendelési információk a háttérben töltődnek be. Közben a térkép már használható.
+        </p>
+      </div>
+    </section>
+  )
+}
+
 
 function MemberHome({ session }: { session: SessionShape }) {
   const token = session?.access_token ?? ""
@@ -459,13 +499,34 @@ function MemberHome({ session }: { session: SessionShape }) {
         if (params.get("utm_source")) url.searchParams.set("utm_source", params.get("utm_source")!)
         if (params.get("utm_campaign")) url.searchParams.set("utm_campaign", params.get("utm_campaign")!)
         url.searchParams.set("hour", String(new Date().getHours()))
+
         let referrerHost: string | null = null
         try { referrerHost = document.referrer ? new URL(document.referrer).host : null } catch { referrerHost = null }
+
+        let sessionId: string | null = null
+        try {
+          sessionId = getSessionId()
+          const stored = sessionStorage.getItem("vh_homepage_entry_v1")
+          if (stored) {
+            const entry = JSON.parse(stored) as { source?: unknown; campaign?: unknown; referrer?: unknown; capturedAt?: unknown }
+            const capturedAt = Number(entry.capturedAt ?? 0)
+            if (capturedAt > 0 && Date.now() - capturedAt < 24 * 60 * 60 * 1000) {
+              if (typeof entry.source === "string" && !url.searchParams.get("utm_source")) url.searchParams.set("utm_source", entry.source)
+              if (typeof entry.campaign === "string" && !url.searchParams.get("utm_campaign")) url.searchParams.set("utm_campaign", entry.campaign)
+              if (!referrerHost && typeof entry.referrer === "string") {
+                try { referrerHost = entry.referrer ? new URL(entry.referrer).host : null } catch { referrerHost = null }
+              }
+            }
+          }
+        } catch {
+          // A kampányforrás és a session azonosítása opcionális.
+        }
+
         const response = await fetch(url.toString(), {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
           body: JSON.stringify({
-            sessionId: getSessionId(),
+            sessionId,
             isMobile: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ""),
             isInAppBrowser: /FBAN|FBAV|Instagram|Line\b|TikTok|Twitter|WhatsApp|Snapchat|Pinterest|LinkedInApp|wv\b|WebView/i.test(navigator.userAgent || ""),
             referrerHost,
@@ -477,15 +538,19 @@ function MemberHome({ session }: { session: SessionShape }) {
         const payload = await response.json() as { ok?: boolean; plan?: HomepagePlan }
         if (!payload.ok || !payload.plan) throw new Error("homepage_missing")
         setPlan(payload.plan)
+        try { sessionStorage.removeItem("vh_homepage_entry_v1") } catch { /* Opcionális tárolótakarítás. */ }
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return
-        console.error("[fooldal-4] aktív rendelések betöltése nem sikerült", error)
+        console.error("[fooldal-4] személyes tartalom és rendelések betöltése nem sikerült", error)
         setError(true)
-      } finally { setLoadingPlan(false) }
+      } finally {
+        setLoadingPlan(false)
+      }
     }
     void load()
     return () => controller.abort()
   }, [token])
+
   const usefulBlocks = plan?.blocks.filter((block) => block.type === "order_status") ?? []
   const handleReceived = (orderId: string) => {
     setCelebratedOrders(current => current.some(item => item.orderId === orderId)
@@ -496,47 +561,49 @@ function MemberHome({ session }: { session: SessionShape }) {
       blocks: current.blocks.filter(block => block.type !== "order_status" || block.orderId !== orderId)
     } : current)
   }
+
   return (
     <>
       <SiteHeader />
       <main className="animate-fadeIn mx-auto w-full max-w-6xl px-5 pb-24 pt-0 sm:px-8 sm:pb-32">
-        <MemberGreeting token={token} />
+        <div className="animate-fadeIn">
+          <Fooldal4HuntingMap />
+        </div>
+
+        <MemberGreeting greeting={plan?.greeting ?? ""} loading={loadingPlan} error={error} />
+
+        {loadingPlan ? <OrderStatusLoadingBlock /> : null}
         {!loadingPlan && !error && usefulBlocks.map(block => (
           <OrderStatusBlockView key={"order-" + block.orderId} block={block} token={token} onReceived={handleReceived} />
         ))}
         {!loadingPlan && celebratedOrders.map(order => (
           <OrderReceivedCelebration key={"received-" + order.orderId} />
         ))}
-        {!loadingPlan && (
-          <div className="animate-fadeIn">
-            <Fooldal4HuntingMap />
-          </div>
-        )}
-        {!loadingPlan && (
-          <section className="animate-fadeIn border-b border-zinc-900 py-5">
-            <Link
-              href="/kapcsolat"
-              className="flex w-full items-center gap-4 border border-zinc-800 bg-zinc-950/70 px-4 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900/80 hover:text-white sm:w-auto"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              <Image
-                src="/img/avatar.webp"
-                alt=""
-                width={44}
-                height={44}
-                className="h-11 w-11 shrink-0 rounded-full border border-zinc-700 object-cover"
-              />
-              <span className="flex-1">ÜZENET V.-NEK</span>
-              <ArrowUpRight className="h-4 w-4 shrink-0" />
-            </Link>
-          </section>
-        )}
+
+        <section className="animate-fadeIn border-b border-zinc-900 py-5">
+          <Link
+            href="/kapcsolat"
+            className="flex w-full items-center gap-4 border border-zinc-800 bg-zinc-950/70 px-4 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-900/80 hover:text-white sm:w-auto"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            <Image
+              src="/img/avatar.webp"
+              alt=""
+              width={44}
+              height={44}
+              className="h-11 w-11 shrink-0 rounded-full border border-zinc-700 object-cover"
+            />
+            <span className="flex-1">ÜZENET V.-NEK</span>
+            <ArrowUpRight className="h-4 w-4 shrink-0" />
+          </Link>
+        </section>
         <TrustSection />
       </main>
       <Footer />
     </>
   )
 }
+
 
 export default function Fooldal4() {
   const { session, loading } = useSessionGuard() as {
@@ -550,8 +617,29 @@ export default function Fooldal4() {
       {loading ? (
         <>
           <SiteHeader />
-          <div className="animate-fadeIn flex min-h-[30vh] items-center justify-center" role="status" aria-label="Betöltés">
-            <span aria-hidden="true" className="inline-block h-6 w-[2px] animate-pulse bg-lime-200" />
+          <div className="animate-fadeIn flex min-h-[62vh] items-center justify-center px-5 py-12" role="status" aria-label="Kapcsolódás a hálózathoz">
+            <section className="w-full max-w-xl border border-lime-200/20 bg-[#050605] p-5 sm:p-7">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-[9px] uppercase tracking-[0.28em] text-lime-200/70" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  V / ZÁRTKÖRŰ HÁLÓZAT
+                </p>
+                <LoaderCircle aria-hidden="true" className="h-5 w-5 animate-spin text-lime-200" />
+              </div>
+              <h1 className="mt-5 text-xl uppercase tracking-tight text-zinc-100 sm:text-2xl" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                Kapcsolódás a hálózathoz
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">
+                Ellenőrizzük a munkamenetedet. A Vadásztérkép, a lelőhelyek és a rendeléseid ezután külön-külön töltődnek be.
+              </p>
+              <div className="mt-6 h-1 overflow-hidden bg-zinc-900">
+                <div className="h-full w-2/5 animate-pulse bg-lime-200/75" />
+              </div>
+              <div className="mt-5 grid grid-cols-1 gap-3 text-[9px] uppercase tracking-[0.18em] text-zinc-600 sm:grid-cols-3" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                <div className="border border-zinc-900 p-3"><p>01 / VADÁSZTÉRKÉP</p><p className="mt-2 text-lime-200/70">Indításra kész</p></div>
+                <div className="border border-zinc-900 p-3"><p>02 / RENDELÉSEK</p><p className="mt-2">Ellenőrzés</p></div>
+                <div className="border border-zinc-900 p-3"><p>03 / PROFIL</p><p className="mt-2">Szinkronizálás</p></div>
+              </div>
+            </section>
           </div>
         </>
       ) : null}
