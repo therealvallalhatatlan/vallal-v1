@@ -324,15 +324,36 @@ function GuestHome() {
             <p className="mt-5 text-right text-[21px] italic tracking-wide text-zinc-500">— Író Úr</p>
             <div className="mt-10">
               <p className="text-right text-[11px] uppercase tracking-[0.08em] text-zinc-500">Ez egy privát, zártkörű klub. Jelentkezz be.</p>
-              <div className="mt-5 flex flex-row gap-7 sm:justify-end">
-                <Link href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4" className="outline-4 outline-offset-2 outline-lime-100/10 inline-flex min-h-14 flex-1 items-center justify-center gap-3 rounded-md border-2 border-lime-400/45 bg-lime-400/[0.035] px-4 py-3 text-[17px] font-semibold tracking-[0.04em] text-lime-200 transition-all hover:border-lime-300 hover:bg-lime-400/[0.08] hover:text-white sm:min-w-40 sm:flex-none sm:text-[12px]">
-                  <Mail aria-hidden="true" className="h-6 w-6 shrink-0 text-lime-200 sm:h-5 sm:w-5" />Email
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:ml-auto sm:max-w-xl sm:gap-4">
+                <Link
+                  href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=google"
+                  aria-label="Belépés Google-fiókkal"
+                  className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-md border-2 border-zinc-300/80 bg-zinc-100 px-4 py-3 text-base font-semibold tracking-[0.01em] text-zinc-950 shadow-[0_8px_32px_rgba(255,255,255,0.08)] transition-all hover:border-white hover:bg-white hover:shadow-[0_8px_36px_rgba(255,255,255,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-200 sm:min-h-[64px] sm:text-base"
+                >
+                  <GoogleMark />
+                  <span>Google</span>
                 </Link>
-                <Link href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=google" className="outline-4 outline-offset-2 outline-zinc-100/10 inline-flex min-h-14 flex-1 items-center justify-center gap-3 rounded-md border-2 border-zinc-400 bg-black px-4 py-3 text-[17px] font-semibold tracking-[0.04em] text-zinc-300 transition-all hover:border-zinc-100/60 hover:bg-zinc-900 hover:text-lime-100 sm:min-w-48 sm:flex-none">
-                  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0 fill-current text-zinc-200 sm:h-5 sm:w-5"><path d="M21.35 11.1h-9.18v2.98h5.62c-.24 1.56-1.84 4.58-5.62 4.58-3.38 0-6.14-2.8-6.14-6.26s2.76-6.26 6.14-6.26c1.92 0 3.21.82 3.95 1.53l2.14-2.08C16.88 4.3 14.96 3.3 12.17 3.3 7.36 3.3 3.45 7.2 3.45 12s3.91 8.7 8.72 8.7c5.04 0 8.39-3.54 8.39-8.52 0-.57-.06-.99-.13-1.08z" /></svg>
-                  Google
+                <Link
+                  href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=facebook"
+                  aria-label="Belépés Facebookkal"
+                  className="group inline-flex min-h-[58px] items-center justify-center gap-3 rounded-md border-2 border-[#1877F2] bg-[#1877F2] px-4 py-3 text-base font-semibold tracking-[0.01em] text-white shadow-[0_8px_32px_rgba(24,119,242,0.22)] transition-all hover:border-[#3288ff] hover:bg-[#3288ff] hover:shadow-[0_8px_36px_rgba(24,119,242,0.32)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-lime-200 sm:min-h-[64px] sm:text-base"
+                >
+                  <FacebookMark />
+                  <span>Facebook</span>
                 </Link>
               </div>
+              <div className="mt-3 flex items-center gap-3 sm:ml-auto sm:max-w-xl">
+                <span className="h-px flex-1 bg-zinc-800" />
+                <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">vagy emaillel</span>
+                <span className="h-px flex-1 bg-zinc-800" />
+              </div>
+              <Link
+                href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4"
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-zinc-800 bg-black px-4 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-100 sm:ml-auto sm:flex sm:w-auto sm:min-w-48"
+              >
+                <Mail aria-hidden="true" className="h-4 w-4 shrink-0" />
+                Emailes belépés
+              </Link>
             </div>
           </div>
         </section>
@@ -343,6 +364,26 @@ function GuestHome() {
     </>
   )
 }
+
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" className="h-6 w-6 shrink-0 sm:h-6 sm:w-6">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 5.98 1.53 7.36 2.81l5.38-5.25C33.45 4.13 29.1 2.5 24 2.5 14.61 2.5 6.58 7.88 2.76 15.72l6.25 4.85C10.89 14.01 16.93 9.5 24 9.5Z" />
+      <path fill="#4285F4" d="M45.5 24.5c0-1.56-.14-2.68-.44-3.85H24v7.3h12.36c-.25 1.82-1.6 4.56-4.62 6.4l6.17 4.79c3.6-3.32 7.59-8.16 7.59-14.64Z" />
+      <path fill="#FBBC05" d="M9.01 29.57A14.57 0 0 1 8.2 24c0-1.93.32-3.8.76-5.5l-6.2-4.83A22.83 22.83 0 0 0 1.5 24c0 3.7.89 7.22 2.6 10.33l6.2-4.76Z" />
+      <path fill="#34A853" d="M24 45.5c6.36 0 11.7-2.08 15.6-5.67l-6.17-4.79c-1.68 1.15-4.02 1.96-7.43 1.96-6.94 0-12.96-4.58-15.1-10.93l-6.2 4.76C8.58 39.62 15.5 45.5 24 45.5Z" />
+    </svg>
+  )
+}
+
+function FacebookMark() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="h-6 w-6 shrink-0 sm:h-6 sm:w-6">
+      <path fill="currentColor" d="M13.65 22v-8.22h2.76l.41-3.2h-3.17V8.54c0-.93.26-1.57 1.6-1.57h1.71V4.1c-.3-.04-1.34-.1-2.55-.1-2.52 0-4.25 1.54-4.25 4.37v2.21H7.3v3.2h2.87V22h3.48Z" />
+    </svg>
+  )
+}
+
 
 function MemberGreeting({ token }: { token: string }) {
   const [greeting, setGreeting] = useState("")
@@ -381,7 +422,7 @@ function MemberGreeting({ token }: { token: string }) {
           body: JSON.stringify({
             sessionId,
             isMobile: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ""),
-            isInAppBrowser: /FBAN|FBAV|Instagram|Line\b|TikTok|Twitter|WhatsApp|Snapchat|Pinterest|LinkedInApp|wv\b|WebView/i.test(navigator.userAgent || ""),
+            isInAppBrowser: /FBAN|FBAV|Instagram|Line\\b|TikTok|Twitter|WhatsApp|Snapchat|Pinterest|LinkedInApp|wv\\b|WebView/i.test(navigator.userAgent || ""),
             referrerHost,
           }),
           cache: "no-store",
@@ -467,7 +508,7 @@ function MemberHome({ session }: { session: SessionShape }) {
           body: JSON.stringify({
             sessionId: getSessionId(),
             isMobile: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ""),
-            isInAppBrowser: /FBAN|FBAV|Instagram|Line\b|TikTok|Twitter|WhatsApp|Snapchat|Pinterest|LinkedInApp|wv\b|WebView/i.test(navigator.userAgent || ""),
+            isInAppBrowser: /FBAN|FBAV|Instagram|Line\\b|TikTok|Twitter|WhatsApp|Snapchat|Pinterest|LinkedInApp|wv\\b|WebView/i.test(navigator.userAgent || ""),
             referrerHost,
           }),
           cache: "no-store",
@@ -504,7 +545,7 @@ function MemberHome({ session }: { session: SessionShape }) {
         {!loadingPlan && !error && usefulBlocks.map(block => (
           <OrderStatusBlockView key={"order-" + block.orderId} block={block} token={token} onReceived={handleReceived} />
         ))}
-        {!loadingPlan && celebratedOrders.map(order => (
+        {!loadingPlan && !loadingPlan && celebratedOrders.map(order => (
           <OrderReceivedCelebration key={"received-" + order.orderId} />
         ))}
         {!loadingPlan && (
