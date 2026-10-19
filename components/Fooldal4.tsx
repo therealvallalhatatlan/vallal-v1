@@ -528,7 +528,7 @@ function MemberHome({ session }: { session: SessionShape }) {
           body: JSON.stringify({
             sessionId,
             isMobile: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ""),
-            isInAppBrowser: /FBAN|FBAV|Instagram|Line\\b|TikTok|Twitter|WhatsApp|Snapchat|Pinterest|LinkedInApp|wv\\b|WebView/i.test(navigator.userAgent || ""),
+            isInAppBrowser: /FBAN|FBAV|Instagram|Line\b|TikTok|Twitter|WhatsApp|Snapchat|Pinterest|LinkedInApp|wv\b|WebView/i.test(navigator.userAgent || ""),
             referrerHost,
           }),
           cache: "no-store",
