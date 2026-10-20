@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUserFromToken, parseBearerToken } from "@/lib/auth"
+import { getUserFromToken, isAdminEmail, parseBearerToken } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 
 export const dynamic = "force-dynamic"
@@ -11,7 +11,11 @@ const ALLOWED_FULFILLMENT = new Set([
   "eu_shipping",
   "global_shipping",
 ])
-const ALLOWED_PRODUCTS = new Set(["book_i", "book_ii"])
+const PRODUCT_DETAILS: Record<string, { product_name: string; unit_price_huf: number }> = {
+  book_i: { product_name: "Vállalhatatlan I.", unit_price_huf: 10000 },
+  book_ii: { product_name: "Vállalhatatlan II.", unit_price_huf: 10000 },
+}
+const ALLOWED_PRODUCTS = new Set(Object.keys(PRODUCT_DETAILS))
 
 export async function POST(request: NextRequest) {
   const token = parseBearerToken(request.headers)
@@ -19,6 +23,7 @@ export async function POST(request: NextRequest) {
 
   const user = await getUserFromToken(token)
   if (!user?.id) return NextResponse.json({ error: "unauthenticated" }, { status: 401 })
+  const isAdmin = isAdminEmail(user.email)
 
   let body: {
     cell_id?: unknown
@@ -68,6 +73,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid_fulfillment_options" }, { status: 400 })
   }
 
+  const productDetails = PRODUCT_DETAILS[productId]
   const db = supabaseAdmin()
   const [{ data: membership, error: membershipError }, { data: cell, error: cellError }, { data: inventory, error: inventoryError }] = await Promise.all([
     db.from("distribution_cell_members")
@@ -93,35 +99,38 @@ export async function POST(request: NextRequest) {
   if (!membership) return NextResponse.json({ error: "not_cell_member" }, { status: 403 })
   if (!cell || cell.status !== "active") return NextResponse.json({ error: "cell_unavailable" }, { status: 409 })
   if (cell.city !== cityFromBody(body.city)) return NextResponse.json({ error: "cell_city_mismatch" }, { status: 409 })
-  if (!inventory) return NextResponse.json({ error: "inventory_not_found" }, { status: 409 })
-  if (inventory.quantity_available < 1) return NextResponse.json({ error: "inventory_empty" }, { status: 409 })
+  if (!isAdmin && !inventory) return NextResponse.json({ error: "inventory_not_found" }, { status: 409 })
+  if (!isAdmin && inventory && inventory.quantity_available < 1) return NextResponse.json({ error: "inventory_empty" }, { status: 409 })
 
-  const { data: decremented, error: decrementError } = await db
-    .from("distribution_cell_inventory")
-    .update({
-      quantity_available: inventory.quantity_available - 1,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", inventory.id)
-    .eq("quantity_available", inventory.quantity_available)
-    .gte("quantity_available", 1)
-    .select("id")
-    .maybeSingle()
+  if (!isAdmin && inventory) {
+    const { data: decremented, error: decrementError } = await db
+      .from("distribution_cell_inventory")
+      .update({
+        quantity_available: inventory.quantity_available - 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", inventory.id)
+      .eq("quantity_available", inventory.quantity_available)
+      .gte("quantity_available", 1)
+      .select("id")
+      .maybeSingle()
 
-  if (decrementError) {
-    console.error("[distribution/cell/drops] inventory decrement error", decrementError)
-    return NextResponse.json({ error: "server_error" }, { status: 500 })
+    if (decrementError) {
+      console.error("[distribution/cell/drops] inventory decrement error", decrementError)
+      return NextResponse.json({ error: "server_error" }, { status: 500 })
+    }
+    if (!decremented) return NextResponse.json({ error: "inventory_changed_retry" }, { status: 409 })
   }
-  if (!decremented) return NextResponse.json({ error: "inventory_changed_retry" }, { status: 409 })
 
   const now = new Date().toISOString()
   const { data: drop, error: dropError } = await db
     .from("distribution_drops")
     .insert({
       cell_id: cellId,
-      product_id: inventory.product_id,
-      product_name: inventory.product_name,
-      price_huf: Math.round(Number(inventory.unit_price_huf)),
+      product_id: productId,
+      product_name: inventory?.product_name || productDetails.product_name,
+      price_huf: Math.round(Number(inventory?.unit_price_huf ?? productDetails.unit_price_huf)),
+      inventory_reserved: !isAdmin,
       city: cell.city,
       district,
       location_hint: locationHint,
@@ -136,22 +145,26 @@ export async function POST(request: NextRequest) {
 
   if (dropError || !drop?.id) {
     console.error("[distribution/cell/drops] drop insert error", dropError)
-    await db
-      .from("distribution_cell_inventory")
-      .update({ quantity_available: inventory.quantity_available, updated_at: new Date().toISOString() })
-      .eq("id", inventory.id)
+    if (!isAdmin && inventory) {
+      await db
+        .from("distribution_cell_inventory")
+        .update({ quantity_available: inventory.quantity_available, updated_at: new Date().toISOString() })
+        .eq("id", inventory.id)
+    }
     return NextResponse.json({ error: "drop_create_failed" }, { status: 500 })
   }
 
-  await db.from("distribution_inventory_events").insert({
-    cell_id: cellId,
-    product_id: inventory.product_id,
-    delta_quantity: -1,
-    event_type: "drop_allocated",
-    reference_id: drop.id,
-    created_by_user_id: user.id,
-    note: "Book allocated to distribution drop",
-  })
+  if (!isAdmin) {
+    await db.from("distribution_inventory_events").insert({
+      cell_id: cellId,
+      product_id: productId,
+      delta_quantity: -1,
+      event_type: "drop_allocated",
+      reference_id: drop.id,
+      created_by_user_id: user.id,
+      note: "Book allocated to distribution drop",
+    })
+  }
 
   return NextResponse.json({ ok: true, drop_id: drop.id }, { status: 201 })
 }
