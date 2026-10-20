@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin"
 export const dynamic = "force-dynamic"
 
 const BUCKET = "distribution-drop-photos"
-const MAX_PHOTO_BYTES = 4 * 1024 * 1024
+const MAX_PHOTO_BYTES = 8 * 1024 * 1024
 const MAX_PHOTOS_PER_DROP = 8
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
 
