@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { LocateFixed, MapPin, RefreshCw } from "lucide-react"
 import { createClient } from "@/lib/browser"
 import { buildAuthHref } from "@/lib/authRedirect"
@@ -352,7 +353,7 @@ export default function Fooldal4HuntingMap() {
                 </div>
               )}
             </div>}
-        {selectedDrop ? (
+        {selectedDrop ? createPortal(
           <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:p-6">
             <div className="w-full max-w-xl bg-[#000000] p-5 shadow-2xl sm:p-7">
               <div className="flex items-start justify-between gap-5">
@@ -428,7 +429,8 @@ export default function Fooldal4HuntingMap() {
 
               {checkoutError ? <p className="mt-4 text-sm text-red-300">{checkoutError}</p> : null}
             </div>
-          </div>
+          </div>,
+          document.body,
         ) : null}
 
     </section>
