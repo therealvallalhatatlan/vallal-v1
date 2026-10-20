@@ -3,6 +3,51 @@
 import { useEffect, useMemo, useState } from "react"
 import { createClient } from "@/lib/browser"
 
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
+const MAX_IMAGE_EDGE = 2048
+
+function loadImageFile(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    image.onload = () => { URL.revokeObjectURL(url); resolve(image) }
+    image.onerror = () => { URL.revokeObjectURL(url); reject(new Error("A kép nem olvasható. Próbáld JPG vagy PNG formátumban.")) }
+    image.src = url
+  })
+}
+
+async function prepareUploadImage(file: File): Promise<File> {
+  const supportedTypes = ["image/jpeg", "image/png", "image/webp"]
+  if (supportedTypes.includes(file.type) && file.size <= MAX_UPLOAD_BYTES) return file
+
+  // On compatible mobile browsers, canvas decoding also converts HEIC/HEIF and large photos to JPEG.
+  const image = await loadImageFile(file)
+  const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(image.naturalWidth, image.naturalHeight))
+  const canvas = document.createElement("canvas")
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * scale))
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * scale))
+  const context = canvas.getContext("2d")
+  if (!context) throw new Error("A képfeldolgozás nem érhető el ezen az eszközön.")
+  context.drawImage(image, 0, 0, canvas.width, canvas.height)
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((value) => value ? resolve(value) : reject(new Error("A képet nem sikerült átalakítani.")), "image/jpeg", 0.84)
+  })
+  if (blob.size > MAX_UPLOAD_BYTES) {
+    const smaller = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((value) => value ? resolve(value) : reject(new Error("A képet nem sikerült tömöríteni.")), "image/jpeg", 0.65)
+    })
+    if (smaller.size > MAX_UPLOAD_BYTES) throw new Error("A kép tömörítés után is túl nagy. Válassz kisebb képet.")
+    return new File([smaller], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg", lastModified: Date.now() })
+  }
+  return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg", lastModified: Date.now() })
+}
+
+async function prepareUploadImages(files: File[]): Promise<File[]> {
+  const prepared: File[] = []
+  for (const file of files) prepared.push(await prepareUploadImage(file))
+  return prepared
+}
+
 type Inventory = {
   id: string
   product_id: string
@@ -191,11 +236,6 @@ export default function CellConsole() {
       setMessage("Egy szpothoz legfeljebb 8 fotót tölthetsz fel.")
       return
     }
-    if (newPhotos.some((photo) => photo.size > 4 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(photo.type))) {
-      setMessage("Csak JPG, PNG vagy WebP képet tölts fel, legfeljebb 4 MB fájlmérettel.")
-      return
-    }
-
     setSaving(true)
     setMessage(null)
     try {
@@ -221,7 +261,8 @@ export default function CellConsole() {
 
       let photoMessage = ""
       if (newPhotos.length) {
-        const photosSaved = await uploadPhotos(json.drop_id, newPhotos)
+        const preparedPhotos = await prepareUploadImages(newPhotos)
+        const photosSaved = await uploadPhotos(json.drop_id, preparedPhotos)
         if (!photosSaved) photoMessage = " A szpot létrejött, de a fotók feltöltése nem sikerült teljesen."
       }
 
@@ -351,9 +392,8 @@ export default function CellConsole() {
       setMessage("Legalább egy átadási módot válassz.")
       return
     }
-    if (editingDrop.photos.length + editingDrop.newPhotos.length > 8 ||
-      editingDrop.newPhotos.some((photo) => photo.size > 4 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(photo.type))) {
-      setMessage("Legfeljebb 8 fotó lehet szpotonként. Csak JPG, PNG vagy WebP képet tölts fel, maximum 4 MB méretben.")
+    if (editingDrop.photos.length + editingDrop.newPhotos.length > 8) {
+      setMessage("Legfeljebb 8 fotó lehet szpotonként.")
       return
     }
 
@@ -380,7 +420,10 @@ export default function CellConsole() {
       }
 
       let photosSaved = true
-      if (editingDrop.newPhotos.length) photosSaved = await uploadPhotos(editingDrop.id, editingDrop.newPhotos)
+      if (editingDrop.newPhotos.length) {
+        const preparedPhotos = await prepareUploadImages(editingDrop.newPhotos)
+        photosSaved = await uploadPhotos(editingDrop.id, preparedPhotos)
+      }
       setEditingDrop(null)
       await load()
       setMessage(photosSaved ? "Szpot mentve." : "A szpot adatai mentve, de a fotók feltöltése nem sikerült.")
@@ -583,8 +626,8 @@ export default function CellConsole() {
 
           <label className="mt-6 block">
             <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">HELYSZÍNI FOTÓK · MAX. 8 KÉP</span>
-            <input key={photoInputKey} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => setNewPhotos(Array.from(event.target.files || []).slice(0, 8))} className="mt-2 block w-full border border-zinc-800 bg-black px-3 py-3 text-xs text-zinc-400 file:mr-3 file:border-0 file:bg-lime-100 file:px-3 file:py-2 file:text-[10px] file:font-bold file:uppercase file:text-black" />
-            <span className="mt-2 block text-xs text-zinc-600">JPG, PNG vagy WebP, fájlonként legfeljebb 4 MB. A fotókat a vásárló csak fizetés után látja.</span>
+            <input key={photoInputKey} type="file" accept="image/*" multiple onChange={(event) => setNewPhotos(Array.from(event.target.files || []).slice(0, 8))} className="mt-2 block w-full border border-zinc-800 bg-black px-3 py-3 text-xs text-zinc-400 file:mr-3 file:border-0 file:bg-lime-100 file:px-3 file:py-2 file:text-[10px] file:font-bold file:uppercase file:text-black" />
+            <span className="mt-2 block text-xs text-zinc-600">Mobilról is választhatsz fotót. A képeket feltöltés előtt automatikusan átméretezzük és tömörítjük; legfeljebb 8 kép. A fotókat a vásárló csak fizetés után látja.</span>
             {newPhotos.length ? <span className="mt-2 block text-xs text-lime-100/70">{newPhotos.length} fotó kiválasztva: {newPhotos.map((photo) => photo.name).join(", ")}</span> : null}
           </label>
 
@@ -706,8 +749,8 @@ export default function CellConsole() {
               </div>
               <label className="mt-5 block">
                 <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">ÚJ FOTÓK HOZZÁADÁSA</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => setEditingDrop((current) => current ? { ...current, newPhotos: Array.from(event.target.files || []).slice(0, Math.max(0, 8 - current.photos.length)) } : current)} className="mt-2 block w-full border border-zinc-800 bg-black px-3 py-3 text-xs text-zinc-400" />
-                <span className="mt-2 block text-xs text-zinc-600">Összesen legfeljebb 8 kép, fájlonként max. 4 MB. A képek csak fizetés után láthatók a vevőnek.</span>
+                <input type="file" accept="image/*" multiple onChange={(event) => setEditingDrop((current) => current ? { ...current, newPhotos: Array.from(event.target.files || []).slice(0, Math.max(0, 8 - current.photos.length)) } : current)} className="mt-2 block w-full border border-zinc-800 bg-black px-3 py-3 text-xs text-zinc-400" />
+                <span className="mt-2 block text-xs text-zinc-600">Összesen legfeljebb 8 kép. A nagy fotókat feltöltés előtt automatikusan átméretezzük és tömörítjük. A képek csak fizetés után láthatók a vevőnek.</span>
                 {editingDrop.newPhotos.length ? <span className="mt-2 block text-xs text-lime-100/70">{editingDrop.newPhotos.length} új kép kiválasztva.</span> : null}
               </label>
 
