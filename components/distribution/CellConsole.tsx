@@ -214,17 +214,8 @@ export default function CellConsole() {
 
       let photoMessage = ""
       if (newPhotos.length) {
-        const photoForm = new FormData()
-        newPhotos.forEach((photo) => photoForm.append("photos", photo))
-        const photoResponse = await fetch("/api/distribution/cell/drops/" + encodeURIComponent(json.drop_id) + "/photos", {
-          method: "POST",
-          headers: { Authorization: "Bearer " + token },
-          body: photoForm,
-        })
-        const photoJson = await photoResponse.json()
-        if (!photoResponse.ok || !photoJson?.ok) {
-          photoMessage = " A szpot létrejött, de a fotók feltöltése nem sikerült: " + (photoJson?.error || "ismeretlen hiba") + "."
-        }
+        const photosSaved = await uploadPhotos(json.drop_id, newPhotos)
+        if (!photosSaved) photoMessage = " A szpot létrejött, de a fotók feltöltése nem sikerült teljesen."
       }
 
       setDistrict("")
@@ -283,18 +274,20 @@ export default function CellConsole() {
 
   async function uploadPhotos(dropId: string, files: File[]) {
     const accessToken = await getToken()
-    if (!accessToken || !files.length) return true
-    const formData = new FormData()
-    files.forEach((file) => formData.append("photos", file))
-    const response = await fetch("/api/distribution/cell/drops/" + encodeURIComponent(dropId) + "/photos", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + accessToken },
-      body: formData,
-    })
-    const json = await response.json()
-    if (!response.ok || !json?.ok) {
-      setMessage(json?.error || "A fotók feltöltése nem sikerült.")
-      return false
+    if (!accessToken || !files.length) return files.length === 0
+    for (const file of files) {
+      const formData = new FormData()
+      formData.append("photos", file)
+      const response = await fetch("/api/distribution/cell/drops/" + encodeURIComponent(dropId) + "/photos", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + accessToken },
+        body: formData,
+      })
+      const json = await response.json()
+      if (!response.ok || !json?.ok) {
+        setMessage(json?.error || "A fotók feltöltése nem sikerült.")
+        return false
+      }
     }
     return true
   }
