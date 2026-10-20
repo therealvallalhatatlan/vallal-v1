@@ -10,7 +10,6 @@ const SAFE_FIELDS = [
   "price_huf",
   "city",
   "district",
-  "location_hint",
   "fulfillment_options",
   "status",
   "hidden_at",
