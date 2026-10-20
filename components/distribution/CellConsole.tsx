@@ -71,6 +71,7 @@ const FULFILLMENT = [
 
 export default function CellConsole() {
   const [token, setToken] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [cells, setCells] = useState<Cell[]>([])
   const [orders, setOrders] = useState<Array<{
     id: string
@@ -111,6 +112,7 @@ export default function CellConsole() {
     const { data } = await supabase.auth.getSession()
     const accessToken = data?.session?.access_token || null
     setToken(accessToken)
+    setIsAdmin(false)
 
     if (!accessToken) {
       setLoading(false)
@@ -136,6 +138,7 @@ export default function CellConsole() {
       return
     }
 
+    setIsAdmin(Boolean(json.is_admin))
     const nextCells: Cell[] = Array.isArray(json.cells) ? json.cells : []
     setCells(nextCells)
     if (nextCells.length) {
@@ -176,7 +179,7 @@ export default function CellConsole() {
       setMessage("A helyszín és a koordináta kötelező.")
       return
     }
-    if (!selectedInventory || selectedInventory.quantity_available < 1) {
+    if (!isAdmin && (!selectedInventory || selectedInventory.quantity_available < 1)) {
       setMessage("Ehhez a kötethez nincs elérhető készlet. Előbb rögzítsd az átvett példányokat.")
       return
     }
@@ -448,8 +451,8 @@ export default function CellConsole() {
         <section className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="border border-zinc-800 p-5">
             <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-600">KÉSZLET / {BOOKS.find((book) => book.id === selectedProductId)?.name.toUpperCase()}</p>
-            <p className="mt-2 text-4xl font-black text-zinc-100">{selectedInventory?.quantity_available ?? 0}</p>
-            <p className="mt-1 text-xs text-zinc-500">elérhető példány a sejt készletében</p>
+            <p className="mt-2 text-4xl font-black text-zinc-100">{isAdmin ? "∞" : (selectedInventory?.quantity_available ?? 0)}</p>
+            <p className="mt-1 text-xs text-zinc-500">{isAdmin ? "korlátlan admin készlet, nem csökkenti a fizikai készletet" : "elérhető példány a sejt készletében"}</p>
           </div>
           <div className="border border-zinc-800 p-5">
             <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-600">FOLYAMAT</p>
@@ -520,7 +523,7 @@ export default function CellConsole() {
               <select value={selectedProductId} onChange={(event) => setSelectedProductId(event.target.value as "book_i" | "book_ii")} className="mt-2 w-full border border-zinc-800 bg-black px-3 py-3 text-sm text-zinc-200 outline-none focus:border-lime-200/50">
                 {BOOKS.map((book) => {
                   const qty = currentCell?.inventory.find((item) => item.product_id === book.id)?.quantity_available ?? 0
-                  return <option key={book.id} value={book.id}>{book.name} · {qty} DB KÉSZLET</option>
+                  return <option key={book.id} value={book.id}>{book.name} · {isAdmin ? "KORLÁTLAN KÉSZLET" : `${qty} DB KÉSZLET`}</option>
                 })}
               </select>
             </label>
@@ -529,7 +532,7 @@ export default function CellConsole() {
             </div>
           </div>
 
-          {currentCell?.role === "owner" ? (
+          {currentCell?.role === "owner" && !isAdmin ? (
             <div className="mt-4 grid gap-3 border border-zinc-800/70 p-4 sm:grid-cols-[1fr_140px_auto] sm:items-end">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">KÉSZLET FELVÉTELE</p>
@@ -585,7 +588,7 @@ export default function CellConsole() {
             {newPhotos.length ? <span className="mt-2 block text-xs text-lime-100/70">{newPhotos.length} fotó kiválasztva: {newPhotos.map((photo) => photo.name).join(", ")}</span> : null}
           </label>
 
-          <button type="button" onClick={() => void createDrop()} disabled={saving || !selectedInventory?.quantity_available} className="mt-7 w-full border border-lime-200/50 bg-lime-100 px-4 py-4 text-[10px] font-black uppercase tracking-[0.25em] text-black disabled:cursor-not-allowed disabled:opacity-40">
+          <button type="button" onClick={() => void createDrop()} disabled={saving || (!isAdmin && !selectedInventory?.quantity_available)} className="mt-7 w-full border border-lime-200/50 bg-lime-100 px-4 py-4 text-[10px] font-black uppercase tracking-[0.25em] text-black disabled:cursor-not-allowed disabled:opacity-40">
             {saving ? "SZPOT LÉTREHOZÁSA…" : "KÖNYV KIHELYEZÉSE"}
           </button>
 
