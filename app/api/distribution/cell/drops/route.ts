@@ -11,6 +11,7 @@ const ALLOWED_FULFILLMENT = new Set([
   "eu_shipping",
   "global_shipping",
 ])
+const ALLOWED_PRODUCTS = new Set(["book_i", "book_ii"])
 
 export async function POST(request: NextRequest) {
   const token = parseBearerToken(request.headers)
@@ -22,7 +23,6 @@ export async function POST(request: NextRequest) {
   let body: {
     cell_id?: unknown
     product_id?: unknown
-    price_huf?: unknown
     city?: unknown
     district?: unknown
     location_hint?: unknown
@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
 
   const cellId = typeof body.cell_id === "string" ? body.cell_id.trim() : ""
   const productId = typeof body.product_id === "string" ? body.product_id.trim() : ""
-  const priceHuf = Number(body.price_huf)
   const district = typeof body.district === "string" && body.district.trim() ? body.district.trim() : null
   const locationHint = typeof body.location_hint === "string" ? body.location_hint.trim() : ""
   const lat = Number(body.lat)
@@ -50,7 +49,18 @@ export async function POST(request: NextRequest) {
       )))
     : []
 
-  if (!cellId || !productId || !locationHint || !Number.isFinite(priceHuf) || priceHuf <= 0 || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+  if (
+    !cellId ||
+    !ALLOWED_PRODUCTS.has(productId) ||
+    !locationHint ||
+    locationHint.length > 1000 ||
+    !Number.isFinite(lat) ||
+    lat < -90 ||
+    lat > 90 ||
+    !Number.isFinite(lng) ||
+    lng < -180 ||
+    lng > 180
+  ) {
     return NextResponse.json({ error: "missing_or_invalid_fields" }, { status: 400 })
   }
 
@@ -59,22 +69,16 @@ export async function POST(request: NextRequest) {
   }
 
   const db = supabaseAdmin()
-
-  const { data: membership, error: membershipError } = await db
-    .from("distribution_cell_members")
-    .select("cell_id, role")
-    .eq("cell_id", cellId)
-    .eq("user_id", user.id)
-    .maybeSingle()
-
-  if (membershipError) {
-    console.error("[distribution/cell/drops] membership error", membershipError)
-    return NextResponse.json({ error: "server_error" }, { status: 500 })
-  }
-  if (!membership) return NextResponse.json({ error: "not_cell_member" }, { status: 403 })
-
-  const [{ data: cell, error: cellError }, { data: inventory, error: inventoryError }] = await Promise.all([
-    db.from("distribution_cells").select("id, city, status").eq("id", cellId).maybeSingle(),
+  const [{ data: membership, error: membershipError }, { data: cell, error: cellError }, { data: inventory, error: inventoryError }] = await Promise.all([
+    db.from("distribution_cell_members")
+      .select("cell_id, role")
+      .eq("cell_id", cellId)
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    db.from("distribution_cells")
+      .select("id, city, status")
+      .eq("id", cellId)
+      .maybeSingle(),
     db.from("distribution_cell_inventory")
       .select("id, cell_id, product_id, product_name, unit_price_huf, quantity_total, quantity_available")
       .eq("cell_id", cellId)
@@ -82,17 +86,16 @@ export async function POST(request: NextRequest) {
       .maybeSingle(),
   ])
 
-  if (cellError || inventoryError) {
-    console.error("[distribution/cell/drops] lookup error", cellError || inventoryError)
+  if (membershipError || cellError || inventoryError) {
+    console.error("[distribution/cell/drops] lookup error", membershipError || cellError || inventoryError)
     return NextResponse.json({ error: "server_error" }, { status: 500 })
   }
+  if (!membership) return NextResponse.json({ error: "not_cell_member" }, { status: 403 })
   if (!cell || cell.status !== "active") return NextResponse.json({ error: "cell_unavailable" }, { status: 409 })
   if (cell.city !== cityFromBody(body.city)) return NextResponse.json({ error: "cell_city_mismatch" }, { status: 409 })
   if (!inventory) return NextResponse.json({ error: "inventory_not_found" }, { status: 409 })
   if (inventory.quantity_available < 1) return NextResponse.json({ error: "inventory_empty" }, { status: 409 })
 
-  // The inventory decrement is conditional, so concurrent cell requests cannot
-  // both consume the same last book.
   const { data: decremented, error: decrementError } = await db
     .from("distribution_cell_inventory")
     .update({
@@ -111,20 +114,22 @@ export async function POST(request: NextRequest) {
   }
   if (!decremented) return NextResponse.json({ error: "inventory_changed_retry" }, { status: 409 })
 
+  const now = new Date().toISOString()
   const { data: drop, error: dropError } = await db
     .from("distribution_drops")
     .insert({
       cell_id: cellId,
       product_id: inventory.product_id,
       product_name: inventory.product_name,
-      price_huf: Math.round(priceHuf),
+      price_huf: Math.round(Number(inventory.unit_price_huf)),
       city: cell.city,
       district,
       location_hint: locationHint,
       lat,
       lng,
       fulfillment_options: fulfillmentOptions,
-      hidden_at: new Date().toISOString(),
+      hidden_at: now,
+      photo_paths: [],
     })
     .select("id")
     .single()
@@ -148,7 +153,7 @@ export async function POST(request: NextRequest) {
     note: "Book allocated to distribution drop",
   })
 
-  return NextResponse.json({ ok: true, drop_id: drop.id })
+  return NextResponse.json({ ok: true, drop_id: drop.id }, { status: 201 })
 }
 
 function cityFromBody(value: unknown) {
