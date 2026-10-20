@@ -356,7 +356,7 @@ function GuestHome() {
                   className="inline-flex min-h-14 items-center justify-center gap-3 rounded-md border-2 border-zinc-300 bg-zinc-100 px-4 py-3 text-[15px] font-semibold tracking-[0.02em] text-zinc-950 transition-all hover:border-white hover:bg-white sm:min-w-44 sm:text-[13px]"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0 fill-current text-[#4285F4] sm:h-5 sm:w-5"><path d="M21.35 11.1h-9.18v2.98h5.62c-.24 1.56-1.84 4.58-5.62 4.58-3.38 0-6.14-2.8-6.14-6.26s2.76-6.26 6.14-6.26c1.92 0 3.21.82 3.95 1.53l2.14-2.08C16.88 4.3 14.96 3.3 12.17 3.3 7.36 3.3 3.45 7.2 3.45 12s3.91 8.7 8.72 8.7c5.04 0 8.39-3.54 8.39-8.52 0-.57-.06-.99-.13-1.08z" /></svg>
-                  Belépés Google-lal
+                  Google
                 </Link>
                 <Link
                   href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=facebook"
@@ -366,13 +366,13 @@ function GuestHome() {
                   <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0 fill-current text-white sm:h-5 sm:w-5">
                     <path d="M13.65 22v-8.22h2.76l.41-3.2h-3.17V8.54c0-.93.26-1.57 1.6-1.57h1.71V4.1c-.3-.04-1.34-.1-2.55-.1-2.52 0-4.25 1.54-4.25 4.37v2.21H7.3v3.2h2.87V22h3.48Z" />
                   </svg>
-                  Belépés Facebookkal
+                  Facebook
                 </Link>
               </div>
               <div className="mt-5 flex justify-end border-t border-zinc-800/80 pt-3">
                 <Link
                   href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4#auth-email"
-                  className="inline-flex items-center gap-2 py-2 text-[11px] tracking-[0.04em] text-zinc-600 underline decoration-zinc-800 underline-offset-4 transition-colors hover:text-zinc-300 hover:decoration-zinc-500"
+                  className="inline-flex items-center gap-2 py-2 text-[12px] tracking-[0.04em] text-zinc-500 underline decoration-zinc-800 underline-offset-4 transition-colors hover:text-zinc-300 hover:decoration-zinc-500"
                 >
                   <Mail aria-hidden="true" className="h-3.5 w-3.5" />
                   Belépés emaillel
