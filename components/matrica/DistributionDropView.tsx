@@ -16,6 +16,7 @@ type AccessDrop = {
   fulfillment_method: string | null
   status: string
   found_at: string | null
+  photos?: string[]
 }
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ""
@@ -146,6 +147,19 @@ export default function DistributionDropView({ dropId }: { dropId: string }) {
           <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">HELYSZÍNI INSTRUKCIÓ</p>
           <p className="mt-2 text-base leading-7 text-zinc-300">{drop.location_hint}</p>
         </div>
+
+        {drop.photos?.length ? (
+          <section className="mt-6">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">HELYSZÍNI FOTÓK</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {drop.photos.map((url, index) => (
+                <a key={url} href={url} target="_blank" rel="noreferrer" className="block overflow-hidden border border-zinc-800">
+                  <img src={url} alt={"A szpot helyszíne, " + (index + 1) + ". fotó"} className="aspect-[4/3] w-full object-cover" loading="lazy" />
+                </a>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {collected ? (
           <div className="mt-8 border border-lime-200/30 bg-lime-100/5 p-5">
