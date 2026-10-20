@@ -201,7 +201,7 @@ export async function DELETE(
   const db = supabaseAdmin()
   const { data: drop, error: lookupError } = await db
     .from("distribution_drops")
-    .select("id, cell_id, product_id, status, photo_paths, order_id")
+    .select("id, cell_id, product_id, status, photo_paths, order_id, inventory_reserved")
     .eq("id", id)
     .maybeSingle()
 
@@ -233,43 +233,45 @@ export async function DELETE(
   }
   if (!cancelled) return NextResponse.json({ error: "drop_changed_retry" }, { status: 409 })
 
-  const { data: inventory, error: inventoryLookupError } = await db
-    .from("distribution_cell_inventory")
-    .select("id, quantity_available")
-    .eq("cell_id", drop.cell_id)
-    .eq("product_id", drop.product_id)
-    .maybeSingle()
+  if (drop.inventory_reserved !== false) {
+    const { data: inventory, error: inventoryLookupError } = await db
+      .from("distribution_cell_inventory")
+      .select("id, quantity_available")
+      .eq("cell_id", drop.cell_id)
+      .eq("product_id", drop.product_id)
+      .maybeSingle()
 
-  if (inventoryLookupError || !inventory) {
-    await db.from("distribution_drops").update({ status: drop.status, updated_at: new Date().toISOString() }).eq("id", id).eq("status", "cancelled")
-    console.error("[distribution/cell/drops/id] inventory lookup failed", inventoryLookupError)
-    return NextResponse.json({ error: "inventory_restore_failed" }, { status: 500 })
+    if (inventoryLookupError || !inventory) {
+      await db.from("distribution_drops").update({ status: drop.status, updated_at: new Date().toISOString() }).eq("id", id).eq("status", "cancelled")
+      console.error("[distribution/cell/drops/id] inventory lookup failed", inventoryLookupError)
+      return NextResponse.json({ error: "inventory_restore_failed" }, { status: 500 })
+    }
+
+    const { data: restored, error: restoreError } = await db
+      .from("distribution_cell_inventory")
+      .update({ quantity_available: inventory.quantity_available + 1, updated_at: new Date().toISOString() })
+      .eq("id", inventory.id)
+      .eq("quantity_available", inventory.quantity_available)
+      .select("id")
+      .maybeSingle()
+
+    if (restoreError || !restored) {
+      await db.from("distribution_drops").update({ status: drop.status, updated_at: new Date().toISOString() }).eq("id", id).eq("status", "cancelled")
+      console.error("[distribution/cell/drops/id] inventory restore failed", restoreError)
+      return NextResponse.json({ error: "inventory_restore_failed" }, { status: 500 })
+    }
+
+    const { error: eventError } = await db.from("distribution_inventory_events").insert({
+      cell_id: drop.cell_id,
+      product_id: drop.product_id,
+      delta_quantity: 1,
+      event_type: "drop_cancelled_restore",
+      reference_id: drop.id,
+      created_by_user_id: auth.user.id,
+      note: "Cancelled unused drop; item returned to available inventory",
+    })
+    if (eventError) console.error("[distribution/cell/drops/id] inventory audit event failed", eventError)
   }
-
-  const { data: restored, error: restoreError } = await db
-    .from("distribution_cell_inventory")
-    .update({ quantity_available: inventory.quantity_available + 1, updated_at: new Date().toISOString() })
-    .eq("id", inventory.id)
-    .eq("quantity_available", inventory.quantity_available)
-    .select("id")
-    .maybeSingle()
-
-  if (restoreError || !restored) {
-    await db.from("distribution_drops").update({ status: drop.status, updated_at: new Date().toISOString() }).eq("id", id).eq("status", "cancelled")
-    console.error("[distribution/cell/drops/id] inventory restore failed", restoreError)
-    return NextResponse.json({ error: "inventory_restore_failed" }, { status: 500 })
-  }
-
-  const { error: eventError } = await db.from("distribution_inventory_events").insert({
-    cell_id: drop.cell_id,
-    product_id: drop.product_id,
-    delta_quantity: 1,
-    event_type: "drop_cancelled_restore",
-    reference_id: drop.id,
-    created_by_user_id: auth.user.id,
-    note: "Cancelled unused drop; item returned to available inventory",
-  })
-  if (eventError) console.error("[distribution/cell/drops/id] inventory audit event failed", eventError)
 
   const paths: string[] = Array.isArray(drop.photo_paths) ? drop.photo_paths : []
   if (paths.length) {
