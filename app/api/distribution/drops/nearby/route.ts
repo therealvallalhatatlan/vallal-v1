@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic"
 
 const SAFE_FIELDS = [
   "id","product_id","product_name","price_huf","city","district",
-  "location_hint","fulfillment_options","status","hidden_at","lat","lng",
+  "fulfillment_options","status","hidden_at","lat","lng",
 ].join(", ")
 
 function maskCoordinate(value: number) {
@@ -91,7 +91,6 @@ export async function POST(request: NextRequest) {
         price_huf: drop.price_huf,
         city: drop.city,
         district: drop.district,
-        location_hint: drop.location_hint,
         fulfillment_options: drop.fulfillment_options,
         hidden_at: drop.hidden_at,
         map_lat: maskCoordinate(dropLat),
