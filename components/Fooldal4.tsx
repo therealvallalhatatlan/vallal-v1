@@ -23,6 +23,31 @@ type SessionShape = {
   } | null
 }
 
+function FullScreenLoader() {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex min-h-[100dvh] w-screen items-center justify-center bg-[#030303]"
+      role="status"
+      aria-live="polite"
+      aria-label="Betöltés"
+    >
+      <div className="flex flex-col items-center gap-4">
+        <LoaderCircle
+          aria-hidden="true"
+          className="h-7 w-7 animate-spin text-lime-200/90"
+          strokeWidth={1.25}
+        />
+        <span
+          className="text-[9px] uppercase tracking-[0.3em] text-zinc-600"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          BETÖLTÉS...
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function OrderStatusBlockView({
   block,
   token,
@@ -344,101 +369,59 @@ function GuestHome() {
   )
 }
 
-function MemberGreeting({ token }: { token: string }) {
-  const [greeting, setGreeting] = useState("")
-  const [loadingGreeting, setLoadingGreeting] = useState(true)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    async function load() {
-      try {
-        const url = new URL("/api/homepage/personalize", window.location.origin)
-        const params = new URLSearchParams(window.location.search)
-        if (params.get("utm_source")) url.searchParams.set("utm_source", params.get("utm_source")!)
-        if (params.get("utm_campaign")) url.searchParams.set("utm_campaign", params.get("utm_campaign")!)
-        url.searchParams.set("hour", String(new Date().getHours()))
-        let referrerHost: string | null = null
-        try { referrerHost = document.referrer ? new URL(document.referrer).host : null } catch { referrerHost = null }
-        let sessionId: string | null = null
-        try {
-          sessionId = getSessionId()
-          const stored = sessionStorage.getItem("vh_homepage_entry_v1")
-          if (stored) {
-            const entry = JSON.parse(stored) as { source?: unknown; campaign?: unknown; referrer?: unknown; capturedAt?: unknown }
-            const capturedAt = Number(entry.capturedAt ?? 0)
-            if (capturedAt > 0 && Date.now() - capturedAt < 24 * 60 * 60 * 1000) {
-              if (typeof entry.source === "string" && !url.searchParams.get("utm_source")) url.searchParams.set("utm_source", entry.source)
-              if (typeof entry.campaign === "string" && !url.searchParams.get("utm_campaign")) url.searchParams.set("utm_campaign", entry.campaign)
-              if (!referrerHost && typeof entry.referrer === "string") {
-                try { referrerHost = entry.referrer ? new URL(entry.referrer).host : null } catch { referrerHost = null }
-              }
-            }
-          }
-        } catch { /* Opcionális kampánymérés. */ }
-        const response = await fetch(url.toString(), {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-          body: JSON.stringify({
-            sessionId,
-            isMobile: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || ""),
-            isInAppBrowser: /FBAN|FBAV|Instagram|Line\b|TikTok|Twitter|WhatsApp|Snapchat|Pinterest|LinkedInApp|wv\b|WebView/i.test(navigator.userAgent || ""),
-            referrerHost,
-          }),
-          cache: "no-store",
-          signal: controller.signal,
-        })
-        if (!response.ok) throw new Error("homepage_failed")
-        const payload = await response.json() as { ok?: boolean; plan?: HomepagePlan }
-        if (!payload.ok || !payload.plan) throw new Error("homepage_missing")
-        setGreeting(payload.plan.greeting)
-        try { sessionStorage.removeItem("vh_homepage_entry_v1") } catch { /* Opcionális tárolótakarítás. */ }
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return
-        console.error("[fooldal-4] személyes üdvözlés betöltése nem sikerült", error)
-        // A személyre szabás hibája ne akadályozza a főoldal használatát.
-        setGreeting("Szia. Jó, hogy itt vagy.")
-      } finally { setLoadingGreeting(false) }
-    }
-    void load()
-    return () => controller.abort()
-  }, [token])
-
+function MemberGreeting({ greeting }: { greeting: string }) {
   const [typedGreeting, setTypedGreeting] = useState("")
+
   useEffect(() => {
-    if (!greeting) return
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setTypedGreeting(greeting); return }
+    if (!greeting) {
+      setTypedGreeting("")
+      return
+    }
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setTypedGreeting(greeting)
+      return
+    }
+
     setTypedGreeting("")
     let index = 0
     let timeoutId: number | null = null
+
     const tick = () => {
       index += 1
       setTypedGreeting(greeting.slice(0, index))
+
       if (index < greeting.length) {
         const char = greeting[index - 1] ?? ""
-        timeoutId = window.setTimeout(tick, char === " " ? 10 : /[.!?,:]/.test(char) ? 90 : 24)
+        timeoutId = window.setTimeout(
+          tick,
+          char === " " ? 10 : /[.!?,:]/.test(char) ? 90 : 24,
+        )
       }
     }
+
     timeoutId = window.setTimeout(tick, 140)
-    return () => { if (timeoutId !== null) window.clearTimeout(timeoutId) }
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId)
+    }
   }, [greeting])
 
   return (
     <section className="pt-10 pb-8 sm:pt-7" aria-label="Személyes üdvözlés">
-      {loadingGreeting ? (
-        <div className="h-8" role="status" aria-label="Betöltés">
-          <span
-            aria-hidden="true"
-            className="inline-block h-6 w-[2px] animate-pulse bg-lime-200 align-middle"
-          />
-        </div>
-      ) : (
-        <div className="max-w-4xl animate-fadeIn">
-          <p className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base" style={{ fontFamily: "var(--font-mono-tech)" }}>
-            {typedGreeting}
-            {typedGreeting.length < greeting.length && <span aria-hidden="true" className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse" />}
-          </p>
-        </div>
-      )}
+      <div className="max-w-4xl">
+        <p
+          className="text-[23px] font-normal italic leading-normal tracking-tighter text-zinc-300 sm:text-base"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          {typedGreeting}
+          {typedGreeting.length < greeting.length && (
+            <span
+              aria-hidden="true"
+              className="ml-1 inline-block h-[1em] w-px translate-y-[0.08em] bg-zinc-400 align-baseline animate-pulse"
+            />
+          )}
+        </p>
+      </div>
     </section>
   )
 }
@@ -496,11 +479,13 @@ function MemberHome({ session }: { session: SessionShape }) {
       blocks: current.blocks.filter(block => block.type !== "order_status" || block.orderId !== orderId)
     } : current)
   }
+  if (loadingPlan) return <FullScreenLoader />
+
   return (
     <>
       <SiteHeader />
       <main className="animate-fadeIn mx-auto w-full max-w-6xl px-5 pb-24 pt-0 sm:px-8 sm:pb-32">
-        <MemberGreeting token={token} />
+        <MemberGreeting greeting={plan?.greeting ?? "Szia. Jó, hogy itt vagy."} />
         {!loadingPlan && !error && usefulBlocks.map(block => (
           <OrderStatusBlockView key={"order-" + block.orderId} block={block} token={token} onReceived={handleReceived} />
         ))}
@@ -545,16 +530,13 @@ export default function Fooldal4() {
   }
   return (
     <MainContent fullWidth>
-      {!loading && !session ? <GuestHome /> : null}
-      {!loading && session ? <MemberHome session={session} /> : null}
       {loading ? (
-        <>
-          <SiteHeader />
-          <div className="animate-fadeIn flex min-h-[30vh] items-center justify-center" role="status" aria-label="Betöltés">
-            <span aria-hidden="true" className="inline-block h-6 w-[2px] animate-pulse bg-lime-200" />
-          </div>
-        </>
-      ) : null}
+        <FullScreenLoader />
+      ) : session ? (
+        <MemberHome session={session} />
+      ) : (
+        <GuestHome />
+      )}
     </MainContent>
   )
 }
