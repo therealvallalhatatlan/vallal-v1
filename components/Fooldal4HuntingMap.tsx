@@ -254,6 +254,25 @@ export default function Fooldal4HuntingMap() {
 
             </div>
 
+            <div className="mt-4 border border-zinc-800/70">
+              <div className="flex items-center justify-between border-b border-zinc-800/70 px-4 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                  {loading ? "SZPOTOK BETÖLTÉSE…" : drops.length + " AKTÍV SZPOT"}
+                </p>
+                <span className="h-2 w-2 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(163,230,53,.65)]" />
+              </div>
+              <DistributionMap
+                drops={drops}
+                userLocation={location}
+                onSelectDrop={openDrop}
+              />
+              {!loading && drops.length === 0 ? (
+                <p className="border-t border-zinc-800/70 px-4 py-4 text-xs text-zinc-500">
+                  Most nincs aktív szpot a térképen.
+                </p>
+              ) : null}
+            </div>
+
             {false && <div className="mt-5">
               <div className="flex items-end justify-between gap-4">
                 <div>
