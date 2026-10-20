@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { LocateFixed, MapPin, RefreshCw } from "lucide-react"
 import { createClient } from "@/lib/browser"
 import { buildAuthHref } from "@/lib/authRedirect"
@@ -35,8 +35,6 @@ type Drop = {
   distance_band: string | null
 }
 
-const CITY_ORDER = ["BUDAPEST", "PÉCS", "SZEGED", "BÉCS"]
-
 function elapsedLabel(iso: string) {
   const value = new Date(iso).getTime()
   const diff = Math.max(0, Date.now() - value)
@@ -53,7 +51,6 @@ function elapsedLabel(iso: string) {
 export default function Fooldal4HuntingMap() {
   const { enabled: locationEnabled, location, status: locationStatus, error: locationError, requestPermission, disable } = useUserGeolocation()
   const [drops, setDrops] = useState<Drop[]>([])
-  const [cities, setCities] = useState<string[]>([])
   const city = "ALL"
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -99,7 +96,6 @@ export default function Fooldal4HuntingMap() {
       if (!response.ok || !json?.ok) throw new Error(json?.error || "Nem sikerült betölteni a lelőhelyeket.")
 
       setDrops(Array.isArray(json.drops) ? json.drops : [])
-      setCities(Array.isArray(json.cities) ? json.cities : [])
 
       if (queryLocation) {
         lastQueryRef.current = { lat: queryLocation.lat, lng: queryLocation.lng, city }
