@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUserFromToken, parseBearerToken } from "@/lib/auth"
+import { getUserFromToken, isAdminEmail, parseBearerToken } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 
 export const dynamic = "force-dynamic"
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "server_error" }, { status: 500 })
   }
 
-  if (!memberships?.length) return NextResponse.json({ ok: true, cells: [] })
+  if (!memberships?.length) return NextResponse.json({ ok: true, is_admin: isAdminEmail(user.email), cells: [] })
 
   const cellIds = memberships.map((item) => item.cell_id)
   const [{ data: cells }, { data: inventory }, { data: drops }] = await Promise.all([
@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
+    is_admin: isAdminEmail(user.email),
     cells: (cells || []).map((cell) => ({
       ...cell,
       role: memberships.find((item) => item.cell_id === cell.id)?.role || "member",
