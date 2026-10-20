@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { LocateFixed, MapPin, RefreshCw } from "lucide-react"
 import { createClient } from "@/lib/browser"
 import { buildAuthHref } from "@/lib/authRedirect"
@@ -35,8 +35,6 @@ type Drop = {
   distance_band: string | null
 }
 
-const CITY_ORDER = ["BUDAPEST", "PÉCS", "SZEGED", "BÉCS"]
-
 function elapsedLabel(iso: string) {
   const value = new Date(iso).getTime()
   const diff = Math.max(0, Date.now() - value)
@@ -53,8 +51,7 @@ function elapsedLabel(iso: string) {
 export default function Fooldal4HuntingMap() {
   const { enabled: locationEnabled, location, status: locationStatus, error: locationError, requestPermission, disable } = useUserGeolocation()
   const [drops, setDrops] = useState<Drop[]>([])
-  const [cities, setCities] = useState<string[]>([])
-  const [city, setCity] = useState("ALL")
+  const city = "ALL"
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null)
@@ -99,7 +96,6 @@ export default function Fooldal4HuntingMap() {
       if (!response.ok || !json?.ok) throw new Error(json?.error || "Nem sikerült betölteni a lelőhelyeket.")
 
       setDrops(Array.isArray(json.drops) ? json.drops : [])
-      setCities(Array.isArray(json.cities) ? json.cities : [])
 
       if (queryLocation) {
         lastQueryRef.current = { lat: queryLocation.lat, lng: queryLocation.lng, city }
@@ -129,10 +125,6 @@ export default function Fooldal4HuntingMap() {
     return () => window.clearInterval(interval)
   }, [])
 
-  const orderedCities = useMemo(() => {
-    const values = Array.from(new Set(CITY_ORDER.concat(cities)))
-    return ["ALL"].concat(values)
-  }, [cities])
 
   function openDrop(drop: Drop) {
     setSelectedDrop(drop)
@@ -260,40 +252,9 @@ export default function Fooldal4HuntingMap() {
                 {locationError ? <p className="mt-3 text-xs text-red-300">{locationError}</p> : null}
               </div>
 
-              <div className="p-1">
-                {orderedCities.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setCity(item)}
-                    className={
-                      "px-3 py-2 text-[12px] font-bold uppercase transition " +
-                      (city === item
-                        ? "bg-lime-300/20 rounded-sm text-zinc-100"
-                        : "text-zinc-600 hover:text-zinc-200")
-                    }
-                  >
-                    {item === "ALL" ? "ÖSSZES" : item}
-                  </button>
-                ))}
-              </div>
-
-              <div className="overflow-hidden border-t border-zinc-800/70">
-                {loading ? (
-                  <div className="flex h-[460px] items-center justify-center text-[10px] uppercase tracking-[0.25em] text-zinc-600 sm:h-[540px]">
-                    LELŐHELY KERESÉSE…
-                  </div>
-                ) : (
-                  <DistributionMap
-                    drops={drops}
-                    userLocation={location ? { lat: location.lat, lng: location.lng } : null}
-                    onSelectDrop={(drop) => openDrop(drop as Drop)}
-                  />
-                )}
-              </div>
             </div>
 
-            <div className="mt-5">
+            {false && <div className="mt-5">
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-600">
@@ -371,7 +332,7 @@ export default function Fooldal4HuntingMap() {
                   ))}
                 </div>
               )}
-            </div>
+            </div>}
         {selectedDrop ? (
           <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:p-6">
             <div className="w-full max-w-xl bg-[#000000] p-5 shadow-2xl sm:p-7">
