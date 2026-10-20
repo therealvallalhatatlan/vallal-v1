@@ -188,6 +188,10 @@ export default function CellConsole() {
       setMessage("Egy szpothoz legfeljebb 8 fotót tölthetsz fel.")
       return
     }
+    if (newPhotos.some((photo) => photo.size > 4 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(photo.type))) {
+      setMessage("Csak JPG, PNG vagy WebP képet tölts fel, legfeljebb 4 MB fájlmérettel.")
+      return
+    }
 
     setSaving(true)
     setMessage(null)
@@ -225,7 +229,7 @@ export default function CellConsole() {
       setNewPhotos([])
       setPhotoInputKey((value) => value + 1)
       await load()
-      setMessage((photoMessage ? "Szpot létrehozva." + photoMessage : "Szpot létrehozva, a fotók is feltöltve.") + " A készlet frissítve.")
+      setMessage((photoMessage ? "Szpot létrehozva." + photoMessage : newPhotos.length ? "Szpot létrehozva, a fotók is feltöltve." : "Szpot létrehozva.") + " A készlet frissítve.")
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "A szpot létrehozása nem sikerült.")
     } finally {
@@ -342,6 +346,11 @@ export default function CellConsole() {
     }
     if (!editingDrop.fulfillment_options.length) {
       setMessage("Legalább egy átadási módot válassz.")
+      return
+    }
+    if (editingDrop.photos.length + editingDrop.newPhotos.length > 8 ||
+      editingDrop.newPhotos.some((photo) => photo.size > 4 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(photo.type))) {
+      setMessage("Legfeljebb 8 fotó lehet szpotonként. Csak JPG, PNG vagy WebP képet tölts fel, maximum 4 MB méretben.")
       return
     }
 
