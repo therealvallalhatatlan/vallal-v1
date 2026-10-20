@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       .in("cell_id", cellIds)
       .order("product_name"),
     db.from("distribution_drops")
-      .select("id, cell_id, product_name, price_huf, city, district, location_hint, fulfillment_options, status, hidden_at, found_at")
+      .select("id, cell_id, product_id, product_name, price_huf, city, district, location_hint, lat, lng, fulfillment_options, status, hidden_at, found_at, created_at, order_id, photo_paths")
       .in("cell_id", cellIds)
       .order("created_at", { ascending: false })
       .limit(100),
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       ...cell,
       role: memberships.find((item) => item.cell_id === cell.id)?.role || "member",
       inventory: (inventory || []).filter((item) => item.cell_id === cell.id),
-      drops: (drops || []).filter((item) => item.cell_id === cell.id),
+      drops: (drops || []).filter((item) => item.cell_id === cell.id).map((item) => ({ ...item, photo_count: Array.isArray(item.photo_paths) ? item.photo_paths.length : 0, photo_paths: undefined })),
     })),
   })
 }
