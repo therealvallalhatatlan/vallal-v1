@@ -1,12 +1,6 @@
-import MainContent from "@/components/MainContent";
-import VallalhatatlanHero2 from "@/components/VallalhatatlanHero2";
-import Footer from "@/components/Footer";
+import Fooldal4 from "@/components/Fooldal4"
 
+// The site root now uses the same homepage experience as /fooldal-4.
 export default function Page() {
-  return (
-    <MainContent>
-      <VallalhatatlanHero2 />
-      <Footer />
-    </MainContent>
-  );
+  return <Fooldal4 />
 }
