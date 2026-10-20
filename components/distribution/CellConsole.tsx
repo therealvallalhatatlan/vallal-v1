@@ -445,8 +445,8 @@ export default function CellConsole() {
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="border border-zinc-800 p-5">
-            <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-600">KÖNYV KÉSZLET</p>
-            <p className="mt-2 text-4xl font-black text-zinc-100">{bookInventory?.quantity_available ?? 0}</p>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-600">KÉSZLET / {BOOKS.find((book) => book.id === selectedProductId)?.name.toUpperCase()}</p>
+            <p className="mt-2 text-4xl font-black text-zinc-100">{selectedInventory?.quantity_available ?? 0}</p>
             <p className="mt-1 text-xs text-zinc-500">elérhető példány a sejt készletében</p>
           </div>
           <div className="border border-zinc-800 p-5">
@@ -510,7 +510,36 @@ export default function CellConsole() {
         <section className="mt-10 border-t border-zinc-800 pt-7">
           <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/60">ÚJ SZPOT</p>
           <h2 className="mt-2 text-2xl font-black text-zinc-100">Rakj ki egy könyvet.</h2>
-          <p className="mt-2 text-sm leading-6 text-zinc-500">A könyv azonnal kikerül a saját inventorydból.</p>
+          <p className="mt-2 text-sm leading-6 text-zinc-500">Válaszd ki a kötetet, add meg a helyszínt, és tölts fel képeket a vásárlónak.</p>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-[1fr_auto]">
+            <label className="block">
+              <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">KIHELYEZENDŐ TERMÉK</span>
+              <select value={selectedProductId} onChange={(event) => setSelectedProductId(event.target.value as "book_i" | "book_ii")} className="mt-2 w-full border border-zinc-800 bg-black px-3 py-3 text-sm text-zinc-200 outline-none focus:border-lime-200/50">
+                {BOOKS.map((book) => {
+                  const qty = currentCell?.inventory.find((item) => item.product_id === book.id)?.quantity_available ?? 0
+                  return <option key={book.id} value={book.id}>{book.name} · {qty} DB KÉSZLET</option>
+                })}
+              </select>
+            </label>
+            <div className="flex items-end">
+              <p className="text-xs leading-5 text-zinc-500">Ár: {Number(selectedInventory?.unit_price_huf ?? 10000).toLocaleString("hu-HU")} Ft</p>
+            </div>
+          </div>
+
+          {currentCell?.role === "owner" ? (
+            <div className="mt-4 grid gap-3 border border-zinc-800/70 p-4 sm:grid-cols-[1fr_140px_auto] sm:items-end">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">KÉSZLET FELVÉTELE</p>
+                <p className="mt-1 text-xs leading-5 text-zinc-600">Csak a fizikailag átvett példányokat add hozzá.</p>
+              </div>
+              <label className="block">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">DARABSZÁM</span>
+                <input type="number" min={1} max={100} value={stockQuantity} onChange={(event) => setStockQuantity(event.target.value)} className="mt-2 w-full border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50" />
+              </label>
+              <button type="button" onClick={() => void receiveStock()} disabled={receivingStock} className="border border-zinc-700 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-200 hover:border-lime-200/50 disabled:opacity-50">{receivingStock ? "RÖGZÍTÉS…" : "KÉSZLET HOZZÁADÁSA"}</button>
+            </div>
+          ) : null}
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <label className="block">
@@ -547,12 +576,143 @@ export default function CellConsole() {
             </div>
           </div>
 
-          <button type="button" onClick={() => void createDrop()} disabled={saving || !bookInventory?.quantity_available} className="mt-7 w-full border border-lime-200/50 bg-lime-100 px-4 py-4 text-[10px] font-black uppercase tracking-[0.25em] text-black disabled:cursor-not-allowed disabled:opacity-40">
+          <label className="mt-6 block">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">HELYSZÍNI FOTÓK · MAX. 8 KÉP</span>
+            <input key={photoInputKey} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => setNewPhotos(Array.from(event.target.files || []).slice(0, 8))} className="mt-2 block w-full border border-zinc-800 bg-black px-3 py-3 text-xs text-zinc-400 file:mr-3 file:border-0 file:bg-lime-100 file:px-3 file:py-2 file:text-[10px] file:font-bold file:uppercase file:text-black" />
+            <span className="mt-2 block text-xs text-zinc-600">JPG, PNG vagy WebP, fájlonként legfeljebb 4 MB. A fotókat a vásárló csak fizetés után látja.</span>
+            {newPhotos.length ? <span className="mt-2 block text-xs text-lime-100/70">{newPhotos.length} fotó kiválasztva: {newPhotos.map((photo) => photo.name).join(", ")}</span> : null}
+          </label>
+
+          <button type="button" onClick={() => void createDrop()} disabled={saving || !selectedInventory?.quantity_available} className="mt-7 w-full border border-lime-200/50 bg-lime-100 px-4 py-4 text-[10px] font-black uppercase tracking-[0.25em] text-black disabled:cursor-not-allowed disabled:opacity-40">
             {saving ? "SZPOT LÉTREHOZÁSA…" : "KÖNYV KIHELYEZÉSE"}
           </button>
 
           {message ? <p className="mt-4 border border-zinc-800 px-4 py-3 text-sm text-zinc-400">{message}</p> : null}
         </section>
+
+        <section className="mt-12 border-t border-zinc-800 pt-7">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/60">SZPOTOK KEZELÉSE</p>
+              <h2 className="mt-2 text-2xl font-black text-zinc-100">Mi van kint, és hol?</h2>
+            </div>
+            <span className="text-xs text-zinc-600">{visibleDrops.length} nyilvántartott szpot</span>
+          </div>
+          <div className="mt-5 divide-y divide-zinc-800 border-y border-zinc-800">
+            {visibleDrops.length ? visibleDrops.map((drop) => {
+              const editable = ["active", "inactive"].includes(drop.status) && !drop.order_id
+              const statusLabel: Record<string, string> = {
+                active: "AKTÍV",
+                inactive: "INAKTÍV",
+                reserved: "FOGLALVA",
+                purchased: "ELADVA",
+                collected: "MEGTALÁLVA",
+                expired: "LEJÁRT",
+              }
+              return (
+                <article key={drop.id} className="grid gap-3 px-4 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-bold text-zinc-100">{drop.product_name}</h3>
+                      <span className={"border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.14em] " + (drop.status === "active" ? "border-lime-200/30 text-lime-100" : "border-zinc-700 text-zinc-500")}>{statusLabel[drop.status] || drop.status}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-zinc-400">{drop.city}{drop.district ? " · " + drop.district : ""} · {Number(drop.price_huf).toLocaleString("hu-HU")} Ft</p>
+                    <p className="mt-1 truncate text-xs text-zinc-600">{drop.location_hint}</p>
+                    <p className="mt-1 text-[10px] uppercase tracking-[0.13em] text-zinc-700">{drop.photo_count || 0} FOTÓ · {drop.fulfillment_options?.length || 0} ÁTADÁSI MÓD</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {editable ? (
+                      <>
+                        <button type="button" onClick={() => void openEditDrop(drop)} disabled={editLoadingId === drop.id} className="border border-zinc-700 px-3 py-2 text-[10px] uppercase tracking-[0.13em] text-zinc-300 hover:border-lime-200/50 disabled:opacity-50">{editLoadingId === drop.id ? "BETÖLTÉS…" : "SZERKESZTÉS"}</button>
+                        <button type="button" onClick={() => void toggleDropStatus(drop)} className="border border-zinc-700 px-3 py-2 text-[10px] uppercase tracking-[0.13em] text-zinc-300 hover:border-lime-200/50">{drop.status === "active" ? "INAKTÍV" : "AKTIVÁLÁS"}</button>
+                        <button type="button" onClick={() => void deleteDrop(drop)} className="border border-red-900/60 px-3 py-2 text-[10px] uppercase tracking-[0.13em] text-red-300 hover:border-red-500">TÖRLÉS</button>
+                      </>
+                    ) : (
+                      <span className="self-center text-[10px] uppercase tracking-[0.13em] text-zinc-700">LEZÁRT SZPOT</span>
+                    )}
+                  </div>
+                </article>
+              )
+            }) : <p className="px-4 py-8 text-sm text-zinc-600">Még nincs kint egyetlen szpot sem.</p>}
+          </div>
+        </section>
+
+        {editingDrop ? (
+          <div className="fixed inset-0 z-[80] flex items-end justify-center overflow-y-auto bg-black/85 p-0 backdrop-blur-sm sm:items-center sm:p-5">
+            <section className="my-auto max-h-[95vh] w-full max-w-2xl overflow-y-auto border border-zinc-800 bg-[#050505] p-5 sm:p-7">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-lime-200/60">SZPOT SZERKESZTÉSE</p>
+                  <h2 className="mt-2 text-2xl font-black text-zinc-100">{editingDrop.product_name}</h2>
+                  <p className="mt-1 text-xs text-zinc-600">{editingDrop.city}</p>
+                </div>
+                <button type="button" onClick={() => setEditingDrop(null)} aria-label="Bezárás" className="text-3xl leading-none text-zinc-600 hover:text-white">×</button>
+              </div>
+
+              <label className="mt-5 block">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">KERÜLET / TERÜLET</span>
+                <input value={editingDrop.district} onChange={(event) => setEditingDrop((current) => current ? { ...current, district: event.target.value } : current)} className="mt-2 w-full border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50" />
+              </label>
+              <label className="mt-4 block">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">HELYSZÍNLEÍRÁS</span>
+                <textarea value={editingDrop.location_hint} onChange={(event) => setEditingDrop((current) => current ? { ...current, location_hint: event.target.value } : current)} rows={3} className="mt-2 w-full border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50" />
+              </label>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">LAT</span>
+                  <input value={editingDrop.lat} onChange={(event) => setEditingDrop((current) => current ? { ...current, lat: event.target.value } : current)} inputMode="decimal" className="mt-2 w-full border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50" />
+                </label>
+                <label className="block">
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">LNG</span>
+                  <input value={editingDrop.lng} onChange={(event) => setEditingDrop((current) => current ? { ...current, lng: event.target.value } : current)} inputMode="decimal" className="mt-2 w-full border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50" />
+                </label>
+              </div>
+
+              <div className="mt-5">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">ÁTADÁSI MÓDOK</span>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {FULFILLMENT.map(([value, label]) => {
+                    const active = editingDrop.fulfillment_options.includes(value)
+                    return <button key={value} type="button" onClick={() => setEditingDrop((current) => current ? { ...current, fulfillment_options: active ? current.fulfillment_options.filter((method) => method !== value) : [...current.fulfillment_options, value] } : current)} className={"border px-3 py-2 text-[10px] uppercase tracking-[0.16em] " + (active ? "border-lime-200/50 bg-lime-100/10 text-lime-100" : "border-zinc-800 text-zinc-600")}>{label}</button>
+                  })}
+                </div>
+              </div>
+
+              <label className="mt-5 block">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">ÁLLAPOT</span>
+                <select value={editingDrop.status} onChange={(event) => setEditingDrop((current) => current ? { ...current, status: event.target.value } : current)} className="mt-2 w-full border border-zinc-800 bg-black px-3 py-3 text-sm">
+                  <option value="active">Aktív, megjelenik a térképen</option>
+                  <option value="inactive">Inaktív, rejtve a térképről</option>
+                </select>
+              </label>
+
+              <div className="mt-6">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">FELTÖLTÖTT FOTÓK</p>
+                {editingDrop.photos.length ? (
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {editingDrop.photos.map((photo) => (
+                      <div key={photo.path} className="relative border border-zinc-800">
+                        <img src={photo.url} alt="Szpotfotó" className="aspect-[4/3] w-full object-cover" />
+                        <button type="button" onClick={() => setEditingDrop((current) => current ? { ...current, photos: current.photos.filter((item) => item.path !== photo.path) } : current)} className="absolute right-1 top-1 bg-black/80 px-2 py-1 text-xs text-red-300">ELTÁVOLÍT</button>
+                      </div>
+                    ))}
+                  </div>
+                ) : <p className="mt-2 text-xs text-zinc-600">Nincs feltöltött fotó.</p>}
+              </div>
+              <label className="mt-5 block">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-zinc-600">ÚJ FOTÓK HOZZÁADÁSA</span>
+                <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(event) => setEditingDrop((current) => current ? { ...current, newPhotos: Array.from(event.target.files || []).slice(0, Math.max(0, 8 - current.photos.length)) } : current)} className="mt-2 block w-full border border-zinc-800 bg-black px-3 py-3 text-xs text-zinc-400" />
+                <span className="mt-2 block text-xs text-zinc-600">Összesen legfeljebb 8 kép, fájlonként max. 4 MB. A képek csak fizetés után láthatók a vevőnek.</span>
+                {editingDrop.newPhotos.length ? <span className="mt-2 block text-xs text-lime-100/70">{editingDrop.newPhotos.length} új kép kiválasztva.</span> : null}
+              </label>
+
+              <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button type="button" onClick={() => setEditingDrop(null)} className="border border-zinc-800 px-5 py-3 text-[10px] uppercase tracking-[0.18em] text-zinc-500">MÉGSE</button>
+                <button type="button" onClick={() => void saveEditDrop()} disabled={editSaving} className="border border-lime-200/50 bg-lime-100 px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-50">{editSaving ? "MENTÉS…" : "VÁLTOZTATÁSOK MENTÉSE"}</button>
+              </div>
+            </section>
+          </div>
+        ) : null}
 
         <a href="/fooldal-3" className="mt-10 inline-block text-[10px] uppercase tracking-[0.2em] text-zinc-600 hover:text-zinc-300">← FŐOLDAL</a>
       </div>
