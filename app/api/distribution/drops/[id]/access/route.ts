@@ -19,7 +19,7 @@ export async function GET(
 
   const { data: drop, error } = await db
     .from("distribution_drops")
-    .select("id, product_name, city, district, location_hint, lat, lng, fulfillment_options, reserved_fulfillment_method, status, buyer_user_id, found_at")
+    .select("id, product_name, city, district, location_hint, lat, lng, fulfillment_options, reserved_fulfillment_method, status, buyer_user_id, found_at, photo_paths")
     .eq("id", id)
     .maybeSingle()
 
@@ -32,6 +32,16 @@ export async function GET(
   if (drop.buyer_user_id !== user.id || !["purchased", "collected"].includes(drop.status)) {
     return NextResponse.json({ error: "not_authorized" }, { status: 403 })
   }
+
+  const photoPaths: string[] = Array.isArray(drop.photo_paths) ? drop.photo_paths : []
+  const photoUrls = (await Promise.all(photoPaths.map(async (path) => {
+    const { data, error: signError } = await db.storage.from("distribution-drop-photos").createSignedUrl(path, 15 * 60)
+    if (signError || !data?.signedUrl) {
+      console.error("[distribution/drops/access] photo signing failed", signError)
+      return null
+    }
+    return data.signedUrl
+  }))).filter((url): url is string => Boolean(url))
 
   return NextResponse.json({
     ok: true,
@@ -46,6 +56,7 @@ export async function GET(
       fulfillment_method: drop.reserved_fulfillment_method,
       status: drop.status,
       found_at: drop.found_at,
+      photos: photoUrls,
     },
   })
 }
