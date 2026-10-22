@@ -14,7 +14,7 @@ interface PageProps {
 }
 
 function siteOrigin(): string {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.vallalhatatlan.online'
+  const raw = process.env.NEXT_PUBLIC_SITE_URL || 'https://vallalhatatlan.online'
   return raw.replace(/\/$/, '')
 }
 
