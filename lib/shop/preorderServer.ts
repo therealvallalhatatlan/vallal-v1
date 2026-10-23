@@ -19,6 +19,7 @@ export interface CreateShopOrderDraftInput {
   items: ValidatedCheckoutItem[];
   deliveryMethod: DeliveryMethod;
   userId?: string | null;
+  pickupPoint?: string | null;
 }
 
 type CampaignRow = {
@@ -61,6 +62,8 @@ export function validateCheckoutItems(items: CheckoutItemInput[]): ValidatedChec
 export async function createShopOrderDraft({
   items,
   deliveryMethod,
+  userId,
+  pickupPoint,
 }: CreateShopOrderDraftInput): Promise<{ orderId: string; subtotalAmount: number; shippingAmount: number; totalAmount: number; }> {
   const subtotalAmount = items.reduce((sum, item) => sum + item.product.price * 100 * item.quantity, 0);
   const shippingAmount = getDeliveryFee(deliveryMethod) * 100;
@@ -77,6 +80,7 @@ export async function createShopOrderDraft({
       metadata: {
         source: "shop",
         deliveryMethod,
+        pickupPoint: pickupPoint ?? null,
         shippingAmount,
         totalAmount,
       },

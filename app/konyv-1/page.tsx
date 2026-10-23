@@ -5,6 +5,7 @@ import { Montserrat } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
 import Reviews from "@/components/Reviews";
+import BookPurchaseCard from "@/components/book-purchase/BookPurchaseCard";
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -16,8 +17,6 @@ export const metadata: Metadata = {
   description:
     "A Vállalhatatlan első kötete. Bővített kiadás, új szövegekkel, képekkel és dokumentumokkal.",
 };
-
-const FIRST_BOOK_STRIPE_URL = "https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j";
 
 export default function FirstBookPage() {
   return (
@@ -68,17 +67,7 @@ export default function FirstBookPage() {
               </div>
             </div>
 
-            <Link
-              href={FIRST_BOOK_STRIPE_URL}
-              className="mt-6 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 px-6 font-mono text-base font-medium tracking-[0.04em] text-lime-100/80 transition-all hover:border-zinc-100/70 hover:bg-zinc-100/10 hover:text-lime-100 sm:text-xl"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              <span>MEGSZERZEM A KÖNYVET</span>
-              <span aria-hidden="true">→</span>
-            </Link>
-            <p className="mt-3 text-xs text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
-              A szállítás díja a rendelés módjától függhet.
-            </p>
+            <BookPurchaseCard productId="book-1" editionLabel="I." />
           </article>
         </section>
 
@@ -108,12 +97,13 @@ export default function FirstBookPage() {
             A Vállalhatatlan nem csak egy könyv. Kapcsolódási pont egy analóg, személyes kapcsolatokra épülő hálózathoz.
           </p>
           <Link
-            href={FIRST_BOOK_STRIPE_URL}
+            href="#book-purchase"
+            aria-label="Vissza a megrendelési lehetőséghez"
             className="mb-12 mt-6 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 px-6 font-mono text-base font-medium tracking-[0.04em] text-lime-100/80 transition-all hover:border-zinc-100/70 hover:bg-zinc-100/10 hover:text-lime-100 sm:text-xl"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            <span>MEGSZERZEM A KÖNYVET</span>
-            <span aria-hidden="true">→</span>
+            <span>MEGRENDELEM A KÖNYVET</span>
+            <span aria-hidden="true">↑</span>
           </Link>
           <Reviews />
         </section>
