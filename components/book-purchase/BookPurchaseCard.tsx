@@ -187,7 +187,7 @@ export default function BookPurchaseCard({
         )}
         <div className="flex items-center justify-between gap-4 pt-1">
           <span className="text-sm font-bold uppercase tracking-wide text-zinc-200">Fizetendő</span>
-          <span className="text-xl font-bold text-lime-100">{HUF.format(total)} Ft</span>
+          <span className="text-xl font-bold text-lime-100">{selectedOption ? `${HUF.format(total)} Ft` : "Válassz módot"}</span>
         </div>
       </div>
 
