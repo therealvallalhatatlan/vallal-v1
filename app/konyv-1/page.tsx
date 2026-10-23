@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "A Vállalhatatlan első kötete. Bővített kiadás, új szövegekkel, képekkel és dokumentumokkal.",
 };
 
-const FIRST_BOOK_STRIPE_URL = "YOUR_FIRST_BOOK_STRIPE_URL";
+const FIRST_BOOK_STRIPE_URL = "https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j";
 
 export default function FirstBookPage() {
   return (
@@ -44,7 +44,7 @@ export default function FirstBookPage() {
             <div className="flex gap-4 sm:gap-6">
               <div className="w-40 shrink-0 overflow-hidden">
                 <img
-                  src="/vallalhatatlan1.png"
+                  src="/vallalhatatlan.png"
                   alt="Vállalhatatlan I. könyv borító"
                   className="block h-full w-full rounded-md object-cover"
                 />
