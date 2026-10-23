@@ -25,8 +25,17 @@ type CheckoutItem = {
   variantId?: string;
 };
 
+const EU_SHIPPING_COUNTRIES: Stripe.Checkout.SessionCreateParams.ShippingAddressCollection["allowed_countries"] = [
+  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR",
+  "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL",
+  "PL", "PT", "RO", "SK", "SI", "ES", "SE",
+];
+
 function parseDeliveryMethod(input: unknown): DeliveryMethod {
-  return input === "postaautomata" ? "postaautomata" : "dead-drop";
+  if (input === "postaautomata" || input === "eu" || input === "dead-drop") {
+    return input;
+  }
+  return "dead-drop";
 }
 
 export async function POST(req: NextRequest) {
@@ -48,10 +57,31 @@ export async function POST(req: NextRequest) {
     const authenticatedUser = token ? await getUserFromToken(token) : null;
     const items = Array.isArray(body?.items) ? (body.items as CheckoutItem[]) : [];
     const deliveryMethod = parseDeliveryMethod(body?.deliveryMethod);
+    const pickupPoint =
+      typeof body?.pickupPoint === "string"
+        ? body.pickupPoint.trim().slice(0, 160)
+        : "";
+    const isBookCheckout =
+      items.length > 0 &&
+      items.every((item) => item?.productId === "book-1" || item?.productId === "book-2");
 
     if (items.length === 0) {
       return NextResponse.json(
         { error: "Cart is empty" },
+        { status: 400 }
+      );
+    }
+
+    if (deliveryMethod === "eu" && !isBookCheckout) {
+      return NextResponse.json(
+        { error: "EU shipping is currently available for book orders only." },
+        { status: 400 }
+      );
+    }
+
+    if (isBookCheckout && deliveryMethod === "postaautomata" && pickupPoint.length < 3) {
+      return NextResponse.json(
+        { error: "Add the name or address of your preferred parcel point or locker." },
         { status: 400 }
       );
     }
@@ -61,6 +91,7 @@ export async function POST(req: NextRequest) {
       items: validatedItems,
       deliveryMethod,
       userId: authenticatedUser?.id ?? null,
+      pickupPoint: isBookCheckout && deliveryMethod === "postaautomata" ? pickupPoint : null,
     });
     draftOrderId = draftOrder.orderId;
 
@@ -87,7 +118,12 @@ export async function POST(req: NextRequest) {
         price_data: {
           currency: "huf",
           product_data: {
-            name: "Postaautomata kézbesítés",
+            name:
+              deliveryMethod === "eu"
+                ? "EU-n belüli külföldi szállítás"
+                : deliveryMethod === "postaautomata"
+                  ? "Csomagpont / csomagautomata kézbesítés"
+                  : "Kézbesítés",
           },
           unit_amount: deliveryFee * 100,
         },
@@ -125,6 +161,7 @@ export async function POST(req: NextRequest) {
         ...bookRegistryMetadata,
         product_id: validatedItems.length === 1 ? validatedItems[0]?.product.id ?? "multi_cart" : "multi_cart",
         deliveryMethod,
+        ...(isBookCheckout && deliveryMethod === "postaautomata" ? { pickupPoint } : {}),
         shippingAmount: String(draftOrder.shippingAmount),
         totalAmount: String(draftOrder.totalAmount),
       },
@@ -150,7 +187,16 @@ export async function POST(req: NextRequest) {
       client_reference_id: metadata.order_id,
       metadata,
       payment_intent_data: { metadata },
-      shipping_address_collection: { allowed_countries: ["HU"] },
+      ...(
+        isBookCheckout
+          ? deliveryMethod === "eu"
+            ? { shipping_address_collection: { allowed_countries: EU_SHIPPING_COUNTRIES } }
+            : {}
+          : { shipping_address_collection: { allowed_countries: ["HU"] as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection["allowed_countries"] } }
+      ),
+      ...(isBookCheckout && deliveryMethod !== "dead-drop"
+        ? { phone_number_collection: { enabled: true } }
+        : {}),
     });
 
     await attachStripeSessionToOrder(draftOrder.orderId, session.id);
