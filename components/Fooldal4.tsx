@@ -446,6 +446,130 @@ function MemberGreeting({ greeting }: { greeting: string }) {
   )
 }
 
+function BookPurchaseSection() {
+  const editions = [
+    {
+      edition: "I. KÖTET",
+      title: "Vállalhatatlan I.",
+      description:
+        "Történetek a kilencvenes évek és az ezredforduló félresiklott Budapestjéről. Bővített kiadás új szövegekkel, képekkel és dokumentumokkal.",
+      cover: "/vallalhatatlan.png",
+      href: "/konyv-1",
+      alt: "Vállalhatatlan I. kötet borítója",
+    },
+    {
+      edition: "II. KÖTET",
+      title: "Vállalhatatlan II.",
+      description:
+        "V. egy szürreális pénzmosodaként működő, éjjel-nappali internetkávézó élére kerül. Bővített kiadás új tartalmakkal.",
+      cover: "/vallalhatatlan2.png",
+      href: "/konyv-v2",
+      alt: "Vállalhatatlan II. kötet borítója",
+    },
+  ]
+
+  return (
+    <section
+      className="animate-fadeIn border-b border-zinc-900 py-9 sm:py-12"
+      aria-labelledby="homepage-books-heading"
+    >
+      <div className="mb-5 flex flex-col gap-3 sm:mb-7 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p
+            className="text-[9px] uppercase tracking-[0.28em] text-lime-200/55"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            KÖNYVTÁR / BŐVÍTETT KIADÁS // 2026
+          </p>
+          <h2
+            id="homepage-books-heading"
+            className="mt-3 text-2xl uppercase leading-[0.98] tracking-tight text-zinc-100 sm:text-4xl"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            Válassz egy kötetet
+          </h2>
+        </div>
+        <p
+          className="max-w-sm text-xs leading-5 text-zinc-500 sm:text-right"
+          style={{ fontFamily: "var(--font-mono-tech)" }}
+        >
+          Két könyv. Új anyagok. Egy hálózat. A szállítás módját a rendelésnél választod ki.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+        {editions.map((edition) => (
+          <article
+            key={edition.edition}
+            className="group relative overflow-hidden border border-zinc-800 bg-[#050505] transition-colors hover:border-zinc-600"
+          >
+            <div className="flex h-full gap-4 p-4 sm:gap-5 sm:p-5">
+              <div className="relative w-[104px] shrink-0 self-start overflow-hidden bg-zinc-950 sm:w-[132px]">
+                <Image
+                  src={edition.cover}
+                  alt={edition.alt}
+                  width={264}
+                  height={360}
+                  sizes="(min-width: 640px) 132px, 104px"
+                  className="aspect-[2/2.8] h-auto w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
+                />
+              </div>
+
+              <div className="flex min-w-0 flex-1 flex-col">
+                <p
+                  className="text-[9px] uppercase tracking-[0.22em] text-lime-200/55"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  {edition.edition}
+                </p>
+                <h3
+                  className="mt-2 text-xl uppercase leading-tight tracking-tight text-zinc-100 sm:text-2xl"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  {edition.title}
+                </h3>
+                <p
+                  className="mt-3 text-xs leading-5 text-zinc-500 sm:text-sm sm:leading-6"
+                  style={{ fontFamily: "var(--font-mono-tech)" }}
+                >
+                  {edition.description}
+                </p>
+
+                <div className="mt-auto pt-5">
+                  <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span
+                      className="text-lg font-semibold text-zinc-100 sm:text-xl"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      10 000 Ft
+                    </span>
+                    <span
+                      className="text-[10px] text-zinc-600"
+                      style={{ fontFamily: "var(--font-mono-tech)" }}
+                    >
+                      + választott szállítás
+                    </span>
+                  </div>
+                  <Link
+                    href={edition.href}
+                    className="flex min-h-12 w-full items-center justify-between gap-3 border border-lime-200/60 bg-lime-200/[0.04] px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-lime-100 transition-colors hover:border-lime-100 hover:bg-lime-200/[0.1] sm:px-4 sm:text-xs"
+                    style={{ fontFamily: "var(--font-mono-tech)" }}
+                    aria-label={edition.title + " megvásárlása és szállítás kiválasztása"}
+                  >
+                    <span>MEGRENDELEM</span>
+                    <ArrowUpRight aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+
 function MemberHome({ session }: { session: SessionShape }) {
   const token = session?.access_token ?? ""
   const [plan, setPlan] = useState<HomepagePlan | null>(null)
@@ -517,6 +641,7 @@ function MemberHome({ session }: { session: SessionShape }) {
             <Fooldal4HuntingMap />
           </div>
         )}
+        <BookPurchaseSection />
         {!loadingPlan && (
           <section className="animate-fadeIn border-b border-zinc-900 py-5">
             <Link
