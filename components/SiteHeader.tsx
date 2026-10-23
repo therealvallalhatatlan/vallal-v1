@@ -15,14 +15,14 @@ const menuSections = [
     label: "KÖNYVEK",
     items: [
       {
-        href: "/konyv",
+        href: "/konyv-v2",
         label: "A MÁSODIK KÖNYV",
         description: "A könyvben áll össze a történet. Szerezz egyet a 100-ból.",
       },
       {
-        href: "/reader",
+        href: "/konyv-1",
         label: "AZ ELSŐ KÖNYV",
-        description: "Itt olvashatod az első könyvet online.",
+        description: "Az első kötet bemutatója és megrendelése.",
       },
     ],
   },

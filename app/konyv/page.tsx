@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "Vállalhatatlan könyvek. Két évad, limitált sorszámozott példányok, dead drop terjesztés.",
 };
 
-const FIRST_BOOK_STRIPE_URL = "YOUR_FIRST_BOOK_STRIPE_URL";
+const FIRST_BOOK_STRIPE_URL = "https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j";
 const SECOND_BOOK_STRIPE_URL = "https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h";
 
 export default function Page() {
