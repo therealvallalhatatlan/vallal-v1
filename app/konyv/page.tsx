@@ -5,6 +5,7 @@ import { Montserrat } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
 import Reviews from "@/components/Reviews";
+import BookPurchaseCard from "@/components/book-purchase/BookPurchaseCard";
 
 const montserrat = Montserrat({
   subsets: ["latin-ext"],
@@ -16,9 +17,6 @@ export const metadata: Metadata = {
   description:
     "Vállalhatatlan könyvek. Két évad, limitált sorszámozott példányok, dead drop terjesztés.",
 };
-
-const FIRST_BOOK_STRIPE_URL = "https://buy.stripe.com/14A14ndjk9MYdcH3038Ra0j";
-const SECOND_BOOK_STRIPE_URL = "https://buy.stripe.com/8x2dR96UW9MY3C78kn8Ra0h";
 
 export default function Page() {
   return (
@@ -71,14 +69,7 @@ export default function Page() {
               </div>
             </div>
 
-            <Link
-              href={SECOND_BOOK_STRIPE_URL}
-              className="mt-6 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-all hover:border-zinc-100/70 hover:bg-zinc-100/10 hover:text-lime-100"
-              style={{ fontFamily: "var(--font-mono-tech)" }}
-            >
-              <span>MEGSZERZEM A KÖNYVET</span>
-              <span aria-hidden="true">→</span>
-            </Link>
+            <BookPurchaseCard productId="book-2" editionLabel="II." />
 
           </article>
         </section>
@@ -118,12 +109,13 @@ export default function Page() {
           </p>
 
           <Link
-              href={SECOND_BOOK_STRIPE_URL}
-              className="mt-6 mb-12 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-all hover:border-zinc-100/70 hover:bg-zinc-100/10 hover:text-lime-100"
+              href="#book-purchase"
+              aria-label="Vissza a megrendelési lehetőséghez"
+              className="mb-12 mt-6 flex min-h-16 w-full items-center justify-between rounded-md border-2 border-lime-100/80 bg-black/0 px-6 font-mono text-xl font-medium tracking-[0.08em] text-lime-100/80 transition-all hover:border-zinc-100/70 hover:bg-zinc-100/10 hover:text-lime-100"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              <span>MEGSZERZEM A KÖNYVET</span>
-              <span aria-hidden="true">→</span>
+              <span>MEGRENDELEM A KÖNYVET</span>
+              <span aria-hidden="true">↑</span>
           </Link>
 
           <Reviews/>
