@@ -580,7 +580,7 @@ export async function PATCH(
       if (fulfillment.fulfillment_status !== "pickup_date_confirmed") {
         return NextResponse.json({ error: "pickup_date_must_be_confirmed" }, { status: 409 });
       }
-      if (fulfillment.delivery_method !== "dead-drop") {
+      if (!["dead-drop", "personal"].includes(fulfillment.delivery_method)) {
         return NextResponse.json({ error: "location_release_not_applicable" }, { status: 409 });
       }
       const lat = Number(json?.pickupLat);
