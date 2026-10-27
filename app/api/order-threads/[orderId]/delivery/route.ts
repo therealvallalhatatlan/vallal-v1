@@ -347,7 +347,8 @@ async function notifyFulfillmentCounterparty(input: {
   updated: FulfillmentRow;
 }) {
   const customerEmail = await resolveCustomerEmail(input.order, input.orderIds);
-  const siteUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.vallalhatatlan.online").replace(/\\/$/, "");
+  const siteUrlCandidate = process.env.NEXT_PUBLIC_BASE_URL || "https://www.vallalhatatlan.online";
+  const siteUrl = siteUrlCandidate.endsWith("/") ? siteUrlCandidate.slice(0, -1) : siteUrlCandidate;
   const adminUrl = input.orderIds.ordersOrderId
     ? `${siteUrl}/admin/orders/${input.orderIds.ordersOrderId}`
     : `${siteUrl}/admin/shop-orders/${input.orderIds.shopOrderId ?? input.orderId}`;
