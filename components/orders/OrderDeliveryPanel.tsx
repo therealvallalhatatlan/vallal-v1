@@ -80,6 +80,7 @@ function formatDateTime(value: string | null) {
 
 function errorText(code: string) {
   const labels: Record<string, string> = {
+    payment_not_confirmed: "A kézbesítés csak sikeres fizetés után indítható el.",
     invalid_pickup_date: "Adj meg egy érvényes, jövőbeli időpontot.",
     pickup_date_not_proposed: "Nincs elfogadható időpontjavaslat.",
     pickup_date_must_be_confirmed: "A vásárlónak előbb el kell fogadnia az időpontot.",
