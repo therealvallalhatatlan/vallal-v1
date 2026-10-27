@@ -86,9 +86,14 @@ export default function AdminShopOrdersPage() {
           <h1 className="mt-2 text-2xl font-bold">Webshopos rendelések</h1>
           <p className="mt-1 text-sm text-white/50">Azok a fizetési rekordok is itt jelennek meg, amelyekhez még nincs külön operatív rendelési rekord.</p>
         </div>
-        <Link href="/admin/orders" className="border border-white/20 px-3 py-2 text-sm text-lime-200 hover:bg-white/5">
-          Operatív rendelések →
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href="/admin/order-map" className="border border-lime-200/30 px-3 py-2 text-sm text-lime-200 hover:bg-lime-200/5">
+            Kézbesítési térkép →
+          </Link>
+          <Link href="/admin/orders" className="border border-white/20 px-3 py-2 text-sm text-lime-200 hover:bg-white/5">
+            Operatív rendelések →
+          </Link>
+        </div>
       </header>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
