@@ -624,6 +624,14 @@ export async function PATCH(
       if (!["postaautomata", "eu"].includes(fulfillment.delivery_method)) {
         return NextResponse.json({ error: "shipping_not_applicable" }, { status: 409 });
       }
+      // Do not reopen a cancelled or completed fulfillment. Updating the
+      // tracking details remains allowed while the parcel is already in transit.
+      if (["received", "cancelled"].includes(fulfillment.fulfillment_status)) {
+        return NextResponse.json({ error: "fulfillment_already_closed" }, { status: 409 });
+      }
+      if (!["awaiting_contact", "preparing", "shipped"].includes(fulfillment.fulfillment_status)) {
+        return NextResponse.json({ error: "shipping_flow_already_advanced" }, { status: 409 });
+      }
       const carrier = typeof json?.carrier === "string" ? json.carrier.trim().slice(0, 120) : "";
       const trackingNumber = typeof json?.trackingNumber === "string" ? json.trackingNumber.trim().slice(0, 160) : "";
       const trackingUrl = typeof json?.trackingUrl === "string" ? json.trackingUrl.trim().slice(0, 500) : "";
