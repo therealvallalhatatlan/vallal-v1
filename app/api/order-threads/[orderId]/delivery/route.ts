@@ -377,6 +377,9 @@ export async function PATCH(
       if (!["dead-drop", "personal"].includes(fulfillment.delivery_method)) {
         return NextResponse.json({ error: "pickup_date_not_applicable" }, { status: 409 });
       }
+      if (!["awaiting_contact", "pickup_date_proposed", "pickup_date_confirmed"].includes(fulfillment.fulfillment_status)) {
+        return NextResponse.json({ error: "pickup_date_flow_already_advanced" }, { status: 409 });
+      }
       const raw = typeof json?.proposedPickupAt === "string" ? json.proposedPickupAt : "";
       const proposedDate = new Date(raw);
       if (!raw || Number.isNaN(proposedDate.getTime()) || proposedDate.getTime() <= Date.now()) {
