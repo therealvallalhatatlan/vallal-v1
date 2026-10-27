@@ -83,7 +83,7 @@ function errorText(code: string) {
     invalid_pickup_date: "Adj meg egy érvényes, jövőbeli időpontot.",
     pickup_date_not_proposed: "Nincs elfogadható időpontjavaslat.",
     pickup_date_must_be_confirmed: "A vásárlónak előbb el kell fogadnia az időpontot.",
-    location_release_not_applicable: "Ehhez a kézbesítési módhoz nem tartozik dead-drop helyszín.",
+    location_release_not_applicable: "Ehhez a kézbesítési módhoz nem tartozik megosztható átvételi helyszín.",
     valid_coordinates_and_instructions_required: "Érvényes szélesség, hosszúság és helyszínleírás szükséges.",
     tracking_number_required: "A feladáshoz add meg a nyomkövetési számot.",
     tracking_url_must_be_https: "A nyomkövetési linknek HTTPS címet kell használnia.",
