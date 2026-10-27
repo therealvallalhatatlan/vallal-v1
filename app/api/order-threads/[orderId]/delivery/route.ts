@@ -539,6 +539,7 @@ export async function PATCH(
       }
     }
 
+    const previousStatus = fulfillment.fulfillment_status;
     const now = new Date().toISOString();
     let update: Record<string, unknown> = {
       updated_at: now,
@@ -676,6 +677,23 @@ export async function PATCH(
         },
       });
       if (eventError) console.warn("[order-fulfillment] event log failed", eventError);
+    }
+
+    try {
+      await notifyFulfillmentCounterparty({
+        action,
+        staff: resolved.staff,
+        source: resolved.source,
+        orderId,
+        order: resolved.order,
+        orderIds: resolved.orderIds,
+        previousStatus,
+        updated,
+      });
+    } catch (notificationError) {
+      // The state change has already been committed. Never make the client retry
+      // and accidentally repeat a successful fulfillment transition due to email.
+      console.warn("[order-fulfillment] status changed but notification failed", notificationError);
     }
 
     return NextResponse.json({
