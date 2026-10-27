@@ -122,8 +122,38 @@ async function resolveConversationContext(
     return { ok: false as const, response: NextResponse.json({ error: "forbidden" }, { status: 403 }) };
   }
 
-  const customerUserId = order.user_id
+  let customerUserId = order.user_id
     ?? (staff ? await findAuthUserByEmail(order.customer_email) : requester.id);
+
+  // Some older operational rows have neither a customer ID nor an email, but
+  // retain the shop-order ID in Stripe metadata. Recover the buyer identity
+  // from that linked payment record before disabling in-app messaging.
+  if (staff && !customerUserId && source === "orders") {
+    const metadataShopOrderId =
+      typeof order.metadata?.order_id === "string" ? order.metadata.order_id : null;
+    let linkedShopOrder: { user_id: string | null; customer_email: string | null } | null = null;
+
+    if (metadataShopOrderId) {
+      const { data, error } = await supabaseAdmin()
+        .from("shop_orders")
+        .select("user_id, customer_email")
+        .eq("id", metadataShopOrderId)
+        .maybeSingle<{ user_id: string | null; customer_email: string | null }>();
+      if (error) throw error;
+      linkedShopOrder = data;
+    } else if (order.stripe_session_id) {
+      const { data, error } = await supabaseAdmin()
+        .from("shop_orders")
+        .select("user_id, customer_email")
+        .eq("stripe_checkout_session_id", order.stripe_session_id)
+        .maybeSingle<{ user_id: string | null; customer_email: string | null }>();
+      if (error) throw error;
+      linkedShopOrder = data;
+    }
+
+    customerUserId = linkedShopOrder?.user_id
+      ?? await findAuthUserByEmail(linkedShopOrder?.customer_email ?? null);
+  }
 
   if (!customerUserId) {
     return {
