@@ -136,7 +136,7 @@ export default function AdminShopOrdersPage() {
                   <td className="whitespace-nowrap px-3 py-3 text-white/60">{new Date(order.created_at).toLocaleString("hu-HU")}</td>
                   <td className="px-3 py-3 text-white/70">{order.customer_email || "Nincs email"}</td>
                   <td className="max-w-xs px-3 py-3 text-white/60">
-                    <div>{DELIVERY_LABELS[method] ?? method.replaceAll("_", " ") || "Nincs megadva"}</div>
+                    <div>{DELIVERY_LABELS[method] ?? (method.replaceAll("_", " ") || "Nincs megadva")}</div>
                     {pickup ? <p className="mt-1 text-xs text-white/35">{pickup}</p> : null}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3 text-white/80">{formatAmount(order.total_amount, order.currency)}</td>
