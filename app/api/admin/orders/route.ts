@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabaseAdmin()
     .from("orders")
     .select(
-      "id, created_at, stripe_session_id, user_id, anonymized_user_hash, telegram_chat_id, product_id, delivery_type, amount, currency, status, customer_email, customer_name, delivery_note, dispatch_photo_url, dispatch_coordinates, dispatch_sent_at, fulfilled_at, fulfilled_by, metadata",
+      "id, created_at, stripe_session_id, user_id, anonymized_user_hash, telegram_chat_id, product_id, delivery_type, amount, currency, status, customer_email, customer_name, delivery_note, dispatch_photo_url, dispatch_coordinates, dispatch_sent_at, fulfilled_at, fulfilled_by, user_received_at, metadata",
     )
     .in("status", statuses)
     .order("created_at", { ascending: false })
