@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { DeliveryMethod } from "@/lib/shop/delivery";
+import { createClient } from "@/lib/browser";
 
 type BookProductId = "book-1" | "book-2";
 
@@ -61,11 +62,24 @@ export default function BookPurchaseCard({
     setError(null);
 
     try {
+      // Include the current Supabase session when available so the server can
+      // attach the purchase to the signed-in account. Guest checkout stays supported.
+      const checkoutHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      try {
+        const { data: sessionData } = await createClient().auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+        if (accessToken) {
+          checkoutHeaders.Authorization = `Bearer ${accessToken}`;
+        }
+      } catch (sessionError) {
+        console.warn("[BookPurchaseCard] Could not read auth session; continuing as guest.", sessionError);
+      }
+
       const response = await fetch("/api/shop/create-checkout-session", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: checkoutHeaders,
         body: JSON.stringify({
           items: [{ productId, quantity: 1 }],
           deliveryMethod,
