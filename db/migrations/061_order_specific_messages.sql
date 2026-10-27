@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS public.order_fulfillment (
   confirmed_pickup_at TIMESTAMPTZ,
   pickup_point TEXT,
   pickup_instructions TEXT,
+  pickup_photo_url TEXT,
   pickup_lat DOUBLE PRECISION CHECK (pickup_lat IS NULL OR pickup_lat BETWEEN -90 AND 90),
   pickup_lng DOUBLE PRECISION CHECK (pickup_lng IS NULL OR pickup_lng BETWEEN -180 AND 180),
   location_released_at TIMESTAMPTZ,
