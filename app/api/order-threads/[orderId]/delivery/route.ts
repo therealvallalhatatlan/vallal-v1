@@ -500,6 +500,16 @@ export async function PATCH(
     const resolved = await resolveRequestContext(source, orderId, requester);
     if (!resolved.ok) return resolved.response;
 
+    // Never start or advance a fulfillment workflow unless the order is paid.
+    // Payment status remains owned by Stripe/shop_orders and is not changed here.
+    const isPaymentConfirmed = source === "shop_orders"
+      ? resolved.order.status === "paid"
+      : ["paid", "ready_to_dispatch", "dispatched", "fulfilled"].includes(resolved.order.status);
+
+    if (!isPaymentConfirmed) {
+      return NextResponse.json({ error: "payment_not_confirmed" }, { status: 409 });
+    }
+
     const staffActions = ["propose_pickup_date", "release_location", "mark_shipped", "cancel_fulfillment"];
     const customerActions = ["confirm_pickup_date", "mark_received"];
     if (resolved.staff && !staffActions.includes(action)) {
