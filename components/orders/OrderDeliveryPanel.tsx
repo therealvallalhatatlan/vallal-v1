@@ -283,8 +283,8 @@ export default function OrderDeliveryPanel({ orderId, source, token }: Props) {
                   <div className="space-y-2">
                     <p className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">Helyszín kiválasztása térképen</p>
                     <MapPicker
-                      lat={pickupLat.trim() ? Number(pickupLat) : null}
-                      lng={pickupLng.trim() ? Number(pickupLng) : null}
+                      lat={pickupLat.trim() && Number.isFinite(Number(pickupLat)) ? Number(pickupLat) : null}
+                      lng={pickupLng.trim() && Number.isFinite(Number(pickupLng)) ? Number(pickupLng) : null}
                       onChange={(nextLat, nextLng) => {
                         setPickupLat(nextLat.toFixed(6));
                         setPickupLng(nextLng.toFixed(6));
