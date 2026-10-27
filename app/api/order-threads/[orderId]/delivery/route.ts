@@ -296,7 +296,6 @@ function adminNotificationRecipients(): string[] {
 }
 
 async function resolveCustomerEmail(
-  source: OrderSource,
   order: OrderRow,
   orderIds: { ordersOrderId: string | null; shopOrderId: string | null },
 ): Promise<string | null> {
@@ -341,14 +340,13 @@ async function resolveCustomerEmail(
 async function notifyFulfillmentCounterparty(input: {
   action: string;
   staff: boolean;
-  source: OrderSource;
   orderId: string;
   order: OrderRow;
   orderIds: { ordersOrderId: string | null; shopOrderId: string | null };
   previousStatus: FulfillmentStatus;
   updated: FulfillmentRow;
 }) {
-  const customerEmail = await resolveCustomerEmail(input.source, input.order, input.orderIds);
+  const customerEmail = await resolveCustomerEmail(input.order, input.orderIds);
   const siteUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.vallalhatatlan.online").replace(/\\/$/, "");
   const adminUrl = input.orderIds.ordersOrderId
     ? `${siteUrl}/admin/orders/${input.orderIds.ordersOrderId}`
@@ -683,7 +681,6 @@ export async function PATCH(
       await notifyFulfillmentCounterparty({
         action,
         staff: resolved.staff,
-        source: resolved.source,
         orderId,
         order: resolved.order,
         orderIds: resolved.orderIds,
