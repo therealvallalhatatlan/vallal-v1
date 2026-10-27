@@ -289,7 +289,7 @@ export async function POST(
     const { data: existingConversation, error: conversationLookupError } = await db
       .from("order_conversations")
       .select("id, customer_user_id")
-      .eq(resolved.key, orderId)
+      .eq(resolved.key, resolved.threadOrderId)
       .maybeSingle<{ id: string; customer_user_id: string }>();
 
     if (conversationLookupError) {
@@ -320,7 +320,7 @@ export async function POST(
         const { data: raced } = await db
           .from("order_conversations")
           .select("id, customer_user_id")
-          .eq(resolved.key, orderId)
+          .eq(resolved.key, resolved.threadOrderId)
           .maybeSingle<{ id: string; customer_user_id: string }>();
 
         if (!raced || raced.customer_user_id !== resolved.customerUserId) {
