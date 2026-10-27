@@ -236,7 +236,7 @@ export default function OrderDeliveryPanel({ orderId, source, token }: Props) {
             </button>
           ) : null}
 
-          {isStaff && deadDropMethod && !closed ? (
+          {isStaff && deadDropMethod && ["awaiting_contact", "pickup_date_proposed", "pickup_date_confirmed"].includes(status) ? (
             <div className="mt-4 space-y-3 border-t border-zinc-800 pt-4">
               <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">1. Átvételi időpont egyeztetése</p>
               <label className="block text-xs text-zinc-400">
@@ -284,14 +284,14 @@ export default function OrderDeliveryPanel({ orderId, source, token }: Props) {
                     className="inline-flex items-center gap-2 border border-lime-200/40 bg-lime-100/[0.04] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-lime-100 hover:bg-lime-100/10 disabled:opacity-40"
                   >
                     <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
-                    {busyAction === "release_location" ? "FELoldás…" : "HELYSZÍN MEGOSZTÁSA A VÁSÁRLÓVAL"}
+                    {busyAction === "release_location" ? "FELOLDÁS…" : "HELYSZÍN MEGOSZTÁSA A VÁSÁRLÓVAL"}
                   </button>
                 </div>
               ) : null}
             </div>
           ) : null}
 
-          {status === "location_released" && fulfillment.pickup_lat != null && fulfillment.pickup_lng != null ? (
+          {["location_released", "received"].includes(status) && fulfillment.pickup_lat != null && fulfillment.pickup_lng != null ? (
             <div className="mt-3 rounded border border-lime-200/20 bg-lime-200/[0.03] p-3">
               <p className="text-[10px] uppercase tracking-[0.14em] text-lime-100/70">Átvételi hely</p>
               <p className="mt-1 font-mono text-sm text-zinc-100">{fulfillment.pickup_lat}, {fulfillment.pickup_lng}</p>
