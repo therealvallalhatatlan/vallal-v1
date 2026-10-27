@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 
 import {
   getUserFromToken,
@@ -229,6 +230,177 @@ async function resolveRequestContext(
     fulfillment,
     deliveryMethod: fulfillment?.delivery_method ?? deriveDeliveryMethod(source, order),
   };
+}
+
+const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const emailFrom = process.env.EMAIL_FROM;
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function formatEmailDate(value: string | null | undefined): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("hu-HU", {
+    year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
+    timeZone: "Europe/Budapest",
+  }).format(date);
+}
+
+async function sendFulfillmentEmail(input: {
+  recipients: string[];
+  subject: string;
+  body: string;
+  actionUrl: string;
+}) {
+  const recipients = [...new Set(input.recipients.map((item) => item.trim()).filter(Boolean))];
+  if (!resendClient || !emailFrom || recipients.length === 0) return;
+
+  const safeSubject = escapeHtml(input.subject);
+  const safeBody = escapeHtml(input.body).replace(/\\r?\\n/g, "<br />");
+  const safeUrl = escapeHtml(input.actionUrl);
+  try {
+    await resendClient.emails.send({
+      from: emailFrom,
+      to: recipients,
+      subject: input.subject,
+      html: `
+        <div style="margin:0;background:#050505;color:#f4f4f4;font-family:Arial,sans-serif;padding:28px;line-height:1.6">
+          <div style="max-width:620px;margin:0 auto;border:1px solid #2a2a2a;background:#0b0b0b;padding:24px">
+            <p style="margin:0 0 10px;color:#b7ed78;font-size:11px;letter-spacing:.16em;text-transform:uppercase">VÁLLALHATATLAN / KÉZBESÍTÉS</p>
+            <h1 style="font-size:21px;margin:0 0 16px;color:#fff">${safeSubject}</h1>
+            <div style="border:1px solid #242424;background:#060606;padding:14px;color:#eee;font-size:14px;overflow-wrap:anywhere">${safeBody}</div>
+            <p style="margin:22px 0 0"><a href="${safeUrl}" style="color:#b7ed78">Rendelés megnyitása →</a></p>
+          </div>
+        </div>
+      `,
+    });
+  } catch (error) {
+    // Do not roll back a successful state change if email delivery is unavailable.
+    console.warn("[order-fulfillment] status notification failed", error);
+  }
+}
+
+function adminNotificationRecipients(): string[] {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean);
+}
+
+async function resolveCustomerEmail(
+  source: OrderSource,
+  order: OrderRow,
+  orderIds: { ordersOrderId: string | null; shopOrderId: string | null },
+): Promise<string | null> {
+  if (order.customer_email?.trim()) return order.customer_email.trim();
+
+  if (orderIds.shopOrderId) {
+    const { data, error } = await supabaseAdmin()
+      .from("shop_orders")
+      .select("customer_email, user_id")
+      .eq("id", orderIds.shopOrderId)
+      .maybeSingle<{ customer_email: string | null; user_id: string | null }>();
+    if (error) console.warn("[order-fulfillment] linked shop order email lookup failed", error);
+    if (data?.customer_email) return data.customer_email;
+    if (data?.user_id) {
+      const { data: authUser } = await supabaseAdmin().auth.admin.getUserById(data.user_id);
+      if (authUser.user?.email) return authUser.user.email;
+    }
+  }
+
+  if (orderIds.ordersOrderId) {
+    const { data, error } = await supabaseAdmin()
+      .from("orders")
+      .select("customer_email, user_id")
+      .eq("id", orderIds.ordersOrderId)
+      .maybeSingle<{ customer_email: string | null; user_id: string | null }>();
+    if (error) console.warn("[order-fulfillment] linked operational order email lookup failed", error);
+    if (data?.customer_email) return data.customer_email;
+    if (data?.user_id) {
+      const { data: authUser } = await supabaseAdmin().auth.admin.getUserById(data.user_id);
+      if (authUser.user?.email) return authUser.user.email;
+    }
+  }
+
+  if (order.user_id) {
+    const { data: authUser } = await supabaseAdmin().auth.admin.getUserById(order.user_id);
+    if (authUser.user?.email) return authUser.user.email;
+  }
+
+  return null;
+}
+
+async function notifyFulfillmentCounterparty(input: {
+  action: string;
+  staff: boolean;
+  source: OrderSource;
+  orderId: string;
+  order: OrderRow;
+  orderIds: { ordersOrderId: string | null; shopOrderId: string | null };
+  previousStatus: FulfillmentStatus;
+  updated: FulfillmentRow;
+}) {
+  const customerEmail = await resolveCustomerEmail(input.source, input.order, input.orderIds);
+  const siteUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.vallalhatatlan.online").replace(/\\/$/, "");
+  const adminUrl = input.orderIds.ordersOrderId
+    ? `${siteUrl}/admin/orders/${input.orderIds.ordersOrderId}`
+    : `${siteUrl}/admin/shop-orders/${input.orderIds.shopOrderId ?? input.orderId}`;
+  const customerUrl = `${siteUrl}/dashboard`;
+  let subject = "";
+  let body = "";
+
+  switch (input.action) {
+    case "propose_pickup_date":
+      subject = "Átvételi időpontjavaslat érkezett";
+      body = `A javasolt átvételi időpont: ${formatEmailDate(input.updated.proposed_pickup_at)}. Jelentkezz be a fiókodba, hogy elfogadd az időpontot.`;
+      break;
+    case "confirm_pickup_date":
+      subject = "A vásárló elfogadta az átvételi időpontot";
+      body = `A vásárló elfogadta a javasolt időpontot: ${formatEmailDate(input.updated.confirmed_pickup_at)}. Most már megosztható a dead-drop helyszín.`;
+      break;
+    case "release_location":
+      subject = "Az átvételi helyszín elérhető";
+      body = [
+        "Az egyeztetett átvételi helyszínt feloldottuk.",
+        `Koordináták: ${input.updated.pickup_lat}, ${input.updated.pickup_lng}`,
+        `Útmutató: ${input.updated.pickup_instructions ?? "Lépj be a fiókodba az átvételi részletekért."}`,
+      ].join("\\n");
+      break;
+    case "mark_shipped":
+      if (input.previousStatus !== "shipped") {
+        subject = "A rendelésedet feladtuk";
+        body = [
+          `Szolgáltató: ${input.updated.carrier ?? "nincs megadva"}`,
+          `Nyomkövetési szám: ${input.updated.tracking_number ?? "nincs megadva"}`,
+          input.updated.tracking_url ? `Nyomkövetés: ${input.updated.tracking_url}` : "",
+        ].filter(Boolean).join("\\n");
+      }
+      break;
+    case "mark_received":
+      subject = "A vásárló átvette a rendelést";
+      body = "A vásárló átvettként jelölte a rendelést.";
+      break;
+    case "cancel_fulfillment":
+      subject = "A kézbesítési folyamat megszakadt";
+      body = "A rendelés kézbesítési folyamata megszakításra került. Lépj be a fiókodba a további egyeztetéshez.";
+      break;
+  }
+
+  if (!subject) return;
+  const to = input.staff
+    ? (customerEmail ? [customerEmail] : [])
+    : adminNotificationRecipients();
+  const actionUrl = input.staff ? customerUrl : adminUrl;
+
+  await sendFulfillmentEmail({ recipients: to, subject, body, actionUrl });
 }
 
 function safeFulfillment(row: FulfillmentRow | null, deliveryMethod: DeliveryMethod, order: OrderRow, staff: boolean) {
