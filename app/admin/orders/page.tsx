@@ -14,6 +14,7 @@ type AdminOrder = {
   delivery_type: string;
   customer_email: string | null;
   telegram_chat_id: string | null;
+  user_received_at: string | null;
   metadata: Record<string, unknown> | null;
 };
 
@@ -166,6 +167,7 @@ export default function AdminOrdersPage() {
                   ) : null}
                 </td>
                 <td className="px-3 py-2 text-white/70">
+                  {order.user_received_at ? <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-lime-200">Vásárló átvette</div> : null}
                   {order.telegram_chat_id ? `tg:${order.telegram_chat_id}` : order.customer_email || "n/a"}
                 </td>
               </tr>
