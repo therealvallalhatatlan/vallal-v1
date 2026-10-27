@@ -222,6 +222,11 @@ async function resolveConversationContext(
     };
   }
 
+  if (staff && !customerEmail) {
+    const { data } = await supabaseAdmin().auth.admin.getUserById(customerUserId);
+    customerEmail = data.user?.email ?? null;
+  }
+
   // If a webshop order also has an operational orders row, both sides share
   // one conversation so neither the buyer nor admin sees a split thread.
   let threadSource = source;
@@ -427,7 +432,7 @@ export async function POST(
     const adminUrl = resolved.threadSource === "orders"
       ? `${siteUrl}/admin/orders/${resolved.threadOrderId}`
       : `${siteUrl}/admin/shop-orders/${resolved.threadOrderId}`;
-    const actionUrl = resolved.staff ? adminUrl : `${siteUrl}/dashboard`;
+    const actionUrl = resolved.staff ? `${siteUrl}/dashboard` : adminUrl;
     const recipients = resolved.staff
       ? (resolved.customerEmail ? [resolved.customerEmail] : [])
       : getAdminNotificationRecipients();
