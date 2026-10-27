@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarClock, CheckCircle2, MapPin, PackageCheck, Truck } from "lucide-react";
+import MapPicker from "@/components/matrica/MapPicker";
 
 type OrderSource = "orders" | "shop_orders";
 type DeliveryMethod = "dead-drop" | "postaautomata" | "eu" | "personal" | "unknown";
@@ -23,6 +24,7 @@ type Fulfillment = {
   confirmed_pickup_at: string | null;
   pickup_point: string | null;
   pickup_instructions: string | null;
+  pickup_photo_url: string | null;
   pickup_lat: number | null;
   pickup_lng: number | null;
   location_released_at: string | null;
@@ -88,6 +90,7 @@ function errorText(code: string) {
     valid_coordinates_and_instructions_required: "Érvényes szélesség, hosszúság és helyszínleírás szükséges.",
     tracking_number_required: "A feladáshoz add meg a nyomkövetési számot.",
     tracking_url_must_be_https: "A nyomkövetési linknek HTTPS címet kell használnia.",
+    pickup_photo_url_must_be_https: "A fotó linkjének HTTPS címet kell használnia.",
     shipping_not_applicable: "Ez a kézbesítési mód nem csomagküldés.",
     order_not_ready_for_receipt: "A rendelés csak a helyszín megosztása vagy a csomag feladása után jelölhető átvettnek.",
     forbidden: "Ehhez a rendeléshez nincs hozzáférésed.",
@@ -109,6 +112,7 @@ export default function OrderDeliveryPanel({ orderId, source, token }: Props) {
   const [pickupLat, setPickupLat] = useState("");
   const [pickupLng, setPickupLng] = useState("");
   const [pickupInstructions, setPickupInstructions] = useState("");
+  const [pickupPhotoUrl, setPickupPhotoUrl] = useState("");
   const [carrier, setCarrier] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [trackingUrl, setTrackingUrl] = useState("");
@@ -141,6 +145,7 @@ export default function OrderDeliveryPanel({ orderId, source, token }: Props) {
       setPickupLat(row?.pickup_lat == null ? "" : String(row.pickup_lat));
       setPickupLng(row?.pickup_lng == null ? "" : String(row.pickup_lng));
       setPickupInstructions(row?.pickup_instructions ?? "");
+      setPickupPhotoUrl(row?.pickup_photo_url ?? "");
       setCarrier(row?.carrier ?? "");
       setTrackingNumber(row?.tracking_number ?? "");
       setTrackingUrl(row?.tracking_url ?? "");
@@ -275,13 +280,34 @@ export default function OrderDeliveryPanel({ orderId, source, token }: Props) {
                       <input inputMode="decimal" value={pickupLng} onChange={(event) => setPickupLng(event.target.value)} placeholder="19.0402" className="mt-1 w-full border border-zinc-800 bg-black px-3 py-2 text-sm text-zinc-100" />
                     </label>
                   </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">Helyszín kiválasztása térképen</p>
+                    <MapPicker
+                      lat={pickupLat.trim() ? Number(pickupLat) : null}
+                      lng={pickupLng.trim() ? Number(pickupLng) : null}
+                      onChange={(nextLat, nextLng) => {
+                        setPickupLat(nextLat.toFixed(6));
+                        setPickupLng(nextLng.toFixed(6));
+                      }}
+                    />
+                  </div>
                   <label className="block text-xs text-zinc-400">Átvételi útmutató
                     <textarea value={pickupInstructions} onChange={(event) => setPickupInstructions(event.target.value.slice(0, 2000))} rows={3} maxLength={2000} placeholder="Helyszínleírás, támpontok, fotóhoz fűzött megjegyzés…" className="mt-1 w-full border border-zinc-800 bg-black px-3 py-2 text-sm text-zinc-100" />
+                  </label>
+                  <label className="block text-xs text-zinc-400">Átvételi fotó URL (opcionális, HTTPS)
+                    <input
+                      type="url"
+                      value={pickupPhotoUrl}
+                      onChange={(event) => setPickupPhotoUrl(event.target.value.slice(0, 500))}
+                      maxLength={500}
+                      placeholder="https://…"
+                      className="mt-1 w-full border border-zinc-800 bg-black px-3 py-2 text-sm text-zinc-100"
+                    />
                   </label>
                   <button
                     type="button"
                     disabled={!pickupLat.trim() || !pickupLng.trim() || !pickupInstructions.trim() || Boolean(busyAction)}
-                    onClick={() => void updateFulfillment("release_location", { pickupLat: Number(pickupLat), pickupLng: Number(pickupLng), pickupInstructions })}
+                    onClick={() => void updateFulfillment("release_location", { pickupLat: Number(pickupLat), pickupLng: Number(pickupLng), pickupInstructions, pickupPhotoUrl })}
                     className="inline-flex items-center gap-2 border border-lime-200/40 bg-lime-100/[0.04] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-lime-100 hover:bg-lime-100/10 disabled:opacity-40"
                   >
                     <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
@@ -305,6 +331,11 @@ export default function OrderDeliveryPanel({ orderId, source, token }: Props) {
                 <MapPin className="h-3.5 w-3.5" aria-hidden="true" /> Megnyitás térképen
               </a>
               {fulfillment.pickup_instructions ? <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-zinc-300">{fulfillment.pickup_instructions}</p> : null}
+              {fulfillment.pickup_photo_url ? (
+                <a href={fulfillment.pickup_photo_url} target="_blank" rel="noreferrer" className="mt-3 block text-xs text-lime-200 underline underline-offset-4">
+                  Átvételi fotó megnyitása →
+                </a>
+              ) : null}
             </div>
           ) : null}
 
