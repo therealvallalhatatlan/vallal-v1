@@ -88,9 +88,82 @@ export async function GET(req: NextRequest, context: { params: Promise<{ orderId
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 
+  let detailItems = items ?? [];
+
+  // Shop purchases are stored in shop_order_items; the legacy operational
+  // order_items table can be empty for those same paid orders. Resolve the
+  // related shop order by its metadata ID first, then by Stripe session ID.
+  if (detailItems.length === 0) {
+    const orderMetadata =
+      order.metadata && typeof order.metadata === "object"
+        ? (order.metadata as Record<string, unknown>)
+        : {};
+    const metadataShopOrderId =
+      typeof orderMetadata.order_id === "string" ? orderMetadata.order_id : null;
+
+    let shopOrderId: string | null = null;
+
+    if (metadataShopOrderId) {
+      const { data: linkedShopOrder, error: linkedShopOrderError } = await supabaseAdmin()
+        .from("shop_orders")
+        .select("id")
+        .eq("id", metadataShopOrderId)
+        .maybeSingle<{ id: string }>();
+
+      if (linkedShopOrderError) {
+        console.warn("[admin.orders] linked shop order lookup failed", linkedShopOrderError);
+      } else {
+        shopOrderId = linkedShopOrder?.id ?? null;
+      }
+    }
+
+    if (!shopOrderId && order.stripe_session_id) {
+      const { data: sessionShopOrder, error: sessionShopOrderError } = await supabaseAdmin()
+        .from("shop_orders")
+        .select("id")
+        .eq("stripe_checkout_session_id", order.stripe_session_id)
+        .maybeSingle<{ id: string }>();
+
+      if (sessionShopOrderError) {
+        console.warn("[admin.orders] shop order session lookup failed", sessionShopOrderError);
+      } else {
+        shopOrderId = sessionShopOrder?.id ?? null;
+      }
+    }
+
+    if (shopOrderId) {
+      const { data: shopItems, error: shopItemsError } = await supabaseAdmin()
+        .from("shop_order_items")
+        .select("id, product_id, product_type, product_name, variant_id, quantity, unit_amount, metadata, created_at")
+        .eq("order_id", shopOrderId)
+        .order("created_at", { ascending: true });
+
+      if (shopItemsError) {
+        console.warn("[admin.orders] shop order items lookup failed", shopItemsError);
+      } else {
+        detailItems = (shopItems ?? []).map((item) => {
+          const quantity = Number(item.quantity ?? 0);
+          const unitAmount = Number(item.unit_amount ?? 0);
+
+          return {
+            id: item.id,
+            product_id: item.product_id,
+            product_code: item.variant_id ?? item.product_id,
+            product_name: item.product_name,
+            unit_price: unitAmount / 100,
+            quantity,
+            line_total: (unitAmount * quantity) / 100,
+            metadata: item.metadata,
+            created_at: item.created_at,
+          };
+        });
+      }
+    }
+  }
+
   return NextResponse.json({
     order,
-    items: items ?? [],
+    items: detailItems,
     events: events ?? [],
   });
 }
