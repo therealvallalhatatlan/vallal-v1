@@ -88,7 +88,10 @@ export default function AdminOrdersPage() {
     <div className="mx-auto max-w-6xl space-y-4 p-6 text-white">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Admin Orders Queue</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href="/admin/order-map" className="border border-lime-200/30 px-3 py-2 text-sm text-lime-200 hover:bg-lime-200/5">
+            Kézbesítési térkép →
+          </Link>
           <Link href="/admin/shop-orders" className="border border-white/20 px-3 py-2 text-sm text-lime-200 hover:bg-white/5">
             Webshopos rendelések →
           </Link>
