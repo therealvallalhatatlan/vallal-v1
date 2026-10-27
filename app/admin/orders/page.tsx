@@ -18,6 +18,8 @@ type AdminOrder = {
   metadata: Record<string, unknown> | null;
 };
 
+type AccessState = "checking" | "allowed" | "denied" | "error";
+
 function formatStripeAmount(amountMinor: number, currency: string) {
   const code = (currency || "huf").toUpperCase();
   return new Intl.NumberFormat("hu-HU", {
@@ -45,6 +47,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [statusFilter, setStatusFilter] = useState(DEFAULT_STATUS_FILTER);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [accessState, setAccessState] = useState<AccessState>("checking");
   const [error, setError] = useState<string | null>(null);
 
   const headers = useMemo(() => {
@@ -54,35 +57,82 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     if (!headers) return;
+    let active = true;
 
     const loadOrders = async () => {
       setLoadingOrders(true);
       setError(null);
       try {
         const params = new URLSearchParams({ status: statusFilter, limit: "100" });
-        const response = await fetch(`/api/admin/orders?${params.toString()}`, { headers });
+        const response = await fetch(`/api/admin/orders?${params.toString()}`, {
+          headers,
+          cache: "no-store",
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          if (active) {
+            setOrders([]);
+            setAccessState("denied");
+          }
+          return;
+        }
+
         if (!response.ok) {
-          throw new Error("Nem sikerült lekérni a rendeléseket.");
+          throw new Error("Nem sikerült ellenőrizni a jogosultságot vagy lekérni a rendeléseket.");
         }
 
         const payload = (await response.json()) as { orders?: AdminOrder[] };
-        setOrders(payload.orders ?? []);
+        if (active) {
+          setOrders(payload.orders ?? []);
+          setAccessState("allowed");
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Ismeretlen hiba");
+        if (active) {
+          setError(err instanceof Error ? err.message : "Ismeretlen hiba");
+          setAccessState("error");
+        }
       } finally {
-        setLoadingOrders(false);
+        if (active) setLoadingOrders(false);
       }
     };
 
-    loadOrders();
+    void loadOrders();
+    return () => {
+      active = false;
+    };
   }, [headers, statusFilter]);
 
-  if (loading) {
-    return <div className="p-6 text-white">Betöltés...</div>;
+  if (loading || (session && token && accessState === "checking")) {
+    return <div className="p-6 text-white">Jogosultság ellenőrzése...</div>;
   }
 
-  if (!session) {
-    return <div className="p-6 text-white">Jelentkezz be admin/editor jogosultsággal.</div>;
+  if (!session || !token || accessState === "denied") {
+    return (
+      <main className="mx-auto max-w-xl p-6 text-white" role="alert">
+        <h1 className="text-xl font-semibold">Nincs hozzáférés</h1>
+        <p className="mt-2 text-sm text-white/60">
+          Ez az oldal kizárólag admin/editor jogosultsággal érhető el.
+        </p>
+      </main>
+    );
+  }
+
+  if (accessState !== "allowed") {
+    return (
+      <main className="mx-auto max-w-xl p-6 text-white" role="alert">
+        <h1 className="text-xl font-semibold">A jogosultság nem ellenőrizhető</h1>
+        <p className="mt-2 text-sm text-red-300">
+          {error || "A rendelési adatok védelme érdekében az oldal nem jeleníthető meg."}
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 border border-white/20 px-3 py-2 text-sm hover:bg-white/5"
+        >
+          Újrapróbálás
+        </button>
+      </main>
+    );
   }
 
   return (
@@ -141,7 +191,7 @@ export default function AdminOrdersPage() {
 
             {!loadingOrders && orders.length === 0 ? (
               <tr>
-                <td className="px-3 py-4 text-white/60" colSpan={6}>
+                <td className="px-3 py-4 text-white/60" colSpan={7}>
                   Nincs találat a kiválasztott státuszokra.
                 </td>
               </tr>

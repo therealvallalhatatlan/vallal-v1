@@ -19,6 +19,8 @@ type ShopOrder = {
   user_received_at: string | null;
 };
 
+type AccessState = "checking" | "allowed" | "denied" | "error";
+
 function formatAmount(minorAmount: number, currency: string) {
   const code = (currency || "huf").toUpperCase();
   return new Intl.NumberFormat("hu-HU", {
@@ -47,6 +49,7 @@ export default function AdminShopOrdersPage() {
   const [orders, setOrders] = useState<ShopOrder[]>([]);
   const [status, setStatus] = useState("all");
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [accessState, setAccessState] = useState<AccessState>("checking");
   const [error, setError] = useState<string | null>(null);
 
   const headers = useMemo(() => token ? { Authorization: `Bearer ${token}` } : undefined, [token]);
@@ -54,6 +57,7 @@ export default function AdminShopOrdersPage() {
   useEffect(() => {
     if (!headers) return;
     let active = true;
+
     const load = async () => {
       setLoadingOrders(true);
       setError(null);
@@ -62,21 +66,72 @@ export default function AdminShopOrdersPage() {
           headers,
           cache: "no-store",
         });
+
+        if (response.status === 401 || response.status === 403) {
+          if (active) {
+            setOrders([]);
+            setAccessState("denied");
+          }
+          return;
+        }
+
         const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload?.error || "Nem sikerült betölteni a webshopos rendeléseket.");
-        if (active) setOrders(Array.isArray(payload.orders) ? payload.orders : []);
+        if (!response.ok) {
+          throw new Error(payload?.error || "Nem sikerült ellenőrizni a jogosultságot vagy betölteni a webshopos rendeléseket.");
+        }
+
+        if (active) {
+          setOrders(Array.isArray(payload.orders) ? payload.orders : []);
+          setAccessState("allowed");
+        }
       } catch (loadError) {
-        if (active) setError(loadError instanceof Error ? loadError.message : "Ismeretlen hiba");
+        if (active) {
+          setError(loadError instanceof Error ? loadError.message : "Ismeretlen hiba");
+          setAccessState("error");
+        }
       } finally {
         if (active) setLoadingOrders(false);
       }
     };
+
     void load();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [headers, status]);
 
-  if (loading) return <div className="p-6 text-white">Betöltés...</div>;
-  if (!session) return <div className="p-6 text-white">Jelentkezz be admin/editor jogosultsággal.</div>;
+  if (loading || (session && token && accessState === "checking")) {
+    return <div className="p-6 text-white">Jogosultság ellenőrzése...</div>;
+  }
+
+  if (!session || !token || accessState === "denied") {
+    return (
+      <main className="mx-auto max-w-xl p-6 text-white" role="alert">
+        <h1 className="text-xl font-semibold">Nincs hozzáférés</h1>
+        <p className="mt-2 text-sm text-white/60">
+          Ez az oldal kizárólag admin/editor jogosultsággal érhető el.
+        </p>
+      </main>
+    );
+  }
+
+  if (accessState !== "allowed") {
+    return (
+      <main className="mx-auto max-w-xl p-6 text-white" role="alert">
+        <h1 className="text-xl font-semibold">A jogosultság nem ellenőrizhető</h1>
+        <p className="mt-2 text-sm text-red-300">
+          {error || "A rendelési adatok védelme érdekében az oldal nem jeleníthető meg."}
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 border border-white/20 px-3 py-2 text-sm hover:bg-white/5"
+        >
+          Újrapróbálás
+        </button>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-7xl space-y-5 p-6 text-white">
