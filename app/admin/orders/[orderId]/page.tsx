@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useSessionGuard } from "@/hooks/useSessionGuard";
+import OrderMessagesPanel from "@/components/orders/OrderMessagesPanel";
+import OrderDeliveryPanel from "@/components/orders/OrderDeliveryPanel";
 
 type OrderItem = {
   id: string;
@@ -28,6 +30,7 @@ type OrderDetail = {
   created_at: string;
   status: string;
   product_id: string;
+  delivery_type: string;
   amount: number;
   currency: string;
   customer_email: string | null;
@@ -38,6 +41,34 @@ type OrderDetail = {
   dispatch_coordinates: Record<string, unknown> | null;
   dispatch_sent_at: string | null;
   fulfilled_at: string | null;
+  metadata: Record<string, unknown> | null;
+};
+
+function formatStripeAmount(amountMinor: number, currency: string) {
+  const code = (currency || "huf").toUpperCase();
+  return new Intl.NumberFormat("hu-HU", {
+    style: "currency",
+    currency: code,
+    maximumFractionDigits: code === "HUF" ? 0 : 2,
+  }).format(amountMinor / 100);
+}
+
+function formatOrderItemAmount(amount: number, currency: string) {
+  const code = (currency || "huf").toUpperCase();
+  return new Intl.NumberFormat("hu-HU", {
+    style: "currency",
+    currency: code,
+    maximumFractionDigits: code === "HUF" ? 0 : 2,
+  }).format(amount);
+}
+
+const DELIVERY_TYPE_LABELS: Record<string, string> = {
+  dead_drop: "Dead drop / egyeztetett átvétel",
+  anonymous_locker: "Anonim csomagautomata",
+  personal: "Személyes átvétel",
+  hu_shipping: "Csomagautomata / belföldi szállítás",
+  eu_shipping: "EU-n belüli szállítás",
+  global_shipping: "Nemzetközi szállítás",
 };
 
 const STATUS_OPTIONS = ["pending", "paid", "ready_to_dispatch", "dispatched", "fulfilled", "cancelled"];
@@ -202,9 +233,14 @@ export default function AdminOrderDetailPage() {
               <div>Order ID: {order.id}</div>
               <div>Létrehozva: {new Date(order.created_at).toLocaleString()}</div>
               <div>Termék: {order.product_id}</div>
+              <div>Összeg: {formatStripeAmount(order.amount, order.currency)}</div>
               <div>
-                Összeg: {order.amount} {(order.currency || "huf").toUpperCase()}
+                Kézbesítés: {DELIVERY_TYPE_LABELS[order.delivery_type] ?? order.delivery_type ?? "nincs megadva"}
               </div>
+              {typeof order.metadata?.pickupPoint === "string" && order.metadata.pickupPoint.trim() ? (
+                <div>Csomagpont / automata: {order.metadata.pickupPoint}</div>
+              ) : null}
+              {order.delivery_note ? <div>Átvételi megjegyzés: {order.delivery_note}</div> : null}
               <div>Kapcsolat: {order.telegram_chat_id ? `tg:${order.telegram_chat_id}` : order.customer_email || "n/a"}</div>
             </div>
           </section>
@@ -242,6 +278,7 @@ export default function AdminOrderDetailPage() {
             </div>
           </section>
 
+          {order.telegram_chat_id ? (
           <section className="rounded border border-white/15 bg-black/30 p-4">
             <h2 className="mb-3 text-lg font-semibold">Telegram Dispatch</h2>
             <div className="space-y-3">
@@ -273,6 +310,14 @@ export default function AdminOrderDetailPage() {
               </button>
             </div>
           </section>
+          ) : (
+            <section className="rounded border border-white/15 bg-black/30 p-4">
+              <h2 className="mb-2 text-lg font-semibold">Vevői kommunikáció</h2>
+              <p className="text-sm leading-relaxed text-white/55">
+                Ehhez a rendeléshez nincs Telegram-kapcsolat. A vásárlóval a rendeléshez kötött üzenetpanelen tudsz egyeztetni.
+              </p>
+            </section>
+          )}
 
           <section className="rounded border border-white/15 bg-black/30 p-4">
             <h2 className="mb-3 text-lg font-semibold">Tételek</h2>
@@ -280,11 +325,14 @@ export default function AdminOrderDetailPage() {
               {items.length === 0 ? <div>Nincs tétel.</div> : null}
               {items.map((item) => (
                 <div key={item.id} className="border-b border-white/10 pb-2">
-                  {item.product_name || item.product_id} x{item.quantity} = {item.line_total}
+                  {item.product_name || item.product_id} x{item.quantity} = {formatOrderItemAmount(item.line_total, order.currency)}
                 </div>
               ))}
             </div>
           </section>
+
+          <OrderDeliveryPanel orderId={order.id} source="orders" token={token ?? null} />
+          <OrderMessagesPanel orderId={order.id} source="orders" token={token ?? null} />
 
           <section className="rounded border border-white/15 bg-black/30 p-4">
             <h2 className="mb-3 text-lg font-semibold">Események</h2>

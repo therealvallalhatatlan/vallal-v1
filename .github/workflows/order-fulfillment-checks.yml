@@ -1,0 +1,70 @@
+name: Order fulfillment checks
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/api/order-threads/**"
+      - "app/api/admin/orders/**"
+      - "app/api/admin/shop-orders/**"
+      - "app/api/admin/order-fulfillment/**"
+      - "app/admin/orders/**"
+      - "app/admin/shop-orders/**"
+      - "app/admin/order-map/**"
+      - "components/orders/**"
+      - "components/dashboard/UserAccountDashboard.tsx"
+      - "components/book-purchase/BookPurchaseCard.tsx"
+      - "app/api/user/account/route.ts"
+      - "app/api/webhook/stripe/route.ts"
+      - "db/migrations/061_order_specific_messages.sql"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "tsconfig.json"
+  push:
+    branches:
+      - feat/order-fulfillment-foundation-20261027
+    paths:
+      - "app/api/order-threads/**"
+      - "app/api/admin/orders/**"
+      - "app/api/admin/shop-orders/**"
+      - "app/api/admin/order-fulfillment/**"
+      - "app/admin/orders/**"
+      - "app/admin/shop-orders/**"
+      - "app/admin/order-map/**"
+      - "components/orders/**"
+      - "components/dashboard/UserAccountDashboard.tsx"
+      - "components/book-purchase/BookPurchaseCard.tsx"
+      - "app/api/user/account/route.ts"
+      - "app/api/webhook/stripe/route.ts"
+      - "db/migrations/061_order_specific_messages.sql"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "tsconfig.json"
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck-and-tests:
+    name: TypeScript and registry regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate TypeScript
+        run: pnpm exec tsc --noEmit --pretty false
+      - name: Run book registry regression tests
+        run: pnpm test:book-registry

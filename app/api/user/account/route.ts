@@ -124,7 +124,7 @@ export async function GET(req: NextRequest) {
       db
         .from("orders")
         .select(
-          "id, created_at, status, amount, currency, product_id, delivery_type, customer_email, fulfilled_at, dispatch_sent_at, user_received_at, metadata, distribution_drop_id, distribution_fulfillment_method"
+          "id, created_at, status, amount, currency, product_id, delivery_type, customer_email, fulfilled_at, dispatch_sent_at, user_received_at, metadata, distribution_drop_id, distribution_fulfillment_method, stripe_session_id"
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -132,7 +132,7 @@ export async function GET(req: NextRequest) {
       db
         .from("shop_orders")
         .select(
-          "id, created_at, status, subtotal_amount, currency, customer_email, paid_at, user_received_at, metadata"
+          "id, created_at, status, subtotal_amount, currency, customer_email, paid_at, user_received_at, metadata, stripe_checkout_session_id"
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -230,7 +230,31 @@ export async function GET(req: NextRequest) {
     shopItemsByOrder.set(item.order_id, existing);
   }
 
-  const shopOrders = (shopOrdersRes.data ?? []).map((order) => {
+  const linkedShopOrderIds = new Set(
+    (bookOrdersRes.data ?? [])
+      .map((order) => {
+        const metadata = order.metadata && typeof order.metadata === "object"
+          ? order.metadata as Record<string, unknown>
+          : {};
+        return typeof metadata.order_id === "string" ? metadata.order_id : null;
+      })
+      .filter((value): value is string => Boolean(value)),
+  );
+  const linkedStripeSessionIds = new Set(
+    (bookOrdersRes.data ?? [])
+      .map((order) => order.stripe_session_id)
+      .filter((value): value is string => Boolean(value)),
+  );
+
+  // The Stripe webhook mirrors some paid shop orders into the legacy
+  // operational table. Only display the operational record for those pairs,
+  // otherwise the buyer dashboard and spend/badge totals double-count them.
+  const standaloneShopOrders = (shopOrdersRes.data ?? []).filter((order) =>
+    !linkedShopOrderIds.has(order.id)
+    && !(order.stripe_checkout_session_id && linkedStripeSessionIds.has(order.stripe_checkout_session_id)),
+  );
+
+  const shopOrders = standaloneShopOrders.map((order) => {
     const metadata = (order.metadata && typeof order.metadata === "object" ? order.metadata : null) as Record<string, unknown> | null;
     const items = shopItemsByOrder.get(order.id) ?? [];
     const amountHuf = toHuf(order.subtotal_amount, "fillér");

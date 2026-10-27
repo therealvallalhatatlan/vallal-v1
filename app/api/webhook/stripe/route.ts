@@ -211,6 +211,42 @@ type OrderItemRow = {
   quantity: number;
 };
 
+const VALID_ORDER_DELIVERY_TYPES = new Set([
+  "dead_drop",
+  "anonymous_locker",
+  "personal",
+  "hu_shipping",
+  "eu_shipping",
+  "global_shipping",
+]);
+
+function resolveOrderDeliveryType(metadata: Record<string, string>): string {
+  // The current shop checkout writes deliveryMethod; older flows may still
+  // write delivery_type. Prefer the explicit checkout selection when present.
+  const checkoutMethod = metadata.deliveryMethod ?? metadata.delivery_method;
+
+  switch (checkoutMethod) {
+    case "dead-drop":
+    case "dead_drop":
+      return "dead_drop";
+    case "postaautomata":
+      return "hu_shipping";
+    case "eu":
+      return "eu_shipping";
+    case "personal":
+      return "personal";
+    case "global":
+      return "global_shipping";
+  }
+
+  const legacyDeliveryType = metadata.delivery_type;
+  if (legacyDeliveryType && VALID_ORDER_DELIVERY_TYPES.has(legacyDeliveryType)) {
+    return legacyDeliveryType;
+  }
+
+  return "dead_drop";
+}
+
 function sanitizeOrderMetadata(metadata: Record<string, string>) {
   const {
     telegram_chat_id: _telegramChatId,
@@ -513,7 +549,7 @@ async function upsertPaidOrderFromSession(
 
   const rawTelegramIdentity = metadata.telegram_user_ephemeral ?? metadata.telegram_user_id ?? telegramChatId ?? null;
   const anonymizedUserHash = rawTelegramIdentity ? hashTelegramId(String(rawTelegramIdentity)) : null;
-  const deliveryType = metadata.delivery_type === 'anonymous_locker' ? 'anonymous_locker' : 'dead_drop';
+  const deliveryType = resolveOrderDeliveryType(metadata);
   const packageLabel = metadata.package_label ?? metadata.product_alias ?? productId;
   const stripeAmountMinor = typeof session.amount_total === 'number' ? session.amount_total : null;
   const currency = (session.currency ?? 'huf').toLowerCase();

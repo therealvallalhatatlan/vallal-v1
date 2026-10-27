@@ -6,6 +6,8 @@ import { BookMarked, BookOpen, Check, ChevronDown, Crown, HeartHandshake, Pencil
 import { Montserrat } from "next/font/google"
 import { createClient } from "@/lib/browser"
 import UserAvatarWithBadges from "@/components/UserAvatarWithBadges"
+import OrderMessagesPanel from "@/components/orders/OrderMessagesPanel"
+import OrderDeliveryPanel from "@/components/orders/OrderDeliveryPanel"
 import type { DashboardAccountResponse, DashboardUnifiedOrder } from "@/types/dashboard"
 
 const DASHBOARD_BADGE_ICONS = {
@@ -686,6 +688,18 @@ export default function UserAccountDashboard({ account, token }: Props) {
                               KÖVETKEZŐ DEAD DROPRA VÁR
                             </p>
                           ) : null}
+
+                          <OrderDeliveryPanel
+                            orderId={order.id}
+                            source={order.source === "shop" ? "shop_orders" : "orders"}
+                            token={token}
+                          />
+
+                          <OrderMessagesPanel
+                            orderId={order.id}
+                            source={order.source === "shop" ? "shop_orders" : "orders"}
+                            token={token}
+                          />
                         </div>
                       )}
                     </article>
