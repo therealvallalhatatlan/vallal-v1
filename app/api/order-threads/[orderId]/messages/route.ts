@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 
 import {
   getUserFromToken,
@@ -102,6 +103,60 @@ function orderKey(source: OrderSource): "orders_order_id" | "shop_order_id" {
   return source === "orders" ? "orders_order_id" : "shop_order_id";
 }
 
+const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const emailFrom = process.env.EMAIL_FROM;
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+async function sendMessageNotification(input: {
+  to: string[];
+  subject: string;
+  body: string;
+  orderReference: string;
+  actionUrl: string;
+}) {
+  if (!resendClient || !emailFrom || input.to.length === 0) return;
+
+  const safeBody = escapeHtml(input.body).replace(/\r?\n/g, "<br />");
+  const safeReference = escapeHtml(input.orderReference);
+  const safeActionUrl = escapeHtml(input.actionUrl);
+  try {
+    await resendClient.emails.send({
+      from: emailFrom,
+      to: input.to,
+      subject: input.subject,
+      html: `
+        <div style="margin:0;background:#050505;color:#f4f4f4;font-family:Arial,sans-serif;padding:28px;line-height:1.6">
+          <div style="max-width:620px;margin:0 auto;border:1px solid #2a2a2a;background:#0b0b0b;padding:24px">
+            <p style="margin:0 0 10px;color:#b7ed78;font-size:11px;letter-spacing:.16em;text-transform:uppercase">VÁLLALHATATLAN / RENDELÉS</p>
+            <h1 style="font-size:21px;margin:0 0 16px;color:#fff">${escapeHtml(input.subject)}</h1>
+            <p style="margin:0 0 14px;color:#aaa;font-size:12px">Rendelés: ${safeReference}</p>
+            <div style="border:1px solid #242424;background:#060606;padding:14px;color:#eee;font-size:14px;overflow-wrap:anywhere">${safeBody}</div>
+            <p style="margin:22px 0 0"><a href="${safeActionUrl}" style="color:#b7ed78">Rendelés megnyitása →</a></p>
+          </div>
+        </div>
+      `,
+    });
+  } catch (error) {
+    // In-app messaging must remain successful even if outbound email is down.
+    console.warn("[order-threads] notification email failed", error);
+  }
+}
+
+function getAdminNotificationRecipients(): string[] {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean);
+}
+
 async function resolveConversationContext(
   source: OrderSource,
   orderId: string,
@@ -122,13 +177,14 @@ async function resolveConversationContext(
     return { ok: false as const, response: NextResponse.json({ error: "forbidden" }, { status: 403 }) };
   }
 
+  let customerEmail = order.customer_email;
   let customerUserId = order.user_id
-    ?? (staff ? await findAuthUserByEmail(order.customer_email) : requester.id);
+    ?? (staff ? await findAuthUserByEmail(customerEmail) : requester.id);
 
   // Some older operational rows have neither a customer ID nor an email, but
   // retain the shop-order ID in Stripe metadata. Recover the buyer identity
   // from that linked payment record before disabling in-app messaging.
-  if (staff && !customerUserId && source === "orders") {
+  if (staff && (!customerUserId || !customerEmail) && source === "orders") {
     const metadataShopOrderId =
       typeof order.metadata?.order_id === "string" ? order.metadata.order_id : null;
     let linkedShopOrder: { user_id: string | null; customer_email: string | null } | null = null;
@@ -151,8 +207,9 @@ async function resolveConversationContext(
       linkedShopOrder = data;
     }
 
-    customerUserId = linkedShopOrder?.user_id
-      ?? await findAuthUserByEmail(linkedShopOrder?.customer_email ?? null);
+    customerEmail = customerEmail ?? linkedShopOrder?.customer_email ?? null;
+    customerUserId = customerUserId ?? linkedShopOrder?.user_id
+      ?? await findAuthUserByEmail(customerEmail);
   }
 
   if (!customerUserId) {
@@ -181,6 +238,7 @@ async function resolveConversationContext(
     ok: true as const,
     staff,
     order,
+    customerEmail,
     customerUserId,
     threadSource,
     threadOrderId,
@@ -364,6 +422,23 @@ export async function POST(
     if (updateError) {
       console.warn("[order-threads] message saved but conversation timestamp update failed", updateError);
     }
+
+    const siteUrl = (process.env.NEXT_PUBLIC_BASE_URL || "https://www.vallalhatatlan.online").replace(/\/$/, "");
+    const adminUrl = resolved.threadSource === "orders"
+      ? `${siteUrl}/admin/orders/${resolved.threadOrderId}`
+      : `${siteUrl}/admin/shop-orders/${resolved.threadOrderId}`;
+    const actionUrl = resolved.staff ? adminUrl : `${siteUrl}/dashboard`;
+    const recipients = resolved.staff
+      ? (resolved.customerEmail ? [resolved.customerEmail] : [])
+      : getAdminNotificationRecipients();
+
+    await sendMessageNotification({
+      to: recipients,
+      subject: resolved.staff ? "Új üzenet érkezett a rendelésedhez" : "Új vevői üzenet érkezett",
+      body,
+      orderReference: orderId.slice(0, 8).toUpperCase(),
+      actionUrl,
+    });
 
     return NextResponse.json({ ok: true, message }, { status: 201 });
   } catch (error) {
