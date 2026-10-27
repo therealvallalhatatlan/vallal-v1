@@ -18,6 +18,9 @@ type OrderRow = {
   user_id: string | null;
   customer_email: string | null;
   status: string;
+  stripe_session_id?: string | null;
+  stripe_checkout_session_id?: string | null;
+  metadata?: Record<string, unknown> | null;
 };
 
 function parseSource(value: string | null): OrderSource | null {
@@ -42,7 +45,7 @@ async function loadOrder(source: OrderSource, orderId: string): Promise<OrderRow
   if (source === "orders") {
     const { data, error } = await db
       .from("orders")
-      .select("id, user_id, customer_email, status")
+      .select("id, user_id, customer_email, status, stripe_session_id, metadata")
       .eq("id", orderId)
       .maybeSingle<OrderRow>();
     if (error) throw error;
@@ -51,11 +54,32 @@ async function loadOrder(source: OrderSource, orderId: string): Promise<OrderRow
 
   const { data, error } = await db
     .from("shop_orders")
-    .select("id, user_id, customer_email, status")
+    .select("id, user_id, customer_email, status, stripe_checkout_session_id, metadata")
     .eq("id", orderId)
     .maybeSingle<OrderRow>();
   if (error) throw error;
   return data;
+}
+
+async function findOperationalOrderForShopOrder(order: OrderRow, shopOrderId: string): Promise<string | null> {
+  const db = supabaseAdmin();
+  if (order.stripe_checkout_session_id) {
+    const { data, error } = await db
+      .from("orders")
+      .select("id")
+      .eq("stripe_session_id", order.stripe_checkout_session_id)
+      .maybeSingle<{ id: string }>();
+    if (error) throw error;
+    if (data?.id) return data.id;
+  }
+
+  const { data, error } = await db
+    .from("orders")
+    .select("id")
+    .eq("metadata->>order_id", shopOrderId)
+    .maybeSingle<{ id: string }>();
+  if (error) throw error;
+  return data?.id ?? null;
 }
 
 async function findAuthUserByEmail(email: string | null): Promise<string | null> {
@@ -111,12 +135,26 @@ async function resolveConversationContext(
     };
   }
 
+  // If a webshop order also has an operational orders row, both sides share
+  // one conversation so neither the buyer nor admin sees a split thread.
+  let threadSource = source;
+  let threadOrderId = orderId;
+  if (source === "shop_orders") {
+    const linkedOperationalOrderId = await findOperationalOrderForShopOrder(order, orderId);
+    if (linkedOperationalOrderId) {
+      threadSource = "orders";
+      threadOrderId = linkedOperationalOrderId;
+    }
+  }
+
   return {
     ok: true as const,
     staff,
     order,
     customerUserId,
-    key: orderKey(source),
+    threadSource,
+    threadOrderId,
+    key: orderKey(threadSource),
   };
 }
 
@@ -144,7 +182,7 @@ export async function GET(
     const { data: conversation, error: conversationError } = await db
       .from("order_conversations")
       .select("id, customer_user_id, last_message_at")
-      .eq(resolved.key, orderId)
+      .eq(resolved.key, resolved.threadOrderId)
       .maybeSingle<{ id: string; customer_user_id: string; last_message_at: string | null }>();
 
     if (conversationError) {
@@ -238,7 +276,7 @@ export async function POST(
 
     if (!conversationId) {
       const insertPayload = {
-        [resolved.key]: orderId,
+        [resolved.key]: resolved.threadOrderId,
         customer_user_id: resolved.customerUserId,
       };
       const { data: created, error: createError } = await db
