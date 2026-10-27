@@ -277,6 +277,7 @@ export default function AdminOrderDetailPage() {
             </div>
           </section>
 
+          {order.telegram_chat_id ? (
           <section className="rounded border border-white/15 bg-black/30 p-4">
             <h2 className="mb-3 text-lg font-semibold">Telegram Dispatch</h2>
             <div className="space-y-3">
@@ -308,6 +309,14 @@ export default function AdminOrderDetailPage() {
               </button>
             </div>
           </section>
+          ) : (
+            <section className="rounded border border-white/15 bg-black/30 p-4">
+              <h2 className="mb-2 text-lg font-semibold">Vevői kommunikáció</h2>
+              <p className="text-sm leading-relaxed text-white/55">
+                Ehhez a rendeléshez nincs Telegram-kapcsolat. A vásárlóval a rendeléshez kötött üzenetpanelen tudsz egyeztetni.
+              </p>
+            </section>
+          )}
 
           <section className="rounded border border-white/15 bg-black/30 p-4">
             <h2 className="mb-3 text-lg font-semibold">Tételek</h2>
