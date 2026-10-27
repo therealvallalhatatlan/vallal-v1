@@ -265,7 +265,7 @@ async function sendFulfillmentEmail(input: {
   if (!resendClient || !emailFrom || recipients.length === 0) return;
 
   const safeSubject = escapeHtml(input.subject);
-  const safeBody = escapeHtml(input.body).replace(/\\r?\\n/g, "<br />");
+  const safeBody = escapeHtml(input.body).replace(/\r?\n/g, "<br />");
   const safeUrl = escapeHtml(input.actionUrl);
   try {
     await resendClient.emails.send({
@@ -372,7 +372,8 @@ async function notifyFulfillmentCounterparty(input: {
         "Az egyeztetett átvételi helyszínt feloldottuk.",
         `Koordináták: ${input.updated.pickup_lat}, ${input.updated.pickup_lng}`,
         `Útmutató: ${input.updated.pickup_instructions ?? "Lépj be a fiókodba az átvételi részletekért."}`,
-      ].join("\\n");
+        input.updated.pickup_photo_url ? `Fotó: ${input.updated.pickup_photo_url}` : "",
+      ].filter(Boolean).join("\n");
       break;
     case "mark_shipped":
       if (input.previousStatus !== "shipped") {
@@ -381,7 +382,7 @@ async function notifyFulfillmentCounterparty(input: {
           `Szolgáltató: ${input.updated.carrier ?? "nincs megadva"}`,
           `Nyomkövetési szám: ${input.updated.tracking_number ?? "nincs megadva"}`,
           input.updated.tracking_url ? `Nyomkövetés: ${input.updated.tracking_url}` : "",
-        ].filter(Boolean).join("\\n");
+        ].filter(Boolean).join("\n");
       }
       break;
     case "mark_received":
