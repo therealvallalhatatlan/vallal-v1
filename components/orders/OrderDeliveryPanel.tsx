@@ -332,7 +332,7 @@ export default function OrderDeliveryPanel({ orderId, source, token }: Props) {
             </div>
           ) : null}
 
-          {status === "shipped" ? (
+          {parcelMethod && ["shipped", "received"].includes(status) && fulfillment.tracking_number ? (
             <div className="mt-3 rounded border border-zinc-800 bg-black/30 p-3">
               <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-500">Küldemény</p>
               <p className="mt-1 text-sm text-zinc-200">{fulfillment.carrier || "Futárszolgálat"} · {fulfillment.tracking_number || "Nincs nyomkövetési szám"}</p>
