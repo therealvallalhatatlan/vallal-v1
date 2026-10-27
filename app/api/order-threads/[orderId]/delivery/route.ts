@@ -48,6 +48,7 @@ type FulfillmentRow = {
   confirmed_pickup_at: string | null;
   pickup_point: string | null;
   pickup_instructions: string | null;
+  pickup_photo_url: string | null;
   pickup_lat: number | null;
   pickup_lng: number | null;
   location_released_at: string | null;
@@ -61,7 +62,7 @@ type FulfillmentRow = {
 };
 
 const SELECT_FULFILLMENT =
-  "id, orders_order_id, shop_order_id, delivery_method, fulfillment_status, proposed_pickup_at, confirmed_pickup_at, pickup_point, pickup_instructions, pickup_lat, pickup_lng, location_released_at, carrier, tracking_number, tracking_url, shipped_at, delivered_at, created_at, updated_at";
+  "id, orders_order_id, shop_order_id, delivery_method, fulfillment_status, proposed_pickup_at, confirmed_pickup_at, pickup_point, pickup_instructions, pickup_photo_url, pickup_lat, pickup_lng, location_released_at, carrier, tracking_number, tracking_url, shipped_at, delivered_at, created_at, updated_at";
 
 function parseSource(value: string | null): OrderSource | null {
   if (value === "orders" || value === "shop_orders") return value;
@@ -415,6 +416,7 @@ function safeFulfillment(row: FulfillmentRow | null, deliveryMethod: DeliveryMet
     confirmed_pickup_at: null,
     pickup_point: defaultPickupPoint,
     pickup_instructions: null,
+    pickup_photo_url: null,
     pickup_lat: null,
     pickup_lng: null,
     location_released_at: order.dispatch_sent_at ?? null,
@@ -437,6 +439,7 @@ function safeFulfillment(row: FulfillmentRow | null, deliveryMethod: DeliveryMet
     pickup_lat: locationIsReleased ? base.pickup_lat : null,
     pickup_lng: locationIsReleased ? base.pickup_lng : null,
     pickup_instructions: locationIsReleased ? base.pickup_instructions : null,
+    pickup_photo_url: locationIsReleased ? base.pickup_photo_url : null,
   };
 }
 
@@ -598,8 +601,14 @@ export async function PATCH(
       const instructions = typeof json?.pickupInstructions === "string"
         ? json.pickupInstructions.trim().slice(0, 2000)
         : "";
+      const photoUrl = typeof json?.pickupPhotoUrl === "string"
+        ? json.pickupPhotoUrl.trim().slice(0, 500)
+        : "";
       if (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180 || !instructions) {
         return NextResponse.json({ error: "valid_coordinates_and_instructions_required" }, { status: 400 });
+      }
+      if (photoUrl && !photoUrl.toLowerCase().startsWith("https://")) {
+        return NextResponse.json({ error: "pickup_photo_url_must_be_https" }, { status: 400 });
       }
       update = {
         ...update,
@@ -607,6 +616,7 @@ export async function PATCH(
         pickup_lat: lat,
         pickup_lng: lng,
         pickup_instructions: instructions,
+        pickup_photo_url: photoUrl || null,
         location_released_at: now,
       };
     } else if (action === "mark_shipped") {
