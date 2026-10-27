@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useSessionGuard } from "@/hooks/useSessionGuard";
 import OrderMessagesPanel from "@/components/orders/OrderMessagesPanel";
+import OrderDeliveryPanel from "@/components/orders/OrderDeliveryPanel";
 
 type ShopOrderItem = {
   id: string;
@@ -126,6 +127,7 @@ export default function AdminShopOrderDetailPage() {
             </div>
           </section>
 
+          <OrderDeliveryPanel orderId={order.id} source="shop_orders" token={token ?? null} />
           <OrderMessagesPanel orderId={order.id} source="shop_orders" token={token ?? null} />
         </>
       ) : null}
