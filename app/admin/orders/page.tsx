@@ -14,6 +14,25 @@ type AdminOrder = {
   delivery_type: string;
   customer_email: string | null;
   telegram_chat_id: string | null;
+  metadata: Record<string, unknown> | null;
+};
+
+function formatStripeAmount(amountMinor: number, currency: string) {
+  const code = (currency || "huf").toUpperCase();
+  return new Intl.NumberFormat("hu-HU", {
+    style: "currency",
+    currency: code,
+    maximumFractionDigits: code === "HUF" ? 0 : 2,
+  }).format(amountMinor / 100);
+}
+
+const DELIVERY_TYPE_LABELS: Record<string, string> = {
+  dead_drop: "Dead drop / egyeztetett átvétel",
+  anonymous_locker: "Anonim csomagautomata",
+  personal: "Személyes átvétel",
+  hu_shipping: "Csomagautomata / belföldi szállítás",
+  eu_shipping: "EU-n belüli szállítás",
+  global_shipping: "Nemzetközi szállítás",
 };
 
 const DEFAULT_STATUS_FILTER = "paid,ready_to_dispatch,dispatched";
@@ -98,13 +117,14 @@ export default function AdminOrdersPage() {
               <th className="px-3 py-2">Status</th>
               <th className="px-3 py-2">Product</th>
               <th className="px-3 py-2">Amount</th>
+              <th className="px-3 py-2">Delivery</th>
               <th className="px-3 py-2">Contact</th>
             </tr>
           </thead>
           <tbody>
             {loadingOrders ? (
               <tr>
-                <td className="px-3 py-4 text-white/60" colSpan={6}>
+                <td className="px-3 py-4 text-white/60" colSpan={7}>
                   Rendelések betöltése...
                 </td>
               </tr>
@@ -129,7 +149,13 @@ export default function AdminOrdersPage() {
                 <td className="px-3 py-2">{order.status}</td>
                 <td className="px-3 py-2">{order.product_id}</td>
                 <td className="px-3 py-2">
-                  {order.amount} {(order.currency || "huf").toUpperCase()}
+                  {formatStripeAmount(order.amount, order.currency)}
+                </td>
+                <td className="px-3 py-2 text-white/70">
+                  <div>{DELIVERY_TYPE_LABELS[order.delivery_type] ?? order.delivery_type ?? "n/a"}</div>
+                  {typeof order.metadata?.pickupPoint === "string" && order.metadata.pickupPoint.trim() ? (
+                    <div className="mt-1 text-xs text-white/50">{order.metadata.pickupPoint}</div>
+                  ) : null}
                 </td>
                 <td className="px-3 py-2 text-white/70">
                   {order.telegram_chat_id ? `tg:${order.telegram_chat_id}` : order.customer_email || "n/a"}
