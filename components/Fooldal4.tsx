@@ -11,6 +11,7 @@ import MainContent from "@/components/MainContent"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import type { HomepageBlock, HomepagePlan } from "@/lib/homepage-ai/types"
 import Fooldal4HuntingMap from "@/components/Fooldal4HuntingMap"
+import HomepageVideoCarousel from "@/components/HomepageVideoCarousel"
 import FaszanLevadasztadShare from "@/components/FaszanLevadasztadShare"
 
 type SessionShape = {
@@ -339,7 +340,7 @@ function GuestHome() {
       <SiteHeader />
       <div className="mx-auto w-full pb-28 pt-0 sm:pb-32">
         <section className="w-full animate-fadeIn">
-          <video className="relative left-1/2 block aspect-video w-screen -translate-x-1/2 object-cover" src="/videos/dd2.mp4" autoPlay muted loop playsInline controls={false} preload="metadata" />
+          <HomepageVideoCarousel />
         </section>
         <section className="animate-fadeIn mx-auto mt-12 w-full max-w-5xl px-5 sm:mt-16 sm:px-8">
           <div className="ml-auto max-w-3xl">
