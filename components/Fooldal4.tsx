@@ -43,7 +43,7 @@ function FullScreenLoader() {
           className="text-[9px] uppercase tracking-[0.3em] text-zinc-600"
           style={{ fontFamily: "var(--font-mono-tech)" }}
         >
-          BETÖLTÉS...
+          CSINÁLOM...
         </span>
       </div>
     </div>
@@ -258,7 +258,7 @@ function OrderReceivedCelebration() {
 
 function TrustSection() {
   return (
-    <section className="mt-4 py-12 sm:py-16" aria-label="Bízhatsz bennem">
+    <section className="mt-4 py-12 sm:py-16 px-4" aria-label="Bízhatsz bennem">
       <div className="flex gap-6">
         
         <div className="w-[61.8%]">
@@ -280,7 +280,7 @@ function TrustSection() {
             >
               itt tudsz
             </Link>{" "}
-            írni Vállalhatatlanak.
+            írni nekem.
           </p>
         </div>
 
@@ -344,7 +344,7 @@ function GuestHome() {
           <HomepageVideoCarousel />
         </section>
         <Image
-          src="img/ketkonyv.png"
+          src="/img/ketkonyv.png"
           alt="Vállalhatatlan I. és II. köteti"
           width={1536}
           height={864}
@@ -367,23 +367,42 @@ function GuestHome() {
             <Fooldal4HuntingMap />
           </div>
 
-          <div className="ml-auto mt-12 bg-zinc-100 px-4 py-9 rounded-lg">
-              <p className="text-center text-[19px] italic leading-[1.5] text-zinc-900 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
-              Ez egy privát klub.<br/>Itt tudsz bejelentkezni.
+          <div className="relative ml-auto mt-0 rounded-lg border-4 border-zinc-400/10 bg-black px-4 py-9">
+            <div className="absolute left-4 top-4">
+              <p className="text-[9px] uppercase tracking-[0.3em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                Since 2025
               </p>
-              <div className="mt-5 grid grid-cols-1 gap-6 min-[440px]:grid-cols-2 sm:flex sm:justify-end sm:gap-4">
+            </div>
+            <div className="absolute right-4 top-4">
+              <p className="text-[12px] uppercase tracking-[0.3em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                ★★★★
+              </p>
+            </div>
+
+            <Image
+              src="/img/kislogo.png"
+              alt="Vállalhatatlan I. és II. kötetei"
+              width={190}
+              height={158}
+              className="mx-auto h-[148px] w-auto transition-transform duration-500"
+            />
+            <p className="text-center text-[19px] italic leading-[1.5] text-zinc-200 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
+              Ez egy privát klub.<br />Jelentkezz be.
+              </p>
+              <div className="mt-6 grid grid-cols-7 items-center gap-4">
                 <Link
                   href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=google"
                   aria-label="Belépés Google-fiókkal"
-                  className="inline-flex min-h-12 items-center justify-center gap-3 rounded-md border-4 border-zinc-800 bg-black px-4 py-4 text-[15px] font-semibold tracking-[0.02em] text-zinc-100 transition-all hover:border-white/80 hover:bg-black sm:min-w-44 sm:text-[13px]"
+                  className="col-span-3 inline-flex h-13 items-center justify-center gap-3 rounded-md border-4 border-zinc-800 bg-black px-4 py-4 text-[15px] font-semibold tracking-[0.02em] text-zinc-100 transition-all hover:border-white/80 hover:bg-black sm:min-w-44 sm:text-[13px]"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0 fill-current text-zinc-100 sm:h-5 sm:w-5"><path d="M21.35 11.1h-9.18v2.98h5.62c-.24 1.56-1.84 4.58-5.62 4.58-3.38 0-6.14-2.8-6.14-6.26s2.76-6.26 6.14-6.26c1.92 0 3.21.82 3.95 1.53l2.14-2.08C16.88 4.3 14.96 3.3 12.17 3.3 7.36 3.3 3.45 7.2 3.45 12s3.91 8.7 8.72 8.7c5.04 0 8.39-3.54 8.39-8.52 0-.57-.06-.99-.13-1.08z" /></svg>
                   Google
                 </Link>
+                <span className="text-zinc-600 text-xs italic text-center">Vagy</span>
                 <Link
                   href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=facebook"
                   aria-label="Belépés Facebookkal"
-                  className="inline-flex min-h-12 items-center justify-center gap-3 rounded-md border-4 border-zinc-800 bg-black px-4 py-3 text-[15px] font-semibold tracking-[0.02em] text-zinc-100 transition-all hover:border-zinc-300 hover:bg-black sm:min-w-44 sm:text-[13px]"
+                  className="col-span-3 inline-flex h-13 items-center justify-center gap-3 rounded-md border-4 border-zinc-800 bg-black px-4 py-3 text-[15px] font-semibold tracking-[0.02em] text-zinc-100 transition-all hover:border-zinc-300 hover:bg-black sm:min-w-44 sm:text-[13px]"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0 fill-current text-zinc-100 sm:h-5 sm:w-5">
                     <path d="M13.65 22v-8.22h2.76l.41-3.2h-3.17V8.54c0-.93.26-1.57 1.6-1.57h1.71V4.1c-.3-.04-1.34-.1-2.55-.1-2.52 0-4.25 1.54-4.25 4.37v2.21H7.3v3.2h2.87V22h3.48Z" />
@@ -391,10 +410,10 @@ function GuestHome() {
                   Facebook
                 </Link>
               </div>
-              <div className="mt-5 flex justify-center pt-0">
+              <div className="col-span-1 mt-5 flex justify-center pt-0">
                 <Link
                   href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4#auth-email"
-                  className="inline-flex items-center gap-2 py-2 text-[14px] tracking-[0.04em] text-zinc-900 underline decoration-zinc-800 underline-offset-4 transition-colors hover:text-zinc-300 hover:decoration-zinc-500"
+                  className="text-center inline-flex items-center gap-3 py-2 text-[14px] tracking-[0.04em] text-zinc-500 underline decoration-zinc-800 underline-offset-4 transition-colors hover:text-zinc-300 hover:decoration-zinc-500"
                 >
                   <Mail aria-hidden="true" className="h-3.5 w-3.5" />
                   Belépés emaillel
@@ -402,8 +421,9 @@ function GuestHome() {
               </div>
             </div>
         </section>
-        <div className="border-t border-zinc-800 mx-auto mt-14 w-full max-w-5xl px-5 sm:px-8"><TrustSection /></div>
-        <OrbitalisHiba />
+        <div className=" mx-auto mt-14 w-full max-w-5xl px-5 sm:px-8">
+          <TrustSection />
+        </div>
       </div>
       <Footer />
     </>
@@ -484,7 +504,7 @@ function BookPurchaseSection() {
       description:
         "V. egy szürreális pénzmosodaként működő, éjjel-nappali internetkávézó élére kerül. Bővített kiadás új tartalmakkal.",
       cover: "/img/borito_02.png",
-      href: "/konyv-v2",
+      href: "/konyv-2",
       alt: "Vállalhatatlan II. kötet borítója",
     },
   ]
