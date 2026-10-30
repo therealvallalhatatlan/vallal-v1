@@ -141,6 +141,9 @@ export default function HomepageVideoCarousel() {
           } else if (event.key === "ArrowLeft") {
             event.preventDefault()
             goTo(activeIndex - 1)
+          } else if (event.key === " " || event.key === "Enter") {
+            event.preventDefault()
+            setIsPlaying((current) => !current)
           }
         }}
         tabIndex={0}
@@ -156,13 +159,11 @@ export default function HomepageVideoCarousel() {
           aria-label={activeVideo.title}
           autoPlay
           muted={muted}
-          loop
           playsInline
           preload="metadata"
           controls={false}
           onClick={() => setIsPlaying((current) => !current)}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          onEnded={() => setIsPlaying(false)}
           className="absolute inset-0 h-full w-full object-cover"
         />
 
