@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type TouchEvent, type WheelEvent } from "react"
 import {
   ChevronLeft,
   ChevronRight,
@@ -97,11 +97,11 @@ export default function HomepageVideoCarousel() {
     setIsPlaying(true)
   }
 
-  function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
     touchStartX.current = event.changedTouches[0]?.clientX ?? null
   }
 
-  function handleTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
+  function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
     if (touchStartX.current === null) return
     const delta = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current
     touchStartX.current = null
@@ -110,7 +110,7 @@ export default function HomepageVideoCarousel() {
     goTo(activeIndex + (delta < 0 ? 1 : -1))
   }
 
-  function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
+  function handleWheel(event: WheelEvent<HTMLDivElement>) {
     if (Math.abs(event.deltaX) < 28 || Math.abs(event.deltaX) < Math.abs(event.deltaY)) return
     const now = Date.now()
     if (now - lastWheelAt.current < 550) return
