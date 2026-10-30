@@ -390,7 +390,7 @@ function GuestHome() {
           </div>
         </section>
         <section className="mx-auto mt-8 w-full max-w-5xl px-5 sm:mt-10 sm:px-8"><Reviews /></section>
-        <div className="mx-auto w-full max-w-5xl px-5 sm:px-8"><TrustSection /></div>
+        <div className="mx-auto mt-10 w-full max-w-5xl px-5 sm:mt-14 sm:px-8"><TrustSection /></div>
       </div>
       <Footer />
     </>
