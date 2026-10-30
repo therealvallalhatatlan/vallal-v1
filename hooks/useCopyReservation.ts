@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { BookCopy } from '@/types/reservations';
+import type { BookCopy, CheckoutDeliveryMethod } from '@/types/reservations';
+import type { FoxpostPickupPoint } from '@/types/foxpost';
 import { copyReservationApi } from '@/lib/copyReservationApi';
 
 interface UseCopyReservationState {
@@ -12,7 +13,11 @@ interface UseCopyReservationState {
 
 interface UseCopyReservationActions {
   fetchInventory: () => Promise<void>;
-  createCheckout: (copyNumber: number) => Promise<string>;
+  createCheckout: (
+    copyNumber: number,
+    deliveryMethod: CheckoutDeliveryMethod,
+    pickupPoint: FoxpostPickupPoint | null,
+  ) => Promise<string>;
 }
 
 export function useCopyReservation(): UseCopyReservationState & UseCopyReservationActions {
@@ -36,8 +41,12 @@ export function useCopyReservation(): UseCopyReservationState & UseCopyReservati
     }
   };
 
-  const createCheckout = async (copyNumber: number): Promise<string> => {
-    return copyReservationApi.createCheckout(copyNumber);
+  const createCheckout = async (
+    copyNumber: number,
+    deliveryMethod: CheckoutDeliveryMethod,
+    pickupPoint: FoxpostPickupPoint | null,
+  ): Promise<string> => {
+    return copyReservationApi.createCheckout(copyNumber, deliveryMethod, pickupPoint);
   };
 
   // Inventory polling every 5 seconds
