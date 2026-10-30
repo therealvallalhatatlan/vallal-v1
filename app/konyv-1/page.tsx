@@ -43,7 +43,7 @@ export default function FirstBookPage() {
             <div className="flex gap-4 sm:gap-6">
               <div className="w-40 shrink-0 overflow-hidden">
                 <img
-                  src="/vallalhatatlan.png"
+                  src="/img/borito_01.png"
                   alt="Vállalhatatlan I. könyv borító"
                   className="block h-full w-full rounded-md object-cover"
                 />

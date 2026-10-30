@@ -49,7 +49,7 @@ export default function Page() {
               {/* COVER */}
               <div className="w-40 overflow-hidden">
                 <img
-                  src="/vallalhatatlan2.png"
+                  src="/img/borito_02.png"
                   alt="Vállalhatatlan II. könyv borító"
                   className="inset-0 block h-full w-full min-w-0 max-w-none object-cover rounded-md"
                 />
