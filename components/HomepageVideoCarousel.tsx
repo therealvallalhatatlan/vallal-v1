@@ -167,26 +167,24 @@ export default function HomepageVideoCarousel() {
           className="absolute inset-0 h-full w-full object-cover"
         />
 
-        {videos.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={() => goTo(activeIndex - 1)}
-              aria-label="Előző videó"
-              className="absolute left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white/80 opacity-100 backdrop-blur-sm transition hover:bg-black/65 hover:text-white sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
-            >
-              <ChevronLeft aria-hidden="true" className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => goTo(activeIndex + 1)}
-              aria-label="Következő videó"
-              className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/35 text-white/80 opacity-100 backdrop-blur-sm transition hover:bg-black/65 hover:text-white sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
-            >
-              <ChevronRight aria-hidden="true" className="h-5 w-5" />
-            </button>
-          </>
-        )}
+        <button
+          type="button"
+          onClick={() => goTo(activeIndex - 1)}
+          disabled={videos.length < 2}
+          aria-label="Előző videó"
+          className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white/90 shadow-lg backdrop-blur-sm transition hover:bg-black/75 hover:text-white disabled:cursor-not-allowed disabled:border-white/10 disabled:text-white/35 sm:left-4 sm:h-11 sm:w-11"
+        >
+          <ChevronLeft aria-hidden="true" className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => goTo(activeIndex + 1)}
+          disabled={videos.length < 2}
+          aria-label="Következő videó"
+          className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white/90 shadow-lg backdrop-blur-sm transition hover:bg-black/75 hover:text-white disabled:cursor-not-allowed disabled:border-white/10 disabled:text-white/35 sm:right-4 sm:h-11 sm:w-11"
+        >
+          <ChevronRight aria-hidden="true" className="h-5 w-5" />
+        </button>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-black/55 to-transparent opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100" />
         <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between px-3 pb-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
@@ -203,15 +201,13 @@ export default function HomepageVideoCarousel() {
             )}
           </button>
 
-          {videos.length > 1 && (
-            <span
-              className="text-[9px] tabular-nums tracking-[0.18em] text-white/75"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {String(activeIndex + 1).padStart(2, "0")} / {String(videos.length).padStart(2, "0")}
-            </span>
-          )}
+          <span
+            className="text-[9px] tabular-nums tracking-[0.18em] text-white/75"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {String(activeIndex + 1).padStart(2, "0")} / {String(videos.length).padStart(2, "0")}
+          </span>
 
           <button
             type="button"
@@ -227,6 +223,29 @@ export default function HomepageVideoCarousel() {
             )}
           </button>
         </div>
+      </div>
+
+      <div className="flex min-h-9 items-center justify-between gap-3 border-b border-white/10 bg-black/70 px-3 py-2 text-[8px] uppercase tracking-[0.2em] text-zinc-500 sm:px-4">
+        <span className="shrink-0 text-zinc-400">VIDEÓARCHÍVUM</span>
+        {videos.length > 1 ? (
+          <div className="flex min-w-0 items-center justify-end gap-3">
+            <span className="hidden text-zinc-500 min-[390px]:inline">HÚZD / LAPOZZ</span>
+            <div className="flex items-center gap-1.5" aria-label="Videóválasztó">
+              {videos.map((video, index) => (
+                <button
+                  key={video.id}
+                  type="button"
+                  onClick={() => goTo(index)}
+                  aria-label={`Ugrás a(z) ${index + 1}. videóra`}
+                  aria-current={index === activeIndex ? "true" : undefined}
+                  className={`h-1.5 rounded-full transition-all ${index === activeIndex ? "w-5 bg-white" : "w-1.5 bg-zinc-600 hover:bg-zinc-300"}`}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <span className="text-right text-zinc-500">TOVÁBBI FELVÉTELEK HAMAROSAN</span>
+        )}
       </div>
     </section>
   )
