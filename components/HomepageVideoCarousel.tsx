@@ -30,8 +30,8 @@ const FALLBACK_VIDEO: HomepageVideo = {
 export default function HomepageVideoCarousel() {
   const [videos, setVideos] = useState<HomepageVideo[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
-  const [muted, setMuted] = useState(true)
-  const [isPlaying, setIsPlaying] = useState(true)
+  const [muted, setMuted] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const touchStartX = useRef<number | null>(null)
   const lastWheelAt = useRef(0)
@@ -78,25 +78,39 @@ export default function HomepageVideoCarousel() {
 
   useEffect(() => {
     const video = videoRef.current
-    if (video) video.muted = muted
-  }, [muted, activeVideo?.id])
-
-  useEffect(() => {
-    const video = videoRef.current
     if (!video) return
+
+    video.muted = muted
+    video.loop = true
 
     if (isPlaying) {
       void video.play().catch(() => setIsPlaying(false))
     } else {
       video.pause()
     }
-  }, [activeIndex, isPlaying, videos])
+  }, [activeIndex, isPlaying, muted, videos])
+
+  function startPlayback() {
+    const video = videoRef.current
+    if (!video) return
+
+    // A valódi felhasználói kattintásból indítjuk, így a böngésző engedélyezi a hangos lejátszást.
+    video.muted = false
+    video.loop = true
+    setMuted(false)
+
+    void video.play()
+      .then(() => setIsPlaying(true))
+      .catch((error) => {
+        console.error("[homepage-video-carousel] videó indítása nem sikerült", error)
+        setIsPlaying(false)
+      })
+  }
 
   function goTo(index: number) {
     if (videos.length < 2) return
     const nextIndex = (index + videos.length) % videos.length
     setActiveIndex(nextIndex)
-    setIsPlaying(true)
   }
 
   function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
@@ -145,7 +159,11 @@ export default function HomepageVideoCarousel() {
             goTo(activeIndex - 1)
           } else if (event.key === " " || event.key === "Enter") {
             event.preventDefault()
-            setIsPlaying((current) => !current)
+            if (isPlaying) {
+              setIsPlaying(false)
+            } else {
+              startPlayback()
+            }
           }
         }}
         tabIndex={0}
@@ -159,30 +177,47 @@ export default function HomepageVideoCarousel() {
           src={activeVideo.video_url}
           poster={activeVideo.poster_url ?? undefined}
           aria-label={activeVideo.title}
-          autoPlay
           muted={muted}
+          loop
           playsInline
           preload="metadata"
           controls={false}
-          onClick={() => setIsPlaying((current) => !current)}
-          onEnded={() => setIsPlaying(false)}
+          onClick={() => {
+            if (isPlaying) setIsPlaying(false)
+          }}
           className="absolute inset-0 h-full w-full object-cover"
         />
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-black/55 to-transparent opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100" />
-        <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between px-3 pb-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+        {!isPlaying && (
           <button
             type="button"
-            onClick={() => setIsPlaying((current) => !current)}
-            aria-label={isPlaying ? "Videó szüneteltetése" : "Videó lejátszása"}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white/85 backdrop-blur-sm transition hover:bg-black/65 hover:text-white"
+            onClick={startPlayback}
+            aria-label="Videó lejátszása hanggal"
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-black/15 text-white transition hover:bg-black/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80"
           >
-            {isPlaying ? (
-              <Pause aria-hidden="true" className="h-4 w-4" />
-            ) : (
-              <Play aria-hidden="true" className="h-4 w-4" />
-            )}
+            <span className="flex h-20 w-20 items-center justify-center rounded-full border border-white/75 bg-black/55 shadow-[0_0_45px_rgba(0,0,0,0.45)] backdrop-blur-sm transition-transform hover:scale-105 sm:h-24 sm:w-24">
+              <Play aria-hidden="true" className="ml-1 h-9 w-9 fill-current sm:h-11 sm:w-11" />
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-[0.32em] text-white drop-shadow">
+              LEJÁTSZÁS
+            </span>
           </button>
+        )}
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-black/55 to-transparent opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100" />
+        <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between px-3 pb-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+{isPlaying ? (
+            <button
+              type="button"
+              onClick={() => setIsPlaying(false)}
+              aria-label="Videó szüneteltetése"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white/85 backdrop-blur-sm transition hover:bg-black/65 hover:text-white"
+            >
+              <Pause aria-hidden="true" className="h-4 w-4" />
+            </button>
+          ) : (
+            <span className="h-8 w-8" aria-hidden="true" />
+          )}
 
           <span
             className="text-[9px] tabular-nums tracking-[0.18em] text-white/75"
@@ -248,10 +283,19 @@ export default function HomepageVideoCarousel() {
 
         </div>
 
-        <div className="px-6">
+        <div className="ml-auto max-w-3xl px-5 pb-5 pt-4 sm:px-8 sm:pb-7 sm:pt-5">
+          <p
+            className="text-right text-[11px] uppercase tracking-[0.22em] text-zinc-500"
+            style={{ fontFamily: "var(--font-mono-tech)" }}
+          >
+            {activeVideo.title}
+          </p>
           {activeVideo.description?.trim() ? (
-            <p className="mt-2 whitespace-pre-wrap break-words text-md leading-6 text-zinc-400">
-              "{activeVideo.description}"<br/>(...)
+            <p
+              className="mt-3 whitespace-pre-wrap break-words text-right text-[21px] italic leading-[1.7] text-zinc-300 sm:text-[23px]"
+              style={{ fontFamily: "var(--font-mono-tech)" }}
+            >
+              {activeVideo.description}
             </p>
           ) : null}
         </div>
