@@ -263,14 +263,14 @@ function TrustSection() {
         
         <div className="w-[61.8%]">
           <p
-            className="text-[23px] font-normal italic leading-tight tracking-tight text-zinc-300 sm:text-base"
+            className="text-right text-[23px] font-normal italic leading-tight tracking-tight text-zinc-300 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             Bízhatsz bennem,<br/>nyúl vagyok.
           </p>
 
           <p
-            className="mt-4 text-sm leading-normal italic text-zinc-400"
+            className="text-right mt-4 text-sm leading-normal italic text-zinc-400"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             Ha kérdésed van{" "}
@@ -363,11 +363,22 @@ function GuestHome() {
 
           <section className="mx-auto mt-8 w-full max-w-5xl sm:mt-10"><Reviews /></section>
 
+          <video
+            className="block w-full"
+            src="/videos/dd2.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            controls={false}
+            preload="metadata"
+          />
+
           <div className="mx-auto w-full max-w-5xl px-0 sm:px-0">
             <Fooldal4HuntingMap />
           </div>
 
-          <div className="relative ml-auto mt-0 rounded-lg border-4 border-zinc-400/10 bg-black px-4 py-9">
+          <div className="relative ml-auto mt-12 rounded-lg border-4 border-zinc-400/10 bg-black px-4 py-9">
             <div className="absolute left-4 top-4">
               <p className="text-[9px] uppercase tracking-[0.3em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
                 Since 2025
@@ -375,7 +386,7 @@ function GuestHome() {
             </div>
             <div className="absolute right-4 top-4">
               <p className="text-[12px] uppercase tracking-[0.3em] text-zinc-600" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                ★★★★
+                🐰🐰🐰🐰
               </p>
             </div>
 

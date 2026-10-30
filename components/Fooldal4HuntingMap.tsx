@@ -184,18 +184,7 @@ export default function Fooldal4HuntingMap() {
 
   return (
     <section className="mt-10 w-full" aria-label="Aktív szpotok" aria-labelledby="active-spots">
-            <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/60">01 / AKTÍV SZPOTOK</p>
-                <p
-                  id="active-spots"
-                  className="text-left text-[17px] font-normal uppercase leading-relaxed tracking-normal text-zinc-300 sm:text-base"
-                  style={{ fontFamily: "var(--font-mono-tech)" }}
-                >
-                  Vadásztérkép
-                </p>
-              </div>
-
+            <div className="flex flex-row gap-4 items-center justify-between">
               <button
                 type="button"
                 onClick={() => void fetchDrops(true, true)}
@@ -205,15 +194,21 @@ export default function Fooldal4HuntingMap() {
                 Frissítés
                 <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
               </button>
+              <div className="px-2 flex flex-col items-end gap-2 text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/60">AKTÍV REJTEKHELYEK</p>
+                <p id="active-spots" className="text-right text-[19px] italic leading-[1.5] text-zinc-200 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                  Keresd meg most!<br/>Instant kaland, a közeledben. 
+                </p>
+              </div>
             </div>
 
-            <div className="mt-4 border border-zinc-800/70">
+            <div className="mt-4 border border-zinc-800/70 rounded-sm">
               <div className="border-b border-zinc-800/70 px-4 py-4 sm:px-5">
                 {!locationEnabled ? (
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-zinc-200">
-                        Keresd meg a hozzád legközelebbit
+                        Ezek a cuccok ott várnak rád.
                       </p>
                       <p className="mt-1 max-w-xl text-xs leading-5 text-zinc-500">
                         A pozíciód csak arra kell, hogy a lelőhelyeket hozzád közel soroljuk és a térképet odahúzzuk.
@@ -243,9 +238,9 @@ export default function Fooldal4HuntingMap() {
                     <button
                       type="button"
                       onClick={disable}
-                      className="self-start text-[10px] uppercase tracking-[0.16em] text-zinc-600 hover:text-zinc-300 sm:self-auto"
+                      className="text-right text-[10px] uppercase tracking-[0.16em] text-zinc-600 hover:text-zinc-300 sm:self-auto"
                     >
-                      POZÍCIÓ KIKAPCSOLÁSA
+                      ✖ POZÍCIÓ KIKAPCSOLÁSA
                     </button>
                   </div>
                 )}
@@ -255,12 +250,12 @@ export default function Fooldal4HuntingMap() {
 
             </div>
 
-            <div className="mt-4 border border-zinc-800/70">
+            <div className="mt-4 border border-zinc-800/70 rounded-sm">
               <div className="flex items-center justify-between border-b border-zinc-800/70 px-4 py-3">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
                   {loading ? "SZPOTOK BETÖLTÉSE…" : drops.length + " AKTÍV SZPOT"}
                 </p>
-                <span className="h-2 w-2 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(163,230,53,.65)]" />
+                <span className="h-1 w-1 rounded-full bg-lime-300 shadow-[0_0_10px_rgba(163,230,53,.65)]" />
               </div>
               <DistributionMap
                 drops={drops}
