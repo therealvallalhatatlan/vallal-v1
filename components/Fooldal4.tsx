@@ -342,12 +342,19 @@ function GuestHome() {
         <section className="w-full animate-fadeIn">
           <HomepageVideoCarousel />
         </section>
+        <Image
+          src="img/ketkonyv.png"
+          alt="Vállalhatatlan I. és II. köteti"
+          width={1536}
+          height={864}
+          sizes="(min-width: 640px) 132px, 104px"
+          className="aspect-[2/2.8] h-auto w-full object-cover transition-transform duration-500 group-hover:scale-[1.025]"
+        />
         <section className="animate-fadeIn mx-auto mt-12 w-full max-w-5xl px-5 sm:mt-16 sm:px-8">
           <div className="ml-auto max-w-3xl">
             <p className="text-right text-[21px] italic leading-[1.7] text-zinc-300 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
-              "Archetípus vagyok.<br/>A funkcionális rendszerhiba, az elbaszott túlélő, a káosz-építész archetípusa. Egy csótány fejlett idegrendszerrel."
+              Ennek a könyvnek nincs írója,<br/>nincs címe, és nincs kiadója.<br/>Nem kapható a könyvesboltokban.<br/>Meg kell találnod.
             </p>
-            <p className="mt-5 text-right text-[21px] italic tracking-wide text-zinc-500">— Író Úr</p>
             <div className="mt-10">
               <p className="text-right text-[11px] uppercase tracking-[0.08em] text-zinc-500">Ez egy privát, zártkörű klub. Jelentkezz be.</p>
               <div className="mt-5 grid grid-cols-1 gap-3 min-[440px]:grid-cols-2 sm:flex sm:justify-end sm:gap-4">

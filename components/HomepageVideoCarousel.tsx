@@ -132,7 +132,7 @@ export default function HomepageVideoCarousel() {
   return (
     <section aria-label="Videóarchívum" className="w-full">
       <div
-        className="group relative left-1/2 aspect-video w-screen -translate-x-1/2 overflow-hidden bg-black"
+        className="group relative left-1/2 aspect-video w-screen -translate-x-1/2 overflow-hidden bg-black rounded-lg"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
@@ -208,19 +208,16 @@ export default function HomepageVideoCarousel() {
         </div>
       </div>
 
-      <div className="border-b border-white/10 bg-black/75">
-        <div className="grid min-h-12 grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-white/[0.07] px-3 py-2 sm:px-4">
-          <span className="text-[8px] uppercase tracking-[0.2em] text-zinc-400">
-            VIDEÓARCHÍVUM
-          </span>
+      <div className="pb-6 border-b border-zinc-900 bg-black/75">
+        <div className="grid min-h-12 grid-cols-1 items-center gap-2 px-4 py-0">
 
-          <div className="flex items-center justify-center gap-2" aria-label="Videónavigáció">
+          <div className="flex items-center justify-between gap-2" aria-label="Videónavigáció">
             <button
               type="button"
               onClick={() => goTo(activeIndex - 1)}
               disabled={videos.length < 2}
               aria-label="Előző videó"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-white/80 transition hover:border-white/40 hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:border-white/[0.07] disabled:text-white/25"
+              className="flex h-8 w-8 items-center justify-center  border border-white/15 text-white/80 transition hover:border-white/40 hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:border-white/[0.07] disabled:text-white/25"
             >
               <ChevronLeft aria-hidden="true" className="h-4 w-4" />
             </button>
@@ -249,18 +246,12 @@ export default function HomepageVideoCarousel() {
             </button>
           </div>
 
-          <span className="text-right text-[8px] tabular-nums tracking-[0.18em] text-zinc-500">
-            {String(activeIndex + 1).padStart(2, "0")} / {String(videos.length).padStart(2, "0")}
-          </span>
         </div>
 
-        <div className="px-3 py-4 sm:px-4 sm:py-5">
-          <h2 className="text-base font-medium leading-snug tracking-wide text-zinc-100 sm:text-lg">
-            {activeVideo.title}
-          </h2>
+        <div className="px-6">
           {activeVideo.description?.trim() ? (
-            <p className="mt-2 whitespace-pre-wrap break-words text-[12px] leading-6 text-zinc-400 sm:text-[13px]">
-              {activeVideo.description}
+            <p className="mt-2 whitespace-pre-wrap break-words text-md leading-6 text-zinc-400">
+              "{activeVideo.description}"<br/>(...)
             </p>
           ) : null}
         </div>
