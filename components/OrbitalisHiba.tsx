@@ -31,6 +31,12 @@ export default function OrbitalisHiba() {
   const [sound, setSound] = useState(false)
   const [arcade, setArcade] = useState(false)
   const audio = useRef<AudioContext | null>(null)
+  const baselineGamma = useRef<number | null>(null)
+  const lastGamma = useRef<number | null>(null)
+  const baselineAccelX = useRef<number | null>(null)
+  const lastAccelX = useRef<number | null>(null)
+  const lastOrientationAt = useRef(0)
+  const lastSensorAt = useRef(0)
 
   const tone = useCallback((hz: number, duration: number) => {
     if (!sound) return
@@ -98,34 +104,129 @@ export default function OrbitalisHiba() {
   }, [buildWave, tone])
 
   const enableMotion = useCallback(async () => {
-    if (typeof DeviceOrientationEvent === 'undefined') {
-      setMotion('denied')
+    if (!window.isSecureContext) {
+      setMotion("denied")
       return
     }
-    try {
-      const orientation = DeviceOrientationEvent as typeof DeviceOrientationEvent & {
-        requestPermission?: () => Promise<'granted' | 'denied'>
-      }
-      if (typeof orientation.requestPermission === 'function') {
-        const permission = await orientation.requestPermission()
-        if (permission !== 'granted') {
-          setMotion('denied')
-          return
+
+    const orientationEvent = typeof DeviceOrientationEvent !== "undefined"
+      ? DeviceOrientationEvent as typeof DeviceOrientationEvent & {
+          requestPermission?: () => Promise<"granted" | "denied">
         }
+      : null
+    const motionEvent = typeof DeviceMotionEvent !== "undefined"
+      ? DeviceMotionEvent as typeof DeviceMotionEvent & {
+          requestPermission?: () => Promise<"granted" | "denied">
+        }
+      : null
+
+    if (!orientationEvent && !motionEvent) {
+      setMotion("denied")
+      return
+    }
+
+    setMotion("requesting")
+    baselineGamma.current = null
+    baselineAccelX.current = null
+    lastGamma.current = null
+    lastAccelX.current = null
+    lastOrientationAt.current = 0
+    lastSensorAt.current = 0
+
+    try {
+      // iOS Safari may gate orientation and motion events separately.
+      // Start both permission requests directly from this click handler.
+      const permissionRequests: Array<Promise<"granted" | "denied">> = []
+      let orientationPermissionIndex = -1
+      let motionPermissionIndex = -1
+
+      if (orientationEvent && typeof orientationEvent.requestPermission === "function") {
+        orientationPermissionIndex = permissionRequests.length
+        permissionRequests.push(orientationEvent.requestPermission())
       }
-      setMotion('active')
+      if (motionEvent && typeof motionEvent.requestPermission === "function") {
+        motionPermissionIndex = permissionRequests.length
+        permissionRequests.push(motionEvent.requestPermission())
+      }
+
+      const permissions = await Promise.all(permissionRequests)
+      if (
+        orientationPermissionIndex >= 0 &&
+        permissions[orientationPermissionIndex] !== "granted"
+      ) {
+        setMotion("denied")
+        return
+      }
+      if (
+        orientationPermissionIndex < 0 &&
+        motionPermissionIndex >= 0 &&
+        permissions[motionPermissionIndex] !== "granted"
+      ) {
+        setMotion("denied")
+        return
+      }
+
+      setMotion("waiting")
     } catch {
-      setMotion('denied')
+      setMotion("denied")
     }
   }, [])
 
   useEffect(() => {
+    if (motion !== "waiting" && motion !== "active" && motion !== "no-signal") return
+
     const onOrientation = (event: DeviceOrientationEvent) => {
-      if (typeof event.gamma === 'number') game.current.tilt = clamp(event.gamma / 28, -1, 1)
+      if (typeof event.gamma !== "number") return
+      lastGamma.current = event.gamma
+      lastOrientationAt.current = Date.now()
+      lastSensorAt.current = lastOrientationAt.current
+
+      // Use the phone's first stable position as neutral, so small hand
+      // placement differences do not immediately steer the ship.
+      if (baselineGamma.current === null) baselineGamma.current = event.gamma
+      const delta = event.gamma - baselineGamma.current
+      const deadZone = 2.5
+      const responsiveDelta = Math.abs(delta) <= deadZone
+        ? 0
+        : Math.sign(delta) * (Math.abs(delta) - deadZone)
+      game.current.tilt = clamp(responsiveDelta / 20, -1, 1)
+
+      setMotion(current => current === "active" ? current : "active")
     }
-    if (motion === 'active') window.addEventListener('deviceorientation', onOrientation, true)
-    return () => window.removeEventListener('deviceorientation', onOrientation, true)
+
+    const onDeviceMotion = (event: DeviceMotionEvent) => {
+      // Prefer orientation data when it is available. Acceleration is a
+      // fallback for browsers/devices that expose motion but no gamma value.
+      if (Date.now() - lastOrientationAt.current < 700) return
+      const accelerationX = event.accelerationIncludingGravity?.x
+      if (typeof accelerationX !== "number") return
+
+      lastAccelX.current = accelerationX
+      lastSensorAt.current = Date.now()
+      if (baselineAccelX.current === null) baselineAccelX.current = accelerationX
+      game.current.tilt = clamp((accelerationX - baselineAccelX.current) / 5, -1, 1)
+      setMotion(current => current === "active" ? current : "active")
+    }
+
+    window.addEventListener("deviceorientation", onOrientation, true)
+    window.addEventListener("devicemotion", onDeviceMotion, true)
+
+    const noSignalTimer = window.setTimeout(() => {
+      if (lastSensorAt.current === 0) setMotion(current => current === "waiting" ? "no-signal" : current)
+    }, 2200)
+
+    return () => {
+      window.removeEventListener("deviceorientation", onOrientation, true)
+      window.removeEventListener("devicemotion", onDeviceMotion, true)
+      window.clearTimeout(noSignalTimer)
+    }
   }, [motion])
+
+  const calibrateMotion = useCallback(() => {
+    if (lastGamma.current !== null) baselineGamma.current = lastGamma.current
+    if (lastAccelX.current !== null) baselineAccelX.current = lastAccelX.current
+    game.current.tilt = 0
+  }, [])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent, pressed: boolean) => {
@@ -318,15 +419,27 @@ export default function OrbitalisHiba() {
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#030609]/85 px-6 text-center backdrop-blur-[2px]">
               <p className="text-[9px] uppercase tracking-[0.3em] text-lime-200/70">{over ? 'SIGNAL TERMINATED' : 'INCOMING TRANSMISSION'}</p>
               <h3 className="mt-4 text-2xl font-bold uppercase tracking-[0.12em] text-zinc-100">{over ? 'GAME OVER' : 'INSERT COIN'}</h3>
-              <p className="mt-3 max-w-[230px] text-[10px] leading-5 text-zinc-500">{over ? `ELÉRT PONTSZÁM: ${score}` : 'Döntsd a telefont, vagy használd a nyilakat. Az űrhajó automatikusan tüzel.'}</p>
+              <p className="mt-3 max-w-[230px] text-[10px] leading-5 text-zinc-500">{over ? `ELÉRT PONTSZÁM: ${score}` : 'Engedélyezd a mozgásvezérlést, majd finoman döntsd balra vagy jobbra. Az űrhajó automatikusan tüzel.'}</p>
               <button type="button" onClick={start} className="mt-6 border border-lime-200/70 bg-lime-200/10 px-8 py-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-lime-100 transition-colors hover:bg-lime-200/20">{over ? 'ÚJRAINDÍTÁS' : 'START GAME'}</button>
               {!started && <button type="button" onClick={() => void enableMotion()} className="mt-3 text-[9px] uppercase tracking-[0.18em] text-zinc-500 hover:text-lime-100">MOTION CONTROL / {motion === 'active' ? 'ACTIVE' : motion === 'denied' ? 'UNAVAILABLE' : 'ENABLE'}</button>}
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between border-t border-zinc-800 px-3 py-2 text-[8px] uppercase tracking-[0.15em] text-zinc-600">
-          <span className="inline-flex items-center gap-1">{motion === 'active' ? <Activity size={11} className="text-lime-200" /> : null}{motion === 'active' ? 'MOTION ACTIVE' : 'TOUCH / KEYBOARD'}</span>
-          <button type="button" onClick={() => setArcade(value => !value)} className="inline-flex items-center gap-1 hover:text-lime-100"><Maximize2 size={11} /> {arcade ? 'NORMAL' : 'ARCADE MODE'}</button>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-800 px-3 py-2 text-[8px] uppercase tracking-[0.15em] text-zinc-600">
+          <span className="inline-flex items-center gap-1">
+            {motion === "active" ? <Activity size={11} className="text-lime-200" /> : null}
+            {motion === "active" ? "MOTION ACTIVE" : motion === "requesting" ? "PERMISSION REQUEST..." : motion === "waiting" ? "SENSOR SEARCH..." : motion === "no-signal" ? "NO SENSOR SIGNAL" : motion === "denied" ? "SENSOR BLOCKED" : "TOUCH / KEYBOARD"}
+          </span>
+          <div className="flex items-center gap-3">
+            {motion === "active" ? (
+              <button type="button" onClick={calibrateMotion} className="hover:text-lime-100">CENTER PHONE</button>
+            ) : (
+              <button type="button" onClick={() => void enableMotion()} disabled={motion === "requesting"} className="text-lime-200/80 hover:text-lime-100 disabled:opacity-40">
+                {motion === "no-signal" ? "RETRY TILT" : motion === "denied" ? "ALLOW TILT" : "ENABLE TILT"}
+              </button>
+            )}
+            <button type="button" onClick={() => setArcade(value => !value)} className="inline-flex items-center gap-1 hover:text-lime-100"><Maximize2 size={11} /> {arcade ? "NORMAL" : "ARCADE MODE"}</button>
+          </div>
         </div>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
