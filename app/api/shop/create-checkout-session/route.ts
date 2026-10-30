@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import { DeliveryMethod, getDeliveryFee } from "@/lib/shop/delivery";
+import {
+  formatFoxpostPickupPoint,
+  foxpostPickupPointMetadata,
+  parseFoxpostPickupPoint,
+} from "@/lib/foxpost";
 import { products } from "@/lib/shop/products";
 import {
   attachStripeSessionToOrder,
@@ -57,10 +62,17 @@ export async function POST(req: NextRequest) {
     const authenticatedUser = token ? await getUserFromToken(token) : null;
     const items = Array.isArray(body?.items) ? (body.items as CheckoutItem[]) : [];
     const deliveryMethod = parseDeliveryMethod(body?.deliveryMethod);
-    const pickupPoint =
-      typeof body?.pickupPoint === "string"
-        ? body.pickupPoint.trim().slice(0, 160)
-        : "";
+    const pickupPointData = parseFoxpostPickupPoint(body?.pickupPoint);
+    const legacyPickupPoint =
+      typeof body?.pickupPoint === "string" ? body.pickupPoint.trim().slice(0, 240) : "";
+    const pickupPoint = pickupPointData
+      ? formatFoxpostPickupPoint(pickupPointData)
+      : legacyPickupPoint;
+    const pickupPointMetadata = pickupPointData
+      ? foxpostPickupPointMetadata(pickupPointData)
+      : pickupPoint
+        ? { pickupPoint }
+        : {};
     const isBookCheckout =
       items.length > 0 &&
       items.every((item) => item?.productId === "book-1" || item?.productId === "book-2");
@@ -79,9 +91,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (isBookCheckout && deliveryMethod === "postaautomata" && pickupPoint.length < 3) {
+    if (isBookCheckout && deliveryMethod === "postaautomata" && !pickupPointData) {
       return NextResponse.json(
-        { error: "Add the name or address of your preferred parcel point or locker." },
+        { error: "Válassz ki egy Foxpost átvételi pontot a fizetés előtt." },
         { status: 400 }
       );
     }
@@ -92,6 +104,8 @@ export async function POST(req: NextRequest) {
       deliveryMethod,
       userId: authenticatedUser?.id ?? null,
       pickupPoint: isBookCheckout && deliveryMethod === "postaautomata" ? pickupPoint : null,
+      pickupPointMetadata:
+        isBookCheckout && deliveryMethod === "postaautomata" ? pickupPointMetadata : null,
     });
     draftOrderId = draftOrder.orderId;
 
@@ -161,7 +175,7 @@ export async function POST(req: NextRequest) {
         ...bookRegistryMetadata,
         product_id: validatedItems.length === 1 ? validatedItems[0]?.product.id ?? "multi_cart" : "multi_cart",
         deliveryMethod,
-        ...(isBookCheckout && deliveryMethod === "postaautomata" ? { pickupPoint } : {}),
+        ...(isBookCheckout && deliveryMethod === "postaautomata" ? pickupPointMetadata : {}),
         shippingAmount: String(draftOrder.shippingAmount),
         totalAmount: String(draftOrder.totalAmount),
       },
