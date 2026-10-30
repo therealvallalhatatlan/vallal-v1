@@ -144,7 +144,7 @@ export default function HomepageVideoCarousel() {
   }
 
   return (
-    <section aria-label="Videóarchívum" className="w-full">
+    <section aria-label="Videóarchívum" className="w-full bg-black">
       <div
         className="group relative left-1/2 aspect-video w-screen -translate-x-1/2 overflow-hidden bg-black rounded-lg"
         onTouchStart={handleTouchStart}
@@ -203,44 +203,7 @@ export default function HomepageVideoCarousel() {
             </span>
           </button>
         )}
-
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-black/55 to-transparent opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100" />
-        <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between px-3 pb-3 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-{isPlaying ? (
-            <button
-              type="button"
-              onClick={() => setIsPlaying(false)}
-              aria-label="Videó szüneteltetése"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white/85 backdrop-blur-sm transition hover:bg-black/65 hover:text-white"
-            >
-              <Pause aria-hidden="true" className="h-4 w-4" />
-            </button>
-          ) : (
-            <span className="h-8 w-8" aria-hidden="true" />
-          )}
-
-          <span
-            className="text-[9px] tabular-nums tracking-[0.18em] text-white/75"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {String(activeIndex + 1).padStart(2, "0")} / {String(videos.length).padStart(2, "0")}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setMuted((current) => !current)}
-            aria-label={muted ? "Hang bekapcsolása" : "Hang némítása"}
-            aria-pressed={!muted}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white/85 backdrop-blur-sm transition hover:bg-black/65 hover:text-white"
-          >
-            {muted ? (
-              <VolumeX aria-hidden="true" className="h-4 w-4" />
-            ) : (
-              <Volume2 aria-hidden="true" className="h-4 w-4" />
-            )}
-          </button>
-        </div>
       </div>
 
       <div className="pb-6 border-b border-zinc-900 bg-black/75">
@@ -252,7 +215,7 @@ export default function HomepageVideoCarousel() {
               onClick={() => goTo(activeIndex - 1)}
               disabled={videos.length < 2}
               aria-label="Előző videó"
-              className="flex h-8 w-8 items-center justify-center  border border-white/15 text-white/80 transition hover:border-white/40 hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:border-white/[0.07] disabled:text-white/25"
+              className="flex h-10 w-10 rounded-sm items-center justify-center  border border-zinc-800 text-white/80 transition hover:border-zinc-700 hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:border-white/[0.07] disabled:text-white/25"
             >
               <ChevronLeft aria-hidden="true" className="h-4 w-4" />
             </button>
@@ -275,7 +238,7 @@ export default function HomepageVideoCarousel() {
               onClick={() => goTo(activeIndex + 1)}
               disabled={videos.length < 2}
               aria-label="Következő videó"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-white/80 transition hover:border-white/40 hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:border-white/[0.07] disabled:text-white/25"
+              className="flex h-10 w-10 rounded-sm items-center justify-center  border border-zinc-800 text-white/80 transition hover:border-zinc-700 hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:border-white/[0.07] disabled:text-white/25"
             >
               <ChevronRight aria-hidden="true" className="h-4 w-4" />
             </button>
@@ -283,19 +246,19 @@ export default function HomepageVideoCarousel() {
 
         </div>
 
-        <div className="ml-auto max-w-3xl px-5 pb-5 pt-4 sm:px-8 sm:pb-7 sm:pt-5">
+        <div className="ml-auto max-w-3xl px-5 pb-8 pt-4 sm:px-8 sm:pb-7">
           <p
-            className="text-right text-[11px] uppercase tracking-[0.22em] text-zinc-500"
+            className="text-center text-[21px] italic uppercase tracking-[0.22em] text-zinc-500"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             {activeVideo.title}
           </p>
           {activeVideo.description?.trim() ? (
             <p
-              className="mt-3 whitespace-pre-wrap break-words text-left text-[19px] italic leading-[1.5] text-zinc-300 sm:text-[23px]"
+              className="px-6 mt-3 whitespace-pre-wrap break-words text-left text-[19px] italic leading-[1.3] text-zinc-300]"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
-              {activeVideo.description}
+              "{activeVideo.description}" <span className="text-[12px]">(...)</span>
             </p>
           ) : null}
         </div>
