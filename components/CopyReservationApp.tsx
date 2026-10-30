@@ -6,6 +6,9 @@ import { useCopyReservation } from '@/hooks/useCopyReservation';
 import { formatCopyNumber } from '@/lib/copyFormatting';
 import { CopyGrid } from './CopyGrid';
 import { Button } from './ui/button';
+import { FoxpostPickupPointSelector } from '@/components/foxpost/FoxpostPickupPointSelector';
+import type { FoxpostPickupPoint } from '@/types/foxpost';
+import type { CheckoutDeliveryMethod } from '@/types/reservations';
 
 export function CopyReservationApp() {
   const {
@@ -16,6 +19,8 @@ export function CopyReservationApp() {
   } = useCopyReservation();
 
   const [selectedCopy, setSelectedCopy] = useState<number | null>(null);
+  const [deliveryMethod, setDeliveryMethod] = useState<CheckoutDeliveryMethod>('dead-drop');
+  const [pickupPoint, setPickupPoint] = useState<FoxpostPickupPoint | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
@@ -60,10 +65,15 @@ export function CopyReservationApp() {
       return;
     }
 
+    if (deliveryMethod === 'automata' && !pickupPoint) {
+      setCheckoutError('Először válassz ki egy Foxpost automatát.');
+      return;
+    }
+
     try {
       setCheckoutLoading(true);
       setCheckoutError(null);
-      const checkoutUrl = await createCheckout(selectedCopy);
+      const checkoutUrl = await createCheckout(selectedCopy, deliveryMethod, pickupPoint);
       window.location.href = checkoutUrl;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Nem sikerült továbblépni a fizetéshez';
@@ -207,6 +217,109 @@ Különleges, 100 darabos, limitált kiadás <br/> <span className="text-lime-40
         </section>
       )}
 
+      {selectedCopy !== null && (
+        <section className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-5 sm:p-6">
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-lime-300/70">
+              KÉZBESÍTÉS / VÁLASZTÁS
+            </p>
+            <h2 className="mt-2 text-xl font-bold text-white">
+              Hogyan jusson el hozzád a könyv?
+            </h2>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+              Választhatsz személyes, egyeztetett átvételt vagy Foxpost automatát.
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <label className={
+                "flex cursor-pointer items-start gap-3 border p-4 transition-colors " +
+                (deliveryMethod === 'dead-drop'
+                  ? "border-lime-300/70 bg-lime-300/[0.06]"
+                  : "border-zinc-800 bg-black/30 hover:border-zinc-600")
+              }>
+                <input
+                  type="radio"
+                  name="book-two-delivery"
+                  value="dead-drop"
+                  checked={deliveryMethod === 'dead-drop'}
+                  onChange={() => {
+                    setDeliveryMethod('dead-drop');
+                    setPickupPoint(null);
+                    setCheckoutError(null);
+                  }}
+                  className="mt-1 accent-lime-300"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-zinc-100">
+                    Dead drop / egyeztetett átvétel
+                  </span>
+                  <span className="mt-1 block text-xs text-zinc-500">
+                    Személyes átvétel a hálózaton keresztül.
+                  </span>
+                </span>
+                <span className="shrink-0 text-xs font-semibold text-lime-100">0 Ft</span>
+              </label>
+              <label className={
+                "flex cursor-pointer items-start gap-3 border p-4 transition-colors " +
+                (deliveryMethod === 'automata'
+                  ? "border-lime-300/70 bg-lime-300/[0.06]"
+                  : "border-zinc-800 bg-black/30 hover:border-zinc-600")
+              }>
+                <input
+                  type="radio"
+                  name="book-two-delivery"
+                  value="automata"
+                  checked={deliveryMethod === 'automata'}
+                  onChange={() => {
+                    setDeliveryMethod('automata');
+                    setCheckoutError(null);
+                  }}
+                  className="mt-1 accent-lime-300"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-zinc-100">
+                    FOXPOST csomagautomata
+                  </span>
+                  <span className="mt-1 block text-xs text-zinc-500">
+                    Válassz automatát a térképen vagy a listában.
+                  </span>
+                </span>
+                <span className="shrink-0 text-xs font-semibold text-lime-100">+2 500 Ft</span>
+              </label>
+            </div>
+            {deliveryMethod === 'automata' ? (
+              <div className="mt-4">
+                <FoxpostPickupPointSelector onChange={(point) => {
+                  setPickupPoint(point);
+                  setCheckoutError(null);
+                }} />
+                {pickupPoint ? (
+                  <div className="mt-3 border border-lime-300/30 bg-lime-300/[0.04] p-3">
+                    <p className="text-[9px] uppercase tracking-[0.18em] text-lime-100/60">
+                      KIVÁLASZTOTT FOXPOST ÁTVÉTELI PONT
+                    </p>
+                    <p className="mt-2 text-xs font-semibold text-zinc-100">
+                      {pickupPoint.variant} · {pickupPoint.destinationId}
+                    </p>
+                    <p className="mt-1 text-sm text-zinc-200">{pickupPoint.name}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-500">{pickupPoint.address}</p>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-[11px] text-amber-200/80">
+                    A továbblépéshez előbb válassz ki egy automatát a Foxpost keresőben.
+                  </p>
+                )}
+              </div>
+            ) : null}
+            <div className="mt-5 flex items-center justify-between border-t border-zinc-800 pt-4">
+              <span className="text-xs uppercase tracking-wider text-zinc-500">Szállítási díj</span>
+              <span className="text-sm font-semibold text-zinc-100">
+                {deliveryMethod === 'automata' ? '+2 500 Ft' : '0 Ft'}
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── ERRORS ───────────────────────────────────────────────────── */}
       {(error || checkoutError) && (
         <section className="mx-auto max-w-6xl space-y-2 px-4 pb-4 sm:px-6 lg:px-8">
@@ -225,15 +338,17 @@ Különleges, 100 darabos, limitált kiadás <br/> <span className="text-lime-40
       <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8">
         <Button
           onClick={handleCheckout}
-          disabled={checkoutLoading || selectedCopy === null}
+          disabled={checkoutLoading || selectedCopy === null || (deliveryMethod === 'automata' && !pickupPoint)}
           size="lg"
           className="h-14 w-full rounded-xl bg-lime-400 text-sm font-bold uppercase tracking-widest text-black transition-all duration-200 hover:bg-lime-300 active:bg-lime-500 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {checkoutLoading
             ? 'Készítjük a fizetési oldalt...'
-            : selectedCopy !== null
-              ? `Tovább a fizetéshez — #${formatCopyNumber(selectedCopy)}`
-              : 'Válassz egy sorszámot'}
+            : selectedCopy !== null && deliveryMethod === 'automata' && !pickupPoint
+              ? 'Válassz Foxpost automatát'
+              : selectedCopy !== null
+                ? `Tovább a fizetéshez — #${formatCopyNumber(selectedCopy)}`
+                : 'Válassz egy sorszámot'}
         </Button>
       </section>
 
