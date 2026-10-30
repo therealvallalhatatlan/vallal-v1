@@ -363,6 +363,10 @@ function GuestHome() {
 
           <section className="mx-auto mt-8 w-full max-w-5xl sm:mt-10"><Reviews /></section>
 
+          <div className="mx-auto w-full max-w-5xl px-0 sm:px-0">
+            <Fooldal4HuntingMap />
+          </div>
+
           <div className="ml-auto mt-12 bg-zinc-100 px-4 py-9 rounded-lg">
               <p className="text-center text-[19px] italic leading-[1.5] text-zinc-900 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
               Ez egy privát klub.<br/>Itt tudsz bejelentkezni.
