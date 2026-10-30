@@ -1,15 +1,15 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Activity, Maximize2, Volume2, VolumeX } from 'lucide-react'
+import { Activity, Volume2, VolumeX } from 'lucide-react'
 
 type Enemy = { x: number; y: number; hp: number; size: number }
 type Shot = { x: number; y: number; vy: number; hostile: boolean }
 type Particle = { x: number; y: number; vx: number; vy: number; life: number }
 
 const W = 360
-const H = 520
-const PLAYER_Y = 465
+const H = 300
+const PLAYER_Y = 260
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n))
 
 export default function OrbitalisHiba() {
@@ -27,9 +27,9 @@ export default function OrbitalisHiba() {
   const [best, setBest] = useState(0)
   const [lives, setLives] = useState(3)
   const [wave, setWave] = useState(1)
-  const [motion, setMotion] = useState<'off' | 'active' | 'denied'>('off')
+  const [motion, setMotion] = useState<'off' | 'requesting' | 'waiting' | 'active' | 'no-signal' | 'denied'>('off')
+  const [controlMode, setControlMode] = useState<'motion' | 'buttons'>('motion')
   const [sound, setSound] = useState(false)
-  const [arcade, setArcade] = useState(false)
   const audio = useRef<AudioContext | null>(null)
   const baselineGamma = useRef<number | null>(null)
   const lastGamma = useRef<number | null>(null)
@@ -230,9 +230,10 @@ export default function OrbitalisHiba() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent, pressed: boolean) => {
+      if (event.key === ' ' && pressed && !game.current.running) start()
+      if (controlMode !== 'buttons') return
       if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') game.current.direction = pressed ? -1 : 0
       if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') game.current.direction = pressed ? 1 : 0
-      if (event.key === ' ' && pressed && !game.current.running) start()
     }
     const down = (event: KeyboardEvent) => onKey(event, true)
     const up = (event: KeyboardEvent) => onKey(event, false)
@@ -242,7 +243,7 @@ export default function OrbitalisHiba() {
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
     }
-  }, [start])
+  }, [start, controlMode])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -255,7 +256,9 @@ export default function OrbitalisHiba() {
       g.lastTime = time
       if (g.running) {
         g.elapsed += dt
-        const input = Math.abs(g.direction) > 0 ? g.direction : Math.abs(g.tilt) > 0.09 ? g.tilt : 0
+        const input = controlMode === 'motion'
+          ? (Math.abs(g.tilt) > 0.09 ? g.tilt : 0)
+          : g.direction
         g.x = clamp(g.x + input * 275 * dt, 18, W - 18)
         if (time - g.lastShot > 220) {
           g.shots.push({ x: g.x, y: PLAYER_Y - 20, vy: -470, hostile: false })
@@ -384,7 +387,7 @@ export default function OrbitalisHiba() {
     }
     frameRef.current = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(frameRef.current)
-  }, [buildWave, tone])
+  }, [buildWave, tone, controlMode])
 
   useEffect(() => () => {
     cancelAnimationFrame(frameRef.current)
@@ -394,59 +397,101 @@ export default function OrbitalisHiba() {
   const move = (direction: number) => { game.current.direction = direction }
 
   return (
-    <section className="mx-auto my-12 w-full max-w-5xl px-5 sm:my-16 sm:px-8" aria-labelledby="orbitalis-hiba-title">
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <div>
-          <p className="text-[9px] uppercase tracking-[0.28em] text-lime-200/50" style={{ fontFamily: 'var(--font-mono-tech)' }}>V. SYSTEMS / ARCADE UNIT 01</p>
-          <h2 id="orbitalis-hiba-title" className="mt-2 text-2xl uppercase leading-none tracking-tight text-zinc-100 sm:text-4xl" style={{ fontFamily: 'var(--font-mono-tech)' }}>ORBITÁLIS HIBA</h2>
+    <section className="mx-auto w-full max-w-5xl px-3 sm:px-8" aria-label="Űrhajós minijáték">
+      <div className="mx-auto flex max-h-[45dvh] w-full max-w-[420px] flex-col overflow-hidden border border-lime-200/30 bg-[#030609] shadow-[0_0_40px_rgba(163,230,53,.06)]">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-800 px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-zinc-500" style={{ fontFamily: 'var(--font-mono-tech)' }}>
+          <span>SYS. 1999.08 / SIGNAL LOST</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-[11px] text-lime-200/90">WAVE {String(wave).padStart(2, '0')}</span>
+            <button type="button" onClick={() => setSound(value => !value)} aria-label={sound ? 'Hang kikapcsolása' : 'Hang bekapcsolása'} aria-pressed={sound} className="inline-flex h-7 w-7 items-center justify-center border border-lime-200/25 text-zinc-300 transition-colors hover:border-lime-200/70 hover:text-lime-100">
+              {sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            </button>
+          </div>
         </div>
-        <button type="button" onClick={() => setSound(value => !value)} aria-label={sound ? 'Hang kikapcsolása' : 'Hang bekapcsolása'} className="inline-flex h-9 w-9 items-center justify-center border border-zinc-800 text-zinc-400 hover:text-lime-100">
-          {sound ? <Volume2 size={15} /> : <VolumeX size={15} />}
-        </button>
-      </div>
-      <div className={arcade ? 'fixed inset-0 z-[100] flex flex-col justify-center bg-black p-3' : 'overflow-hidden border border-lime-200/20 bg-[#030609] shadow-[0_0_40px_rgba(163,230,53,.06)]'}>
-        <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2 text-[9px] uppercase tracking-[0.18em] text-zinc-500" style={{ fontFamily: 'var(--font-mono-tech)' }}>
-          <span>SYS. 1999.08 / SIGNAL LOST</span><span className="text-lime-200/80">WAVE {String(wave).padStart(2, '0')}</span>
+        <div className="grid shrink-0 grid-cols-3 border-b border-zinc-800 text-center">
+          <div className="border-r border-zinc-800 py-1.5">
+            <p className="text-[10px] tracking-widest text-zinc-500">SCORE</p>
+            <p className="text-base tabular-nums text-lime-100">{String(score).padStart(6, '0')}</p>
+          </div>
+          <div className="border-r border-zinc-800 py-1.5">
+            <p className="text-[10px] tracking-widest text-zinc-500">BEST</p>
+            <p className="text-base tabular-nums text-zinc-300">{String(best).padStart(6, '0')}</p>
+          </div>
+          <div className="py-1.5">
+            <p className="text-[10px] tracking-widest text-zinc-500">LIVES</p>
+            <p className="text-base tracking-[0.2em] text-red-300">{'♥ '.repeat(lives).trim() || '—'}</p>
+          </div>
         </div>
-        <div className="grid grid-cols-3 border-b border-zinc-800 text-center">
-          <div className="border-r border-zinc-800 py-2"><p className="text-[8px] tracking-widest text-zinc-600">SCORE</p><p className="text-sm tabular-nums text-lime-100">{String(score).padStart(6, '0')}</p></div>
-          <div className="border-r border-zinc-800 py-2"><p className="text-[8px] tracking-widest text-zinc-600">BEST</p><p className="text-sm tabular-nums text-zinc-300">{String(best).padStart(6, '0')}</p></div>
-          <div className="py-2"><p className="text-[8px] tracking-widest text-zinc-600">LIVES</p><p className="text-sm tracking-[0.2em] text-red-300">{'♥ '.repeat(lives).trim() || '—'}</p></div>
+        <div className="relative mx-auto min-h-0 w-full flex-1">
+          <div className="relative mx-auto w-full" style={{ width: 'min(100%, calc((45dvh - 124px) * 1.2))' }}>
+            <canvas ref={canvasRef} width={W} height={H} className="block aspect-[6/5] h-auto w-full touch-pan-y" aria-label="Űrhajós lövöldözős játék" />
+            {(!started || over) && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#030609]/85 px-5 text-center backdrop-blur-[2px]">
+                <p className="text-[10px] uppercase tracking-[0.24em] text-lime-200/80">{over ? 'SIGNAL TERMINATED' : 'INCOMING TRANSMISSION'}</p>
+                <h3 className="mt-2 text-xl font-bold uppercase tracking-[0.12em] text-zinc-100">{over ? 'GAME OVER' : 'INSERT COIN'}</h3>
+                <p className="mt-2 max-w-[260px] text-[12px] leading-5 text-zinc-300">
+                  {over
+                    ? `ELÉRT PONTSZÁM: ${score}`
+                    : 'Döntsd balra vagy jobbra a telefont. A mozgásérzékelő az alapértelmezett irányítás, a fegyver automatikusan tüzel.'}
+                </p>
+                <button type="button" onClick={start} className="mt-4 border border-lime-200/70 bg-lime-200/10 px-7 py-2.5 text-[12px] font-semibold uppercase tracking-[0.2em] text-lime-100 transition-colors hover:bg-lime-200/20">
+                  {over ? 'ÚJRAINDÍTÁS' : 'START GAME'}
+                </button>
+                {!started && <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-zinc-400">A szenzort alul tudod engedélyezni</p>}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="relative mx-auto w-full max-w-[360px]">
-          <canvas ref={canvasRef} width={W} height={H} className="block aspect-[9/13] w-full touch-none" aria-label="Űrhajós lövöldözős játék" />
-          {(!started || over) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#030609]/85 px-6 text-center backdrop-blur-[2px]">
-              <p className="text-[9px] uppercase tracking-[0.3em] text-lime-200/70">{over ? 'SIGNAL TERMINATED' : 'INCOMING TRANSMISSION'}</p>
-              <h3 className="mt-4 text-2xl font-bold uppercase tracking-[0.12em] text-zinc-100">{over ? 'GAME OVER' : 'INSERT COIN'}</h3>
-              <p className="mt-3 max-w-[230px] text-[10px] leading-5 text-zinc-500">{over ? `ELÉRT PONTSZÁM: ${score}` : 'Engedélyezd a mozgásvezérlést, majd finoman döntsd balra vagy jobbra. Az űrhajó automatikusan tüzel.'}</p>
-              <button type="button" onClick={start} className="mt-6 border border-lime-200/70 bg-lime-200/10 px-8 py-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-lime-100 transition-colors hover:bg-lime-200/20">{over ? 'ÚJRAINDÍTÁS' : 'START GAME'}</button>
-              {!started && <button type="button" onClick={() => void enableMotion()} className="mt-3 text-[9px] uppercase tracking-[0.18em] text-zinc-500 hover:text-lime-100">MOTION CONTROL / {motion === 'active' ? 'ACTIVE' : motion === 'denied' ? 'UNAVAILABLE' : 'ENABLE'}</button>}
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-zinc-800 px-2 py-1.5 text-[10px] uppercase tracking-[0.12em]" style={{ fontFamily: 'var(--font-mono-tech)' }}>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setControlMode('motion')
+                game.current.direction = 0
+                if (motion !== 'active') void enableMotion()
+              }}
+              aria-pressed={controlMode === 'motion'}
+              className={controlMode === 'motion' ? 'border border-lime-200/70 bg-lime-200/10 px-2.5 py-1.5 text-lime-100' : 'border border-zinc-800 px-2.5 py-1.5 text-zinc-400 hover:text-zinc-200'}
+            >
+              TILT
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setControlMode('buttons')
+                game.current.direction = 0
+                game.current.tilt = 0
+              }}
+              aria-pressed={controlMode === 'buttons'}
+              className={controlMode === 'buttons' ? 'border border-lime-200/70 bg-lime-200/10 px-2.5 py-1.5 text-lime-100' : 'border border-zinc-800 px-2.5 py-1.5 text-zinc-400 hover:text-zinc-200'}
+            >
+              BUTTONS
+            </button>
+          </div>
+          {controlMode === 'buttons' ? (
+            <div className="flex items-center gap-1.5">
+              <button type="button" onPointerDown={() => move(-1)} onPointerUp={() => move(0)} onPointerLeave={() => move(0)} onPointerCancel={() => move(0)} className="inline-flex h-8 w-9 items-center justify-center border border-zinc-700 bg-zinc-950 text-xl text-zinc-200 active:border-lime-200 active:text-lime-100" aria-label="Balra mozgatás">←</button>
+              <button type="button" onPointerDown={() => move(1)} onPointerUp={() => move(0)} onPointerLeave={() => move(0)} onPointerCancel={() => move(0)} className="inline-flex h-8 w-9 items-center justify-center border border-zinc-700 bg-zinc-950 text-xl text-zinc-200 active:border-lime-200 active:text-lime-100" aria-label="Jobbra mozgatás">→</button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                {motion === 'active' ? <Activity size={13} className="text-lime-200" /> : null}
+                {motion === 'active' ? 'ACTIVE' : motion === 'requesting' ? 'REQUESTING' : motion === 'waiting' ? 'SEARCHING' : motion === 'no-signal' ? 'NO SIGNAL' : motion === 'denied' ? 'BLOCKED' : 'SENSOR OFF'}
+              </span>
+              {motion === 'active' ? (
+                <button type="button" onClick={calibrateMotion} className="border border-zinc-700 px-2 py-1.5 text-lime-200 hover:border-lime-200/70">CENTER</button>
+              ) : (
+                <button type="button" onClick={() => void enableMotion()} disabled={motion === 'requesting'} className="border border-zinc-700 px-2 py-1.5 text-lime-200 hover:border-lime-200/70 disabled:opacity-40">
+                  {motion === 'no-signal' ? 'RETRY' : motion === 'denied' ? 'ALLOW' : motion === 'requesting' ? 'WAIT...' : 'ENABLE'}
+                </button>
+              )}
             </div>
           )}
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-800 px-3 py-2 text-[8px] uppercase tracking-[0.15em] text-zinc-600">
-          <span className="inline-flex items-center gap-1">
-            {motion === "active" ? <Activity size={11} className="text-lime-200" /> : null}
-            {motion === "active" ? "MOTION ACTIVE" : motion === "requesting" ? "PERMISSION REQUEST..." : motion === "waiting" ? "SENSOR SEARCH..." : motion === "no-signal" ? "NO SENSOR SIGNAL" : motion === "denied" ? "SENSOR BLOCKED" : "TOUCH / KEYBOARD"}
-          </span>
-          <div className="flex items-center gap-3">
-            {motion === "active" ? (
-              <button type="button" onClick={calibrateMotion} className="hover:text-lime-100">CENTER PHONE</button>
-            ) : (
-              <button type="button" onClick={() => void enableMotion()} disabled={motion === "requesting"} className="text-lime-200/80 hover:text-lime-100 disabled:opacity-40">
-                {motion === "no-signal" ? "RETRY TILT" : motion === "denied" ? "ALLOW TILT" : "ENABLE TILT"}
-              </button>
-            )}
-            <button type="button" onClick={() => setArcade(value => !value)} className="inline-flex items-center gap-1 hover:text-lime-100"><Maximize2 size={11} /> {arcade ? "NORMAL" : "ARCADE MODE"}</button>
-          </div>
-        </div>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
-        <button type="button" onPointerDown={() => move(-1)} onPointerUp={() => move(0)} onPointerLeave={() => move(0)} className="min-h-14 border border-zinc-800 bg-zinc-950 text-2xl text-zinc-300 active:border-lime-200 active:text-lime-100" aria-label="Balra mozgatás">←</button>
-        <button type="button" onPointerDown={() => move(1)} onPointerUp={() => move(0)} onPointerLeave={() => move(0)} className="min-h-14 border border-zinc-800 bg-zinc-950 text-2xl text-zinc-300 active:border-lime-200 active:text-lime-100" aria-label="Jobbra mozgatás">→</button>
-      </div>
-      <p className="mt-3 text-center text-[9px] uppercase tracking-[0.14em] text-zinc-600" style={{ fontFamily: 'var(--font-mono-tech)' }}>← → MOZGÁS / AUTO FIRE / SURVIVE THE SIGNAL</p>
     </section>
   )
+}
 }
