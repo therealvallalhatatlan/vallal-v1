@@ -136,6 +136,10 @@ export async function createCheckoutForCopy(
     return { success: false, error: 'Invalid delivery method.' };
   }
 
+  if (deliveryMethod === 'automata' && !checkoutMetadata?.pickupPointId?.trim()) {
+    return { success: false, error: 'Válassz ki egy Foxpost csomagautomatát.' };
+  }
+
   const db = supabaseAdmin();
   const now = new Date();
   const nowIso = now.toISOString();
@@ -280,7 +284,8 @@ export async function createCheckoutForCopy(
         total_amount_huf: totalAmount.toString(),
         ...(userId ? { user_uuid: userId } : {}),
       },
-      collectShippingAddress: deliveryMethod === 'automata',
+      collectShippingAddress: false,
+      collectPhoneNumber: deliveryMethod === 'automata',
     });
 
     const { error: updateError } = await db
