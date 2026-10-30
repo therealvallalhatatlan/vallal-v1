@@ -1,4 +1,5 @@
-import type { InventoryResponse, ReservationResponse, CheckoutCopyResponse, BookCopy } from '@/types/reservations';
+import type { InventoryResponse, ReservationResponse, CheckoutCopyResponse, BookCopy, CheckoutDeliveryMethod } from '@/types/reservations';
+import type { FoxpostPickupPoint } from '@/types/foxpost';
 
 export const copyReservationApi = {
   async fetchInventory(): Promise<BookCopy[]> {
@@ -23,11 +24,19 @@ export const copyReservationApi = {
     return data.copy;
   },
 
-  async createCheckout(copyNumber: number): Promise<string> {
+  async createCheckout(
+    copyNumber: number,
+    deliveryMethod: CheckoutDeliveryMethod,
+    pickupPoint: FoxpostPickupPoint | null,
+  ): Promise<string> {
     const response = await fetch('/api/checkout-copy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ copy_number: copyNumber }),
+      body: JSON.stringify({
+        copy_number: copyNumber,
+        delivery_method: deliveryMethod,
+        ...(deliveryMethod === 'automata' && pickupPoint ? { pickup_point: pickupPoint } : {}),
+      }),
     });
     const data: CheckoutCopyResponse = await response.json();
     if (!data.success || !data.url) {
