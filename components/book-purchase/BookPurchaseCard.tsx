@@ -3,6 +3,8 @@
 import { useState } from "react";
 import type { DeliveryMethod } from "@/lib/shop/delivery";
 import { createClient } from "@/lib/browser";
+import { FoxpostPickupPointSelector } from "@/components/foxpost/FoxpostPickupPointSelector";
+import type { FoxpostPickupPoint } from "@/types/foxpost";
 
 type BookProductId = "book-1" | "book-2";
 
@@ -28,7 +30,7 @@ const OPTIONS: Array<{
   {
     value: "postaautomata",
     label: "Csomagpont / csomagautomata",
-    description: "Magyarországon belül. Add meg az automata vagy csomagpont nevét és címét.",
+    description: "Válassz egy Foxpost átvételi pontot a térképen vagy a listában.",
     fee: 2500,
   },
   {
@@ -46,14 +48,15 @@ export default function BookPurchaseCard({
   editionLabel,
 }: BookPurchaseCardProps) {
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod | null>(null);
-  const [pickupPoint, setPickupPoint] = useState("");
+  const [pickupPoint, setPickupPoint] = useState<FoxpostPickupPoint | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const selectedOption = OPTIONS.find((option) => option.value === deliveryMethod);
   const deliveryFee = selectedOption?.fee ?? 0;
   const total = BOOK_PRICE + deliveryFee;
-  const pickupPointIsValid = deliveryMethod !== "postaautomata" || pickupPoint.trim().length >= 3;
+  const pickupPointIsValid =
+    deliveryMethod !== "postaautomata" || Boolean(pickupPoint?.destinationId);
 
   async function handleCheckout() {
     if (!deliveryMethod || !pickupPointIsValid || loading) return;
@@ -83,7 +86,7 @@ export default function BookPurchaseCard({
         body: JSON.stringify({
           items: [{ productId, quantity: 1 }],
           deliveryMethod,
-          ...(deliveryMethod === "postaautomata" ? { pickupPoint: pickupPoint.trim() } : {}),
+          ...(deliveryMethod === "postaautomata" && pickupPoint ? { pickupPoint } : {}),
         }),
       });
 
@@ -163,21 +166,25 @@ export default function BookPurchaseCard({
 
       {deliveryMethod === "postaautomata" && (
         <div className="mt-4">
-          <label htmlFor={`pickup-point-${productId}`} className="mb-2 block text-xs font-semibold text-zinc-200">
-            Csomagpont vagy automata neve és címe
-          </label>
-          <input
-            id={`pickup-point-${productId}`}
-            type="text"
-            maxLength={160}
-            value={pickupPoint}
-            onChange={(event) => setPickupPoint(event.target.value)}
-            placeholder="Szolgáltató, pont/automata neve, település"
-            autoComplete="off"
-            className="w-full rounded-sm border border-zinc-700 bg-black px-3 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-lime-200/70"
-          />
-          <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
-            A telefonszámodat a fizetési oldalon kérjük el a kézbesítéshez.
+          <FoxpostPickupPointSelector onChange={setPickupPoint} />
+          {pickupPoint ? (
+            <div className="mt-3 border border-lime-200/30 bg-lime-200/[0.04] p-3">
+              <p className="text-[9px] uppercase tracking-[0.18em] text-lime-100/60">
+                KIVÁLASZTOTT ÁTVÉTELI PONT
+              </p>
+              <p className="mt-2 text-xs font-semibold text-zinc-100">
+                {pickupPoint.variant} · {pickupPoint.destinationId}
+              </p>
+              <p className="mt-1 text-sm text-zinc-200">{pickupPoint.name}</p>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-500">{pickupPoint.address}</p>
+            </div>
+          ) : (
+            <p className="mt-2 text-[11px] text-amber-200/80">
+              A fizetéshez előbb válassz ki egy átvételi pontot a Foxpost keresőben.
+            </p>
+          )}
+          <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
+            A kézbesítéshez szükséges telefonszámot a fizetési oldalon kérjük el.
           </p>
         </div>
       )}
