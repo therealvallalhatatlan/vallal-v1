@@ -258,43 +258,38 @@ function OrderReceivedCelebration() {
 
 function TrustSection() {
   return (
-    <section className="mt-4 py-12 sm:py-16 px-4" aria-label="Bízhatsz bennem">
-      <div className="flex gap-6">
+    <section className="mt-0 mb-12 px-4" aria-label="Bízhatsz bennem">
+      <div className="flex flex-row items-center justify-between gap-0">
         
-        <div className="w-[61.8%]">
+        <div className="w-[63%]">
           <p
-            className="text-right text-[23px] font-normal italic leading-tight tracking-tight text-zinc-300 sm:text-base"
+            className="mt-14 text-right text-[23px] font-normal italic leading-tight tracking-tight text-zinc-300 sm:text-base"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             Bízhatsz bennem,<br/>nyúl vagyok.
           </p>
 
           <p
-            className="text-right mt-4 text-sm leading-normal italic text-zinc-400"
+            className="text-right mt-4 text-[12px] leading-normal italic text-zinc-500"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
             Ha kérdésed van{" "}
             <Link
               href="/kapcsolat"
-              className="text-lime-100 underline underline-offset-4"
+              className="text-lime-200/70 underline underline-offset-4"
             >
-              itt tudsz
-            </Link>{" "}
-            írni nekem.
+              itt tudsz </Link>{" "} írni nekem.
           </p>
         </div>
 
-        <div className="mx-auto w-[38.2%] overflow-hidden rounded-full bg-black sm:mx-0 sm:w-36 sm:justify-self-end">
-          <video
-            className="block w-full"
-            src="/420.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            controls={false}
-            preload="metadata"
-          />
+        <div className="mx-auto w-[37%] overflow-hidden rounded-full bg-black sm:mx-0 sm:w-36 sm:justify-self-end">
+          <Image
+                src="/img/kislogo.png"
+                alt="Vállalhatatlan I. és II. kötetei"
+                width={190}
+                height={158}
+                className="opacity-50 mt-12 mx-auto h-[100px] w-auto transition-transform duration-500 hover:opacity-100"
+              />
         </div>
       </div>
     </section>
@@ -339,7 +334,7 @@ function GuestHome() {
   return (
     <>
       <SiteHeader />
-      <div className="mx-auto w-full pb-28 pt-0 sm:pb-32">
+      <div className="mx-auto w-full pb-10 pt-0 sm:pb-32">
         <section className="w-full animate-fadeIn">
           <HomepageVideoCarousel />
         </section>
@@ -380,7 +375,7 @@ function GuestHome() {
 
           <section
             id="bg-image"
-            className="relative isolate left-1/2 mt-12 flex min-h-screen w-screen -translate-x-1/2 items-center justify-center overflow-hidden bg-black px-5 py-16 sm:px-8"
+            className="relative isolate left-1/2 flex min-h-screen w-screen -translate-x-1/2 items-center justify-center overflow-hidden bg-black px-8 py-16"
             aria-label="Belépés a Vállalhatatlan klubba"
           >
             <Image
@@ -389,14 +384,10 @@ function GuestHome() {
               fill
               priority
               sizes="100vw"
-              className="absolute inset-0 z-0 h-full w-full object-cover"
-            />
-            <div
-              className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-black/35 via-black/55 to-black/75"
-              aria-hidden="true"
+              className="contrast-150 brightness-80 absolute inset-0 z-0 h-full w-full object-cover"
             />
 
-            <div className="relative z-20 mx-auto w-full max-w-xl rounded-lg border border-white/15 bg-black/45 px-4 py-9 text-center shadow-2xl backdrop-blur-[2px]">
+            <div className="relative z-20 mx-auto w-full max-w-xl rounded-md border border-zinc-500/30 bg-black/0 py-9 text-center">
               <div className="absolute left-4 top-4">
                 <p className="text-[9px] uppercase tracking-[0.3em] text-zinc-300/70" style={{ fontFamily: "var(--font-mono-tech)" }}>
                   Since 2025
@@ -408,31 +399,26 @@ function GuestHome() {
                 </p>
               </div>
 
-              <Image
-                src="/img/kislogo.png"
-                alt="Vállalhatatlan I. és II. kötetei"
-                width={190}
-                height={158}
-                className="mx-auto h-[148px] w-auto transition-transform duration-500"
-              />
-              <p className="text-center text-[19px] italic leading-[1.5] text-zinc-100 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
-                Ez egy privát klub.<br />Jelentkezz be.
-              </p>
+              
+              <div className="mb-164 mt-12 text-center text-[19px] italic leading-[1.5] text-zinc-100 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
+                <p className="">
+                  Ez egy közösség.<br />Jelentkezz be.
+                </p>
+              </div>
 
-              <div className="mt-6 grid grid-cols-7 items-center gap-4">
+              <div className="mt-6 grid grid-cols-6 items-center gap-4 px-4">
                 <Link
                   href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=google"
                   aria-label="Belépés Google-fiókkal"
-                  className="col-span-3 inline-flex h-13 items-center justify-center gap-3 rounded-md border-4 border-zinc-700 bg-black/70 px-4 py-4 text-[15px] font-semibold tracking-[0.02em] text-zinc-100 transition-all hover:border-white/80 hover:bg-black sm:min-w-44 sm:text-[13px]"
+                  className="col-span-3 inline-flex h-14 items-center justify-center gap-3 rounded-md border-4 border-zinc-300 bg-zinc-100 px-4 py-4 text-[15px] font-semibold tracking-[0.02em] text-zinc-900 transition-all hover:border-white/80 hover:bg-white sm:min-w-44 sm:text-[13px]"
                 >
-                  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0 fill-current text-zinc-100 sm:h-5 sm:w-5"><path d="M21.35 11.1h-9.18v2.98h5.62c-.24 1.56-1.84 4.58-5.62 4.58-3.38 0-6.14-2.8-6.14-6.26s2.76-6.26 6.14-6.26c1.92 0 3.21.82 3.95 1.53l2.14-2.08C16.88 4.3 14.96 3.3 12.17 3.3 7.36 3.3 3.45 7.2 3.45 12s3.91 8.7 8.72 8.7c5.04 0 8.39-3.54 8.39-8.52 0-.57-.06-.99-.13-1.08z" /></svg>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0 fill-current text-zinc-900 sm:h-5 sm:w-5"><path d="M21.35 11.1h-9.18v2.98h5.62c-.24 1.56-1.84 4.58-5.62 4.58-3.38 0-6.14-2.8-6.14-6.26s2.76-6.26 6.14-6.26c1.92 0 3.21.82 3.95 1.53l2.14-2.08C16.88 4.3 14.96 3.3 12.17 3.3 7.36 3.3 3.45 7.2 3.45 12s3.91 8.7 8.72 8.7c5.04 0 8.39-3.54 8.39-8.52 0-.57-.06-.99-.13-1.08z" /></svg>
                   Google
                 </Link>
-                <span className="text-zinc-300 text-xs italic text-center">Vagy</span>
                 <Link
                   href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4&provider=facebook"
                   aria-label="Belépés Facebookkal"
-                  className="col-span-3 inline-flex h-13 items-center justify-center gap-3 rounded-md border-4 border-zinc-700 bg-black/70 px-4 py-3 text-[15px] font-semibold tracking-[0.02em] text-zinc-100 transition-all hover:border-zinc-300 hover:bg-black sm:min-w-44 sm:text-[13px]"
+                  className="col-span-3 inline-flex h-14 items-center justify-center gap-3 rounded-md border-4 border-black/90 bg-black/90 px-4 py-3 text-[15px] font-semibold tracking-[0.02em] text-zinc-100 transition-all hover:border-zinc-300 hover:bg-black sm:min-w-44 sm:text-[13px]"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 shrink-0 fill-current text-zinc-100 sm:h-5 sm:w-5">
                     <path d="M13.65 22v-8.22h2.76l.41-3.2h-3.17V8.54c0-.93.26-1.57 1.6-1.57h1.71V4.1c-.3-.04-1.34-.1-2.55-.1-2.52 0-4.25 1.54-4.25 4.37v2.21H7.3v3.2h2.87V22h3.48Z" />
@@ -443,7 +429,7 @@ function GuestHome() {
               <div className="mt-5 flex justify-center pt-0">
                 <Link
                   href="/auth?from=%2Ffooldal-4&next=%2Ffooldal-4#auth-email"
-                  className="inline-flex items-center gap-3 py-2 text-center text-[14px] tracking-[0.04em] text-zinc-300 underline decoration-zinc-500 underline-offset-4 transition-colors hover:text-white hover:decoration-white"
+                  className="inline-flex items-center gap-3 py-2 text-center text-[16px] tracking-[0.04em] text-zinc-300 underline decoration-zinc-500 underline-offset-4 transition-colors hover:text-white hover:decoration-white"
                 >
                   <Mail aria-hidden="true" className="h-3.5 w-3.5" />
                   Belépés emaillel
@@ -455,6 +441,7 @@ function GuestHome() {
         <div className=" mx-auto mt-14 w-full max-w-5xl px-5 sm:px-8">
           <TrustSection />
         </div>
+        
       </div>
       <Footer />
     </>
