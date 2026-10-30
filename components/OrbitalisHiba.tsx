@@ -8,8 +8,8 @@ type Shot = { x: number; y: number; vy: number; hostile: boolean }
 type Particle = { x: number; y: number; vx: number; vy: number; life: number }
 
 const W = 360
-const H = 300
-const PLAYER_Y = 260
+const H = 420
+const PLAYER_Y = 378
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n))
 
 export default function OrbitalisHiba() {
@@ -28,8 +28,8 @@ export default function OrbitalisHiba() {
   const [lives, setLives] = useState(3)
   const [wave, setWave] = useState(1)
   const [motion, setMotion] = useState<'off' | 'requesting' | 'waiting' | 'active' | 'no-signal' | 'denied'>('off')
-  const [controlMode, setControlMode] = useState<'motion' | 'buttons'>('motion')
   const [sound, setSound] = useState(false)
+  const soundRef = useRef(false)
   const audio = useRef<AudioContext | null>(null)
   const baselineGamma = useRef<number | null>(null)
   const lastGamma = useRef<number | null>(null)
@@ -39,7 +39,7 @@ export default function OrbitalisHiba() {
   const lastSensorAt = useRef(0)
 
   const tone = useCallback((hz: number, duration: number) => {
-    if (!sound) return
+    if (!soundRef.current) return
     try {
       const AudioContextClass = window.AudioContext
       const ctx = audio.current ?? new AudioContextClass()
@@ -58,7 +58,7 @@ export default function OrbitalisHiba() {
     } catch {
       // Sound is optional. Keep the game playable when audio is unavailable.
     }
-  }, [sound])
+  }, [])
 
   const buildWave = useCallback((level: number) => {
     const g = game.current
@@ -100,6 +100,8 @@ export default function OrbitalisHiba() {
     setWave(1)
     setStarted(true)
     setOver(false)
+    soundRef.current = true
+    setSound(true)
     tone(440, 0.1)
   }, [buildWave, tone])
 
@@ -222,6 +224,17 @@ export default function OrbitalisHiba() {
     }
   }, [motion])
 
+  const toggleMotion = useCallback(() => {
+    const enabled = motion === 'requesting' || motion === 'waiting' || motion === 'active' || motion === 'no-signal'
+    if (enabled) {
+      setMotion('off')
+      game.current.tilt = 0
+      game.current.direction = 0
+    } else {
+      void enableMotion()
+    }
+  }, [enableMotion, motion])
+
   const calibrateMotion = useCallback(() => {
     if (lastGamma.current !== null) baselineGamma.current = lastGamma.current
     if (lastAccelX.current !== null) baselineAccelX.current = lastAccelX.current
@@ -231,7 +244,6 @@ export default function OrbitalisHiba() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent, pressed: boolean) => {
       if (event.key === ' ' && pressed && !game.current.running) start()
-      if (controlMode !== 'buttons') return
       if (event.key === 'ArrowLeft' || event.key.toLowerCase() === 'a') game.current.direction = pressed ? -1 : 0
       if (event.key === 'ArrowRight' || event.key.toLowerCase() === 'd') game.current.direction = pressed ? 1 : 0
     }
@@ -243,7 +255,7 @@ export default function OrbitalisHiba() {
       window.removeEventListener('keydown', down)
       window.removeEventListener('keyup', up)
     }
-  }, [start, controlMode])
+  }, [start])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -256,9 +268,9 @@ export default function OrbitalisHiba() {
       g.lastTime = time
       if (g.running) {
         g.elapsed += dt
-        const input = controlMode === 'motion'
-          ? (Math.abs(g.tilt) > 0.09 ? g.tilt : 0)
-          : g.direction
+        const input = Math.abs(g.direction) > 0
+          ? g.direction
+          : Math.abs(g.tilt) > 0.09 ? g.tilt : 0
         g.x = clamp(g.x + input * 275 * dt, 18, W - 18)
         if (time - g.lastShot > 220) {
           g.shots.push({ x: g.x, y: PLAYER_Y - 20, vy: -470, hostile: false })
@@ -387,7 +399,7 @@ export default function OrbitalisHiba() {
     }
     frameRef.current = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(frameRef.current)
-  }, [buildWave, tone, controlMode])
+  }, [buildWave, tone])
 
   useEffect(() => () => {
     cancelAnimationFrame(frameRef.current)
@@ -395,15 +407,19 @@ export default function OrbitalisHiba() {
   }, [])
 
   const move = (direction: number) => { game.current.direction = direction }
+  const sensorEnabled = motion === 'requesting' || motion === 'waiting' || motion === 'active' || motion === 'no-signal'
 
   return (
     <section className="mx-auto w-full max-w-5xl px-3 sm:px-8" aria-label="Űrhajós minijáték">
-      <div className="mx-auto flex max-h-[45dvh] w-full max-w-[420px] flex-col overflow-hidden border border-lime-200/30 bg-[#030609] shadow-[0_0_40px_rgba(163,230,53,.06)]">
+      <div className="mx-auto flex max-h-[60dvh] w-full max-w-[420px] flex-col overflow-hidden border border-lime-200/30 bg-[#030609] shadow-[0_0_40px_rgba(163,230,53,.06)]">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-800 px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-zinc-500" style={{ fontFamily: 'var(--font-mono-tech)' }}>
           <span>SYS. 1999.08 / SIGNAL LOST</span>
           <div className="flex shrink-0 items-center gap-2">
             <span className="text-[11px] text-lime-200/90">WAVE {String(wave).padStart(2, '0')}</span>
-            <button type="button" onClick={() => setSound(value => !value)} aria-label={sound ? 'Hang kikapcsolása' : 'Hang bekapcsolása'} aria-pressed={sound} className="inline-flex h-7 w-7 items-center justify-center border border-lime-200/25 text-zinc-300 transition-colors hover:border-lime-200/70 hover:text-lime-100">
+            <button type="button" onClick={() => setSound(value => {
+              soundRef.current = !value
+              return !value
+            })} aria-label={sound ? 'Hang kikapcsolása' : 'Hang bekapcsolása'} aria-pressed={sound} className="inline-flex h-7 w-7 items-center justify-center border border-lime-200/25 text-zinc-300 transition-colors hover:border-lime-200/70 hover:text-lime-100">
               {sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
             </button>
           </div>
@@ -423,8 +439,8 @@ export default function OrbitalisHiba() {
           </div>
         </div>
         <div className="relative mx-auto min-h-0 w-full flex-1">
-          <div className="relative mx-auto w-full" style={{ width: 'min(100%, calc((45dvh - 124px) * 1.2))' }}>
-            <canvas ref={canvasRef} width={W} height={H} className="block aspect-[6/5] h-auto w-full touch-pan-y" aria-label="Űrhajós lövöldözős játék" />
+          <div className="relative mx-auto w-full" style={{ width: 'min(100%, calc((60dvh - 128px) * 0.857143))' }}>
+            <canvas ref={canvasRef} width={W} height={H} className="block aspect-[6/7] h-auto w-full touch-pan-y" aria-label="Űrhajós lövöldözős játék" />
             {(!started || over) && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#030609]/85 px-5 text-center backdrop-blur-[2px]">
                 <p className="text-[10px] uppercase tracking-[0.24em] text-lime-200/80">{over ? 'SIGNAL TERMINATED' : 'INCOMING TRANSMISSION'}</p>
@@ -442,53 +458,35 @@ export default function OrbitalisHiba() {
             )}
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-zinc-800 px-2 py-1.5 text-[10px] uppercase tracking-[0.12em]" style={{ fontFamily: 'var(--font-mono-tech)' }}>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => {
-                setControlMode('motion')
-                game.current.direction = 0
-                if (motion !== 'active') void enableMotion()
-              }}
-              aria-pressed={controlMode === 'motion'}
-              className={controlMode === 'motion' ? 'border border-lime-200/70 bg-lime-200/10 px-2.5 py-1.5 text-lime-100' : 'border border-zinc-800 px-2.5 py-1.5 text-zinc-400 hover:text-zinc-200'}
-            >
-              TILT
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setControlMode('buttons')
-                game.current.direction = 0
-                game.current.tilt = 0
-              }}
-              aria-pressed={controlMode === 'buttons'}
-              className={controlMode === 'buttons' ? 'border border-lime-200/70 bg-lime-200/10 px-2.5 py-1.5 text-lime-100' : 'border border-zinc-800 px-2.5 py-1.5 text-zinc-400 hover:text-zinc-200'}
-            >
-              BUTTONS
-            </button>
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-zinc-800 px-3 py-2 text-[10px] uppercase tracking-[0.12em]" style={{ fontFamily: 'var(--font-mono-tech)' }}>
+          <button
+            type="button"
+            onClick={toggleMotion}
+            role="switch"
+            aria-checked={sensorEnabled}
+            className="inline-flex min-h-9 items-center gap-2.5 text-left text-lime-100"
+          >
+            <span className="text-[10px] tracking-[0.1em]">ENGEDÉLYEZEM A SZENZORT</span>
+            <span className={`relative inline-flex h-5 w-10 shrink-0 items-center rounded-full border transition-colors ${sensorEnabled ? 'border-lime-200 bg-lime-200/20' : 'border-zinc-600 bg-zinc-900'}`}>
+              <span className={`absolute h-3.5 w-3.5 rounded-full transition-transform ${sensorEnabled ? 'translate-x-[21px] bg-lime-200' : 'translate-x-1 bg-zinc-500'}`} />
+            </span>
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 text-zinc-400">
+              {motion === 'active' ? <Activity size={13} className="text-lime-200" /> : null}
+              {motion === 'active' ? 'SENSOR AKTÍV' : motion === 'requesting' ? 'ENGEDÉLYKÉRÉS' : motion === 'waiting' ? 'ÉRZÉKELŐ KERESÉSE' : motion === 'no-signal' ? 'NINCS JEL' : motion === 'denied' ? 'NEM ELÉRHETŐ' : 'KÉZI IRÁNYÍTÁS'}
+            </span>
+            {motion === 'active' && (
+              <button type="button" onClick={calibrateMotion} className="border border-zinc-700 px-2 py-1.5 text-lime-200 hover:border-lime-200/70">KÖZÉPRE ÁLLÍT</button>
+            )}
           </div>
-          {controlMode === 'buttons' ? (
-            <div className="flex items-center gap-1.5">
-              <button type="button" onPointerDown={() => move(-1)} onPointerUp={() => move(0)} onPointerLeave={() => move(0)} onPointerCancel={() => move(0)} className="inline-flex h-8 w-9 items-center justify-center border border-zinc-700 bg-zinc-950 text-xl text-zinc-200 active:border-lime-200 active:text-lime-100" aria-label="Balra mozgatás">←</button>
-              <button type="button" onPointerDown={() => move(1)} onPointerUp={() => move(0)} onPointerLeave={() => move(0)} onPointerCancel={() => move(0)} className="inline-flex h-8 w-9 items-center justify-center border border-zinc-700 bg-zinc-950 text-xl text-zinc-200 active:border-lime-200 active:text-lime-100" aria-label="Jobbra mozgatás">→</button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 text-zinc-400">
-                {motion === 'active' ? <Activity size={13} className="text-lime-200" /> : null}
-                {motion === 'active' ? 'ACTIVE' : motion === 'requesting' ? 'REQUESTING' : motion === 'waiting' ? 'SEARCHING' : motion === 'no-signal' ? 'NO SIGNAL' : motion === 'denied' ? 'BLOCKED' : 'SENSOR OFF'}
-              </span>
-              {motion === 'active' ? (
-                <button type="button" onClick={calibrateMotion} className="border border-zinc-700 px-2 py-1.5 text-lime-200 hover:border-lime-200/70">CENTER</button>
-              ) : (
-                <button type="button" onClick={() => void enableMotion()} disabled={motion === 'requesting'} className="border border-zinc-700 px-2 py-1.5 text-lime-200 hover:border-lime-200/70 disabled:opacity-40">
-                  {motion === 'no-signal' ? 'RETRY' : motion === 'denied' ? 'ALLOW' : motion === 'requesting' ? 'WAIT...' : 'ENABLE'}
-                </button>
-              )}
-            </div>
-          )}
+        </div>
+        {motion !== 'active' && (
+          <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-zinc-900 px-3 py-2 sm:hidden">
+            <button type="button" onPointerDown={() => move(-1)} onPointerUp={() => move(0)} onPointerLeave={() => move(0)} onPointerCancel={() => move(0)} className="min-h-10 border border-zinc-700 bg-zinc-950 text-2xl leading-none text-zinc-200 active:border-lime-200 active:text-lime-100" aria-label="Balra mozgatás">←</button>
+            <button type="button" onPointerDown={() => move(1)} onPointerUp={() => move(0)} onPointerLeave={() => move(0)} onPointerCancel={() => move(0)} className="min-h-10 border border-zinc-700 bg-zinc-950 text-2xl leading-none text-zinc-200 active:border-lime-200 active:text-lime-100" aria-label="Jobbra mozgatás">→</button>
+          </div>
+        )}
         </div>
       </div>
     </section>
