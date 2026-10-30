@@ -410,8 +410,8 @@ export default function OrbitalisHiba() {
   const sensorEnabled = motion === 'requesting' || motion === 'waiting' || motion === 'active' || motion === 'no-signal'
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-3 sm:px-8" aria-label="Űrhajós minijáték">
-      <div className="mx-auto flex max-h-[76dvh] w-full max-w-[420px] flex-col overflow-hidden border border-lime-200/30 bg-[#030609] shadow-[0_0_40px_rgba(163,230,53,.06)]">
+    <section className="mx-auto w-full max-w-5xl px-3 sm:px-8 mt-12" aria-label="Űrhajós minijáték">
+      <div className="mx-auto flex max-h-[76dvh] w-full max-w-[420px] flex-col overflow-hidden border border-lime-200/0 bg-transparent">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-800 px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-zinc-500" style={{ fontFamily: 'var(--font-mono-tech)' }}>
           <span>SYS. 1999.08 / SIGNAL LOST</span>
           <div className="flex shrink-0 items-center gap-2">

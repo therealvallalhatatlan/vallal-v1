@@ -44,32 +44,17 @@ export default function Reviews() {
   const featured = reviews[2]; // válaszd ki, melyik legyen kiemelt
 
   return (
-    <section id="velemenyek" className="mt-12">
-      
-      <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="px-4 mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-300 pt-4 pb-1 border-t border-b border-zinc-700">
-            <p
-                className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
-                style={{ fontFamily: "var(--font-mono-tech)" }}
-              >
-                AKIK MÁR LEVADÁSZTÁK A VÁLLALHATATLANT
-              </p>
-          </div>
-        </div>
-      </div>
-
-
+    <section id="velemenyek" className="mt-24 mb-28 px-4">
       {/* Scrollable / grid reviews */}
-      <div className="pl-4">
-        <div className="flex md:hidden gap-6 overflow-x-auto snap-x snap-mandatory pb-4 sidebar-scrollbar">
+      <div className="">
+        <div className="flex md:hidden gap-10 overflow-x-auto snap-x snap-mandatory pb-4 sidebar-scrollbar">
           {reviews.map((r, i) => (
             <article
               key={i}
-              className="min-w-[80%]"
+              className="min-w-[75%]"
             >
-              <p className="pt-6 font-mono text-md italic leading-normal text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>“{r.text}”</p>
-              <p className="text-lime-300 text-[19px] pt-2 italic text-left">— {r.author}</p>
+              <p className="text-left text-[14px] italic leading-[1.5] text-zinc-300" style={{ fontFamily: "var(--font-mono-tech)" }}>“{r.text}”</p>
+              <p className="text-lime-200/70 text-[14px] pt-2 italic text-left">— {r.author}</p>
             </article>
           ))}
         </div>

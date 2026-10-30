@@ -246,7 +246,7 @@ export default function HomepageVideoCarousel() {
 
         </div>
 
-        <div className="ml-auto max-w-3xl px-5 pb-8 pt-4 sm:px-8 sm:pb-7">
+        <div className="ml-auto max-w-3xl px-5 pb-16 pt-4 sm:px-8">
           <p
             className="text-center text-[21px] italic uppercase tracking-[0.22em] text-zinc-500"
             style={{ fontFamily: "var(--font-mono-tech)" }}
