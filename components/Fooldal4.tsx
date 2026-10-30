@@ -392,7 +392,6 @@ function GuestHome() {
                 </Link>
               </div>
             </div>
-          </div>
         </section>
         <section className="mx-auto mt-8 w-full max-w-5xl sm:mt-10"><Reviews /></section>
         <div className="border-t border-zinc-800 mx-auto mt-14 w-full max-w-5xl px-5 sm:px-8"><TrustSection /></div>
