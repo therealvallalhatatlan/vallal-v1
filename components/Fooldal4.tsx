@@ -352,7 +352,7 @@ function GuestHome() {
         />
         <section className="animate-fadeIn mx-auto mt-12 w-full max-w-5xl px-5 sm:mt-16 sm:px-8">
           <div className="ml-auto max-w-3xl">
-            <p className="text-right text-[21px] italic leading-[1.7] text-zinc-300 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
+            <p className="text-right text-[19px] italic leading-[1.5] text-zinc-300 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
               Ennek a könyvnek nincs írója,<br/>nincs címe, és nincs kiadója.<br/>Nem kapható a könyvesboltokban.<br/>Meg kell találnod.
             </p>
             <div className="mt-10">
@@ -389,8 +389,8 @@ function GuestHome() {
             </div>
           </div>
         </section>
-        <section className="mx-auto mt-8 w-full max-w-5xl px-5 sm:mt-10 sm:px-8"><Reviews /></section>
-        <div className="mx-auto mt-10 w-full max-w-5xl px-5 sm:mt-14 sm:px-8"><TrustSection /></div>
+        <section className="mx-auto mt-8 w-full max-w-5xl sm:mt-10"><Reviews /></section>
+        <div className="border-t border-zinc-800 mx-auto mt-14 w-full max-w-5xl px-5 sm:px-8"><TrustSection /></div>
       </div>
       <Footer />
     </>

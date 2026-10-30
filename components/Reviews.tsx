@@ -48,7 +48,7 @@ export default function Reviews() {
       
       <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-300 pt-4 pb-1 border-t border-b border-zinc-700">
+          <div className="px-4 mb-3 flex items-center justify-between font-mono text-sm uppercase not-italic text-zinc-300 pt-4 pb-1 border-t border-b border-zinc-700">
             <p
                 className="mb-3 text-[11px] uppercase tracking-[0.24em] text-zinc-400"
                 style={{ fontFamily: "var(--font-mono-tech)" }}
@@ -61,7 +61,7 @@ export default function Reviews() {
 
 
       {/* Scrollable / grid reviews */}
-      <div className="">
+      <div className="pl-4">
         <div className="flex md:hidden gap-6 overflow-x-auto snap-x snap-mandatory pb-4 sidebar-scrollbar">
           {reviews.map((r, i) => (
             <article

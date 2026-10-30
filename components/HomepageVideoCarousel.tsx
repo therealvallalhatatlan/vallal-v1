@@ -292,7 +292,7 @@ export default function HomepageVideoCarousel() {
           </p>
           {activeVideo.description?.trim() ? (
             <p
-              className="mt-3 whitespace-pre-wrap break-words text-right text-[21px] italic leading-[1.7] text-zinc-300 sm:text-[23px]"
+              className="mt-3 whitespace-pre-wrap break-words text-left text-[19px] italic leading-[1.5] text-zinc-300 sm:text-[23px]"
               style={{ fontFamily: "var(--font-mono-tech)" }}
             >
               {activeVideo.description}
