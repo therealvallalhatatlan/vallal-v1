@@ -498,7 +498,7 @@ function BookPurchaseSection() {
             className="group relative overflow-hidden rounded-sm border-4 border-zinc-900 bg-[#050505] transition-colors hover:border-zinc-800"
           >
             <div className="flex h-full gap-4 p-4 sm:gap-5 sm:p-5">
-              <div className="relative w-[144px] shrink-0 self-start overflow-hidden bg-zinc-950 sm:w-[132px]">
+              <div className="relative w-[120px] shrink-0 self-start overflow-hidden bg-zinc-950 sm:w-[132px]">
                 <Image
                   src={edition.cover}
                   alt={edition.alt}
