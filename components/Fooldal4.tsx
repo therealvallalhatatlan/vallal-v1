@@ -13,6 +13,7 @@ import type { HomepageBlock, HomepagePlan } from "@/lib/homepage-ai/types"
 import Fooldal4HuntingMap from "@/components/Fooldal4HuntingMap"
 import HomepageVideoCarousel from "@/components/HomepageVideoCarousel"
 import FaszanLevadasztadShare from "@/components/FaszanLevadasztadShare"
+import OrbitalisHiba from "@/components/OrbitalisHiba"
 
 type SessionShape = {
   access_token?: string
@@ -391,6 +392,7 @@ function GuestHome() {
         </section>
         <section className="mx-auto mt-8 w-full max-w-5xl sm:mt-10"><Reviews /></section>
         <div className="border-t border-zinc-800 mx-auto mt-14 w-full max-w-5xl px-5 sm:px-8"><TrustSection /></div>
+        <OrbitalisHiba />
       </div>
       <Footer />
     </>
@@ -670,6 +672,7 @@ function MemberHome({ session }: { session: SessionShape }) {
           </section>
         )}
         <TrustSection />
+        <OrbitalisHiba />
       </main>
       <Footer />
     </>
