@@ -356,7 +356,11 @@ function GuestHome() {
             <p className="text-right text-[19px] italic leading-[1.5] text-zinc-300 sm:text-[23px]" style={{ fontFamily: "var(--font-mono-tech)" }}>
               Ennek a könyvnek nincs írója,<br/>nincs címe, és nincs kiadója.<br/>Nem kapható a könyvesboltokban.<br/>Meg kell találnod.
             </p>
-            <div className="mt-10">
+          </div>
+          <div className="mx-auto mt-8 w-full max-w-5xl">
+            <BookPurchaseSection />
+          </div>
+          <div className="ml-auto mt-10 max-w-3xl">
               <p className="text-right text-[11px] uppercase tracking-[0.08em] text-zinc-500">Ez egy privát, zártkörű klub. Jelentkezz be.</p>
               <div className="mt-5 grid grid-cols-1 gap-3 min-[440px]:grid-cols-2 sm:flex sm:justify-end sm:gap-4">
                 <Link
@@ -463,7 +467,7 @@ function BookPurchaseSection() {
       title: "Vállalhatatlan I.",
       description:
         "Történetek a kilencvenes évek és az ezredforduló félresiklott Budapestjéről. Bővített kiadás új szövegekkel, képekkel és dokumentumokkal.",
-      cover: "/vallalhatatlan.png",
+      cover: "/img/borito_01.png",
       href: "/konyv-1",
       alt: "Vállalhatatlan I. kötet borítója",
     },
@@ -472,8 +476,8 @@ function BookPurchaseSection() {
       title: "Vállalhatatlan II.",
       description:
         "V. egy szürreális pénzmosodaként működő, éjjel-nappali internetkávézó élére kerül. Bővített kiadás új tartalmakkal.",
-      cover: "/vallalhatatlan2.png",
-      href: "/konyv-v2",
+      cover: "/img/borito_02.png",
+      href: "/konyv-2",
       alt: "Vállalhatatlan II. kötet borítója",
     },
   ]
