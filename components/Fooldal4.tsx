@@ -480,7 +480,7 @@ function BookPurchaseSection() {
       description:
         "V. egy szürreális pénzmosodaként működő, éjjel-nappali internetkávézó élére kerül. Bővített kiadás új tartalmakkal.",
       cover: "/img/borito_02.png",
-      href: "/konyv-2",
+      href: "/konyv-v2",
       alt: "Vállalhatatlan II. kötet borítója",
     },
   ]
