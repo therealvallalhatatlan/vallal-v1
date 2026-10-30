@@ -1,3 +1,5 @@
+import type { FoxpostPickupPoint } from '@/types/foxpost';
+
 export type CopyStatus = 'available' | 'reserved' | 'sold';
 
 export interface BookCopy {
@@ -22,6 +24,7 @@ export type CheckoutDeliveryMethod = 'dead-drop' | 'automata';
 export interface CheckoutCopyRequest {
   copy_number: number;
   delivery_method?: CheckoutDeliveryMethod;
+  pickup_point?: FoxpostPickupPoint;
 }
 
 export interface CheckoutCopyResponse {
