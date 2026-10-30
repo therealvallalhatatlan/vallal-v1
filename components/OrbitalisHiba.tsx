@@ -8,8 +8,8 @@ type Shot = { x: number; y: number; vy: number; hostile: boolean }
 type Particle = { x: number; y: number; vx: number; vy: number; life: number }
 
 const W = 360
-const H = 420
-const PLAYER_Y = 378
+const H = 560
+const PLAYER_Y = 500
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n))
 
 export default function OrbitalisHiba() {
@@ -411,7 +411,7 @@ export default function OrbitalisHiba() {
 
   return (
     <section className="mx-auto w-full max-w-5xl px-3 sm:px-8" aria-label="Űrhajós minijáték">
-      <div className="mx-auto flex max-h-[60dvh] w-full max-w-[420px] flex-col overflow-hidden border border-lime-200/30 bg-[#030609] shadow-[0_0_40px_rgba(163,230,53,.06)]">
+      <div className="mx-auto flex max-h-[76dvh] w-full max-w-[420px] flex-col overflow-hidden border border-lime-200/30 bg-[#030609] shadow-[0_0_40px_rgba(163,230,53,.06)]">
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-800 px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-zinc-500" style={{ fontFamily: 'var(--font-mono-tech)' }}>
           <span>SYS. 1999.08 / SIGNAL LOST</span>
           <div className="flex shrink-0 items-center gap-2">
@@ -438,9 +438,9 @@ export default function OrbitalisHiba() {
             <p className="text-base tracking-[0.2em] text-red-300">{'♥ '.repeat(lives).trim() || '—'}</p>
           </div>
         </div>
-        <div className="relative mx-auto min-h-0 w-full flex-1">
-          <div className="relative mx-auto w-full" style={{ width: motion === 'active' ? 'min(100%, calc((60dvh - 128px) * 0.857143))' : 'min(100%, calc((60dvh - 174px) * 0.857143))' }}>
-            <canvas ref={canvasRef} width={W} height={H} className="block aspect-[6/7] h-auto w-full touch-pan-y" aria-label="Űrhajós lövöldözős játék" />
+        <div className="relative mx-auto w-full shrink-0">
+          <div className="relative mx-auto w-full" style={{ width: 'min(100%, calc((76dvh - 230px) * 0.642857))' }}>
+            <canvas ref={canvasRef} width={W} height={H} className="block aspect-[9/14] h-auto w-full touch-pan-y" aria-label="Űrhajós lövöldözős játék" />
             {(!started || over) && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#030609]/85 px-5 text-center backdrop-blur-[2px]">
                 <p className="text-[10px] uppercase tracking-[0.24em] text-lime-200/80">{over ? 'SIGNAL TERMINATED' : 'INCOMING TRANSMISSION'}</p>
