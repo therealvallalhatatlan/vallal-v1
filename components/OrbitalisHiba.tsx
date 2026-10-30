@@ -439,7 +439,7 @@ export default function OrbitalisHiba() {
           </div>
         </div>
         <div className="relative mx-auto min-h-0 w-full flex-1">
-          <div className="relative mx-auto w-full" style={{ width: 'min(100%, calc((60dvh - 128px) * 0.857143))' }}>
+          <div className="relative mx-auto w-full" style={{ width: motion === 'active' ? 'min(100%, calc((60dvh - 128px) * 0.857143))' : 'min(100%, calc((60dvh - 174px) * 0.857143))' }}>
             <canvas ref={canvasRef} width={W} height={H} className="block aspect-[6/7] h-auto w-full touch-pan-y" aria-label="Űrhajós lövöldözős játék" />
             {(!started || over) && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#030609]/85 px-5 text-center backdrop-blur-[2px]">
@@ -487,7 +487,6 @@ export default function OrbitalisHiba() {
             <button type="button" onPointerDown={() => move(1)} onPointerUp={() => move(0)} onPointerLeave={() => move(0)} onPointerCancel={() => move(0)} className="min-h-10 border border-zinc-700 bg-zinc-950 text-2xl leading-none text-zinc-200 active:border-lime-200 active:text-lime-100" aria-label="Jobbra mozgatás">→</button>
           </div>
         )}
-        </div>
       </div>
     </section>
   )
