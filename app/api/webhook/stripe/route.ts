@@ -230,6 +230,7 @@ function resolveOrderDeliveryType(metadata: Record<string, string>): string {
     case "dead_drop":
       return "dead_drop";
     case "postaautomata":
+    case "automata":
       return "hu_shipping";
     case "eu":
       return "eu_shipping";
