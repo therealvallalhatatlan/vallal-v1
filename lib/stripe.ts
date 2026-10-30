@@ -8,6 +8,7 @@ export interface CheckoutSessionParams {
   productName?: string
   metadata?: Record<string, string>
   collectShippingAddress?: boolean
+  collectPhoneNumber?: boolean
 }
 
 export interface CheckoutSessionResult {
@@ -84,6 +85,9 @@ export async function createCheckoutSession(
       },
       ...(params.collectShippingAddress
         ? { shipping_address_collection: { allowed_countries: ["HU"] as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection["allowed_countries"] } }
+        : {}),
+      ...(params.collectPhoneNumber
+        ? { phone_number_collection: { enabled: true } }
         : {}),
     })
 
