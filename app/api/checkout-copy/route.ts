@@ -6,6 +6,7 @@ import type { CheckoutCopyRequest, CheckoutCopyResponse } from '../../../types/r
 import { getUserFromToken, parseBearerToken } from '@/lib/auth';
 import { buildCheckoutMetadata, getAttributionSource } from '@/lib/stripeAttribution';
 import { trackServerEvent } from '@/lib/siteAnalyticsServer';
+import { parseFoxpostPickupPoint, foxpostPickupPointMetadata } from '@/lib/foxpost';
 
 export async function POST(request: NextRequest): Promise<Response> {
   try {
@@ -27,6 +28,14 @@ export async function POST(request: NextRequest): Promise<Response> {
     const token = parseBearerToken(request.headers);
     const authenticatedUser = token ? await getUserFromToken(token) : null;
     const deliveryMethod = body.delivery_method ?? 'dead-drop';
+    const pickupPoint = parseFoxpostPickupPoint(body.pickup_point);
+    if (deliveryMethod === 'automata' && !pickupPoint) {
+      return Response.json(
+        { success: false, error: 'Válassz ki egy Foxpost csomagautomatát a fizetés előtt.' },
+        { status: 400 },
+      );
+    }
+    const pickupMetadata = pickupPoint ? foxpostPickupPointMetadata(pickupPoint) : {};
     const checkoutMetadata = await buildCheckoutMetadata(
       request,
       {
@@ -35,6 +44,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         type: 'numbered_copy',
         product_id: 'numbered_copy',
         delivery_method: deliveryMethod,
+        ...pickupMetadata,
       },
       {
         cartSummary: 'numbered-copy#' + String(body.copy_number) + 'x1|delivery:' + deliveryMethod,
