@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
   const totalHuf = DISTRIBUTION_DEFAULT_BOOK_PRICE_HUF + shippingFee
   try {
     const session = await stripe.checkout.sessions.create({
+      allow_promotion_codes: true,
       payment_method_types: ["card"],
       mode: "payment",
       line_items: [{
