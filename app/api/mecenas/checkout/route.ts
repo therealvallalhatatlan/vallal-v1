@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       mode: "payment",
       currency: "huf",
       locale: "hu",
-      allow_promotion_codes: false,
+      allow_promotion_codes: true,
       automatic_tax: { enabled: false },
       billing_address_collection: "auto",
       success_url: `${baseUrl}/mecenas/koszonom?session_id={CHECKOUT_SESSION_ID}`,
