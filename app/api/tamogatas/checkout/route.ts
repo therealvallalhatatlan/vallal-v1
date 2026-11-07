@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       mode: 'payment',
       currency: 'huf',
       locale: 'hu',
+      allow_promotion_codes: true,
       billing_address_collection: 'auto',
       success_url: `${baseUrl}/tamogatas/koszonom?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/tamogatas`,
