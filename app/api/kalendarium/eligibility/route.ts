@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getUserFromToken, parseBearerToken, getUserRoleByEmail, canCreatePaidSpots } from "@/lib/auth"
+import { getUserFromToken, parseBearerToken } from "@/lib/auth"
 
 export const dynamic = "force-dynamic"
 
