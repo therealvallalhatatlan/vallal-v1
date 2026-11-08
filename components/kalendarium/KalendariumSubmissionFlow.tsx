@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { useSessionGuard } from "@/hooks/useSessionGuard"
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, FileText, ImagePlus, Loader2, Plus, Store, Trash2, UploadCloud } from "lucide-react"
 
@@ -39,7 +40,7 @@ export default function KalendariumSubmissionFlow() {
   const [error,setError] = useState("")
   const [crewAllowed,setCrewAllowed] = useState(false)
   const [checkingCrew,setCheckingCrew] = useState(false)
-  const fileInput = useRef<HTMLInputElement>(null)
+  const [draftLoaded,setDraftLoaded] = useState(false)
   const artBranch = answers.kind==="art" || answers.kind==="both"
   const serviceBranch = answers.kind==="service" || answers.kind==="both"
   const steps = useMemo(()=>["start",...(artBranch?["art"]:[]),...(serviceBranch?["service"]:[]),"contact","review"],[artBranch,serviceBranch])
@@ -64,13 +65,20 @@ export default function KalendariumSubmissionFlow() {
       if(saved&&!submitted){
         const parsed=JSON.parse(saved)
         setAnswers(current=>({...current,...parsed,arts:Array.isArray(parsed.arts)&&parsed.arts.length?parsed.arts.map((a:Art)=>({...a,file:null})):current.arts}))
+        if(Number.isInteger(parsed.step)) setStep(Math.max(0,Math.min(parsed.step,4)))
       }
     } catch { /* invalid local draft is ignored */ }
+    finally { setDraftLoaded(true) }
   },[submitted])
 
   useEffect(()=>{
-    try { localStorage.setItem("kalendarium-2027-draft-v1",JSON.stringify({...answers,arts:answers.arts.map(({file,...a})=>a)})) } catch { /* local storage can be disabled */ }
-  },[answers])
+    if(session?.user?.email) setAnswers(current=>current.email?current:{...current,email:session.user!.email!})
+  },[session?.user?.email])
+
+  useEffect(()=>{
+    if(!draftLoaded)return
+    try { localStorage.setItem("kalendarium-2027-draft-v1",JSON.stringify({...answers,step,arts:answers.arts.map(({file,...a})=>a)})) } catch { /* local storage can be disabled */ }
+  },[answers,step,draftLoaded])
 
   const update = <K extends keyof Answers>(key:K,value:Answers[K])=>setAnswers(current=>({...current,[key]:value}))
   const updateArt = (index:number,patch:Partial<Art>)=>setAnswers(current=>({...current,arts:current.arts.map((a,i)=>i===index?{...a,...patch}:a)}))
@@ -103,7 +111,7 @@ export default function KalendariumSubmissionFlow() {
         arts:answers.arts.map(({file,...art})=>art),service:serviceBranch?answers.service:null,
         consents:{data:answers.dataConsent,rights:answers.rightsConsent,publication:answers.publicationConsent,crew:answers.crewConfirmed}
       }))
-      answers.arts.forEach(art=>{if(art.file)form.append("files",art.file,art.file.name)})
+      answers.arts.forEach((art,index)=>{if(art.file)form.append("art_file_"+index,art.file,art.file.name)})
       const response=await fetch("/api/kalendarium/submissions",{method:"POST",headers:{Authorization:"Bearer "+session.access_token},body:form})
       const result=await response.json().catch(()=>({}))
       if(!response.ok)throw new Error(result.error||"submit_failed")
@@ -138,7 +146,7 @@ export default function KalendariumSubmissionFlow() {
           <label className={labelClass+" mt-4"}>Szöveg / leírás<textarea className={inputClass+" min-h-28 resize-y"} maxLength={12000} value={art.text} onChange={e=>updateArt(index,{text:e.target.value})} placeholder="Írd ide a szöveget, vagy mutasd be röviden a munkát..."/></label>
           <div className="mt-4"><input ref={index===0?fileInput:undefined} id={"kal-file-"+index} type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.txt" className="sr-only" onChange={e=>addFile(e.target.files?.[0]||null,index)}/><button type="button" onClick={()=>document.getElementById("kal-file-"+index)?.click()} className="flex min-h-14 w-full items-center gap-3 border border-dashed border-zinc-700 px-3 text-left transition hover:border-lime-200/50"><UploadCloud className="text-lime-200" size={19}/><span className="min-w-0 flex-1"><span className="block truncate text-xs text-zinc-200">{art.file?art.file.name:"Fájl hozzáadása"}</span><span className="mt-1 block text-[10px] text-zinc-600">JPG, PNG, WEBP, PDF, DOCX, TXT · max. 15 MB</span></span>{art.file?<Check size={16} className="text-lime-200"/>:<Plus size={17} className="text-zinc-500"/>}</button></div>
         </div>)}
-        <button type="button" onClick={()=>update("arts",[...answers.arts,emptyArt()])} className="flex min-h-11 w-full items-center justify-center gap-2 border border-zinc-800 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:border-zinc-600 hover:text-zinc-100"><Plus size={14}/> Új alkotás hozzáadása</button>
+        <button type="button" onClick={()=>update("arts",[...answers.arts,emptyArt()])} disabled={answers.arts.length>=8} className="flex min-h-11 w-full items-center justify-center gap-2 border border-zinc-800 text-[10px] font-mono uppercase tracking-widest text-zinc-400 hover:border-zinc-600 hover:text-zinc-100"><Plus size={14}/> Új alkotás hozzáadása</button>
         </div>
       </Frame>}
       {current==="service"&&<Frame eyebrow="02 / Arany Oldalak" title="Mivel foglalkozol?" description="A V Crew Arany Oldalak a közösség szolgáltatóit mutatja be. A megjelenés fizetett, jóváhagyás után egyeztetjük a csomagot és az árat.">
@@ -170,7 +178,7 @@ export default function KalendariumSubmissionFlow() {
           {serviceBranch&&<Consent checked={answers.crewConfirmed} onChange={v=>update("crewConfirmed",v)} title="Megerősítem, hogy V Crew-tag vagyok, és a szolgáltatásom megadott adatait jogosult vagyok beküldeni."/>}
         </div>
       </Frame>}
-      {error&&<div role="alert" className="mt-5 border border-red-900/70 bg-red-950/30 p-3 text-xs leading-5 text-red-200">{error}</div>}
+      {error&&<div role="alert" className="mt-5 border border-red-900/70 bg-red-950/30 p-3 text-xs leading-5 text-red-200">{error}{!session&&error.includes("jelentkezz be")&&<Link href="/auth?from=%2Fkalendarium-bekuldes&next=%2Fkalendarium-bekuldes" className="mt-3 inline-flex min-h-10 items-center border border-red-200/30 px-3 font-mono text-[9px] uppercase tracking-widest text-red-100 hover:bg-red-100/10">Bejelentkezés a folytatáshoz <ArrowRight size={13} className="ml-2"/></Link>}</div>}
     </div>
     <div className="flex items-center justify-between gap-3 border-t border-zinc-800 bg-black/40 px-4 py-4 sm:px-6">
       <button type="button" onClick={back} disabled={step===0||busy} className="inline-flex min-h-12 items-center gap-2 px-2 font-mono text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-200 disabled:opacity-0"><ArrowLeft size={15}/> Vissza</button>
