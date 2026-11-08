@@ -50,6 +50,9 @@ const sections = [
           <li>fiókhoz és bejelentkezéshez kapcsolódó technikai adatok;</li>
           <li>megrendeléssel, fizetéssel és kézbesítéssel kapcsolatos adatok;</li>
           <li>az általad küldött üzenetek, kapcsolattartási adatok és egyéb önkéntesen megadott információk;</li>
+          <li>a Vállalhatatlan Kalendárium 2027-re beküldött alkotások szövegei, címei, kategóriái és feltöltött fájljai, valamint a hozzájuk kapcsolódó szerkesztőségi megjegyzések;</li>
+          <li>az Arany Oldalakba beküldött szolgáltatás- és vállalkozásbemutatók, kategóriák, webes hivatkozások és a nyilvános megjelenésre megadott kapcsolatfelvételi adatok;</li>
+          <li>a beküldés, a nyilatkozatok és az esetleges későbbi megállapodások időpontja, státusza és technikai azonosítói;</li>
           <li>a weboldal használatához szükséges technikai és analitikai adatok, például oldalmegtekintés, hivatkozó oldal, eszköztípus és munkamenethez kapcsolódó információk.</li>
         </ul>
       </>
@@ -63,7 +66,11 @@ const sections = [
         <ul className="list-disc space-y-2 pl-5">
           <li>felhasználói fiók létrehozása, azonosítása és a bejelentkezés biztosítása;</li>
           <li>megrendelések és fizetések kezelése, valamint a teljesítés és kézbesítés támogatása;</li>
+          <li>a kalendáriumra beküldött anyagok és az Arany Oldalak jelentkezéseinek kezelése a beküldő által megadott és az oldalon közzétett feltételek szerint.</li>
           <li>ügyfélszolgálati és kapcsolattartási megkeresések kezelése;</li>
+          <li>a Vállalhatatlan Kalendárium 2027 közösségi beküldéseinek átvétele, szerkesztőségi ellenőrzése, válogatása és a beküldővel való egyeztetés;</li>
+          <li>a kiválasztott alkotások nyomdai előkészítése és megjelentetése a szerzővel külön egyeztetett felhasználási engedély alapján;</li>
+          <li>az Arany Oldalak szolgáltatói jelentkezéseinek ellenőrzése, a megjelenési lehetőségek és díjak egyeztetése, majd jóváhagyás esetén a fizetett megjelenés teljesítése;</li>
           <li>a weboldal és a szolgáltatások működésének, biztonságának és teljesítményének fenntartása;</li>
           <li>statisztikai és analitikai célú mérés, a szolgáltatás fejlesztése.</li>
         </ul>
@@ -76,9 +83,12 @@ const sections = [
       <>
         <p>
           Az adatkezelés jogalapja az adott helyzettől függően lehet a szerződés
-          teljesítése, az adatkezelő jogos érdeke, jogi kötelezettség teljesítése,
-          illetve azokban az esetekben, ahol ez szükséges, az érintett
-          hozzájárulása.
+          teljesítése vagy az azt megelőző, a beküldő kérésére tett lépések,
+          az adatkezelő jogos érdeke, jogi kötelezettség teljesítése, illetve
+          azokban az esetekben, ahol ez szükséges, az érintett hozzájárulása.
+          A beküldés elküldése önmagában nem jelenti az alkotás megjelentetéséhez
+          szükséges felhasználási engedély megadását: a kiválasztott művek
+          nyomtatott felhasználásáról külön megállapodás készül.
         </p>
         <p className="mt-3">
           A hozzájáruláson alapuló adatkezeléshez adott hozzájárulás
@@ -119,9 +129,14 @@ const sections = [
         <p className="mt-3">
           A weboldal működéséhez és egyes szolgáltatásokhoz további
           adatfeldolgozók is kapcsolódhatnak, többek között a Supabase
-          (hitelesítés és adatbázis), a Vercel (hosting és analitika), valamint
-          a Resend (e-mail-küldés). A digitális tartalmak kiszolgálásához
-          technikai tárhelyszolgáltatás is igénybe vehető.
+          (hitelesítés, adatbázis és a kalendárium-beküldések privát fájltára),
+          a Vercel (hosting és analitika), valamint a Resend (e-mail-küldés).
+          A kalendáriumhoz feltöltött fájlok nem nyilvános tárhelyen kerülnek
+          tárolásra; azokhoz a beküldési folyamatot kiszolgáló, jogosultsággal
+          rendelkező szerveroldali rendszer fér hozzá. A digitális tartalmak
+          kiszolgálásához technikai tárhelyszolgáltatás is igénybe vehető.
+          Arany Oldalak-megjelenés díjának elfogadása után online fizetés
+          esetén a Stripe fizetési szolgáltatása is részt vehet a folyamatban.
         </p>
       </>
     ),
@@ -155,7 +170,14 @@ const sections = [
         <p className="mt-3">
           A felhasználói fiókhoz kapcsolódó adatokat főszabály szerint a fiók
           fennállásáig, a rendelési és számviteli adatokat pedig a vonatkozó
-          jogszabályi megőrzési idő alatt kezeljük.
+          jogszabályi megőrzési idő alatt kezeljük. A kalendáriumra beküldött,
+          de ki nem választott anyagokat a szerkesztőségi válogatás és az
+          esetleges kapcsolódó egyeztetés lezárásáig kezeljük, ezt követően
+          töröljük vagy anonimizáljuk, kivéve, ha jogszabály vagy jogi igény
+          érvényesítése más megőrzést indokol. A kiválasztott alkotásokhoz és
+          szolgáltatói megjelenésekhez kapcsolódó adatokat a megállapodás,
+          a megjelenés és az esetleges jogi kötelezettségek teljesítéséhez
+          szükséges ideig őrizzük meg.
         </p>
       </>
     ),
@@ -246,7 +268,7 @@ export default function PrivacyPolicyPage() {
             className="mt-4 text-[11px] uppercase tracking-[0.14em] text-zinc-700"
             style={{ fontFamily: "var(--font-mono-tech)" }}
           >
-            Utolsó frissítés: 2026. október 3.
+            Utolsó frissítés: 2026. november 8.
           </p>
         </header>
 
