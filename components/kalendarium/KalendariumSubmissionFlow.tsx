@@ -23,7 +23,6 @@ function errorMessage(code:string) {
   const messages:Record<string,string> = {
     missing_fields:"Néhány kötelező adat hiányzik. Ellenőrizd a megjelölt mezőket.",
     unauthenticated:"A munkamenet lejárt. Jelentkezz be újra, majd küldd el ismét.",
-    crew_only:"Az Arany Oldalak fizetett megjelenése jelenleg csak ellenőrzött V Crew-tagoknak érhető el.",
     storage_not_configured:"A fájltárhely még nincs bekötve. A beküldést most nem rögzítettük.",
     rate_limited:"Túl sok beküldési kísérlet történt. Próbáld újra később.",
     submit_failed:"A beküldés most nem sikerült. Próbáld újra később."
@@ -102,8 +101,8 @@ export default function KalendariumSubmissionFlow() {
   }
   const submit = async () => {
     if(!answers.dataConsent||(artBranch&&(!answers.rightsConsent||!answers.publicationConsent))||(serviceBranch&&!answers.crewConfirmed)){setError("Fogadd el a szükséges nyilatkozatokat.");return}
-    if(serviceBranch&&!crewAllowed){setError("Az Arany Oldalakhoz ellenőrzött V Crew-tagság szükséges.");return}
     if(!session?.access_token){setError("A beküldéshez jelentkezz be a Vállalhatatlan-fiókodba.");return}
+    if(serviceBranch&&!crewAllowed){setError("A hálózati fiók jogosultságát nem sikerült ellenőrizni. Jelentkezz be újra, majd próbáld meg ismét.");return}
     setBusy(true);setError("")
     try {
       const form=new FormData()
@@ -151,7 +150,7 @@ export default function KalendariumSubmissionFlow() {
         </div>
       </Frame>}
       {current==="service"&&<Frame eyebrow="02 / Arany Oldalak" title="Mivel foglalkozol?" description="A V Crew Arany Oldalak a közösség szolgáltatóit mutatja be. A megjelenés fizetett, jóváhagyás után egyeztetjük a csomagot és az árat.">
-        <div className="mb-4 border border-amber-200/20 bg-amber-200/[.04] p-3 text-xs leading-5 text-amber-100/70">{checkingCrew?"Ellenőrizzük a V Crew-tagságodat…":crewAllowed?"A fiókod jogosult az Arany Oldalak jelentkezésére.":"Az Arany Oldalak V Crew-tagsághoz kötött. Jelentkezz be a jogosult fiókoddal."}</div>
+        <div className="mb-4 border border-amber-200/20 bg-amber-200/[.04] p-3 text-xs leading-5 text-amber-100/70">{checkingCrew?"Ellenőrizzük a hálózati fiókodat…":crewAllowed?"Bejelentkezett hálózati fiókkal jelentkezhetsz a V Crew Arany Oldalakba.":"Az Arany Oldalakhoz jelentkezz be a Vállalhatatlan-fiókoddal."}</div>
         <label className={labelClass}>Szolgáltatás / vállalkozás neve<input className={inputClass} maxLength={120} value={answers.service.name} onChange={e=>updateService({name:e.target.value})} placeholder="Ahogy a kiadványban szerepeljen"/></label>
         <label className={labelClass+" mt-4"}>Melyik terület?<select className={inputClass} value={answers.service.category} onChange={e=>updateService({category:e.target.value})}>{serviceCategories.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
         <label className={labelClass+" mt-4"}>Mit kínálsz?<textarea className={inputClass+" min-h-28 resize-y"} maxLength={1200} value={answers.service.description} onChange={e=>updateService({description:e.target.value})} placeholder="Milyen szolgáltatást nyújtasz, kinek és miben vagy jó?"/></label>
@@ -183,7 +182,7 @@ export default function KalendariumSubmissionFlow() {
     </div>
     <div className="flex items-center justify-between gap-3 border-t border-zinc-800 bg-black/40 px-4 py-4 sm:px-6">
       <button type="button" onClick={back} disabled={step===0||busy} className="inline-flex min-h-12 items-center gap-2 px-2 font-mono text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-200 disabled:opacity-0"><ArrowLeft size={15}/> Vissza</button>
-      {current==="review"?<button type="button" onClick={submit} disabled={busy||!answers.dataConsent||(artBranch&&(!answers.rightsConsent||!answers.publicationConsent))||(serviceBranch&&(!answers.crewConfirmed||!crewAllowed))} className={buttonClass}>{busy?<><Loader2 size={15} className="animate-spin"/> Küldés...</>:<>Elküldöm <ArrowRight size={15}/></>}</button>:<button type="button" onClick={next} className={buttonClass}>Tovább <ArrowRight size={15}/></button>}
+      {current==="review"?<button type="button" onClick={submit} disabled={busy||!answers.dataConsent||(artBranch&&(!answers.rightsConsent||!answers.publicationConsent))||(serviceBranch&&(!answers.crewConfirmed||checkingCrew||(Boolean(session)&&!crewAllowed)))} className={buttonClass}>{busy?<><Loader2 size={15} className="animate-spin"/> Küldés...</>:<>Elküldöm <ArrowRight size={15}/></>}</button>:<button type="button" onClick={next} className={buttonClass}>Tovább <ArrowRight size={15}/></button>}
     </div>
     <p className="border-t border-zinc-900 px-4 py-3 text-center font-mono text-[8px] uppercase tracking-[.14em] text-zinc-700">A válaszaid ezen az eszközön automatikusan mentődnek · Fájlok a beküldésig nem kerülnek feltöltésre</p>
   </div>
