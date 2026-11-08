@@ -24,9 +24,8 @@ const schema = z.object({
 })
 
 function escapeEmailHtml(value: string) {
-  return value.replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  })[character] || character).replace(/\r?\n/g, "<br>")
+  const entities: Record<string,string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }
+  return value.replace(/[&<>"']/g, (character) => entities[character] || character).replace(/\r?\n/g, "<br>")
 }
 
 export async function POST(req: NextRequest) {
