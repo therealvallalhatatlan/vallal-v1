@@ -33,10 +33,9 @@ export async function POST(req: NextRequest) {
   if(guarded)return guarded
   const rate=checkRateLimit("kalendarium-submission:"+getClientIp(req),5,60*60_000)
   if(!rate.allowed)return NextResponse.json({error:"rate_limited",retryAfterSeconds:rate.retryAfterSeconds},{status:429,headers:{"Retry-After":String(rate.retryAfterSeconds),"Cache-Control":"no-store"}})
+  // A valid session is optional. Guest submissions are stored with a null user_id.
   const token=parseBearerToken(req.headers)
-  if(!token)return NextResponse.json({error:"unauthenticated"},{status:401})
-  const user=await getUserFromToken(token)
-  if(!user)return NextResponse.json({error:"unauthenticated"},{status:401})
+  const user=token?await getUserFromToken(token):null
 
   let form:FormData
   try{form=await req.formData()}catch{return NextResponse.json({error:"invalid_form"},{status:400})}
@@ -71,7 +70,7 @@ export async function POST(req: NextRequest) {
     const fileRecordsByArt:Record<number,Array<{name:string;path:string;type:string;size:number}>>={}
     for(const entry of fileEntries){
       const file=entry.value
-      const path=user.id+"/"+reference+"/"+crypto.randomUUID()+"."+EXTENSIONS[file.type]
+      const path=(user?.id||"guest")+"/"+reference+"/"+crypto.randomUUID()+"."+EXTENSIONS[file.type]
       const {error}=await db.storage.from(bucket).upload(path,Buffer.from(await file.arrayBuffer()),{contentType:file.type,cacheControl:"3600",upsert:false})
       if(error)throw error
       uploaded.push(path)
@@ -79,7 +78,7 @@ export async function POST(req: NextRequest) {
     }
     const artworks=data.arts.map((art,index)=>({...art,attachments:fileRecordsByArt[index]||[]}))
     const {data:row,error}=await db.from("kalendarium_submissions").insert({
-      reference,user_id:user.id,kind:data.kind,author_name:data.author,contact_email:data.email,bio:data.bio,note:data.note,
+      reference,user_id:user?.id??null,kind:data.kind,author_name:data.author,contact_email:data.email,bio:data.bio,note:data.note,
       artworks:hasArt?artworks:[],service_listing:hasService?data.service:null,status:"new",
       payment_status:hasService?"not_requested":"not_applicable",consent_data_at:new Date().toISOString(),
       consent_rights:hasArt,consent_publication:hasArt,consent_crew:hasService
