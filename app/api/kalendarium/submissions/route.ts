@@ -25,7 +25,7 @@ const schema = z.object({
 
 function escapeEmailHtml(value: string) {
   return value.replace(/[&<>"']/g, (character) => ({
-    '"': "&quot;", "'": "&#39;"
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[character] || character).replace(/\r?\n/g, "<br>")
 }
 
