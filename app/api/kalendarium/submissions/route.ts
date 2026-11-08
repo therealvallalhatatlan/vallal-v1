@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
-import { getUserFromToken, parseBearerToken, getUserRoleByEmail, canCreatePaidSpots } from "@/lib/auth"
+import { getUserFromToken, parseBearerToken } from "@/lib/auth"
 import { guardWriteOperation } from "@/lib/systemGuard"
 import { checkRateLimit, getClientIp } from "@/lib/security/rateLimit"
 
@@ -45,7 +45,6 @@ export async function POST(req: NextRequest) {
   const hasService=data.kind==="service"||data.kind==="both"
   if(hasArt&&(!data.arts.length||!data.consents.rights||!data.consents.publication))return NextResponse.json({error:"missing_fields"},{status:400})
   if(hasService&&(!data.service||!data.consents.crew))return NextResponse.json({error:"missing_fields"},{status:400})
-  if(hasService&&!canCreatePaidSpots(getUserRoleByEmail(user.email)))return NextResponse.json({error:"crew_only"},{status:403})
 
   const fileEntries=data.arts.map((_,index)=>({index,value:form.get("art_file_"+index)})).filter((entry):entry is {index:number;value:File}=>entry.value instanceof File)
   if(fileEntries.length>MAX_FILES)return NextResponse.json({error:"too_many_files"},{status:400})
