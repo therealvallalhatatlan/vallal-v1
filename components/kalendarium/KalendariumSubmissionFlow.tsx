@@ -34,7 +34,7 @@ export default function KalendariumSubmissionFlow() {
   const { session, loading } = useSessionGuard() as { session:{access_token:string;user?:{id:string;email?:string|null}}|null; loading:boolean }
   const [answers,setAnswers] = useState<Answers>(initial)
   const [step,setStep] = useState(0)
-  const [submitted,setSubmitted] = useState<{id:string;reference:string}|null>(null)
+  const [submitted,setSubmitted] = useState<{id:string;reference:string;notificationSent:boolean}|null>(null)
   const [busy,setBusy] = useState(false)
   const [error,setError] = useState("")
   const [crewAllowed,setCrewAllowed] = useState(false)
@@ -115,14 +115,14 @@ export default function KalendariumSubmissionFlow() {
       const response=await fetch("/api/kalendarium/submissions",{method:"POST",headers:{Authorization:"Bearer "+session.access_token},body:form})
       const result=await response.json().catch(()=>({}))
       if(!response.ok)throw new Error(result.error||"submit_failed")
-      setSubmitted({id:result.id,reference:result.reference})
+      setSubmitted({id:result.id,reference:result.reference,notificationSent:result.notificationSent===true})
       localStorage.removeItem("kalendarium-2027-draft-v1")
     } catch(e) {setError(errorMessage(e instanceof Error?e.message:"submit_failed"))}
     finally {setBusy(false)}
   }
 
   if(loading)return <div className="border border-zinc-800 bg-zinc-950 p-6"><div className="h-2 w-24 animate-pulse bg-zinc-800"/><div className="mt-5 h-8 w-3/4 animate-pulse bg-zinc-800"/><div className="mt-3 h-24 animate-pulse bg-zinc-900"/></div>
-  if(submitted)return <div className="border border-lime-200/35 bg-zinc-950 p-6 sm:p-8"><div className="flex h-12 w-12 items-center justify-center rounded-full border border-lime-200/40 text-lime-200"><CheckCircle2 size={24}/></div><p className="mt-6 font-mono text-[10px] uppercase tracking-[.22em] text-lime-200">Beküldés rögzítve</p><h2 className="mt-2 text-3xl font-black uppercase" style={{fontFamily:"var(--font-hero)"}}>Megérkezett.</h2><p className="mt-3 text-sm leading-6 text-zinc-400">Köszönjük, hogy hoztál valamit. A szerkesztőség átnézi a beküldésedet, és e-mailben jelentkezünk, ha döntés vagy egyeztetés szükséges.</p><div className="mt-6 border border-zinc-800 bg-black p-4"><p className="font-mono text-[9px] uppercase tracking-[.2em] text-zinc-600">Beküldési azonosító</p><p className="mt-2 break-all font-mono text-sm text-zinc-200">{submitted.reference}</p></div></div>
+  if(submitted)return <div className="border border-lime-200/35 bg-zinc-950 p-6 sm:p-8"><div className="flex h-12 w-12 items-center justify-center rounded-full border border-lime-200/40 text-lime-200"><CheckCircle2 size={24}/></div><p className="mt-6 font-mono text-[10px] uppercase tracking-[.22em] text-lime-200">Beküldés rögzítve</p><h2 className="mt-2 text-3xl font-black uppercase" style={{fontFamily:"var(--font-hero)"}}>Megérkezett.</h2><p className="mt-3 text-sm leading-6 text-zinc-400">Köszönjük, hogy hoztál valamit. {submitted.notificationSent?"A beküldésről értesítést is küldtünk a szerkesztőségnek.":"A beküldés rögzült, de az értesítő e-mailt most nem sikerült elküldeni. Ettől a beküldésed nem veszett el."} A szerkesztőség átnézi az anyagot, és e-mailben jelentkezik, ha döntés vagy egyeztetés szükséges.</p><div className="mt-6 border border-zinc-800 bg-black p-4"><p className="font-mono text-[9px] uppercase tracking-[.2em] text-zinc-600">Beküldési azonosító</p><p className="mt-2 break-all font-mono text-sm text-zinc-200">{submitted.reference}</p></div></div>
 
   return <div className="overflow-hidden border border-zinc-800 bg-[#0d0f0f] shadow-[0_24px_90px_rgba(0,0,0,.35)]">
     <div className="border-b border-zinc-800 bg-black/50 px-4 py-4 sm:px-6">
