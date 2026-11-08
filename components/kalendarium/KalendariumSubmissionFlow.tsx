@@ -44,8 +44,9 @@ export default function KalendariumSubmissionFlow() {
   const artBranch = answers.kind==="art" || answers.kind==="both"
   const serviceBranch = answers.kind==="service" || answers.kind==="both"
   const steps = useMemo(()=>["start",...(artBranch?["art"]:[]),...(serviceBranch?["service"]:[]),"contact","review"],[artBranch,serviceBranch])
-  const current = steps[step] || "start"
-  const progress = Math.round((step/(steps.length-1))*100)
+  const currentIndex = Math.min(step, steps.length - 1)
+  const current = steps[currentIndex] || "start"
+  const progress = Math.round((currentIndex/(steps.length-1))*100)
 
   useEffect(()=>{
     if(!session?.access_token || !serviceBranch){setCrewAllowed(false);return}
@@ -90,8 +91,8 @@ export default function KalendariumSubmissionFlow() {
     if(current==="contact"&&(!answers.author.trim()||!answers.email.trim()||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email)))return "Add meg a nevedet és egy érvényes e-mail-címet."
     return ""
   }
-  const next = () => {const message=validate();if(message){setError(message);return}setError("");setStep(s=>Math.min(steps.length-1,s+1))}
-  const back = () => {setError("");setStep(s=>Math.max(0,s-1))}
+  const next = () => {const message=validate();if(message){setError(message);return}setError("");setStep(Math.min(steps.length-1,currentIndex+1))}
+  const back = () => {setError("");setStep(Math.max(0,currentIndex-1))}
   const addFile = (file:File|null,index:number) => {
     if(!file)return
     if(file.size>15*1024*1024){setError("Egy fájl legfeljebb 15 MB lehet.");return}
