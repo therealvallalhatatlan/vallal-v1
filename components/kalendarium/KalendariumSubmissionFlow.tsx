@@ -91,7 +91,7 @@ export default function KalendariumSubmissionFlow() {
       const form=new FormData()
       form.set("payload",JSON.stringify({
         kind:answers.kind,author:answers.author,email:answers.email,bio:answers.bio,note:answers.note,
-        arts:answers.arts.map(({file,...art})=>art),service:serviceBranch?answers.service:null,
+        arts:artBranch?answers.arts.map(({file,...art})=>art):[],service:serviceBranch?answers.service:null,
         consents:{data:answers.dataConsent,rights:answers.rightsConsent,publication:answers.publicationConsent,crew:answers.crewConfirmed}
       }))
       answers.arts.forEach((art,index)=>{if(art.file)form.append("art_file_"+index,art.file,art.file.name)})
