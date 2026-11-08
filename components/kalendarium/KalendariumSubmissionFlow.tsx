@@ -22,7 +22,6 @@ const buttonClass = "inline-flex min-h-12 items-center justify-center gap-2 bord
 function errorMessage(code:string) {
   const messages:Record<string,string> = {
     missing_fields:"Néhány kötelező adat hiányzik. Ellenőrizd a megjelölt mezőket.",
-    unauthenticated:"A munkamenet lejárt. Jelentkezz be újra, majd küldd el ismét.",
     storage_not_configured:"A fájltárhely még nincs bekötve. A beküldést most nem rögzítettük.",
     rate_limited:"Túl sok beküldési kísérlet történt. Próbáld újra később.",
     submit_failed:"A beküldés most nem sikerült. Próbáld újra később."
@@ -37,8 +36,6 @@ export default function KalendariumSubmissionFlow() {
   const [submitted,setSubmitted] = useState<{id:string;reference:string;notificationSent:boolean}|null>(null)
   const [busy,setBusy] = useState(false)
   const [error,setError] = useState("")
-  const [crewAllowed,setCrewAllowed] = useState(false)
-  const [checkingCrew,setCheckingCrew] = useState(false)
   const [draftLoaded,setDraftLoaded] = useState(false)
   const artBranch = answers.kind==="art" || answers.kind==="both"
   const serviceBranch = answers.kind==="service" || answers.kind==="both"
@@ -46,18 +43,6 @@ export default function KalendariumSubmissionFlow() {
   const currentIndex = Math.min(step, steps.length - 1)
   const current = steps[currentIndex] || "start"
   const progress = Math.round((currentIndex/(steps.length-1))*100)
-
-  useEffect(()=>{
-    if(!session?.access_token || !serviceBranch){setCrewAllowed(false);return}
-    let active=true
-    setCheckingCrew(true)
-    fetch("/api/kalendarium/eligibility",{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"})
-      .then(async r=>({ok:r.ok,data:await r.json()}))
-      .then(({ok,data})=>{if(active)setCrewAllowed(Boolean(ok&&data?.eligible))})
-      .catch(()=>{if(active)setCrewAllowed(false)})
-      .finally(()=>{if(active)setCheckingCrew(false)})
-    return ()=>{active=false}
-  },[session?.access_token,serviceBranch])
 
   useEffect(()=>{
     try {
@@ -101,8 +86,6 @@ export default function KalendariumSubmissionFlow() {
   }
   const submit = async () => {
     if(!answers.dataConsent||(artBranch&&(!answers.rightsConsent||!answers.publicationConsent))||(serviceBranch&&!answers.crewConfirmed)){setError("Fogadd el a szükséges nyilatkozatokat.");return}
-    if(!session?.access_token){setError("A beküldéshez jelentkezz be a Vállalhatatlan-fiókodba.");return}
-    if(serviceBranch&&!crewAllowed){setError("A hálózati fiók jogosultságát nem sikerült ellenőrizni. Jelentkezz be újra, majd próbáld meg ismét.");return}
     setBusy(true);setError("")
     try {
       const form=new FormData()
@@ -112,7 +95,9 @@ export default function KalendariumSubmissionFlow() {
         consents:{data:answers.dataConsent,rights:answers.rightsConsent,publication:answers.publicationConsent,crew:answers.crewConfirmed}
       }))
       answers.arts.forEach((art,index)=>{if(art.file)form.append("art_file_"+index,art.file,art.file.name)})
-      const response=await fetch("/api/kalendarium/submissions",{method:"POST",headers:{Authorization:"Bearer "+session.access_token},body:form})
+      const headers:HeadersInit={}
+      if(session?.access_token)headers.Authorization="Bearer "+session.access_token
+      const response=await fetch("/api/kalendarium/submissions",{method:"POST",headers,body:form})
       const result=await response.json().catch(()=>({}))
       if(!response.ok)throw new Error(result.error||"submit_failed")
       setSubmitted({id:result.id,reference:result.reference,notificationSent:result.notificationSent===true})
@@ -126,7 +111,7 @@ export default function KalendariumSubmissionFlow() {
 
   return <div className="overflow-hidden border border-zinc-800 bg-[#0d0f0f] shadow-[0_24px_90px_rgba(0,0,0,.35)]">
     <div className="border-b border-zinc-800 bg-black/50 px-4 py-4 sm:px-6">
-      <div className="flex items-center justify-between gap-4"><div><p className="font-mono text-[9px] uppercase tracking-[.22em] text-lime-200/70">Szerkesztőségi vonal</p><p className="mt-1 text-sm text-zinc-200">Új beküldés <span className="text-zinc-600">/ 2027</span></p></div><span className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider text-zinc-500"><span className="h-1.5 w-1.5 rounded-full bg-lime-300 shadow-[0_0_9px_#bef264]"/> Online</span></div>
+      <div className="flex items-center justify-between gap-4"><div><p className="font-mono text-[9px] uppercase tracking-[.22em] text-lime-200/70">Szerkesztőségi vonal</p><p className="mt-1 text-sm text-zinc-200">Új beküldés <span className="text-zinc-600">/ 2027</span></p><p className="mt-1 text-[10px] text-zinc-500">Beküldés fiók nélkül is lehetséges.</p></div><span className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider text-zinc-500"><span className="h-1.5 w-1.5 rounded-full bg-lime-300 shadow-[0_0_9px_#bef264]"/> Online</span></div>
       <div className="mt-4 h-1 overflow-hidden bg-zinc-800"><div className="h-full bg-lime-200 transition-all duration-500" style={{width:progress+"%"}}/></div>
       <div className="mt-2 flex justify-between font-mono text-[9px] uppercase tracking-wider text-zinc-600"><span>{String(step+1).padStart(2,"0")} / {steps.length}</span><span>{progress}% kész</span></div>
     </div>
@@ -150,7 +135,7 @@ export default function KalendariumSubmissionFlow() {
         </div>
       </Frame>}
       {current==="service"&&<Frame eyebrow="02 / Arany Oldalak" title="Mivel foglalkozol?" description="A V Crew Arany Oldalak a közösség szolgáltatóit mutatja be. A megjelenés fizetett, jóváhagyás után egyeztetjük a csomagot és az árat.">
-        <div className="mb-4 border border-amber-200/20 bg-amber-200/[.04] p-3 text-xs leading-5 text-amber-100/70">{checkingCrew?"Ellenőrizzük a hálózati fiókodat…":crewAllowed?"Bejelentkezett hálózati fiókkal jelentkezhetsz a V Crew Arany Oldalakba.":"Az Arany Oldalakhoz jelentkezz be a Vállalhatatlan-fiókoddal."}</div>
+        <div className="mb-4 border border-amber-200/20 bg-amber-200/[.04] p-3 text-xs leading-5 text-amber-100/70">A beküldéshez nem szükséges Vállalhatatlan-fiók. A megjelenés szerkesztőségi jóváhagyás és külön egyeztetés után történik.</div>
         <label className={labelClass}>Szolgáltatás / vállalkozás neve<input className={inputClass} maxLength={120} value={answers.service.name} onChange={e=>updateService({name:e.target.value})} placeholder="Ahogy a kiadványban szerepeljen"/></label>
         <label className={labelClass+" mt-4"}>Melyik terület?<select className={inputClass} value={answers.service.category} onChange={e=>updateService({category:e.target.value})}>{serviceCategories.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
         <label className={labelClass+" mt-4"}>Mit kínálsz?<textarea className={inputClass+" min-h-28 resize-y"} maxLength={1200} value={answers.service.description} onChange={e=>updateService({description:e.target.value})} placeholder="Milyen szolgáltatást nyújtasz, kinek és miben vagy jó?"/></label>
@@ -178,11 +163,11 @@ export default function KalendariumSubmissionFlow() {
           {serviceBranch&&<Consent checked={answers.crewConfirmed} onChange={v=>update("crewConfirmed",v)} title="Megerősítem, hogy a megadott szolgáltatás adatai valósak, és jogosult vagyok azokat beküldeni."/>}
         </div>
       </Frame>}
-      {error&&<div role="alert" className="mt-5 border border-red-900/70 bg-red-950/30 p-3 text-xs leading-5 text-red-200">{error}{!session&&error.includes("jelentkezz be")&&<Link href="/auth?from=%2Fkalendarium-bekuldes&next=%2Fkalendarium-bekuldes" className="mt-3 inline-flex min-h-10 items-center border border-red-200/30 px-3 font-mono text-[9px] uppercase tracking-widest text-red-100 hover:bg-red-100/10">Bejelentkezés a folytatáshoz <ArrowRight size={13} className="ml-2"/></Link>}</div>}
+      {error&&<div role="alert" className="mt-5 border border-red-900/70 bg-red-950/30 p-3 text-xs leading-5 text-red-200">{error}</div>}
     </div>
     <div className="flex items-center justify-between gap-3 border-t border-zinc-800 bg-black/40 px-4 py-4 sm:px-6">
       <button type="button" onClick={back} disabled={step===0||busy} className="inline-flex min-h-12 items-center gap-2 px-2 font-mono text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-200 disabled:opacity-0"><ArrowLeft size={15}/> Vissza</button>
-      {current==="review"?<button type="button" onClick={submit} disabled={busy||!answers.dataConsent||(artBranch&&(!answers.rightsConsent||!answers.publicationConsent))||(serviceBranch&&(!answers.crewConfirmed||checkingCrew))} className={buttonClass}>{busy?<><Loader2 size={15} className="animate-spin"/> Küldés...</>:<>Elküldöm <ArrowRight size={15}/></>}</button>:<button type="button" onClick={next} className={buttonClass}>Tovább <ArrowRight size={15}/></button>}
+      {current==="review"?<button type="button" onClick={submit} disabled={busy||!answers.dataConsent||(artBranch&&(!answers.rightsConsent||!answers.publicationConsent))||(serviceBranch&&!answers.crewConfirmed)} className={buttonClass}>{busy?<><Loader2 size={15} className="animate-spin"/> Küldés...</>:<>Elküldöm <ArrowRight size={15}/></>}</button>:<button type="button" onClick={next} className={buttonClass}>Tovább <ArrowRight size={15}/></button>}
     </div>
     <p className="border-t border-zinc-900 px-4 py-3 text-center font-mono text-[8px] uppercase tracking-[.14em] text-zinc-700">A válaszaid ezen az eszközön automatikusan mentődnek · Fájlok a beküldésig nem kerülnek feltöltésre</p>
   </div>
