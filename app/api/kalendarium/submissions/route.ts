@@ -3,6 +3,7 @@ import { z } from "zod"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
 import { getUserFromToken, parseBearerToken, getUserRoleByEmail, canCreatePaidSpots } from "@/lib/auth"
 import { guardWriteOperation } from "@/lib/systemGuard"
+import { checkRateLimit, getClientIp } from "@/lib/security/rateLimit"
 
 export const dynamic = "force-dynamic"
 
@@ -23,6 +24,8 @@ const schema = z.object({
 export async function POST(req: NextRequest) {
   const guarded=await guardWriteOperation(req as never)
   if(guarded)return guarded
+  const rate=checkRateLimit("kalendarium-submission:"+getClientIp(req),5,60*60_000)
+  if(!rate.allowed)return NextResponse.json({error:"rate_limited",retryAfterSeconds:rate.retryAfterSeconds},{status:429,headers:{"Retry-After":String(rate.retryAfterSeconds),"Cache-Control":"no-store"}})
   const token=parseBearerToken(req.headers)
   if(!token)return NextResponse.json({error:"unauthenticated"},{status:401})
   const user=await getUserFromToken(token)
@@ -44,9 +47,9 @@ export async function POST(req: NextRequest) {
   if(hasService&&(!data.service||!data.consents.crew))return NextResponse.json({error:"missing_fields"},{status:400})
   if(hasService&&!canCreatePaidSpots(getUserRoleByEmail(user.email)))return NextResponse.json({error:"crew_only"},{status:403})
 
-  const files=form.getAll("files").filter((value):value is File=>value instanceof File)
-  if(files.length>MAX_FILES)return NextResponse.json({error:"too_many_files"},{status:400})
-  for(const file of files)if(!file.size||file.size>MAX_FILE_BYTES||!EXTENSIONS[file.type])return NextResponse.json({error:"invalid_file"},{status:400})
+  const fileEntries=data.arts.map((_,index)=>({index,value:form.get("art_file_"+index)})).filter((entry):entry is {index:number;value:File}=>entry.value instanceof File)
+  if(fileEntries.length>MAX_FILES)return NextResponse.json({error:"too_many_files"},{status:400})
+  for(const entry of fileEntries)if(!entry.value.size||entry.value.size>MAX_FILE_BYTES||!EXTENSIONS[entry.value.type])return NextResponse.json({error:"invalid_file"},{status:400})
 
   const db=supabaseAdmin()
   const bucket=process.env.KALENDARIUM_STORAGE_BUCKET||"kalendarium-2027"
@@ -59,15 +62,16 @@ export async function POST(req: NextRequest) {
   const reference="VK27-"+crypto.randomUUID().slice(0,8).toUpperCase()
   const uploaded:string[]=[]
   try{
-    const fileRecords=[]
-    for(const file of files){
+    const fileRecordsByArt:Record<number,Array<{name:string;path:string;type:string;size:number}>>={}
+    for(const entry of fileEntries){
+      const file=entry.value
       const path=user.id+"/"+reference+"/"+crypto.randomUUID()+"."+EXTENSIONS[file.type]
       const {error}=await db.storage.from(bucket).upload(path,Buffer.from(await file.arrayBuffer()),{contentType:file.type,cacheControl:"3600",upsert:false})
       if(error)throw error
       uploaded.push(path)
-      fileRecords.push({name:file.name,path,type:file.type,size:file.size})
+      fileRecordsByArt[entry.index]=[{name:file.name,path,type:file.type,size:file.size}]
     }
-    const artworks=data.arts.map((art,index)=>({...art,attachments:index===0?fileRecords:[]}))
+    const artworks=data.arts.map((art,index)=>({...art,attachments:fileRecordsByArt[index]||[]}))
     const {data:row,error}=await db.from("kalendarium_submissions").insert({
       reference,user_id:user.id,kind:data.kind,author_name:data.author,contact_email:data.email,bio:data.bio,note:data.note,
       artworks:hasArt?artworks:[],service_listing:hasService?data.service:null,status:"new",
