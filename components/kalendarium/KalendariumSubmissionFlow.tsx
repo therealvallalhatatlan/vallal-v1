@@ -173,7 +173,7 @@ export default function KalendariumSubmissionFlow() {
           <Summary label="Kapcsolattartó" value={answers.author+" · "+answers.email}/>
         </div>
         <div className="mt-5 space-y-3">
-          <Consent checked={answers.dataConsent} onChange={v=>update("dataConsent",v)} title="Elolvastam és elfogadom az adatkezelési tájékoztatót."/>
+          <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-zinc-400"><input type="checkbox" checked={answers.dataConsent} onChange={e=>update("dataConsent",e.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-lime-200"/><span>Elolvastam és elfogadom az <Link href="/privacy-policy" target="_blank" rel="noreferrer" className="text-lime-200 underline underline-offset-4 hover:text-white">adatkezelési tájékoztatót</Link>.</span></label>
           {artBranch&&<><Consent checked={answers.rightsConsent} onChange={v=>update("rightsConsent",v)} title="Kijelentem, hogy az általam beküldött alkotás saját munkám, vagy rendelkezem a beküldéshez szükséges engedélyekkel."/><Consent checked={answers.publicationConsent} onChange={v=>update("publicationConsent",v)} title="Tudomásul veszem, hogy a kiválasztott alkotás nyomtatott megjelenéséhez külön felhasználási engedélyt kell majd egyeztetnünk. A szerzői jogaimat megtartom."/><p className="pl-7 text-[10px] leading-5 text-zinc-600">A kiválasztott alkotók pénzbeli honorárium helyett tiszteletpéldányokat kapnak. A pontos példányszámról az elfogadáskor tájékoztatunk.</p></>}
           {serviceBranch&&<Consent checked={answers.crewConfirmed} onChange={v=>update("crewConfirmed",v)} title="Megerősítem, hogy V Crew-tag vagyok, és a szolgáltatásom megadott adatait jogosult vagyok beküldeni."/>}
         </div>
