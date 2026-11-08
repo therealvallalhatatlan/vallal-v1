@@ -15,11 +15,19 @@ const LOCATION_EVENT = "vallalhatatlan:location-preference"
 
 function readPreference() {
   if (typeof window === "undefined") return false
-  return window.localStorage.getItem(LOCATION_PREFERENCE_KEY) === "true"
+
+  try {
+    return window.localStorage.getItem(LOCATION_PREFERENCE_KEY) === "true"
+  } catch {
+    // Storage can be unavailable in privacy-restricted browser contexts.
+    return false
+  }
 }
 
 export default function useUserGeolocation() {
-  const [enabled, setEnabled] = useState(readPreference)
+  // Keep the server and first client render identical. Read the persisted
+  // preference after hydration in the effect below.
+  const [enabled, setEnabled] = useState(false)
   const [location, setLocation] = useState<UserLocation | null>(null)
   const [status, setStatus] = useState<GeoStatus>(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) return "unavailable"
@@ -37,7 +45,11 @@ export default function useUserGeolocation() {
 
   const setPreference = useCallback((value: boolean) => {
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(LOCATION_PREFERENCE_KEY, value ? "true" : "false")
+      try {
+        window.localStorage.setItem(LOCATION_PREFERENCE_KEY, value ? "true" : "false")
+      } catch {
+        // The in-memory preference still works for this page session.
+      }
       window.dispatchEvent(new CustomEvent(LOCATION_EVENT, { detail: { enabled: value } }))
     }
     setEnabled(value)
@@ -126,7 +138,9 @@ export default function useUserGeolocation() {
     window.addEventListener("storage", onStorage)
     window.addEventListener(LOCATION_EVENT, onPreference)
 
-    if (readPreference()) startWatching()
+    const savedPreference = readPreference()
+    setEnabled(savedPreference)
+    if (savedPreference) startWatching()
 
     return () => {
       stopWatching()
