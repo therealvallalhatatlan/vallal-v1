@@ -95,7 +95,7 @@ export default function KalendariumSubmissionFlow() {
         consents:{data:answers.dataConsent,rights:answers.rightsConsent,publication:answers.publicationConsent,crew:answers.crewConfirmed}
       }))
       answers.arts.forEach((art,index)=>{if(art.file)form.append("art_file_"+index,art.file,art.file.name)})
-      const headers:HeadersInit={}
+      const headers:Record<string,string>={}
       if(session?.access_token)headers.Authorization="Bearer "+session.access_token
       const response=await fetch("/api/kalendarium/submissions",{method:"POST",headers,body:form})
       const result=await response.json().catch(()=>({}))
