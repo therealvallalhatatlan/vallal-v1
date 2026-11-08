@@ -44,7 +44,17 @@ export async function POST(req: NextRequest) {
   if(typeof raw!=="string"||raw.length>100_000)return NextResponse.json({error:"invalid_payload"},{status:400})
   let body:unknown
   try{body=JSON.parse(raw)}catch{return NextResponse.json({error:"invalid_payload"},{status:400})}
-  const result=schema.safeParse(body)
+  // The UI keeps one empty draft artwork in state even for service-only entries.
+  // Ignore that unused branch before validating the payload.
+  const validationBody =
+    typeof body === "object" &&
+    body !== null &&
+    !Array.isArray(body) &&
+    "kind" in body &&
+    body.kind === "service"
+      ? { ...body, arts: [] }
+      : body
+  const result=schema.safeParse(validationBody)
   if(!result.success)return NextResponse.json({error:"missing_fields",details:result.error.flatten()},{status:400})
   const data=result.data
   const hasArt=data.kind==="art"||data.kind==="both"
