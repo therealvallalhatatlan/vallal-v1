@@ -1386,6 +1386,47 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
   }
 
   await handleCheckoutSessionNotifications(session);
+  if (metadata?.type === 'kalendarium_2027') {
+    if (session.payment_status !== 'paid') {
+      console.warn(`[kalendarium] checkout session is not paid: ${session.id}`);
+      return;
+    }
+
+    const preorderId = metadata.preorder_id;
+    if (!preorderId) {
+      console.error(`[kalendarium] missing preorder_id for session ${session.id}`);
+      return;
+    }
+
+    const paymentIntentId =
+      typeof session.payment_intent === 'string'
+        ? session.payment_intent
+        : session.payment_intent?.id ?? null;
+
+    const { error } = await supabaseAdmin()
+      .from('kalendarium_preorders')
+      .update({
+        status: 'paid',
+        payment_status: 'paid',
+        email: session.customer_details?.email ?? session.customer_email ?? undefined,
+        stripe_payment_intent_id: paymentIntentId,
+        stripe_event_id: stripeEventId,
+        paid_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', preorderId)
+      .eq('stripe_checkout_session_id', session.id);
+
+    if (error) {
+      console.error(`[kalendarium] paid preorder finalization failed for ${session.id}`, error);
+      return;
+    }
+
+    console.log(`[kalendarium] paid preorder finalized: ${preorderId}`);
+    revalidatePath('/kalendarium');
+    return;
+  }
+
   if (metadata?.type === 'distribution_drop') {
     await handleDistributionDropCheckoutCompleted(session);
     return;
