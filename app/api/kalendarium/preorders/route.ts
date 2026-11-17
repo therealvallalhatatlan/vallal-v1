@@ -40,6 +40,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_payload" }, { status: 400 })
   }
 
+  if (input.payment === "preorder" && process.env.KALENDARIUM_PREORDER_PAYMENTS_ENABLED !== "true") {
+    return NextResponse.json({ error: "payment_unavailable" }, { status: 503 })
+  }
+
   const token = parseBearerToken(req.headers)
   const user = token ? await getUserFromToken(token) : null
   const reference = "VK27-" + crypto.randomUUID().slice(0, 8).toUpperCase()
