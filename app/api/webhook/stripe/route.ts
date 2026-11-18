@@ -980,10 +980,33 @@ export async function POST(request: NextRequest) {
       }
 
       break;
-    case 'checkout.session.expired':
+    case 'checkout.session.expired': {
       console.log('🎯 Processing checkout.session.expired event');
-      await handleDistributionDropCheckoutExpired(event.data.object as Stripe.Checkout.Session);
+      const expiredSession = event.data.object as Stripe.Checkout.Session;
+      if (expiredSession.metadata?.type === 'kalendarium_2027' && expiredSession.metadata.preorder_id) {
+        const { error } = await supabaseAdmin()
+          .from('kalendarium_preorders')
+          .update({ status: 'cancelled', payment_status: 'failed', updated_at: new Date().toISOString() })
+          .eq('id', expiredSession.metadata.preorder_id)
+          .eq('status', 'checkout_pending');
+        if (error) console.error('[kalendarium] failed to mark expired checkout', error);
+      }
+      await handleDistributionDropCheckoutExpired(expiredSession);
       break;
+    }
+    case 'checkout.session.async_payment_failed': {
+      console.log('🎯 Processing checkout.session.async_payment_failed event');
+      const failedSession = event.data.object as Stripe.Checkout.Session;
+      if (failedSession.metadata?.type === 'kalendarium_2027' && failedSession.metadata.preorder_id) {
+        const { error } = await supabaseAdmin()
+          .from('kalendarium_preorders')
+          .update({ status: 'cancelled', payment_status: 'failed', updated_at: new Date().toISOString() })
+          .eq('id', failedSession.metadata.preorder_id)
+          .eq('status', 'checkout_pending');
+        if (error) console.error('[kalendarium] failed to mark async payment failure', error);
+      }
+      break;
+    }
     case 'account.updated':
       console.log('🎯 Processing account.updated event');
       await handleDistributionStripeAccountUpdated(event.data.object as Stripe.Account);
@@ -1402,11 +1425,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
       .from('kalendarium_preorders')
       .select('id, reference, email, full_name, quantity, amount_huf, deposit_amount_huf, balance_due_huf, confirmation_email_sent_at, admin_notification_sent_at')
       .eq('id', preorderId)
-      .eq('stripe_checkout_session_id', session.id)
       .maybeSingle();
 
     if (lookupError || !preorder) {
       console.error(`[kalendarium] preorder lookup failed for ${session.id}`, lookupError);
+      return;
+    }
+
+    if (preorder.stripe_checkout_session_id && preorder.stripe_checkout_session_id !== session.id) {
+      console.error('[kalendarium] Checkout Session mismatch; refusing to finalize preorder', {
+        preorderId,
+        receivedSessionId: session.id,
+      });
       return;
     }
 
@@ -1449,7 +1479,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
         updated_at: now,
       })
       .eq('id', preorderId)
-      .eq('stripe_checkout_session_id', session.id)
+      .or('stripe_checkout_session_id.is.null,stripe_checkout_session_id.eq.' + session.id)
       .select('id')
       .maybeSingle();
 
