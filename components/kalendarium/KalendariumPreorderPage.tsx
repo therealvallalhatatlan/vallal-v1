@@ -35,8 +35,7 @@ export default function KalendariumPreorderPage() {
     return {
       total: unitPrice * count,
       deposit,
-      balance: unitPrice * count - deposit,
-      standard: STANDARD_PRICE_HUF * count,
+      balance: preorderType === "supporter" ? unitPrice * count - deposit : 0,
     }
   }, [quantity, preorderType])
 
@@ -265,12 +264,14 @@ export default function KalendariumPreorderPage() {
                 </span>
                 <strong className="text-xl tabular-nums text-lime-200">{formatHuf(totals.deposit)}</strong>
               </div>
-              <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-                <span className="text-zinc-500">
-                  {preorderType === "supporter" ? "Fennmaradó összeg később" : "Későbbi fizetés"}
-                </span>
-                <span className="tabular-nums text-zinc-300">{formatHuf(totals.balance)}</span>
-              </div>
+              {preorderType === "supporter" ? (
+                <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                  <span className="text-zinc-500">Fennmaradó összeg később</span>
+                  <span className="tabular-nums text-zinc-300">{formatHuf(totals.balance)}</span>
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-zinc-500">A sima előjegyzés nem jelent fizetési kötelezettséget. A végleges rendelésről később egyeztetünk.</p>
+              )}
               <p className="mt-4 text-[11px] leading-5 text-zinc-600">
                 {preorderType === "supporter"
                   ? "A támogatói ár 10 000 Ft / példány. Az 5 000 Ft előleg ennek része, a fennmaradó 5 000 Ft-ot később kell rendezni."
