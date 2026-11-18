@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const origin = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.vallalhatatlan.online").replace(/\\/+$/, "")
+    const origin = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.vallalhatatlan.online").replace(/\/+$/, "")
     const metadata = await buildCheckoutMetadata(req, {
       project: "vallalhatatlan",
       type: "kalendarium_2027",
