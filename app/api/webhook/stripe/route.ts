@@ -1423,7 +1423,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
     const db = supabaseAdmin();
     const { data: preorder, error: lookupError } = await db
       .from('kalendarium_preorders')
-      .select('id, reference, email, full_name, quantity, amount_huf, deposit_amount_huf, balance_due_huf, confirmation_email_sent_at, admin_notification_sent_at')
+      .select('id, reference, email, full_name, quantity, amount_huf, deposit_amount_huf, balance_due_huf, stripe_checkout_session_id, confirmation_email_sent_at, admin_notification_sent_at')
       .eq('id', preorderId)
       .maybeSingle();
 
@@ -1471,6 +1471,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
       .update({
         status: 'deposit_paid',
         payment_status: 'deposit_paid',
+        stripe_checkout_session_id: session.id,
         email: customerEmail,
         amount_paid_huf: expectedDepositHuf,
         stripe_payment_intent_id: paymentIntentId,
