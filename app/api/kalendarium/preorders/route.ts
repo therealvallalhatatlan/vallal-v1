@@ -97,7 +97,6 @@ export async function POST(req: NextRequest) {
       mode: "payment",
       currency: "huf",
       locale: "hu",
-      allow_promotion_codes: true,
       billing_address_collection: "auto",
       line_items: [{
         price_data: {
