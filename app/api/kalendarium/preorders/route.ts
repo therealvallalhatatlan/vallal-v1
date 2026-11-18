@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
     await db.from("kalendarium_preorders").update({
       status: "reserved",
       payment_status: "failed",
-    }).eq("id", row.id)
+    }).eq("id", row.id).eq("payment_status", "pending")
     return NextResponse.json({ error: "checkout_failed" }, { status: 502 })
   }
 }
