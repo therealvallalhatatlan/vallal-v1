@@ -16,7 +16,6 @@ const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2025-07-30.basil
 const STANDARD_PRICE_HUF = 12000
 const SUPPORTER_PRICE_HUF = 10000
 const SUPPORTER_DEPOSIT_HUF = 5000
-const SUPPORTER_BALANCE_HUF = SUPPORTER_PRICE_HUF - SUPPORTER_DEPOSIT_HUF
 const NOTIFICATION_EMAIL = "therealvallalhatatlan@gmail.com"
 
 function escapeEmailHtml(value: string) {
@@ -118,7 +117,7 @@ export async function POST(req: NextRequest) {
         "Megjegyzés: " + (input.note || "Nincs megjegyzés"),
         "",
         "Ingyenes előjegyzés. Fizetés nem történt.",
-      ].join("\\n")
+      ].join("\n")
 
       try {
         const adminResult = await resend.emails.send({
@@ -163,7 +162,7 @@ export async function POST(req: NextRequest) {
             "",
             "Köszönjük az érdeklődést!",
             "Vállalhatatlan",
-          ].join("\\n"),
+          ].join("\n"),
         })
         if (customerResult.error) throw customerResult.error
         confirmationSent = true
