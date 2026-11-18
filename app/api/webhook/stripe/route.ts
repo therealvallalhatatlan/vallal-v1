@@ -1423,7 +1423,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
     const db = supabaseAdmin();
     const { data: preorder, error: lookupError } = await db
       .from('kalendarium_preorders')
-      .select('id, reference, email, full_name, quantity, amount_huf, deposit_amount_huf, balance_due_huf, stripe_checkout_session_id, confirmation_email_sent_at, admin_notification_sent_at')
+      .select('id, reference, preorder_type, email, full_name, quantity, amount_huf, deposit_amount_huf, balance_due_huf, stripe_checkout_session_id, confirmation_email_sent_at, admin_notification_sent_at')
       .eq('id', preorderId)
       .maybeSingle();
 
@@ -1498,8 +1498,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
       const quantity = Number(preorder.quantity);
       const fullAmount = Number(preorder.amount_huf);
       const remainingBalance = Number(preorder.balance_due_huf);
+      const preorderType = preorder.preorder_type === 'supporter' ? 'Támogatói előrendelés' : 'Előjegyzés';
       const details = [
         'Vállalhatatlan Kalendárium 2027',
+        'Típus: ' + preorderType,
         'Előjegyzési azonosító: ' + preorder.reference,
         'Példányszám: ' + quantity + ' db',
         'Teljes vételár: ' + fullAmount.toLocaleString('hu-HU') + ' Ft',
@@ -1516,11 +1518,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
           const result = await resend.emails.send({
             from: emailFrom,
             to: [customerEmail],
-            subject: 'Előleg beérkezett · Vállalhatatlan Kalendárium 2027',
+            subject: 'Támogatói előleg beérkezett · Vállalhatatlan Kalendárium 2027',
             text: [
               'Szia' + (preorder.full_name ? ' ' + preorder.full_name : '') + '!',
               '',
-              'Köszönjük, az 5 000 Ft / példány előleged sikeresen beérkezett.',
+              'Köszönjük, a támogatói előrendelésedhez tartozó 5 000 Ft / példány előleg sikeresen beérkezett.',
               '',
               details,
               '',
@@ -1544,9 +1546,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
             from: emailFrom,
             to: ['therealvallalhatatlan@gmail.com'],
             replyTo: customerEmail,
-            subject: '[Kalendárium 2027] Előleg befizetve: ' + preorder.reference,
+            subject: '[Kalendárium 2027] Támogatói előleg befizetve: ' + preorder.reference,
             text: [
-              'Új, előleggel megerősített Kalendárium 2027 rendelés.',
+              'Új, előleggel megerősített Kalendárium 2027 támogatói előrendelés.',
               '',
               'Név: ' + (preorder.full_name || 'Nincs megadva'),
               'E-mail: ' + customerEmail,
