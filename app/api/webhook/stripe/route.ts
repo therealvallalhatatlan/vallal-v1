@@ -1385,7 +1385,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
     return;
   }
 
-  await handleCheckoutSessionNotifications(session);
   if (metadata?.type === 'kalendarium_2027') {
     if (session.payment_status !== 'paid') {
       console.warn(`[kalendarium] checkout session is not paid: ${session.id}`);
@@ -1398,34 +1397,148 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session, stripeE
       return;
     }
 
+    const db = supabaseAdmin();
+    const { data: preorder, error: lookupError } = await db
+      .from('kalendarium_preorders')
+      .select('id, reference, email, full_name, quantity, amount_huf, deposit_amount_huf, balance_due_huf, confirmation_email_sent_at, admin_notification_sent_at')
+      .eq('id', preorderId)
+      .eq('stripe_checkout_session_id', session.id)
+      .maybeSingle();
+
+    if (lookupError || !preorder) {
+      console.error(`[kalendarium] preorder lookup failed for ${session.id}`, lookupError);
+      return;
+    }
+
+    const expectedDepositHuf = Number(preorder.deposit_amount_huf) * Number(preorder.quantity);
+    const expectedStripeAmount = expectedDepositHuf * 100;
+    const stripeCurrency = (session.currency ?? '').toLowerCase();
+
+    // Validate the exact amount against the server-side order before marking it paid.
+    if (
+      stripeCurrency !== 'huf' ||
+      !Number.isSafeInteger(expectedStripeAmount) ||
+      session.amount_total !== expectedStripeAmount
+    ) {
+      console.error('[kalendarium] payment amount mismatch; preorder not marked as paid', {
+        sessionId: session.id,
+        currency: stripeCurrency,
+        received: session.amount_total,
+        expected: expectedStripeAmount,
+      });
+      return;
+    }
+
     const paymentIntentId =
       typeof session.payment_intent === 'string'
         ? session.payment_intent
         : session.payment_intent?.id ?? null;
+    const customerEmail = session.customer_details?.email?.trim() || session.customer_email || preorder.email;
+    const now = new Date().toISOString();
 
-    const { error } = await supabaseAdmin()
+    const { data: updatedPreorder, error: updateError } = await db
       .from('kalendarium_preorders')
       .update({
-        status: 'paid',
-        payment_status: 'paid',
-        email: session.customer_details?.email ?? session.customer_email ?? undefined,
+        status: 'deposit_paid',
+        payment_status: 'deposit_paid',
+        email: customerEmail,
+        amount_paid_huf: expectedDepositHuf,
         stripe_payment_intent_id: paymentIntentId,
         stripe_event_id: stripeEventId,
-        paid_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        deposit_paid_at: now,
+        updated_at: now,
       })
       .eq('id', preorderId)
-      .eq('stripe_checkout_session_id', session.id);
+      .eq('stripe_checkout_session_id', session.id)
+      .select('id')
+      .maybeSingle();
 
-    if (error) {
-      console.error(`[kalendarium] paid preorder finalization failed for ${session.id}`, error);
+    if (updateError || !updatedPreorder) {
+      console.error(`[kalendarium] deposit payment finalization failed for ${session.id}`, updateError);
       return;
     }
 
-    console.log(`[kalendarium] paid preorder finalized: ${preorderId}`);
+    console.log(`[kalendarium] deposit payment finalized: ${preorderId}`);
+
+    // Send separate customer and admin messages. Email outages never undo a paid order.
+    if (!resend || !emailFrom) {
+      console.warn('[kalendarium] payment saved, but Resend configuration is missing');
+    } else {
+      const quantity = Number(preorder.quantity);
+      const fullAmount = Number(preorder.amount_huf);
+      const remainingBalance = Number(preorder.balance_due_huf);
+      const details = [
+        'Vállalhatatlan Kalendárium 2027',
+        'Előjegyzési azonosító: ' + preorder.reference,
+        'Példányszám: ' + quantity + ' db',
+        'Teljes vételár: ' + fullAmount.toLocaleString('hu-HU') + ' Ft',
+        'Beérkezett előleg: ' + expectedDepositHuf.toLocaleString('hu-HU') + ' Ft',
+        'Fennmaradó összeg: ' + remainingBalance.toLocaleString('hu-HU') + ' Ft',
+        'Átvétel: ' + (metadata.fulfillment_method === 'shipping' ? 'postai / csomagküldés' : 'személyes / közösségi átvétel'),
+        '',
+        'Az előleg beleszámít a teljes vételárba. A fennmaradó összeget a kiadvány átvétele előtt kell rendezni.',
+        'A szállítás esetleges díját külön egyeztetjük.',
+      ].join('\\n');
+
+      if (!preorder.confirmation_email_sent_at) {
+        try {
+          const result = await resend.emails.send({
+            from: emailFrom,
+            to: [customerEmail],
+            subject: 'Előleg beérkezett · Vállalhatatlan Kalendárium 2027',
+            text: [
+              'Szia' + (preorder.full_name ? ' ' + preorder.full_name : '') + '!',
+              '',
+              'Köszönjük, az 5 000 Ft / példány előleged sikeresen beérkezett.',
+              '',
+              details,
+              '',
+              'A fennmaradó összegről és az átvétel részleteiről külön küldünk tájékoztatást.',
+              '',
+              'Vállalhatatlan',
+            ].join('\\n'),
+          });
+          if (result.error) throw result.error;
+          await db.from('kalendarium_preorders')
+            .update({ confirmation_email_sent_at: new Date().toISOString() })
+            .eq('id', preorderId);
+        } catch (mailError) {
+          console.error('[kalendarium] customer confirmation email failed', mailError);
+        }
+      }
+
+      if (!preorder.admin_notification_sent_at) {
+        try {
+          const result = await resend.emails.send({
+            from: emailFrom,
+            to: ['therealvallalhatatlan@gmail.com'],
+            replyTo: customerEmail,
+            subject: '[Kalendárium 2027] Előleg befizetve: ' + preorder.reference,
+            text: [
+              'Új, előleggel megerősített Kalendárium 2027 rendelés.',
+              '',
+              'Név: ' + (preorder.full_name || 'Nincs megadva'),
+              'E-mail: ' + customerEmail,
+              details,
+              'Stripe Checkout Session: ' + session.id,
+              'Stripe event: ' + stripeEventId,
+            ].join('\\n'),
+          });
+          if (result.error) throw result.error;
+          await db.from('kalendarium_preorders')
+            .update({ admin_notification_sent_at: new Date().toISOString() })
+            .eq('id', preorderId);
+        } catch (mailError) {
+          console.error('[kalendarium] admin notification email failed', mailError);
+        }
+      }
+    }
+
     revalidatePath('/kalendarium');
     return;
   }
+
+  await handleCheckoutSessionNotifications(session);
 
   if (metadata?.type === 'distribution_drop') {
     await handleDistributionDropCheckoutCompleted(session);
