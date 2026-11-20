@@ -1,4 +1,4 @@
-export type DeliveryMethod = "dead-drop" | "postaautomata" | "eu";
+export type DeliveryMethod = "dead-drop" | "personal" | "postaautomata" | "eu";
 
 export const POSTA_AUTOMATA_FEE = 2500;
 export const EU_SHIPPING_FEE = 5000;
@@ -7,6 +7,11 @@ export const DELIVERY_METHODS: Record<DeliveryMethod, { label: string; descripti
   "dead-drop": {
     label: "Dead drop terjesztéssel",
     description: "Személyes, egyeztetett átvétel a hálózaton keresztül.",
+    fee: 0,
+  },
+  personal: {
+    label: "Személyes átvétel disztribútornál",
+    description: "Ingyenes átvétel egy kiválasztott budapesti terjesztési ponton.",
     fee: 0,
   },
   postaautomata: {
