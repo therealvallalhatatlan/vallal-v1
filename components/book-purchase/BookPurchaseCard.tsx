@@ -31,7 +31,7 @@ const OPTIONS: Array<{
 }> = [
   {
     value: "dead-drop",
-    label: "Dead drop / egyeztetett átvétel",
+    label: "Dead drop / hálózati átadás",
     description: "Rejtett, előre egyeztetett átadás a hálózaton keresztül.",
     fee: 0,
   },
