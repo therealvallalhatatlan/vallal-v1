@@ -46,11 +46,12 @@ export async function PATCH(
     ["pickup_area", 120],
     ["pickup_description", 400],
   ] as const) {
-    if (body[key] !== undefined) {
-      if (typeof body[key] !== "string" || body[key].length > limit) {
+    const value = body[key];
+    if (value !== undefined) {
+      if (typeof value !== "string" || value.length > limit) {
         return NextResponse.json({ error: "invalid_" + key }, { status: 400 });
       }
-      updates[key] = body[key].trim() || null;
+      updates[key] = value.trim() || null;
     }
   }
 
