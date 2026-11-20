@@ -102,7 +102,7 @@ export default function BookPurchaseCard({
         if (active) setPickupPointsLoading(false);
       });
     return () => { active = false; };
-  }, [deliveryMethod, distributionPickupPoints.length, pickupPointsLoading]);
+  }, [deliveryMethod]);
 
   async function handleCheckout() {
     if (!deliveryMethod || !pickupPointIsValid || !distributorPickupIsValid || loading) return;
