@@ -283,7 +283,7 @@ export default function AdminDistributionConsole() {
                     <span className={"text-[10px] uppercase tracking-[0.18em] " + (cell.stripe_payouts_enabled ? "text-lime-100" : "text-zinc-600")}>{cell.stripe_payouts_enabled ? "STRIPE KÉSZ" : "STRIPE NINCS KÉSZ"}</span>
                     <button type="button" onClick={() => void connectCell(cell.id)} disabled={busyId === cell.id} className="ml-4 border border-zinc-700 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-zinc-300 hover:border-lime-200/50 disabled:opacity-50">{busyId === cell.id ? "…" : cell.stripe_connected_account_id ? "ONBOARDING" : "STRIPE BEKÖTÉSE"}</button>
                   </div>
-                  <div className="mt-4 grid gap-3 border-t border-zinc-800 pt-4 sm:grid-cols-[auto_1fr_1fr] sm:items-end">
+                  <div className="mt-4 grid gap-3 border-t border-zinc-800 pt-4 sm:col-span-2 sm:grid-cols-[auto_1fr_1fr] sm:items-end">
                     <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-zinc-400">
                       <input
                         type="checkbox"
