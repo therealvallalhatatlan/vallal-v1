@@ -557,7 +557,7 @@ async function upsertPaidOrderFromSession(
     && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(metadata.distributionCellId)
       ? metadata.distributionCellId
       : null;
-  const packageLabel = metadata.package_label ?? metadata.product_alias ?? productId;
+  const packageLabel = metadata.distributionProductName ?? metadata.package_label ?? metadata.product_alias ?? productId;
   const stripeAmountMinor = typeof session.amount_total === 'number' ? session.amount_total : null;
   const currency = (session.currency ?? 'huf').toLowerCase();
   const safeMetadata = sanitizeOrderMetadata(metadata);
