@@ -30,6 +30,7 @@ type OrderRow = {
   customer_email: string | null;
   status: string;
   delivery_type?: string | null;
+  distribution_cell_id?: string | null;
   metadata?: Record<string, unknown> | null;
   stripe_session_id?: string | null;
   stripe_checkout_session_id?: string | null;
@@ -111,7 +112,7 @@ async function loadOrder(source: OrderSource, orderId: string): Promise<OrderRow
   if (source === "orders") {
     const { data, error } = await supabaseAdmin()
       .from("orders")
-      .select("id, user_id, customer_email, status, delivery_type, metadata, stripe_session_id, dispatch_sent_at, dispatch_coordinates, user_received_at")
+      .select("id, user_id, customer_email, status, delivery_type, distribution_cell_id, metadata, stripe_session_id, dispatch_sent_at, dispatch_coordinates, user_received_at")
       .eq("id", orderId)
       .maybeSingle<OrderRow>();
     if (error) throw error;
@@ -201,6 +202,27 @@ async function findFulfillment(ordersOrderId: string | null, shopOrderId: string
   return data;
 }
 
+async function isDistributionCellMember(
+  source: OrderSource,
+  order: OrderRow,
+  requesterUserId: string,
+): Promise<boolean> {
+  const cellId = source === "shop_orders"
+    ? (typeof order.metadata?.distributionCellId === "string" ? order.metadata.distributionCellId : null)
+    : order.distribution_cell_id ?? null;
+  if (!cellId || !isUuid(cellId)) return false;
+
+  const { data, error } = await supabaseAdmin()
+    .from("distribution_cell_members")
+    .select("cell_id")
+    .eq("cell_id", cellId)
+    .eq("user_id", requesterUserId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return Boolean(data);
+}
+
 async function resolveRequestContext(
   source: OrderSource,
   orderId: string,
@@ -211,7 +233,7 @@ async function resolveRequestContext(
     return { ok: false as const, response: NextResponse.json({ error: "order_not_found" }, { status: 404 }) };
   }
 
-  const staff = isStaff(requester.email);
+  const staff = isStaff(requester.email) || await isDistributionCellMember(source, order, requester.id);
   const emailMatches = normalizeEmail(order.customer_email) !== ""
     && normalizeEmail(order.customer_email) === normalizeEmail(requester.email);
 
@@ -678,7 +700,7 @@ export async function PATCH(
     if (action === "mark_received") {
       if (resolved.orderIds.ordersOrderId) {
         await db.from("orders")
-          .update({ user_received_at: now })
+          .update({ user_received_at: now, status: "fulfilled", fulfilled_at: now })
           .eq("id", resolved.orderIds.ordersOrderId)
           .is("user_received_at", null);
       }
