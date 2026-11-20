@@ -66,6 +66,7 @@ export default function BookPurchaseCard({
   const [distributionPickupPoints, setDistributionPickupPoints] = useState<DistributionPickupPoint[]>([]);
   const [selectedDistributionCellId, setSelectedDistributionCellId] = useState<string | null>(null);
   const [pickupPointsLoading, setPickupPointsLoading] = useState(false);
+  const [pickupPointsLoaded, setPickupPointsLoaded] = useState(false);
   const [pickupPointsError, setPickupPointsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +80,7 @@ export default function BookPurchaseCard({
     deliveryMethod !== "personal" || Boolean(selectedDistributionCellId);
 
   useEffect(() => {
-    if (deliveryMethod !== "personal" || distributionPickupPoints.length || pickupPointsLoading) return;
+    if (deliveryMethod !== "personal" || pickupPointsLoaded) return;
     let active = true;
     setPickupPointsLoading(true);
     setPickupPointsError(null);
@@ -99,10 +100,13 @@ export default function BookPurchaseCard({
         if (active) setPickupPointsError(loadError instanceof Error ? loadError.message : "Az átvételi pontok betöltése nem sikerült.");
       })
       .finally(() => {
-        if (active) setPickupPointsLoading(false);
+        if (active) {
+          setPickupPointsLoading(false);
+          setPickupPointsLoaded(true);
+        }
       });
     return () => { active = false; };
-  }, [deliveryMethod]);
+  }, [deliveryMethod, pickupPointsLoaded]);
 
   async function handleCheckout() {
     if (!deliveryMethod || !pickupPointIsValid || !distributorPickupIsValid || loading) return;
