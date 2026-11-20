@@ -12,6 +12,11 @@ type Cell = {
   commission_default_huf: number
   stripe_connected_account_id: string | null
   stripe_payouts_enabled: boolean
+  pickup_enabled: boolean
+  pickup_public_name: string | null
+  pickup_area: string | null
+  pickup_description: string | null
+  pickup_sort_order: number
 }
 
 type QueueOrder = {
@@ -201,6 +206,41 @@ export default function AdminDistributionConsole() {
     setBusyId(null)
   }
 
+  function updatePickupCell(
+    cellId: string,
+    patch: Partial<Pick<Cell, "pickup_enabled" | "pickup_public_name" | "pickup_area" | "pickup_description" | "pickup_sort_order">>,
+  ) {
+    setCells((current) => current.map((cell) => cell.id === cellId ? { ...cell, ...patch } : cell))
+  }
+
+  async function savePickupSettings(cell: Cell) {
+    if (!token) return
+    setBusyId("pickup:" + cell.id)
+    setMessage(null)
+    const response = await fetch("/api/admin/distribution/cells/" + encodeURIComponent(cell.id), {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({
+        pickup_enabled: cell.pickup_enabled,
+        pickup_public_name: cell.pickup_public_name || "",
+        pickup_area: cell.pickup_area || "",
+        pickup_description: cell.pickup_description || "",
+        pickup_sort_order: cell.pickup_sort_order || 0,
+      }),
+    })
+    const json = await response.json()
+    if (!response.ok || !json?.ok) {
+      setMessage(json?.error === "pickup_public_name_and_area_required"
+        ? "A nyilvános pontnév és a városrész kötelező az aktiváláshoz."
+        : json?.error || "Az átvételi pont mentése nem sikerült.")
+      setBusyId(null)
+      return
+    }
+    setCells((current) => current.map((item) => item.id === cell.id ? { ...item, ...json.cell } : item))
+    setMessage("Átvételi pont beállításai mentve: " + cell.name)
+    setBusyId(null)
+  }
+
   if (!token) {
     return <main className="min-h-screen bg-black px-5 py-16 text-center text-zinc-400">Admin bejelentkezés szükséges.</main>
   }
@@ -242,6 +282,55 @@ export default function AdminDistributionConsole() {
                   <div className="text-right">
                     <span className={"text-[10px] uppercase tracking-[0.18em] " + (cell.stripe_payouts_enabled ? "text-lime-100" : "text-zinc-600")}>{cell.stripe_payouts_enabled ? "STRIPE KÉSZ" : "STRIPE NINCS KÉSZ"}</span>
                     <button type="button" onClick={() => void connectCell(cell.id)} disabled={busyId === cell.id} className="ml-4 border border-zinc-700 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-zinc-300 hover:border-lime-200/50 disabled:opacity-50">{busyId === cell.id ? "…" : cell.stripe_connected_account_id ? "ONBOARDING" : "STRIPE BEKÖTÉSE"}</button>
+                  </div>
+                  <div className="mt-4 grid gap-3 border-t border-zinc-800 pt-4 sm:grid-cols-[auto_1fr_1fr] sm:items-end">
+                    <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-zinc-400">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(cell.pickup_enabled)}
+                        onChange={(event) => updatePickupCell(cell.id, { pickup_enabled: event.target.checked })}
+                        className="accent-lime-200"
+                      />
+                      Vásárlói átvételi pont
+                    </label>
+                    <label className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+                      Nyilvános pontnév
+                      <input
+                        value={cell.pickup_public_name || ""}
+                        onChange={(event) => updatePickupCell(cell.id, { pickup_public_name: event.target.value })}
+                        maxLength={100}
+                        placeholder="Budapest / Margit híd"
+                        className="mt-1 w-full border border-zinc-800 bg-black px-3 py-2 text-xs text-zinc-200"
+                      />
+                    </label>
+                    <label className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
+                      Városrész / környék
+                      <input
+                        value={cell.pickup_area || ""}
+                        onChange={(event) => updatePickupCell(cell.id, { pickup_area: event.target.value })}
+                        maxLength={120}
+                        placeholder="Margit híd budai hídfő"
+                        className="mt-1 w-full border border-zinc-800 bg-black px-3 py-2 text-xs text-zinc-200"
+                      />
+                    </label>
+                    <label className="text-[10px] uppercase tracking-[0.12em] text-zinc-500 sm:col-span-2">
+                      Rövid leírás
+                      <input
+                        value={cell.pickup_description || ""}
+                        onChange={(event) => updatePickupCell(cell.id, { pickup_description: event.target.value })}
+                        maxLength={400}
+                        placeholder="Személyes átvétel előre egyeztetett időpontban."
+                        className="mt-1 w-full border border-zinc-800 bg-black px-3 py-2 text-xs text-zinc-200"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => void savePickupSettings(cell)}
+                      disabled={busyId === "pickup:" + cell.id}
+                      className="border border-lime-200/40 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-lime-100 hover:bg-lime-100/5 disabled:opacity-50"
+                    >
+                      {busyId === "pickup:" + cell.id ? "MENTÉS…" : "ÁTVÉTELI PONT MENTÉSE"}
+                    </button>
                   </div>
                 </div>
               )) : <div className="px-4 py-8 text-sm text-zinc-600">Még nincs sejt.</div>}
