@@ -53,7 +53,7 @@ const STATUS_LABELS: Record<FulfillmentStatus, string> = {
 };
 
 const METHOD_LABELS: Record<DeliveryMethod, string> = {
-  "dead-drop": "Dead drop / egyeztetett átvétel",
+  "dead-drop": "Dead drop / hálózati átadás",
   postaautomata: "Csomagautomata / csomagpont",
   eu: "EU-s szállítás",
   personal: "Személyes átvétel",
