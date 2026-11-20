@@ -5,8 +5,8 @@ export const EU_SHIPPING_FEE = 5000;
 
 export const DELIVERY_METHODS: Record<DeliveryMethod, { label: string; description: string; fee: number }> = {
   "dead-drop": {
-    label: "Dead drop terjesztéssel",
-    description: "Személyes, egyeztetett átvétel a hálózaton keresztül.",
+    label: "Dead drop / hálózati átadás",
+    description: "Rejtett, előre egyeztetett átadás a hálózaton keresztül.",
     fee: 0,
   },
   personal: {
