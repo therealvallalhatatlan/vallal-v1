@@ -516,7 +516,7 @@ export default function CellConsole() {
                   <div className="mt-1 text-[10px] uppercase tracking-[0.14em] text-zinc-600">#{order.id.slice(0, 8)} · {order.distribution_fulfillment_method || order.delivery_type} · {Number(order.amount / 100).toLocaleString("hu-HU")} Ft</div>
                 </div>
                 <div className="flex flex-wrap justify-end gap-2">
-                  {order.status === "paid" && (
+                  {order.status === "paid" && order.distribution_fulfillment_method !== "personal" && (
                     <button type="button" onClick={async () => {
                       if (!token) return
                       await fetch("/api/distribution/cell/orders/" + order.id, {
