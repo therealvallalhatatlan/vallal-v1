@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let distributionPickupLabel: string | null = null;
     if (deliveryMethod === "personal") {
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(distributionCellId)) {
         return NextResponse.json({ error: "Válassz egy személyes átvételi pontot." }, { status: 400 });
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
 
       const { data: pickupCell, error: pickupCellError } = await supabaseAdmin()
         .from("distribution_cells")
-        .select("id")
+        .select("id, name, city, pickup_public_name, pickup_area")
         .eq("id", distributionCellId)
         .eq("status", "active")
         .eq("pickup_enabled", true)
@@ -120,6 +121,12 @@ export async function POST(req: NextRequest) {
       if (!pickupCell) {
         return NextResponse.json({ error: "A kiválasztott átvételi pont jelenleg nem elérhető." }, { status: 400 });
       }
+
+      distributionPickupLabel = [
+        pickupCell.pickup_public_name?.trim() || pickupCell.name,
+        pickupCell.pickup_area,
+        pickupCell.city,
+      ].filter(Boolean).join(" · ");
     }
 
     if (isBookCheckout && deliveryMethod === "postaautomata" && !pickupPointData) {
@@ -134,7 +141,9 @@ export async function POST(req: NextRequest) {
       items: validatedItems,
       deliveryMethod,
       userId: authenticatedUser?.id ?? null,
-      pickupPoint: isBookCheckout && deliveryMethod === "postaautomata" ? pickupPoint : null,
+      pickupPoint: isBookCheckout && deliveryMethod === "postaautomata"
+        ? pickupPoint
+        : deliveryMethod === "personal" ? distributionPickupLabel : null,
       pickupPointMetadata:
         isBookCheckout && deliveryMethod === "postaautomata" ? pickupPointMetadata : null,
       distributionCellId: deliveryMethod === "personal" ? distributionCellId : null,
@@ -208,7 +217,11 @@ export async function POST(req: NextRequest) {
         product_id: validatedItems.length === 1 ? validatedItems[0]?.product.id ?? "multi_cart" : "multi_cart",
         deliveryMethod,
         ...(isBookCheckout && deliveryMethod === "postaautomata" ? pickupPointMetadata : {}),
-        ...(deliveryMethod === "personal" ? { distributionCellId } : {}),
+        ...(deliveryMethod === "personal" ? {
+          distributionCellId,
+          pickupPoint: distributionPickupLabel ?? "",
+          distributionProductName: validatedItems.map((item) => item.product.name).join(", "),
+        } : {}),
         shippingAmount: String(draftOrder.shippingAmount),
         totalAmount: String(draftOrder.totalAmount),
       },
