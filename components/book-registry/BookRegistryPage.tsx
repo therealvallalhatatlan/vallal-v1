@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/browser";
-import { Montserrat } from "next/font/google";
 import MainContent from "@/components/MainContent";
 import Footer from "@/components/Footer";
 import { buildAuthHref, persistAuthReturnTarget } from "@/lib/authRedirect";
@@ -19,7 +18,7 @@ type Draft = { lat: number | null; lng: number | null };
 type EditionCode = "book_1" | "book_2";
 type Suggestion = { editionCode: EditionCode; editionTitle: string; serialPrefix: string; serialNumber: number; serialLabel: string };
 
-const montserrat = Montserrat({ subsets: ["latin-ext"], weight: "800" });
+const montserrat = { className: "font-sans", variable: "font-sans" };
 const supabase = createClient();
 const CLAIM_KEY = "vallal:book-registry:claim-token";
 const TRANSFER_KEY = "vallal:book-registry:transfer-token";
