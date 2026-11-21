@@ -3,7 +3,6 @@
 import { Fragment, useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Montserrat } from "next/font/google"
 import { RefreshCw } from "lucide-react"
 import Reviews from "@/components/Reviews"
 
