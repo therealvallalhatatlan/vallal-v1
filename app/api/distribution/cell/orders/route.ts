@@ -38,5 +38,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "server_error" }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true, orders: data || [] })
+  const orders = (data || []).map((order) => {
+    const metadata = order.metadata && typeof order.metadata === "object" && !Array.isArray(order.metadata)
+      ? order.metadata as Record<string, unknown>
+      : {};
+    return {
+      ...order,
+      shop_order_id: typeof metadata.order_id === "string" ? metadata.order_id : null,
+    };
+  })
+
+  return NextResponse.json({ ok: true, orders })
 }

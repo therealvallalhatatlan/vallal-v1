@@ -4,5 +4,10 @@
       "path": "/api/system/proactive?dry_run=false",
       "schedule": "0 12 * * *"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "feature/personal-distributor-pickup": false
+    }
+  }
 }

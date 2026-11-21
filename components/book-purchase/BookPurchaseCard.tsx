@@ -1,12 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DeliveryMethod } from "@/lib/shop/delivery";
 import { createClient } from "@/lib/browser";
 import { FoxpostPickupPointSelector } from "@/components/foxpost/FoxpostPickupPointSelector";
 import type { FoxpostPickupPoint } from "@/types/foxpost";
 
 type BookProductId = "book-1" | "book-2";
+
+type DistributionPickupPoint = {
+  id: string;
+  name: string;
+  city: string;
+  area: string | null;
+  description: string | null;
+};
 
 type BookPurchaseCardProps = {
   productId: BookProductId;
@@ -23,8 +31,14 @@ const OPTIONS: Array<{
 }> = [
   {
     value: "dead-drop",
-    label: "Dead drop / egyeztetett átvétel",
-    description: "Személyes, egyeztetett átvétel a hálózaton keresztül.",
+    label: "Dead drop / hálózati átadás",
+    description: "Rejtett, előre egyeztetett átadás a hálózaton keresztül.",
+    fee: 0,
+  },
+  {
+    value: "personal",
+    label: "Személyes átvétel disztribútornál",
+    description: "Válassz egy budapesti átvevőpontot. A pontos címet időpont-egyeztetés után kapod meg.",
     fee: 0,
   },
   {
@@ -49,6 +63,11 @@ export default function BookPurchaseCard({
 }: BookPurchaseCardProps) {
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod | null>(null);
   const [pickupPoint, setPickupPoint] = useState<FoxpostPickupPoint | null>(null);
+  const [distributionPickupPoints, setDistributionPickupPoints] = useState<DistributionPickupPoint[]>([]);
+  const [selectedDistributionCellId, setSelectedDistributionCellId] = useState<string | null>(null);
+  const [pickupPointsLoading, setPickupPointsLoading] = useState(false);
+  const [pickupPointsLoaded, setPickupPointsLoaded] = useState(false);
+  const [pickupPointsError, setPickupPointsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,9 +76,40 @@ export default function BookPurchaseCard({
   const total = BOOK_PRICE + deliveryFee;
   const pickupPointIsValid =
     deliveryMethod !== "postaautomata" || Boolean(pickupPoint?.destinationId);
+  const distributorPickupIsValid =
+    deliveryMethod !== "personal" || Boolean(selectedDistributionCellId);
+
+  useEffect(() => {
+    if (deliveryMethod !== "personal" || pickupPointsLoaded) return;
+    let active = true;
+    setPickupPointsLoading(true);
+    setPickupPointsError(null);
+    fetch("/api/shop/pickup-points", { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload?.error || "Az átvételi pontok betöltése nem sikerült.");
+        return Array.isArray(payload?.pickupPoints) ? payload.pickupPoints as DistributionPickupPoint[] : [];
+      })
+      .then((points) => {
+        if (active) {
+          setDistributionPickupPoints(points);
+          if (points.length === 1) setSelectedDistributionCellId(points[0].id);
+        }
+      })
+      .catch((loadError) => {
+        if (active) setPickupPointsError(loadError instanceof Error ? loadError.message : "Az átvételi pontok betöltése nem sikerült.");
+      })
+      .finally(() => {
+        if (active) {
+          setPickupPointsLoading(false);
+          setPickupPointsLoaded(true);
+        }
+      });
+    return () => { active = false; };
+  }, [deliveryMethod, pickupPointsLoaded]);
 
   async function handleCheckout() {
-    if (!deliveryMethod || !pickupPointIsValid || loading) return;
+    if (!deliveryMethod || !pickupPointIsValid || !distributorPickupIsValid || loading) return;
 
     setLoading(true);
     setError(null);
@@ -87,6 +137,9 @@ export default function BookPurchaseCard({
           items: [{ productId, quantity: 1 }],
           deliveryMethod,
           ...(deliveryMethod === "postaautomata" && pickupPoint ? { pickupPoint } : {}),
+          ...(deliveryMethod === "personal" && selectedDistributionCellId
+            ? { distributionCellId: selectedDistributionCellId }
+            : {}),
         }),
       });
 
@@ -189,6 +242,52 @@ export default function BookPurchaseCard({
         </div>
       )}
 
+      {deliveryMethod === "personal" && (
+        <div className="mt-4 space-y-2">
+          <p className="text-[9px] uppercase tracking-[0.18em] text-lime-100/60">
+            VÁLASZTHATÓ ÁTVÉTELI PONTOK
+          </p>
+          {pickupPointsLoading ? (
+            <p className="text-xs text-zinc-500">Átvételi pontok betöltése…</p>
+          ) : pickupPointsError ? (
+            <p role="alert" className="text-xs text-red-300">{pickupPointsError}</p>
+          ) : distributionPickupPoints.length ? (
+            distributionPickupPoints.map((point) => {
+              const selected = selectedDistributionCellId === point.id;
+              return (
+                <label
+                  key={point.id}
+                  className={"flex cursor-pointer items-start gap-3 border p-3 transition-colors " +
+                    (selected ? "border-lime-200/70 bg-lime-200/[0.06]" : "border-zinc-800 bg-black/30 hover:border-zinc-600")}
+                >
+                  <input
+                    type="radio"
+                    name={"distributor-pickup-" + productId}
+                    value={point.id}
+                    checked={selected}
+                    onChange={() => setSelectedDistributionCellId(point.id)}
+                    className="mt-1 accent-lime-200"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-zinc-100">{point.name}</span>
+                    <span className="mt-1 block text-xs text-zinc-400">{point.city}{point.area ? " · " + point.area : ""}</span>
+                    {point.description ? <span className="mt-1 block text-xs leading-relaxed text-zinc-500">{point.description}</span> : null}
+                  </span>
+                  <span className="shrink-0 text-xs font-semibold text-lime-100/80">0 Ft</span>
+                </label>
+              );
+            })
+          ) : (
+            <p className="border border-zinc-800 p-3 text-xs leading-relaxed text-zinc-500">
+              Jelenleg nincs bekapcsolt személyes átvételi pont. Válassz másik kézbesítési módot.
+            </p>
+          )}
+          <p className="text-[10px] leading-relaxed text-zinc-600">
+            A pontos átvételi címet a terjesztő az időpont egyeztetése után osztja meg.
+          </p>
+        </div>
+      )}
+
       {deliveryMethod === "eu" && (
         <p className="mt-3 border-l border-zinc-700 pl-3 text-xs leading-relaxed text-zinc-500">
           Az EU-n belüli szállítási címet a következő, biztonságos fizetési lépésben kell megadnod.
@@ -215,7 +314,7 @@ export default function BookPurchaseCard({
       <button
         type="button"
         onClick={handleCheckout}
-        disabled={!deliveryMethod || !pickupPointIsValid || loading}
+        disabled={!deliveryMethod || !pickupPointIsValid || !distributorPickupIsValid || loading}
         className="mt-4 flex min-h-14 w-full items-center justify-between rounded-sm border border-lime-100/70 bg-lime-100/[0.04] px-4 text-sm font-bold tracking-[0.06em] text-lime-100 transition-colors hover:bg-lime-100/10 disabled:cursor-not-allowed disabled:border-zinc-800 disabled:bg-transparent disabled:text-zinc-600"
       >
         <span>{loading ? "FIZETÉS ELŐKÉSZÍTÉSE…" : "MEGVESZEM A KÖNYVET"}</span>

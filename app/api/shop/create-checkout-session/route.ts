@@ -37,7 +37,7 @@ const EU_SHIPPING_COUNTRIES: Stripe.Checkout.SessionCreateParams.ShippingAddress
 ];
 
 function parseDeliveryMethod(input: unknown): DeliveryMethod {
-  if (input === "postaautomata" || input === "eu" || input === "dead-drop") {
+  if (input === "postaautomata" || input === "eu" || input === "dead-drop" || input === "personal") {
     return input;
   }
   return "dead-drop";
@@ -62,6 +62,8 @@ export async function POST(req: NextRequest) {
     const authenticatedUser = token ? await getUserFromToken(token) : null;
     const items = Array.isArray(body?.items) ? (body.items as CheckoutItem[]) : [];
     const deliveryMethod = parseDeliveryMethod(body?.deliveryMethod);
+    const distributionCellId =
+      typeof body?.distributionCellId === "string" ? body.distributionCellId.trim() : "";
     const pickupPointData = parseFoxpostPickupPoint(body?.pickupPoint);
     const legacyPickupPoint =
       typeof body?.pickupPoint === "string" ? body.pickupPoint.trim().slice(0, 240) : "";
@@ -91,6 +93,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (deliveryMethod === "personal" && !isBookCheckout) {
+      return NextResponse.json(
+        { error: "Személyes disztribútori átvétel csak könyvrendeléshez választható." },
+        { status: 400 }
+      );
+    }
+
+    let distributionPickupLabel: string | null = null;
+    if (deliveryMethod === "personal") {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(distributionCellId)) {
+        return NextResponse.json({ error: "Válassz egy személyes átvételi pontot." }, { status: 400 });
+      }
+
+      const { data: pickupCell, error: pickupCellError } = await supabaseAdmin()
+        .from("distribution_cells")
+        .select("id, name, city, pickup_public_name, pickup_area")
+        .eq("id", distributionCellId)
+        .eq("status", "active")
+        .eq("pickup_enabled", true)
+        .maybeSingle();
+
+      if (pickupCellError) {
+        console.error("[shop/checkout] pickup point validation failed", pickupCellError);
+        return NextResponse.json({ error: "Az átvételi pont ellenőrzése nem sikerült." }, { status: 500 });
+      }
+      if (!pickupCell) {
+        return NextResponse.json({ error: "A kiválasztott átvételi pont jelenleg nem elérhető." }, { status: 400 });
+      }
+
+      distributionPickupLabel = [
+        pickupCell.pickup_public_name?.trim() || pickupCell.name,
+        pickupCell.pickup_area,
+        pickupCell.city,
+      ].filter(Boolean).join(" · ");
+    }
+
     if (isBookCheckout && deliveryMethod === "postaautomata" && !pickupPointData) {
       return NextResponse.json(
         { error: "Válassz ki egy Foxpost átvételi pontot a fizetés előtt." },
@@ -103,9 +141,12 @@ export async function POST(req: NextRequest) {
       items: validatedItems,
       deliveryMethod,
       userId: authenticatedUser?.id ?? null,
-      pickupPoint: isBookCheckout && deliveryMethod === "postaautomata" ? pickupPoint : null,
+      pickupPoint: isBookCheckout && deliveryMethod === "postaautomata"
+        ? pickupPoint
+        : deliveryMethod === "personal" ? distributionPickupLabel : null,
       pickupPointMetadata:
         isBookCheckout && deliveryMethod === "postaautomata" ? pickupPointMetadata : null,
+      distributionCellId: deliveryMethod === "personal" ? distributionCellId : null,
     });
     draftOrderId = draftOrder.orderId;
 
@@ -176,6 +217,11 @@ export async function POST(req: NextRequest) {
         product_id: validatedItems.length === 1 ? validatedItems[0]?.product.id ?? "multi_cart" : "multi_cart",
         deliveryMethod,
         ...(isBookCheckout && deliveryMethod === "postaautomata" ? pickupPointMetadata : {}),
+        ...(deliveryMethod === "personal" ? {
+          distributionCellId,
+          pickupPoint: distributionPickupLabel ?? "",
+          distributionProductName: validatedItems.map((item) => item.product.name).join(", "),
+        } : {}),
         shippingAmount: String(draftOrder.shippingAmount),
         totalAmount: String(draftOrder.totalAmount),
       },

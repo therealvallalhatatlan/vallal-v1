@@ -21,6 +21,7 @@ export interface CreateShopOrderDraftInput {
   userId?: string | null;
   pickupPoint?: string | null;
   pickupPointMetadata?: Record<string, string> | null;
+  distributionCellId?: string | null;
 }
 
 type CampaignRow = {
@@ -66,6 +67,7 @@ export async function createShopOrderDraft({
   userId,
   pickupPoint,
   pickupPointMetadata,
+  distributionCellId,
 }: CreateShopOrderDraftInput): Promise<{ orderId: string; subtotalAmount: number; shippingAmount: number; totalAmount: number; }> {
   const subtotalAmount = items.reduce((sum, item) => sum + item.product.price * 100 * item.quantity, 0);
   const shippingAmount = getDeliveryFee(deliveryMethod) * 100;
@@ -82,6 +84,7 @@ export async function createShopOrderDraft({
       metadata: {
         source: "shop",
         deliveryMethod,
+        distributionCellId: distributionCellId ?? null,
         pickupPoint: pickupPoint ?? null,
         ...(pickupPointMetadata ?? {}),
         shippingAmount,

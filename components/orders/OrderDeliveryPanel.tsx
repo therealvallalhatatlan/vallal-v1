@@ -53,7 +53,7 @@ const STATUS_LABELS: Record<FulfillmentStatus, string> = {
 };
 
 const METHOD_LABELS: Record<DeliveryMethod, string> = {
-  "dead-drop": "Dead drop / egyeztetett átvétel",
+  "dead-drop": "Dead drop / hálózati átadás",
   postaautomata: "Csomagautomata / csomagpont",
   eu: "EU-s szállítás",
   personal: "Személyes átvétel",
@@ -215,7 +215,7 @@ export default function OrderDeliveryPanel({ orderId, source, token }: Props) {
           </div>
 
           {fulfillment.pickup_point ? (
-            <p className="mt-3 text-xs text-zinc-400">Csomagpont: {fulfillment.pickup_point}</p>
+            <p className="mt-3 text-xs text-zinc-400">{method === "personal" ? "Kiválasztott átvételi pont:" : "Csomagpont:"} {fulfillment.pickup_point}</p>
           ) : null}
 
           {fulfillment.proposed_pickup_at ? (

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   const db = supabaseAdmin()
   const { data: cells, error } = await db
     .from("distribution_cells")
-    .select("id, code, name, city, country_code, status, commission_default_huf, stripe_connected_account_id, stripe_payouts_enabled, created_at, updated_at")
+    .select("id, code, name, city, country_code, status, commission_default_huf, stripe_connected_account_id, stripe_payouts_enabled, pickup_enabled, pickup_public_name, pickup_area, pickup_description, pickup_sort_order, created_at, updated_at")
     .order("city", { ascending: true })
     .order("name", { ascending: true })
 

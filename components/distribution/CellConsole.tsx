@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { createClient } from "@/lib/browser"
+import OrderDeliveryPanel from "@/components/orders/OrderDeliveryPanel"
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
 const MAX_IMAGE_EDGE = 2048
@@ -126,7 +127,9 @@ export default function CellConsole() {
     delivery_type: string
     distribution_fulfillment_method: string | null
     distribution_product_name: string | null
+    shop_order_id: string | null
   }>>([])
+  const [openFulfillmentOrderId, setOpenFulfillmentOrderId] = useState<string | null>(null)
   const [cellId, setCellId] = useState("")
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -513,17 +516,26 @@ export default function CellConsole() {
                   <div className="mt-1 text-[10px] uppercase tracking-[0.14em] text-zinc-600">#{order.id.slice(0, 8)} · {order.distribution_fulfillment_method || order.delivery_type} · {Number(order.amount / 100).toLocaleString("hu-HU")} Ft</div>
                 </div>
                 <div className="flex flex-wrap justify-end gap-2">
-                  {order.status === "paid" && (
+                  {order.status === "paid" && order.distribution_fulfillment_method !== "personal" && (
                     <button type="button" onClick={async () => {
                       if (!token) return
                       await fetch("/api/distribution/cell/orders/" + order.id, {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-                        body: JSON.stringify({ status: order.distribution_fulfillment_method === "dead_drop" || order.distribution_fulfillment_method === "personal" ? "fulfilled" : "ready_to_dispatch" }),
+                        body: JSON.stringify({ status: order.distribution_fulfillment_method === "dead_drop" ? "fulfilled" : "ready_to_dispatch" }),
                       })
                       await load()
                     }} className="border border-zinc-700 px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-zinc-300 hover:border-lime-200/50">
-                      {order.distribution_fulfillment_method === "dead_drop" || order.distribution_fulfillment_method === "personal" ? "ÁTADVA" : "ÖSSZEKÉSZÍTVE"}
+                      {order.distribution_fulfillment_method === "dead_drop" ? "ÁTADVA" : "ÖSSZEKÉSZÍTVE"}
+                    </button>
+                  )}
+                  {order.status === "paid" && order.distribution_fulfillment_method === "personal" && (
+                    <button
+                      type="button"
+                      onClick={() => setOpenFulfillmentOrderId((current) => current === order.id ? null : order.id)}
+                      className="border border-lime-200/50 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] text-lime-100 hover:bg-lime-100/5"
+                    >
+                      {openFulfillmentOrderId === order.id ? "EGYEZTETÉS BEZÁRÁSA" : "ÁTVÉTEL EGYEZTETÉSE"}
                     </button>
                   )}
                   {order.status === "ready_to_dispatch" && (
@@ -550,6 +562,15 @@ export default function CellConsole() {
                   )}
                   <span className="self-center text-[10px] uppercase tracking-[0.16em] text-zinc-600">{order.status}</span>
                 </div>
+                {order.distribution_fulfillment_method === "personal" && openFulfillmentOrderId === order.id ? (
+                  <div className="sm:col-span-2">
+                    <OrderDeliveryPanel
+                      orderId={order.shop_order_id || order.id}
+                      source={order.shop_order_id ? "shop_orders" : "orders"}
+                      token={token}
+                    />
+                  </div>
+                ) : null}
               </div>
             )) : <div className="px-4 py-8 text-sm text-zinc-600">Nincs teljesítésre váró rendelés.</div>}
           </div>
