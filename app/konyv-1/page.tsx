@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
 import MainContent from "@/components/MainContent";
 import Footer from "@/components/Footer";
-import { Montserrat } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
 import Reviews from "@/components/Reviews";
 import BookPurchaseCard from "@/components/book-purchase/BookPurchaseCard";
 
-const montserrat = Montserrat({
-  subsets: ["latin-ext"],
-  weight: "800",
-});
+const montserrat = { className: "font-sans", variable: "font-sans" };
 
 export const metadata: Metadata = {
   title: "Vállalhatatlan I. könyv",
