@@ -1,10 +1,4 @@
-const montserrat = Montserrat({
-  subsets: ["latin-ext"],
-  style: ["normal", "italic"],
-  weight: "800",
-})
-
-export default function Reviews() {
+const montserrat = { className: "font-sans", variable: "font-sans" };export default function Reviews() {
   const reviews = [
     {
       text: "Bizsergetően jó cucc - és persze teljesen legális. Megcsavar, mélyre visz, szórakoztat - deviáns, abszurd, és azt hiszem őszinte ez a strukturált zűrzavar ami egy jószándékú ámokfutás zseniális leirata.",
