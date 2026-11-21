@@ -39,8 +39,14 @@
   --sidebar-accent-foreground: oklch(0.28 0.04 260);
   --sidebar-border: oklch(0.88 0.01 95);
   --sidebar-ring: oklch(0.7 0.15 142);
-  --font-serif: "Crimson Pro", serif;
-  --font-sans-reader: "Inter", sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+  --font-sans-reader: var(--font-geist-sans, system-ui, sans-serif);
+  --font-heading: "Courier New", "Liberation Mono", monospace;
+  --font-hero: "Arial Black", Impact, sans-serif;
+  --font-logo: "Arial Narrow", Arial, sans-serif;
+  --font-mono-tech: var(--font-geist-mono, ui-monospace, monospace);
+  --font-terminal: var(--font-geist-mono, ui-monospace, monospace);
+  --font-auth: var(--font-geist-sans, system-ui, sans-serif);
 }
 
 .dark {
