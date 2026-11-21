@@ -3,13 +3,9 @@ import Link from "next/link";
 import MainContent from "@/components/MainContent";
 import Footer from "@/components/Footer";
 import LabContact from "@/components/LabContact";
-import { Montserrat } from "next/font/google";
 import Image from "next/image";
 
-const montserrat = Montserrat({
-  subsets: ["latin-ext"],
-  weight: "800",
-});
+const montserrat = { className: "font-sans", variable: "font-sans" };
 
 export const metadata: Metadata = {
   title: "LAB - Vállalhatatlan",
