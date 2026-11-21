@@ -1,17 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Montserrat } from "next/font/google";
 import { POSTA_AUTOMATA_FEE } from "@/lib/shop/delivery";
 import { Product } from "@/lib/shop/products";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PreorderCampaignSummary } from "@/lib/shop/preorder";
 
-const montserrat = Montserrat({
-  subsets: ["latin-ext"],
-  weight: "800",
-});
+const montserrat = { className: "font-sans", variable: "font-sans" };
 
 interface ProductCardProps {
   product: Product;

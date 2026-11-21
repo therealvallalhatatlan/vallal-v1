@@ -2,20 +2,13 @@
 
 import Link from "next/link"
 import { useEffect, useState, useRef } from "react"
-import { Montserrat } from "next/font/google"
 import { RefreshCw, Volume2, VolumeX } from "lucide-react"
 import Reviews from "@/components/Reviews"
 import { Badge } from "@/components/Badge"
 import Image from "next/image"
 import { createClient } from "@/lib/browser"
 
-const montserrat = Montserrat({
-  subsets: ["latin-ext"],
-  style: ["normal", "italic"],
-  weight: "800",
-})
-
-type RandomStory = {
+const montserrat = { className: "font-sans", variable: "font-sans" };type RandomStory = {
   source: "konyv2" | "stories"
   slug: string
   title: string

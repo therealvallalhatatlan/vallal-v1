@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Montserrat } from "next/font/google";
 import { createClient } from "@/lib/browser";
 import {
   persistAuthReturnTarget,
@@ -10,11 +9,7 @@ import {
 } from "@/lib/authRedirect";
 import { getAttributionSource, trackEvent } from "@/lib/siteAnalytics";
 
-const montserrat = Montserrat({
-  subsets: ["latin-ext"],
-  weight: ["500", "600", "700"],
-  variable: "--font-auth",
-});
+const montserrat = { className: "font-sans", variable: "font-sans" };
 
 const supabase = createClient();
 const VIDEO_SRC = "/videos/film2.mp4";

@@ -2,19 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Montserrat } from "next/font/google";
 import { SupportersTicker } from "@/components/supporters/SupportersTicker";
 import { SUPPORTER_NAMES } from "@/data/supporters";
 import Footer from "@/components/Footer";
 import MainContent from "@/components/MainContent";
 import { getAttributionSource, trackEvent } from "@/lib/siteAnalytics";
 
-const montserrat = Montserrat({
-  subsets: ["latin-ext"],
-  weight: ["800"],
-  style: ["italic"],
-  display: "swap",
-});
+const montserrat = { className: "font-sans", variable: "font-sans" };
 
 const MIN_AMOUNT_HUF = 1000;
 const MAX_AMOUNT_HUF = 500000;

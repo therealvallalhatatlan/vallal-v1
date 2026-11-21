@@ -3,17 +3,10 @@
 import { Fragment, useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Montserrat } from "next/font/google"
 import { RefreshCw } from "lucide-react"
 import Reviews from "@/components/Reviews"
 
-const montserrat = Montserrat({
-  subsets: ["latin-ext"],
-  style: ["normal", "italic"],
-  weight: "800",
-})
-
-const HERO_HEADLINES = [
+const montserrat = { className: "font-sans", variable: "font-sans" };const HERO_HEADLINES = [
   "MA KI KELL VINNEM A KUKÁT.",
   "ÖTTŐL VAGYOK.",
   "EZ MOST A VALÓSÁG?",

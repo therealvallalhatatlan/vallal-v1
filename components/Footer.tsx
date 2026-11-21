@@ -1,10 +1,4 @@
-import { Montserrat } from "next/font/google";
-
-const montserrat = Montserrat({
-  subsets: ["latin-ext"],
-  weight: "800",
-  style: "italic",
-});
+const montserrat = { className: "font-sans", variable: "font-sans" };
 
 export default function Footer() {
   return (

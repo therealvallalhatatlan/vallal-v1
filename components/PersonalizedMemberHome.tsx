@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Montserrat } from "next/font/google"
 import {
   ArrowUpRight,
   BookMarked,
@@ -25,13 +24,7 @@ import type {
   HomepageProductCandidate,
 } from "@/lib/homepage-ai/types"
 
-const montserrat = Montserrat({
-  subsets: ["latin-ext"],
-  style: ["normal", "italic"],
-  weight: "800",
-})
-
-type SessionShape = {
+const montserrat = { className: "font-sans", variable: "font-sans" };type SessionShape = {
   access_token?: string
   user?: {
     user_metadata?: {
