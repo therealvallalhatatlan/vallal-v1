@@ -7,7 +7,6 @@ import "./globals.css"
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 // import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
-import { Crimson_Pro, Inter, VT323, Special_Elite, Oswald, Roboto_Condensed, JetBrains_Mono } from "next/font/google";
 import PWAInstallManager from "@/components/PWAInstallManager";
 import AuthUrlSessionSync from "@/components/AuthUrlSessionSync";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -19,14 +18,6 @@ import NetworkInboxSheet from "@/components/notifications/NetworkInboxSheet";
 import GlobalNotificationToasts from "@/components/notifications/GlobalNotificationToasts";
 import LayoutNavigationGuard from "@/components/LayoutNavigationGuard";
 import CuriosityLayer from "@/components/CuriosityLayer";
-
-const crimson = Crimson_Pro({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-serif" });
-const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-sans-reader" });
-const specialElite = Special_Elite({ subsets: ["latin"], weight: "400", variable: "--font-heading" });
-const oswald = Oswald({ subsets: ["latin"], weight: ["700"], variable: "--font-hero" });
-const robotoCond = Roboto_Condensed({ subsets: ["latin"], weight: ["700"], style: ["italic"], variable: "--font-logo" });
-const jetMono = JetBrains_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-mono-tech" });
-const vt323 = VT323({ subsets: ["latin"], weight: "400", variable: "--font-terminal" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://vallalhatatlan.online"),
@@ -53,11 +44,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`
-          ${crimson.variable} ${inter.variable} ${specialElite.variable} ${vt323.variable}
-          ${oswald.variable} ${robotoCond.variable} ${jetMono.variable}
-          antialiased overflow-x-hidden
-        `}
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased overflow-x-hidden`}
         style={{ touchAction: 'pan-y' }}
       >
         {/* Source-code easter egg: rendered as a real HTML comment in Page Source. */}
