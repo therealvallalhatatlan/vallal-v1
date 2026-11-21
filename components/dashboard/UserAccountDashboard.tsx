@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { useMemo, useRef, useState } from "react"
 import { BookMarked, BookOpen, Check, ChevronDown, Crown, HeartHandshake, Pencil, ShoppingBag, X } from "lucide-react"
-import { Montserrat } from "next/font/google"
 import { createClient } from "@/lib/browser"
 import UserAvatarWithBadges from "@/components/UserAvatarWithBadges"
 import OrderMessagesPanel from "@/components/orders/OrderMessagesPanel"
@@ -18,13 +17,7 @@ const DASHBOARD_BADGE_ICONS = {
   merch: ShoppingBag,
 } as const
 
-const heroHeadline = Montserrat({
-  subsets: ["latin-ext"],
-  style: ["normal", "italic"],
-  weight: "800",
-})
-
-type Props = {
+const heroHeadline = { className: "font-sans", variable: "font-sans" };type Props = {
   account: DashboardAccountResponse
   token: string | null
 }
