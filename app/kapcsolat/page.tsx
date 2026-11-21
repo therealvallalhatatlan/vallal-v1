@@ -3,9 +3,7 @@
 import { FormEvent, useState } from "react";
 import MainContent from "@/components/MainContent";
 import Footer from "@/components/Footer";
-import { Montserrat } from "next/font/google";
-
-const montserrat = Montserrat({ subsets: ["latin-ext"], weight: "800" });
+const montserrat = { className: "font-sans", variable: "font-sans" };
 
 type Step = 1 | 2 | 3;
 
