@@ -5,10 +5,8 @@ import { createClient } from "@/lib/browser"
 
 type Cell = {
   id: string
-  code: string
   name: string
   city: string
-  status: string
   pickup_enabled: boolean
   pickup_public_name: string | null
   pickup_area: string | null
@@ -271,22 +269,22 @@ export default function AdminDistributionConsole() {
                       Vásárlói átvételi pont
                     </label>
                     <label className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-                      Nyilvános pontnév
+                      Disztribútor neve
                       <input
                         value={cell.pickup_public_name || ""}
                         onChange={(event) => updatePickupCell(cell.id, { pickup_public_name: event.target.value })}
                         maxLength={100}
-                        placeholder="Budapest / Margit híd"
+                        placeholder="Angelika Analog"
                         className="mt-1 w-full border border-zinc-800 bg-black px-3 py-2 text-xs text-zinc-200"
                       />
                     </label>
                     <label className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-                      Városrész / környék
+                      Átvételi környék
                       <input
                         value={cell.pickup_area || ""}
                         onChange={(event) => updatePickupCell(cell.id, { pickup_area: event.target.value })}
                         maxLength={120}
-                        placeholder="Margit híd budai hídfő"
+                        placeholder="Margit körút"
                         className="mt-1 w-full border border-zinc-800 bg-black px-3 py-2 text-xs text-zinc-200"
                       />
                     </label>
