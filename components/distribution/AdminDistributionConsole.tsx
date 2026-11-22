@@ -5,13 +5,8 @@ import { createClient } from "@/lib/browser"
 
 type Cell = {
   id: string
-  code: string
   name: string
   city: string
-  status: string
-  commission_default_huf: number
-  stripe_connected_account_id: string | null
-  stripe_payouts_enabled: boolean
   pickup_enabled: boolean
   pickup_public_name: string | null
   pickup_area: string | null
@@ -62,11 +57,8 @@ export default function AdminDistributionConsole() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [form, setForm] = useState({
-    code: "",
     name: "",
-    city: "Budapest",
-    owner_email: "",
-    commission_default_huf: "",
+    pickup_area: "",
   })
 
   async function getToken() {
@@ -121,43 +113,22 @@ export default function AdminDistributionConsole() {
     const response = await fetch("/api/admin/distribution/cells", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-      body: JSON.stringify({
-        ...form,
-        commission_default_huf: Number(form.commission_default_huf || 0),
-      }),
+      body: JSON.stringify(form),
     })
     const json = await response.json()
 
     if (!response.ok || !json?.ok) {
-      setMessage(json?.error || "A sejt létrehozása nem sikerült.")
+      setMessage(json?.error === "name_and_pickup_area_required"
+        ? "Add meg a disztribútor nevét és az átvételi környéket."
+        : json?.error || "Az átvételi pont létrehozása nem sikerült.")
       setBusyId(null)
       return
     }
 
-    setForm({ code: "", name: "", city: "Budapest", owner_email: "", commission_default_huf: "" })
-    setMessage("Sejt létrehozva 3 könyv + 3 póló induló készlettel.")
+    setForm({ name: "", pickup_area: "" })
+    setMessage("Átvételi pont hozzáadva.")
     await load()
     setBusyId(null)
-  }
-
-  async function connectCell(cellId: string) {
-    if (!token) return
-    setBusyId(cellId)
-    setMessage(null)
-
-    const response = await fetch("/api/admin/distribution/cells/" + encodeURIComponent(cellId) + "/connect", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token },
-    })
-    const json = await response.json()
-
-    if (!response.ok || !json?.ok || !json?.url) {
-      setMessage(json?.error || "A Stripe Connect indítása nem sikerült.")
-      setBusyId(null)
-      return
-    }
-
-    window.location.href = json.url
   }
 
   async function assignQueueOrder(orderId: string, dropId: string) {
@@ -249,39 +220,43 @@ export default function AdminDistributionConsole() {
     <main className="min-h-screen bg-[#020202] px-5 py-10 text-zinc-200 sm:px-8">
       <div className="mx-auto max-w-6xl">
         <p className="text-[10px] uppercase tracking-[0.3em] text-lime-200/60">VÁLLALHATATLAN / DISTRIBUTION ADMIN</p>
-        <h1 className="mt-3 text-3xl font-black text-zinc-100">Sejtek és jutalékok</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">A vásárló mindig a központnak fizet. Itt kötöd össze a sejteket Stripe-dal és innen indítod a jóváhagyott jutalékokat.</p>
+        <h1 className="mt-3 text-3xl font-black text-zinc-100">Disztribútorok és átvételi pontok</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">A vásárló a rendelésnél kiválasztja az átvételi pontot. A pontokat itt kizárólag admin tudja felvenni és módosítani.</p>
 
         <section className="mt-10 border-t border-zinc-800 pt-7">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-lime-200/60">ÚJ SEJT</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="BP-01" className="border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50" />
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Budapest Észak" className="border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50" />
-            <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="Budapest" className="border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50" />
-            <input value={form.owner_email} onChange={(e) => setForm({ ...form, owner_email: e.target.value })} placeholder="sejt@pelda.hu" className="border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50" />
-            <div className="flex gap-2">
-              <input value={form.commission_default_huf} onChange={(e) => setForm({ ...form, commission_default_huf: e.target.value })} placeholder="Jutalék Ft" inputMode="numeric" className="min-w-0 flex-1 border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50" />
-              <button type="button" onClick={() => void createCell()} disabled={busyId === "create-cell"} className="border border-lime-200/50 bg-lime-100 px-4 text-[10px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-50">{busyId === "create-cell" ? "…" : "LÉTREHOZ"}</button>
-            </div>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-lime-200/60">ÚJ ÁTVÉTELI PONT</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              maxLength={100}
+              placeholder="Disztribútor neve"
+              aria-label="Disztribútor neve"
+              className="border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50"
+            />
+            <input
+              value={form.pickup_area}
+              onChange={(e) => setForm({ ...form, pickup_area: e.target.value })}
+              maxLength={120}
+              placeholder="Átvételi környék, pl. Margit körút"
+              aria-label="Átvételi környék"
+              className="border border-zinc-800 bg-black px-3 py-3 text-sm outline-none focus:border-lime-200/50"
+            />
+            <button type="button" onClick={() => void createCell()} disabled={busyId === "create-cell" || !form.name.trim() || !form.pickup_area.trim()} className="border border-lime-200/50 bg-lime-100 px-5 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-50">{busyId === "create-cell" ? "MENTÉS…" : "HOZZÁADÁS"}</button>
           </div>
         </section>
 
         <section className="mt-12 border-t border-zinc-800 pt-7">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-lime-200/60">SEJTEK</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-lime-200/60">ÁTVÉTELI PONTOK</p>
           {loading ? <p className="mt-6 text-xs uppercase tracking-[0.2em] text-zinc-600">BETÖLTÉS…</p> : (
             <div className="mt-4 divide-y divide-zinc-800 border-y border-zinc-800">
               {cells.length ? cells.map((cell) => (
                 <div key={cell.id} className="grid gap-4 px-4 py-5 sm:grid-cols-[1fr_auto] sm:items-center">
                   <div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-100">{cell.name}</span>
-                      <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-600">{cell.code} · {cell.city}</span>
+                      <span className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-100">{cell.pickup_public_name || cell.name}</span>
+                      <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-600">{cell.pickup_area || cell.city}</span>
                     </div>
-                    <p className="mt-2 text-xs text-zinc-500">Jutalék / rendelés: {cell.commission_default_huf.toLocaleString("hu-HU")} Ft</p>
-                  </div>
-                  <div className="text-right">
-                    <span className={"text-[10px] uppercase tracking-[0.18em] " + (cell.stripe_payouts_enabled ? "text-lime-100" : "text-zinc-600")}>{cell.stripe_payouts_enabled ? "STRIPE KÉSZ" : "STRIPE NINCS KÉSZ"}</span>
-                    <button type="button" onClick={() => void connectCell(cell.id)} disabled={busyId === cell.id} className="ml-4 border border-zinc-700 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-zinc-300 hover:border-lime-200/50 disabled:opacity-50">{busyId === cell.id ? "…" : cell.stripe_connected_account_id ? "ONBOARDING" : "STRIPE BEKÖTÉSE"}</button>
                   </div>
                   <div className="mt-4 grid gap-3 border-t border-zinc-800 pt-4 sm:col-span-2 sm:grid-cols-[auto_1fr_1fr] sm:items-end">
                     <label className="flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-zinc-400">
@@ -294,22 +269,22 @@ export default function AdminDistributionConsole() {
                       Vásárlói átvételi pont
                     </label>
                     <label className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-                      Nyilvános pontnév
+                      Disztribútor neve
                       <input
                         value={cell.pickup_public_name || ""}
                         onChange={(event) => updatePickupCell(cell.id, { pickup_public_name: event.target.value })}
                         maxLength={100}
-                        placeholder="Budapest / Margit híd"
+                        placeholder="Angelika Analog"
                         className="mt-1 w-full border border-zinc-800 bg-black px-3 py-2 text-xs text-zinc-200"
                       />
                     </label>
                     <label className="text-[10px] uppercase tracking-[0.12em] text-zinc-500">
-                      Városrész / környék
+                      Átvételi környék
                       <input
                         value={cell.pickup_area || ""}
                         onChange={(event) => updatePickupCell(cell.id, { pickup_area: event.target.value })}
                         maxLength={120}
-                        placeholder="Margit híd budai hídfő"
+                        placeholder="Margit körút"
                         className="mt-1 w-full border border-zinc-800 bg-black px-3 py-2 text-xs text-zinc-200"
                       />
                     </label>
@@ -333,7 +308,7 @@ export default function AdminDistributionConsole() {
                     </button>
                   </div>
                 </div>
-              )) : <div className="px-4 py-8 text-sm text-zinc-600">Még nincs sejt.</div>}
+              )) : <div className="px-4 py-8 text-sm text-zinc-600">Még nincs átvételi pont.</div>}
             </div>
           )}
         </section>

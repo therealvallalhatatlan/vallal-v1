@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import { NextRequest, NextResponse } from "next/server"
 import { getUserFromToken, isAdminEmail, parseBearerToken } from "@/lib/auth"
 import { supabaseAdmin } from "@/lib/supabaseAdmin"
@@ -22,7 +23,9 @@ export async function GET(request: NextRequest) {
   const db = supabaseAdmin()
   const { data: cells, error } = await db
     .from("distribution_cells")
-    .select("id, code, name, city, country_code, status, commission_default_huf, stripe_connected_account_id, stripe_payouts_enabled, pickup_enabled, pickup_public_name, pickup_area, pickup_description, pickup_sort_order, created_at, updated_at")
+    .select("id, name, city, pickup_enabled, pickup_public_name, pickup_area, pickup_description, pickup_sort_order")
+    .or("pickup_enabled.eq.true,pickup_public_name.not.is.null")
+    .order("pickup_sort_order", { ascending: true })
     .order("city", { ascending: true })
     .order("name", { ascending: true })
 
@@ -38,121 +41,56 @@ export async function POST(request: NextRequest) {
   const auth = await requireAdmin(request)
   if (!auth.ok) return auth.response
 
-  let body: {
-    code?: unknown
-    name?: unknown
-    city?: unknown
-    owner_email?: unknown
-    commission_default_huf?: unknown
-  }
-
+  let body: { name?: unknown; pickup_area?: unknown }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: "invalid_json" }, { status: 400 })
   }
 
-  const code = typeof body.code === "string" ? body.code.trim().toUpperCase() : ""
   const name = typeof body.name === "string" ? body.name.trim() : ""
-  const city = typeof body.city === "string" ? body.city.trim() : ""
-  const ownerEmail = typeof body.owner_email === "string" ? body.owner_email.trim().toLowerCase() : ""
-  const commission = Math.max(0, Math.round(Number(body.commission_default_huf)))
+  const pickupArea = typeof body.pickup_area === "string" ? body.pickup_area.trim() : ""
 
-  if (!code || !name || !city || !ownerEmail || !Number.isFinite(commission)) {
-    return NextResponse.json({ error: "missing_or_invalid_fields" }, { status: 400 })
+  if (!name || name.length > 100 || !pickupArea || pickupArea.length > 120) {
+    return NextResponse.json({ error: "name_and_pickup_area_required" }, { status: 400 })
   }
 
   const db = supabaseAdmin()
-  const { data: authUsers, error: usersError } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 })
-  if (usersError) {
-    console.error("[admin/distribution/cells] user lookup error", usersError)
-    return NextResponse.json({ error: "user_lookup_failed" }, { status: 500 })
-  }
-
-  const owner = authUsers.users.find((candidate) => candidate.email?.trim().toLowerCase() === ownerEmail)
-  if (!owner?.id) return NextResponse.json({ error: "owner_not_found" }, { status: 404 })
-
-  const { data: existing, error: existingError } = await db
+  const { data: lastPoint, error: sortError } = await db
     .from("distribution_cells")
-    .select("id")
-    .eq("code", code)
-    .maybeSingle()
+    .select("pickup_sort_order")
+    .eq("pickup_enabled", true)
+    .order("pickup_sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ pickup_sort_order: number }>()
 
-  if (existingError) {
-    console.error("[admin/distribution/cells] existing check", existingError)
+  if (sortError) {
+    console.error("[admin/distribution/cells] pickup sort lookup failed", sortError)
     return NextResponse.json({ error: "server_error" }, { status: 500 })
   }
-  if (existing) return NextResponse.json({ error: "cell_code_taken" }, { status: 409 })
 
+  const code = "PICKUP-" + randomUUID().slice(0, 8).toUpperCase()
+  const pickupSortOrder = (lastPoint?.pickup_sort_order ?? 0) + 10
   const { data: cell, error: cellError } = await db
     .from("distribution_cells")
     .insert({
       code,
       name,
-      city,
+      city: "Budapest",
       country_code: "HU",
-      commission_default_huf: commission,
+      commission_default_huf: 0,
+      pickup_enabled: true,
+      pickup_public_name: name,
+      pickup_area: pickupArea,
+      pickup_sort_order: pickupSortOrder,
     })
-    .select("id, code, name, city, status, commission_default_huf")
+    .select("id, code, name, city, status, pickup_enabled, pickup_public_name, pickup_area, pickup_description, pickup_sort_order")
     .single()
 
   if (cellError || !cell) {
-    console.error("[admin/distribution/cells] cell create error", cellError)
-    return NextResponse.json({ error: "cell_create_failed" }, { status: 500 })
+    console.error("[admin/distribution/cells] pickup point create error", cellError)
+    return NextResponse.json({ error: "pickup_point_create_failed" }, { status: 500 })
   }
 
-  const membershipResult = await db
-    .from("distribution_cell_members")
-    .insert({
-      cell_id: cell.id,
-      user_id: owner.id,
-      role: "owner",
-    })
-
-  if (membershipResult.error) {
-    await db.from("distribution_cells").delete().eq("id", cell.id)
-    console.error("[admin/distribution/cells] membership create error", membershipResult.error)
-    return NextResponse.json({ error: "membership_create_failed" }, { status: 500 })
-  }
-
-  const starterItems = [
-    { product_id: "book_ii", product_name: "Vállalhatatlan II.", unit_price_huf: 10000, quantity: 3 },
-    { product_id: "men-shirt-1", product_name: "Vállalhatatlan Póló", unit_price_huf: 10000, quantity: 3 },
-  ]
-
-  const { error: inventoryError } = await db
-    .from("distribution_cell_inventory")
-    .insert(starterItems.map((item) => ({
-      cell_id: cell.id,
-      product_id: item.product_id,
-      product_name: item.product_name,
-      unit_price_huf: item.unit_price_huf,
-      quantity_total: item.quantity,
-      quantity_available: item.quantity,
-    })))
-
-  if (inventoryError) {
-    await db.from("distribution_cell_members").delete().eq("cell_id", cell.id)
-    await db.from("distribution_cells").delete().eq("id", cell.id)
-    console.error("[admin/distribution/cells] starter inventory error", inventoryError)
-    return NextResponse.json({ error: "starter_inventory_failed" }, { status: 500 })
-  }
-
-  await db.from("distribution_inventory_events").insert(
-    starterItems.map((item) => ({
-      cell_id: cell.id,
-      product_id: item.product_id,
-      delta_quantity: item.quantity,
-      event_type: "starter_allocation",
-      created_by_user_id: auth.user.id,
-      note: "Starter allocation: free initial distribution stock",
-    })),
-  )
-
-  return NextResponse.json({
-    ok: true,
-    cell,
-    starter_inventory: starterItems,
-    owner_user_id: owner.id,
-  }, { status: 201 })
+  return NextResponse.json({ ok: true, cell }, { status: 201 })
 }

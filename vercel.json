@@ -8,6 +8,7 @@
   "git": {
     "deploymentEnabled": {
       "feature/personal-distributor-pickup": false,
+      "feature/simple-admin-pickup-points": false,
       "hotfix/offline-google-fonts": false
     }
   }

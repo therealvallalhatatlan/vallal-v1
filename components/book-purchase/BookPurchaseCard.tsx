@@ -270,7 +270,7 @@ export default function BookPurchaseCard({
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-zinc-100">{point.name}</span>
-                    <span className="mt-1 block text-xs text-zinc-400">{point.city}{point.area ? " · " + point.area : ""}</span>
+                    <span className="mt-1 block text-xs text-zinc-400">{point.area || point.city}</span>
                     {point.description ? <span className="mt-1 block text-xs leading-relaxed text-zinc-500">{point.description}</span> : null}
                   </span>
                   <span className="shrink-0 text-xs font-semibold text-lime-100/80">0 Ft</span>
