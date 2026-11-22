@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
   const db = supabaseAdmin()
   const { data: cells, error } = await db
     .from("distribution_cells")
-    .select("id, code, name, city, country_code, status, commission_default_huf, stripe_connected_account_id, stripe_payouts_enabled, pickup_enabled, pickup_public_name, pickup_area, pickup_description, pickup_sort_order, created_at, updated_at")
+    .select("id, name, city, pickup_enabled, pickup_public_name, pickup_area, pickup_description, pickup_sort_order")
+    .or("pickup_enabled.eq.true,pickup_public_name.not.is.null")
+    .order("pickup_sort_order", { ascending: true })
     .order("city", { ascending: true })
     .order("name", { ascending: true })
 
