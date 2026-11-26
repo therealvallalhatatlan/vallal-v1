@@ -72,6 +72,7 @@ const PUBLIC_PATHS = new Set<string>([
   "/admin/inbox",
   "/messages",
   "/ar",
+  "/kalendarium-demo",
 ]);
 
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
