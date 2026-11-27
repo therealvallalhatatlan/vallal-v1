@@ -8,7 +8,6 @@ type SubmissionResult = { reference: string; preorderType: PreorderType }
 
 const STANDARD_PRICE_HUF = 12000
 const SUPPORTER_PRICE_HUF = 10000
-const SUPPORTER_DEPOSIT_HUF = 5000
 const inputClass = "mt-2 min-h-12 w-full rounded-none border border-zinc-700 bg-black/60 px-3 py-3 text-base text-zinc-100 outline-none placeholder:text-zinc-700 focus:border-lime-200/70 focus:ring-1 focus:ring-lime-200/20 sm:text-sm"
 const labelClass = "block font-mono text-[10px] uppercase tracking-[.16em] text-zinc-400"
 
@@ -19,7 +18,6 @@ function formatHuf(value: number) {
 export default function KalendariumPreorderPage() {
   const [email, setEmail] = useState("")
   const [fullName, setFullName] = useState("")
-  const [quantity, setQuantity] = useState("1")
   const [fulfillmentMethod, setFulfillmentMethod] = useState<"pickup" | "shipping">("pickup")
   const [note, setNote] = useState("")
   const [preorderType, setPreorderType] = useState<PreorderType>("reservation")
@@ -29,15 +27,14 @@ export default function KalendariumPreorderPage() {
   const [result, setResult] = useState<SubmissionResult | null>(null)
 
   const totals = useMemo(() => {
-    const count = Number(quantity) || 1
     const unitPrice = preorderType === "supporter" ? SUPPORTER_PRICE_HUF : STANDARD_PRICE_HUF
-    const deposit = preorderType === "supporter" ? SUPPORTER_DEPOSIT_HUF * count : 0
+    const deposit = preorderType === "supporter" ? SUPPORTER_PRICE_HUF : 0
     return {
-      total: unitPrice * count,
+      total: unitPrice,
       deposit,
-      balance: preorderType === "supporter" ? unitPrice * count - deposit : 0,
+      balance: 0,
     }
-  }, [quantity, preorderType])
+  }, [preorderType])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -55,7 +52,6 @@ export default function KalendariumPreorderPage() {
         body: JSON.stringify({
           email,
           fullName,
-          quantity: Number(quantity),
           fulfillmentMethod,
           note,
           preorderType,
@@ -166,7 +162,7 @@ export default function KalendariumPreorderPage() {
                         <span className="font-mono text-xs text-lime-200">0 Ft most</span>
                       </span>
                       <span className="mt-2 block text-xs leading-5 text-zinc-500">
-                        Lefoglalod a tervezett példányszámot. Nem fizetsz most, a rendelés és az átvétel részleteit később egyeztetjük.
+                        Jelzed az érdeklődésedet. Nem fizetsz most, a hozzáférés és a csatlakozás részleteit később egyeztetjük.
                       </span>
                       <span className="mt-2 block font-mono text-[10px] text-zinc-400">Normál ár: 12 000 Ft / példány</span>
                     </span>
@@ -186,10 +182,10 @@ export default function KalendariumPreorderPage() {
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center justify-between gap-2">
                         <strong className="font-mono text-[10px] uppercase tracking-wider text-lime-100">Támogatói előrendelés</strong>
-                        <span className="font-mono text-xs text-lime-200">10 000 Ft / db</span>
+                        <span className="font-mono text-xs text-lime-200">10 000 Ft</span>
                       </span>
                       <span className="mt-2 block text-xs leading-5 text-zinc-400">
-                        Most 5 000 Ft előleget fizetsz példányonként. A fennmaradó 5 000 Ft-ot később, a kiadvány átvétele előtt rendezed.
+                        A webapp korai támogatói hozzáférését most 10 000 Ft-ért biztosíthatod. Ez 2 000 Ft kedvezmény a későbbi 12 000 Ft-os árhoz képest.
                       </span>
                       <span className="mt-2 block font-mono text-[10px] text-lime-200">2 000 Ft kedvezmény a normál árhoz képest</span>
                     </span>
@@ -223,22 +219,15 @@ export default function KalendariumPreorderPage() {
               </label>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className={labelClass}>Példányszám
-                <select className={inputClass} value={quantity} onChange={event => setQuantity(event.target.value)}>
-                  {Array.from({ length: 10 }, (_, index) => index + 1).map(count => (
-                    <option key={count} value={String(count)}>{count} db</option>
-                  ))}
-                </select>
-              </label>
-              <label className={labelClass}>Átvétel módja
+            <div>
+              <label className={labelClass}>Kapcsolódás módja
                 <select
                   className={inputClass}
                   value={fulfillmentMethod}
                   onChange={event => setFulfillmentMethod(event.target.value as "pickup" | "shipping")}
                 >
-                  <option value="pickup">Személyes / közösségi átvétel</option>
-                  <option value="shipping">Postai vagy csomagküldés</option>
+                  <option value="pickup">Online hozzáférés</option>
+                  <option value="shipping">Online hozzáférés</option>
                 </select>
               </label>
             </div>
@@ -255,26 +244,26 @@ export default function KalendariumPreorderPage() {
 
             <div className="border border-zinc-800 bg-black/50 p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-zinc-400">Teljes ár · {quantity} db</span>
+                <span className="text-zinc-400">Teljes ár</span>
                 <strong className="tabular-nums text-zinc-100">{formatHuf(totals.total)}</strong>
               </div>
               <div className="mt-4 flex items-center justify-between gap-3 border-t border-zinc-800 pt-4">
                 <span className="font-mono text-[10px] uppercase tracking-[.15em] text-lime-200">
-                  {preorderType === "supporter" ? "Most fizetendő" : "Most fizetendő"}
+                  {preorderType === "supporter" ? "Előrendeléskor fizetendő" : "Most fizetendő"}
                 </span>
                 <strong className="text-xl tabular-nums text-lime-200">{formatHuf(totals.deposit)}</strong>
               </div>
               {preorderType === "supporter" ? (
                 <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-                  <span className="text-zinc-500">Fennmaradó összeg később</span>
-                  <span className="tabular-nums text-zinc-300">{formatHuf(totals.balance)}</span>
+                  <span className="text-zinc-500">Kedvezmény a későbbi árhoz képest</span>
+                  <span className="tabular-nums text-lime-200">−2 000 Ft</span>
                 </div>
               ) : (
                 <p className="mt-3 text-xs text-zinc-500">A sima előjegyzés nem jelent fizetési kötelezettséget. A végleges rendelésről később egyeztetünk.</p>
               )}
               <p className="mt-4 text-[11px] leading-5 text-zinc-600">
                 {preorderType === "supporter"
-                  ? "A támogatói ár 10 000 Ft / példány. Az 5 000 Ft előleg ennek része, a fennmaradó 5 000 Ft-ot később kell rendezni."
+                  ? "A támogatói előrendelés teljes díja 10 000 Ft. A 12 000 Ft-os későbbi árhoz képest 2 000 Ft kedvezményt kapsz."
                   : "A sima előjegyzés ingyenes és nem jár fizetési kötelezettséggel. A normál tervezett ár 12 000 Ft / példány."}
                 {" "}A szállítás esetleges díját külön egyeztetjük.
               </p>
