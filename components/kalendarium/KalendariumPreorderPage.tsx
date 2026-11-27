@@ -164,7 +164,7 @@ export default function KalendariumPreorderPage() {
                       <span className="mt-2 block text-xs leading-5 text-zinc-500">
                         Jelzed az érdeklődésedet. Nem fizetsz most, a hozzáférés és a csatlakozás részleteit később egyeztetjük.
                       </span>
-                      <span className="mt-2 block font-mono text-[10px] text-zinc-400">Normál ár: 12 000 Ft / példány</span>
+                      <span className="mt-2 block font-mono text-[10px] text-zinc-400">Későbbi ár: 12 000 Ft</span>
                     </span>
                   </span>
                 </label>
@@ -220,16 +220,9 @@ export default function KalendariumPreorderPage() {
             </div>
 
             <div>
-              <label className={labelClass}>Kapcsolódás módja
-                <select
-                  className={inputClass}
-                  value={fulfillmentMethod}
-                  onChange={event => setFulfillmentMethod(event.target.value as "pickup" | "shipping")}
-                >
-                  <option value="pickup">Online hozzáférés</option>
-                  <option value="shipping">Online hozzáférés</option>
-                </select>
-              </label>
+              <div className={labelClass}>Hozzáférés
+                <div className={inputClass + " flex items-center text-zinc-400"}>Online webapp · böngészőből elérhető</div>
+              </div>
             </div>
 
             <label className={labelClass}>Megjegyzés <span className="text-zinc-600">(nem kötelező)</span>
@@ -264,8 +257,8 @@ export default function KalendariumPreorderPage() {
               <p className="mt-4 text-[11px] leading-5 text-zinc-600">
                 {preorderType === "supporter"
                   ? "A támogatói előrendelés teljes díja 10 000 Ft. A 12 000 Ft-os későbbi árhoz képest 2 000 Ft kedvezményt kapsz."
-                  : "A sima előjegyzés ingyenes és nem jár fizetési kötelezettséggel. A normál tervezett ár 12 000 Ft / példány."}
-                {" "}A szállítás esetleges díját külön egyeztetjük.
+                  : "Az ingyenes előjegyzés nem jár fizetési kötelezettséggel. A későbbi ár 12 000 Ft."}
+                {" "}A hozzáférés részleteit e-mailben küldjük.
               </p>
             </div>
 
