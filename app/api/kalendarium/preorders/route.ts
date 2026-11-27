@@ -15,7 +15,7 @@ const stripe = stripeKey ? new Stripe(stripeKey, { apiVersion: "2025-07-30.basil
 
 const STANDARD_PRICE_HUF = 12000
 const SUPPORTER_PRICE_HUF = 10000
-const SUPPORTER_DEPOSIT_HUF = 5000
+const SUPPORTER_DEPOSIT_HUF = 10000
 const NOTIFICATION_EMAIL = "therealvallalhatatlan@gmail.com"
 
 function escapeEmailHtml(value: string) {
@@ -28,7 +28,6 @@ function escapeEmailHtml(value: string) {
 const schema = z.object({
   email: z.string().trim().email().max(254),
   fullName: z.string().trim().max(120).optional().default(""),
-  quantity: z.number().int().min(1).max(10).default(1),
   fulfillmentMethod: z.enum(["pickup", "shipping"]).default("pickup"),
   note: z.string().max(500).optional().default(""),
   preorderType: z.enum(["reservation", "supporter"]).default("reservation"),
@@ -61,10 +60,11 @@ export async function POST(req: NextRequest) {
   const user = token ? await getUserFromToken(token) : null
   const reference = "VK27-" + crypto.randomUUID().slice(0, 8).toUpperCase()
   const isSupporter = input.preorderType === "supporter"
+  const quantity = 1
   const unitPriceHuf = isSupporter ? SUPPORTER_PRICE_HUF : STANDARD_PRICE_HUF
-  const fullAmountHuf = unitPriceHuf * input.quantity
+  const fullAmountHuf = unitPriceHuf
   const depositPerUnitHuf = isSupporter ? SUPPORTER_DEPOSIT_HUF : 0
-  const depositAmountHuf = depositPerUnitHuf * input.quantity
+  const depositAmountHuf = depositPerUnitHuf
   const balanceDueHuf = fullAmountHuf - depositAmountHuf
   const db = supabaseAdmin()
 
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     preorder_type: input.preorderType,
     email: input.email.toLowerCase(),
     full_name: input.fullName,
-    quantity: input.quantity,
+    quantity,
     fulfillment_method: input.fulfillmentMethod,
     note: input.note,
     status: isSupporter ? "checkout_pending" : "reserved",
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
         "Előjegyzési azonosító: " + row.reference,
         "Név: " + (input.fullName || "Nincs megadva"),
         "E-mail: " + input.email,
-        "Példányszám: " + input.quantity + " db",
+        "Digitális hozzáférés: 1 db",
         "Teljes ár: " + fullAmountHuf.toLocaleString("hu-HU") + " Ft",
         "Átvétel: " + fulfillmentLabel,
         "Megjegyzés: " + (input.note || "Nincs megjegyzés"),
@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
             "<h1>Új Kalendárium 2027 előjegyzés</h1>",
             "<p><strong>Azonosító:</strong> " + escapeEmailHtml(row.reference) + "</p>",
             "<p><strong>Név:</strong> " + safeName + "<br><strong>E-mail:</strong> " + safeEmail +
-              "<br><strong>Példányszám:</strong> " + input.quantity + " db<br><strong>Teljes ár:</strong> " +
+              "<br><strong>Digitális hozzáférés:</strong> 1 db<br><strong>Teljes ár:</strong> " +
               fullAmountHuf.toLocaleString("hu-HU") + " Ft<br><strong>Átvétel:</strong> " +
               escapeEmailHtml(fulfillmentLabel) + "<br><strong>Megjegyzés:</strong> " + safeNote + "</p>",
             "<p>Ingyenes előjegyzés. Fizetés nem történt.</p>",
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
             "",
             "Rögzítettük a Vállalhatatlan Kalendárium 2027 ingyenes előjegyzését.",
             "Azonosító: " + row.reference,
-            "Példányszám: " + input.quantity + " db",
+            "Digitális hozzáférés: 1 db",
             "Tervezett teljes ár: " + fullAmountHuf.toLocaleString("hu-HU") + " Ft",
             "",
             "Ez ingyenes előjegyzés, fizetés nem történt és most nincs teendőd.",
@@ -192,12 +192,12 @@ export async function POST(req: NextRequest) {
       preorder_id: row.id,
       preorder_reference: row.reference,
       preorder_type: "supporter",
-      quantity: String(input.quantity),
+      quantity: String(quantity),
       amount_huf: String(fullAmountHuf),
       deposit_amount_huf: String(depositAmountHuf),
       balance_due_huf: String(balanceDueHuf),
       fulfillment_method: input.fulfillmentMethod,
-    }, { orderId: row.id, cartSummary: "kalendarium-supporter-2027x" + input.quantity, userUuid: user?.id ?? null })
+    }, { orderId: row.id, cartSummary: "kalendarium-supporter-2027x1", userUuid: user?.id ?? null })
 
     const session = await stripe!.checkout.sessions.create({
       mode: "payment",
@@ -209,11 +209,11 @@ export async function POST(req: NextRequest) {
           currency: "huf",
           product_data: {
             name: "Vállalhatatlan Kalendárium 2027 · támogatói előrendelés",
-            description: "Támogatói ár: 10 000 Ft / példány. Most 5 000 Ft előleg, később 5 000 Ft fennmaradó összeg / példány.",
+            description: "Támogatói előrendelési ár: 10 000 Ft. Korai hozzáférés 2 000 Ft-tal kedvezőbben a későbbi 12 000 Ft-os árnál.",
           },
-          unit_amount: SUPPORTER_DEPOSIT_HUF * 100,
+          unit_amount: SUPPORTER_PRICE_HUF * 100,
         },
-        quantity: input.quantity,
+        quantity,
       }],
       success_url: origin + "/kalendarium/siker?session_id={CHECKOUT_SESSION_ID}",
       cancel_url: origin + "/kalendarium?payment=cancelled&ref=" + encodeURIComponent(row.reference),
