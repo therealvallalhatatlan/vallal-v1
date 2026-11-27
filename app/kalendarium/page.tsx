@@ -3,10 +3,10 @@ import KalendariumPreorderPage from "@/components/kalendarium/KalendariumPreorde
 
 export const metadata: Metadata = {
   title: "Vállalhatatlan Kalendárium 2027",
-  description: "Előjegyzés és előrendelés a Vállalhatatlan Kalendárium 2027 kiadványra.",
+  description: "Előrendelés a Vállalhatatlan Kalendárium 2027 online webappjához.",
   openGraph: {
     title: "Vállalhatatlan Kalendárium 2027",
-    description: "Naptár, notesz, kalendárium és közösségi arany oldalak egyetlen kiadványban.",
+    description: "Közösségi webapp, alkotások és szolgáltatói adatbázis egyetlen online térben.",
     type: "website",
   },
 }
